@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.gestor-de-compras</groupId>
-	<artifactId>brisa_gestor_de_compra</artifactId>
+	<artifactId>gestor-compras-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>brisa</name>
+	<name>gestor-compras-backend</name>
 	<description>Gestor de compras.</description>
 	<url/>
 	<licenses>
