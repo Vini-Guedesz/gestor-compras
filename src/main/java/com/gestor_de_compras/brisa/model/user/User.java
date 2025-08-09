@@ -20,6 +20,7 @@ import java.util.List;
 public class User implements UserDetails {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     private String login;
     private String senha;
     @Enumerated(EnumType.STRING)
