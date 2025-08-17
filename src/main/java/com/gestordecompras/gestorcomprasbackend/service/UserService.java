@@ -34,7 +34,7 @@ public class UserService {
     public UserDTO findById(Integer id) {
         return repository.findById(id)
                 .map(UserDTO::new)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: teste" + id));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID:" + id));
     }
 
     @Transactional
