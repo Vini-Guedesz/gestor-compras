@@ -4,21 +4,21 @@ import com.gestordecompras.gestorcomprasbackend.model.contato.Contato;
 import com.gestordecompras.gestorcomprasbackend.model.endereco.Endereco;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@Entity
 @Table(name = "fornecedor_de_produto")
-@Entity(name = "fornecedor_de_produto")
-
 public class FornecedorDeProduto extends Fornecedor {
-    public FornecedorDeProduto(Integer id, String razaoSocial, String cnpj, Endereco endereco, Contato contato) {
+
+    private String inscricaoEstadual;
+
+    public FornecedorDeProduto(Integer id, String razaoSocial, String cnpj, Endereco endereco, Contato contato, String inscricaoEstadual) {
         super(id, razaoSocial, cnpj, endereco, contato);
+        this.inscricaoEstadual = inscricaoEstadual;
     }
-private String inscricaoEstadual;
 }

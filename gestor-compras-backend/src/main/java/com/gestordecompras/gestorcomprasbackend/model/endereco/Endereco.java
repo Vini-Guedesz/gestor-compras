@@ -1,26 +1,47 @@
 package com.gestordecompras.gestorcomprasbackend.model.endereco;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 
 @Getter
-@AllArgsConstructor
 @Setter
-@Entity(name="endereco")
-@Table(name="endereco")
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(of = "id")
+@ToString
+@Entity
+@Table(name = "endereco")
 public class Endereco {
+
     @Id
-    @GeneratedValue (strategy = GenerationType.IDENTITY)
-
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private String cep;
-    private String estado;
-    private String cidade;
-    private String bairro;
-    private String rua;
-    private String numero;
-    private String complemento;
 
+    @NotBlank
+    @Column(nullable = false, length = 9)
+    private String cep;
+
+    @NotBlank
+    @Column(nullable = false, length = 50)
+    private String estado;
+
+    @NotBlank
+    @Column(nullable = false, length = 50)
+    private String cidade;
+
+    @NotBlank
+    @Column(nullable = false, length = 60)
+    private String bairro;
+
+    @NotBlank
+    @Column(nullable = false, length = 100)
+    private String rua;
+
+    @NotBlank
+    @Column(nullable = false, length = 10)
+    private String numero;
+
+    @Column(length = 100)
+    private String complemento;
 }

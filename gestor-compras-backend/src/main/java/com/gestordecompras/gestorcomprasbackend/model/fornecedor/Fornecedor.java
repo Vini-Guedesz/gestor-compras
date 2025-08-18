@@ -2,22 +2,32 @@ package com.gestordecompras.gestorcomprasbackend.model.fornecedor;
 
 import com.gestordecompras.gestorcomprasbackend.model.contato.Contato;
 import com.gestordecompras.gestorcomprasbackend.model.endereco.Endereco;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-@NoArgsConstructor
-@AllArgsConstructor
+
+@MappedSuperclass
 @Getter
 @Setter
-
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class Fornecedor {
-    Integer id ;
-    String razaoSocial;
-    String cnpj;
-    Endereco endereco;
-    Contato contato;
 
-    public Fornecedor(Integer id, String razaoSocial, String cnpj, Endereco endereco, Contato contato) {
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    private String razaoSocial;
+
+    private String cnpj;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "endereco_id")
+    private Endereco endereco;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "contato_id")
+    private Contato contato;
 }
