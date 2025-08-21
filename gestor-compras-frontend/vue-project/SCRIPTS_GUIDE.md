@@ -4,7 +4,31 @@ Este arquivo explica o que cada script do `package.json` faz e quando utilizá-l
 
 ## 📦 Scripts Principais
 
-### Desenvolvimento
+### Aplicação Completa (NOVO!)
+```bash
+npm run start:full
+# ou
+npm run start:app
+```
+- **O que faz**: Inicia backend (Spring Boot) e frontend (Vue.js) simultaneamente
+- **Portas**: Backend na 8081, Frontend na 5173
+- **Inclui**: Banco H2 em memória, APIs REST, interface web
+- **Características**: 
+  - Cores diferenciadas nos logs (Backend: cyan, Frontend: green)
+  - Ambos os serviços em paralelo
+  - Hot reload automático no frontend
+  - LiveReload no backend
+- **Quando usar**: Para desenvolvimento com stack completo
+
+### Backend Isolado
+```bash
+npm run backend
+```
+- **O que faz**: Inicia apenas o backend Spring Boot
+- **Porta**: 8081
+- **Quando usar**: Para desenvolvimento focado na API
+
+### Desenvolvimento Frontend
 ```bash
 npm run dev
 ```
@@ -189,6 +213,48 @@ npm run prepare
 # Execute com debug
 npm run test:e2e:dev
 ```
+
+## 🚀 Scripts de Execução Rápida (NOVO!)
+
+### Para rodar a aplicação completa
+
+**Opção 1: Através do NPM (Recomendado)**
+```bash
+# No diretório gestor-compras-frontend/vue-project
+npm run start:full
+```
+
+**Opção 2: Scripts do diretório raiz**
+```powershell
+# Execute no diretório raiz do projeto
+.\run-app.ps1    # PowerShell
+# ou
+.\run-app.bat    # Command Prompt/Batch
+```
+
+### O que acontece quando você executa
+- ✅ **Backend** inicia na porta 8081 (Spring Boot + H2)
+- ✅ **Frontend** inicia na porta 5173 (Vue.js + Vite)
+- ✅ **Banco H2** configurado em memória
+- ✅ **Usuários de teste** criados automaticamente
+- ✅ **APIs REST** disponíveis
+- ✅ **Hot reload** ativo em ambos
+
+### URLs importantes
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8081
+- **Console H2**: http://localhost:8081/h2-console
+  - URL do banco: `jdbc:h2:mem:gestorcompras`
+  - Usuário: `sa`
+  - Senha: (vazio)
+
+### Usuários de teste
+- **Admin**: admin@gestor.com / admin123
+- **Usuário**: user@gestor.com / user123
+
+### Para parar a aplicação
+- Pressione `Ctrl + C` no terminal onde está rodando
+- Ou feche a janela do terminal
 
 ---
 

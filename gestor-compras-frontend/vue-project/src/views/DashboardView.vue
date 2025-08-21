@@ -10,10 +10,18 @@
     <main class="main-content">
       <!-- Mensagem de Boas-vindas -->
       <div class="welcome-section">
-        <h1 class="welcome-title">Bem-vinda de volta, {{ userName }}! 👋</h1>
-        <p class="welcome-subtitle">
-          Aqui está um resumo das suas atividades de compras hoje.
-        </p>
+        <div class="welcome-header">
+          <div class="welcome-content">
+            <h1 class="welcome-title">Bem-vinda de volta, {{ userName }}! 👋</h1>
+            <p class="welcome-subtitle">
+              Aqui está um resumo das suas atividades de compras hoje.
+            </p>
+          </div>
+          <div class="user-status">
+            <div class="status-indicator online"></div>
+            <span class="status-text">Online</span>
+          </div>
+        </div>
       </div>
 
       <!-- Ações Rápidas -->
@@ -160,6 +168,17 @@ const navigateTo = (path) => {
   padding: 24px 0;
 }
 
+.welcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.welcome-content {
+  flex: 1;
+}
+
 .welcome-title {
   font-family: Arial, sans-serif;
   font-size: 28px;
@@ -175,6 +194,47 @@ const navigateTo = (path) => {
   color: #6b7280;
   margin: 0;
   line-height: 1.5;
+}
+
+.user-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #15803d;
+  font-weight: 500;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.online {
+  background: #22c55e;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.status-text {
+  font-family: Arial, sans-serif;
 }
 
 /* Metrics Section */

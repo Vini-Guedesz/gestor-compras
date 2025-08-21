@@ -42,7 +42,7 @@
         </div>
 
         <!-- Avatar e Info do Usuário -->
-        <div class="user-info" @click="toggleUserMenu">
+        <div class="user-info" @click="toggleUserMenu" v-click-outside="closeUserMenu">
           <div class="user-avatar">
             <img :src="userAvatar" :alt="userName" />
           </div>
@@ -50,22 +50,71 @@
             <span class="user-name">{{ userName }}</span>
             <span class="user-role">{{ userRole }}</span>
           </div>
-          <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16">
+          <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" :class="{ 'rotated': isUserMenuOpen }">
             <path fill="currentColor" d="M7 10l5 5 5-5z"/>
           </svg>
+
+          <!-- Dropdown Menu do Usuário -->
+          <div v-if="isUserMenuOpen" class="user-dropdown">
+            <div class="dropdown-item" @click="viewProfile">
+              <svg class="item-icon" viewBox="0 0 24 24" width="16" height="16">
+                <path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              <span>Meu Perfil</span>
+            </div>
+
+            <div class="dropdown-item" @click="openSettings">
+              <svg class="item-icon" viewBox="0 0 24 24" width="16" height="16">
+                <path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+              </svg>
+              <span>Configurações</span>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <div class="dropdown-item logout-item" @click="handleLogout">
+              <svg class="item-icon" viewBox="0 0 24 24" width="16" height="16">
+                <path fill="currentColor" d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+              </svg>
+              <span>Sair</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Modal de Logout -->
+    <LogoutModal
+      :show="showLogoutModal"
+      @confirm="confirmLogout"
+      @cancel="cancelLogout"
+    />
   </header>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useAuthStore } from '../stores/auth'
+/**
+ * Componente DashboardHeader - Cabeçalho da aplicação
+ *
+ * Funcionalidades:
+ * - Exibição da logo
+ * - Barra de pesquisa
+ * - Notificações
+ * - Menu do usuário com logout
+ * - Configurações
+ */
 
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import LogoutModal from './LogoutModal.vue'
+
+const router = useRouter()
 const authStore = useAuthStore()
 const searchQuery = ref('')
 const notificationCount = ref(3)
+const isUserMenuOpen = ref(false)
+const showLogoutModal = ref(false)
 
 const userName = computed(() => authStore.user?.name || 'Ana Silva')
 const userRole = computed(() => authStore.user?.role || 'Gestora de Compras')
@@ -80,24 +129,105 @@ const userAvatar = computed(() => {
   `)}`
 })
 
+/**
+ * Manipula a busca quando o usuário pressiona Enter
+ */
 const handleSearch = () => {
   console.log('Pesquisando:', searchQuery.value)
-  // Implementar lógica de busca
+  // TODO: Implementar lógica de busca
 }
 
+/**
+ * Abre/fecha o painel de notificações
+ */
 const toggleNotifications = () => {
   console.log('Abrir notificações')
-  // Implementar painel de notificações
+  // TODO: Implementar painel de notificações
 }
 
+/**
+ * Abre as configurações da aplicação
+ */
 const openSettings = () => {
   console.log('Abrir configurações')
-  // Implementar configurações
+  isUserMenuOpen.value = false
+  // TODO: Implementar configurações
 }
 
+/**
+ * Abre/fecha o menu dropdown do usuário
+ */
 const toggleUserMenu = () => {
-  console.log('Toggle menu do usuário')
-  // Implementar menu dropdown do usuário
+  isUserMenuOpen.value = !isUserMenuOpen.value
+}
+
+/**
+ * Fecha o menu do usuário
+ */
+const closeUserMenu = () => {
+  isUserMenuOpen.value = false
+}
+
+/**
+ * Abre a página de perfil do usuário
+ */
+const viewProfile = () => {
+  console.log('Visualizar perfil')
+  isUserMenuOpen.value = false
+  // TODO: Implementar página de perfil
+}
+
+/**
+ * Realiza o logout do usuário
+ *
+ * Abre o modal de confirmação em vez de usar alert()
+ */
+const handleLogout = () => {
+  isUserMenuOpen.value = false
+  showLogoutModal.value = true
+}
+
+/**
+ * Confirma o logout após o usuário aceitar no modal
+ */
+const confirmLogout = async () => {
+  try {
+    // Realiza o logout
+    authStore.logout()
+
+    // Fecha o modal
+    showLogoutModal.value = false
+
+    // Redireciona para a página de login
+    router.push('/login')
+
+    console.log('Logout realizado com sucesso')
+  } catch (error) {
+    console.error('Erro ao fazer logout:', error)
+    alert('Erro ao sair da aplicação. Tente novamente.')
+  }
+}
+
+/**
+ * Cancela o logout
+ */
+const cancelLogout = () => {
+  showLogoutModal.value = false
+}
+
+// Diretiva customizada para fechar menu ao clicar fora
+const vClickOutside = {
+  beforeMount(el, binding) {
+    el.clickOutsideEvent = function(event) {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value()
+      }
+    }
+    document.addEventListener('click', el.clickOutsideEvent)
+  },
+  unmounted(el) {
+    document.removeEventListener('click', el.clickOutsideEvent)
+  }
 }
 </script>
 
@@ -224,6 +354,7 @@ const toggleUserMenu = () => {
 }
 
 .user-info {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -277,8 +408,77 @@ const toggleUserMenu = () => {
   transition: transform 0.2s ease;
 }
 
+.dropdown-arrow.rotated {
+  transform: rotate(180deg);
+}
+
 .user-info:hover .dropdown-arrow {
   transform: rotate(180deg);
+}
+
+/* User Dropdown Menu */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #374151;
+  font-size: 14px;
+  font-family: Arial, sans-serif;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background-color: #f9fafb;
+}
+
+.dropdown-item.logout-item {
+  color: #dc2626;
+}
+
+.dropdown-item.logout-item:hover {
+  background-color: #fef2f2;
+}
+
+.item-icon {
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 4px 0;
 }
 
 /* Responsividade */
