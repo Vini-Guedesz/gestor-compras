@@ -3,6 +3,7 @@
     <!-- Menu Principal -->
     <nav class="main-nav">
       <div class="nav-section">
+        <h3 class="nav-title">Menu Principal</h3>
         <ul class="nav-list">
           <li class="nav-item">
             <router-link to="/dashboard" class="nav-link" :class="{ active: isActive('/dashboard') }">
@@ -146,6 +147,16 @@ const setActiveStatus = (status) => {
   margin-bottom: 32px;
 }
 
+.nav-title {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1F285F;
+  margin: 0 0 16px 24px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .nav-list {
   list-style: none;
   margin: 0;
@@ -177,7 +188,7 @@ const setActiveStatus = (status) => {
 }
 
 .nav-link.active {
-  background: linear-gradient(90deg, #1F285F 0%, rgba(31, 40, 95, 0.1) 100%);
+  background: #EAF0FC;
   color: #1F285F;
   font-weight: 600;
 }
@@ -243,9 +254,9 @@ const setActiveStatus = (status) => {
 }
 
 .status-filter.active {
-  background: #1F285F;
+  background: #EAF0FC;
   border-color: #1F285F;
-  color: white;
+  color: #1F285F;
 }
 
 .status-indicator {
@@ -268,7 +279,7 @@ const setActiveStatus = (status) => {
 }
 
 .status-filter.active .status-indicator {
-  background: white;
+  background: #1F285F;
 }
 
 .status-count {
@@ -284,7 +295,7 @@ const setActiveStatus = (status) => {
 }
 
 .status-filter.active .status-count {
-  background: rgba(255, 255, 255, 0.2);
+  background: #1F285F;
   color: white;
 }
 

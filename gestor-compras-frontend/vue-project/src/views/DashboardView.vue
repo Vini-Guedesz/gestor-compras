@@ -108,12 +108,14 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
 import MetricCard from '../components/MetricCard.vue'
 import QuickActions from '../components/QuickActions.vue'
 
+const router = useRouter()
 const authStore = useAuthStore()
 
 const userName = computed(() => {
@@ -130,7 +132,12 @@ const handleQuickAction = (action) => {
 
 const navigateTo = (path) => {
   console.log('Navegando para:', path)
-  // router.push(path) - Descomente quando as rotas estiverem criadas
+  if (path === '/fornecedores') {
+    router.push(path)
+  } else {
+    // Para outras rotas ainda não implementadas
+    console.log('Rota ainda não implementada:', path)
+  }
 }
 </script>
 
