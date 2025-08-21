@@ -12,7 +12,7 @@
               <span>Dashboard</span>
             </router-link>
           </li>
-          
+
           <li class="nav-item">
             <router-link to="/pedidos" class="nav-link" :class="{ active: isActive('/pedidos') }">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -21,7 +21,7 @@
               <span>Pedidos de Compra</span>
             </router-link>
           </li>
-          
+
           <li class="nav-item">
             <router-link to="/fornecedores" class="nav-link" :class="{ active: isActive('/fornecedores') }">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -30,7 +30,7 @@
               <span>Fornecedores</span>
             </router-link>
           </li>
-          
+
           <li class="nav-item">
             <router-link to="/cotacoes" class="nav-link" :class="{ active: isActive('/cotacoes') }">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -39,7 +39,7 @@
               <span>Cotações</span>
             </router-link>
           </li>
-          
+
           <li class="nav-item">
             <router-link to="/notas-fiscais" class="nav-link" :class="{ active: isActive('/notas-fiscais') }">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -48,7 +48,7 @@
               <span>Notas Fiscais</span>
             </router-link>
           </li>
-          
+
           <li class="nav-item">
             <router-link to="/relatorios" class="nav-link" :class="{ active: isActive('/relatorios') }">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -65,8 +65,8 @@
     <div class="status-section">
       <h3 class="status-title">Status</h3>
       <div class="status-filters">
-        <button 
-          class="status-filter" 
+        <button
+          class="status-filter"
           :class="{ active: activeStatus === 'pendentes' }"
           @click="setActiveStatus('pendentes')"
         >
@@ -74,9 +74,9 @@
           <span>Pendentes</span>
           <span class="status-count">{{ statusCounts.pendentes }}</span>
         </button>
-        
-        <button 
-          class="status-filter" 
+
+        <button
+          class="status-filter"
           :class="{ active: activeStatus === 'aprovados' }"
           @click="setActiveStatus('aprovados')"
         >
@@ -84,9 +84,9 @@
           <span>Aprovados</span>
           <span class="status-count">{{ statusCounts.aprovados }}</span>
         </button>
-        
-        <button 
-          class="status-filter" 
+
+        <button
+          class="status-filter"
           :class="{ active: activeStatus === 'urgentes' }"
           @click="setActiveStatus('urgentes')"
         >
@@ -312,7 +312,7 @@ const setActiveStatus = (status) => {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
   }
-  
+
   .sidebar.open {
     transform: translateX(0);
   }

@@ -14,11 +14,11 @@
         </button>
       </div>
     </div>
-    
+
     <div class="card-content">
       <h3 class="card-title">{{ title }}</h3>
       <p class="card-description">{{ description }}</p>
-      
+
       <div class="metrics">
         <div class="metric-item" v-for="metric in metrics" :key="metric.label">
           <span class="metric-value" :style="{ color: metric.color || '#1F285F' }">
@@ -28,7 +28,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="card-footer" v-if="$slots.footer">
       <slot name="footer"></slot>
     </div>
@@ -223,15 +223,15 @@ const iconComponent = computed(() => {
   .metric-card {
     padding: 16px;
   }
-  
+
   .card-title {
     font-size: 16px;
   }
-  
+
   .metric-value {
     font-size: 20px;
   }
-  
+
   .metrics {
     gap: 12px;
   }

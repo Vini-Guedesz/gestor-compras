@@ -14,8 +14,8 @@
           <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
             <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
           </svg>
-          <input 
-            type="text" 
+          <input
+            type="text"
             v-model="searchQuery"
             placeholder="Pesquisar pedidos e fornecedores..."
             class="search-input"
@@ -69,7 +69,16 @@ const notificationCount = ref(3)
 
 const userName = computed(() => authStore.user?.name || 'Ana Silva')
 const userRole = computed(() => authStore.user?.role || 'Gestora de Compras')
-const userAvatar = computed(() => authStore.user?.avatar || '/api/placeholder/40/40')
+const userAvatar = computed(() => {
+  // Placeholder para avatar - pode ser substituído por uma URL real
+  return `data:image/svg+xml;base64,${btoa(`
+    <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="20" fill="#1F285F"/>
+      <circle cx="20" cy="16" r="6" fill="white"/>
+      <path d="M20 24c-6 0-11 3-11 7v3h22v-3c0-4-5-7-11-7z" fill="white"/>
+    </svg>
+  `)}`
+})
 
 const handleSearch = () => {
   console.log('Pesquisando:', searchQuery.value)
@@ -277,11 +286,11 @@ const toggleUserMenu = () => {
   .search-section {
     display: none;
   }
-  
+
   .user-details {
     display: none;
   }
-  
+
   .header-content {
     padding: 0 16px;
   }

@@ -2,10 +2,10 @@
   <div class="dashboard-layout">
     <!-- Header -->
     <DashboardHeader />
-    
+
     <!-- Sidebar -->
     <DashboardSidebar />
-    
+
     <!-- Conteúdo Principal -->
     <main class="main-content">
       <!-- Mensagem de Boas-vindas -->
@@ -195,16 +195,16 @@ const navigateTo = (path) => {
     margin-left: 0;
     padding: 20px;
   }
-  
+
   .metrics-grid {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
   }
-  
+
   .welcome-title {
     font-size: 24px;
   }
-  
+
   .section-title {
     font-size: 20px;
   }
@@ -214,16 +214,16 @@ const navigateTo = (path) => {
   .main-content {
     padding: 16px;
   }
-  
+
   .metrics-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .welcome-title {
     font-size: 22px;
   }
-  
+
   .welcome-subtitle {
     font-size: 14px;
   }

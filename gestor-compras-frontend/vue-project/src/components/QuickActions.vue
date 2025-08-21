@@ -2,8 +2,8 @@
   <div class="quick-actions">
     <h3 class="actions-title">Ações Rápidas</h3>
     <div class="actions-grid">
-      <button 
-        v-for="action in actions" 
+      <button
+        v-for="action in actions"
         :key="action.id"
         class="action-button"
         :class="action.variant"
@@ -177,21 +177,21 @@ const getIconPath = (iconName) => {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  
+
   .action-button {
     padding: 16px;
     gap: 12px;
   }
-  
+
   .action-icon {
     width: 40px;
     height: 40px;
   }
-  
+
   .action-title {
     font-size: 14px;
   }
-  
+
   .action-description {
     font-size: 13px;
   }
