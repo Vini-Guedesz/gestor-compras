@@ -1,36 +1,63 @@
+/**
+ * Store de Autenticação - Gerenciamento Global do Estado de Autenticação
+ *
+ * Este store utiliza Pinia para gerenciar o estado global da autenticação.
+ *
+ * Funcionalidades principais:
+ * - Login/logout de usuários
+ * - Persistência da sessão no localStorage
+ * - Validação automática de tokens
+ * - Recuperação de senha
+ *
+ * Estados gerenciados:
+ * - isAuthenticated: boolean - se o usuário está logado
+ * - user: object - dados do usuário logado
+ * - token: string - token JWT de autenticação
+ */
+
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { authService } from '../services/authService.js'
 
 export const useAuthStore = defineStore('auth', () => {
-  const isAuthenticated = ref(false)
-  const user = ref(null)
-  const token = ref(null)
+  // Estados reativos da autenticação
+  const isAuthenticated = ref(false)  // Indica se o usuário está autenticado
+  const user = ref(null)              // Dados do usuário logado
+  const token = ref(null)             // Token JWT para autorização
 
-  const login = async (username, password) => {
+  /**
+   * Realiza o login do usuário
+   *
+   * @param {string} email - Email do usuário
+   * @param {string} password - Senha do usuário
+   * @returns {Object} Resultado da operação de login
+   */
+  const login = async (email, password) => {
     try {
-      // Aqui você fará a chamada para sua API de autenticação
-      // Por enquanto, vamos simular um login bem-sucedido
+      // Chama o serviço de autenticação para validar credenciais
+      const result = await authService.login(email, password)
 
-      // Simulação de delay da API
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (result.success) {
+        // Login bem-sucedido: valida o token recebido
+        const tokenValidation = await authService.validateToken(result.token)
 
-      // Simulação de resposta da API
-      if (username && password) {
-        isAuthenticated.value = true
-        user.value = {
-          id: 1,
-          username: username,
-          name: 'Usuário Sistema'
+        if (tokenValidation.success) {
+          // Token válido: atualiza o estado da aplicação
+          isAuthenticated.value = true
+          user.value = tokenValidation.user
+          token.value = result.token
+
+          // Persiste a sessão no localStorage para manter login entre sessões
+          localStorage.setItem('auth-token', token.value)
+          localStorage.setItem('user', JSON.stringify(user.value))
+
+          return { success: true }
+        } else {
+          throw new Error('Token recebido é inválido')
         }
-        token.value = 'fake-jwt-token'
-
-        // Salvar no localStorage para persistir a sessão
-        localStorage.setItem('auth-token', token.value)
-        localStorage.setItem('user', JSON.stringify(user.value))
-
-        return { success: true }
       } else {
-        throw new Error('Credenciais inválidas')
+        // Login falhou: retorna o erro do serviço
+        return result
       }
     } catch (error) {
       return {
@@ -40,52 +67,73 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Realiza o logout do usuário
+   *
+   * - Limpa todos os estados de autenticação
+   * - Remove dados do localStorage
+   */
   const logout = () => {
+    // Limpa o estado da aplicação
     isAuthenticated.value = false
     user.value = null
     token.value = null
 
-    // Limpar localStorage
+    // Remove dados persistidos no navegador
     localStorage.removeItem('auth-token')
     localStorage.removeItem('user')
   }
 
-  const checkAuth = () => {
-    // Verificar se há dados de autenticação salvos
+  /**
+   * Verifica se há uma sessão ativa salva
+   *
+   * Chamado ao inicializar a aplicação para restaurar sessões
+   * válidas que foram salvas anteriormente.
+   *
+   * @returns {boolean} True se encontrou e validou uma sessão ativa
+   */
+  const checkAuth = async () => {
+    // Recupera dados salvos do localStorage
     const savedToken = localStorage.getItem('auth-token')
     const savedUser = localStorage.getItem('user')
 
     if (savedToken && savedUser) {
-      token.value = savedToken
-      user.value = JSON.parse(savedUser)
-      isAuthenticated.value = true
-      return true
+      // Verifica se o token salvo ainda é válido
+      const tokenValidation = await authService.validateToken(savedToken)
+
+      if (tokenValidation.success) {
+        // Token válido: restaura a sessão
+        token.value = savedToken
+        user.value = JSON.parse(savedUser)
+        isAuthenticated.value = true
+        return true
+      } else {
+        // Token inválido ou expirado: limpa dados salvos
+        logout()
+        return false
+      }
     }
 
     return false
   }
 
+  /**
+   * Solicita recuperação de senha
+   *
+   * @param {string} email - Email para envio das instruções
+   * @returns {Object} Resultado da operação
+   */
   const forgotPassword = async (email) => {
-    try {
-      // Aqui você fará a chamada para sua API de recuperação de senha
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      return {
-        success: true,
-        message: 'E-mail de recuperação enviado com sucesso!'
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Erro ao enviar e-mail de recuperação'
-      }
-    }
+    return await authService.forgotPassword(email)
   }
 
+  // Expõe os estados e métodos para uso nos componentes
   return {
+    // Estados reativos
     isAuthenticated,
     user,
     token,
+    // Métodos de ação
     login,
     logout,
     checkAuth,

@@ -1,53 +1,83 @@
+/**
+ * Configuração do sistema de rotas da aplicação
+ *
+ * Este arquivo define:
+ * - Todas as rotas disponíveis na aplicação
+ * - Proteção de rotas baseada em autenticação
+ * - Redirecionamentos automáticos
+ *
+ * Estrutura de rotas:
+ * - / → Redireciona para /login
+ * - /login → Página de login (apenas para usuários não autenticados)
+ * - /dashboard → Página principal (requer autenticação)
+ * - /fornecedores → Gestão de fornecedores (requer autenticação)
+ */
+
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import FornecedoresView from '../views/FornecedoresView.vue'
 
+// Criação do router com histórico de navegação do navegador
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/login'
+      redirect: '/login' // Redireciona a raiz para a página de login
     },
     {
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { requiresGuest: true }
+      meta: { requiresGuest: true } // Apenas para usuários não autenticados
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true } // Requer autenticação
     },
     {
       path: '/fornecedores',
       name: 'fornecedores',
       component: FornecedoresView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true } // Requer autenticação
     }
   ],
 })
 
-// Guarda de rotas
-router.beforeEach((to, from, next) => {
+/**
+ * Guarda de navegação global - executa antes de cada mudança de rota
+ *
+ * Responsabilidades:
+ * - Verificar se o usuário está autenticado
+ * - Proteger rotas que requerem autenticação
+ * - Redirecionar usuários logados para fora da página de login
+ * - Redirecionar usuários não logados para a página de login
+ */
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // Verificar se há dados de autenticação salvos ao inicializar
+  // Verificar se há dados de autenticação salvos no localStorage
+  // Importante fazer isso antes de verificar as proteções de rota
   if (!authStore.isAuthenticated) {
-    authStore.checkAuth()
+    await authStore.checkAuth()
   }
 
+  // Proteção para rotas que requerem autenticação
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    // Rota requer autenticação mas usuário não está logado
+    // Usuário não autenticado tentando acessar rota protegida
     next('/login')
-  } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    // Rota é apenas para visitantes mas usuário está logado
+  }
+  // Proteção para rotas que são apenas para visitantes (ex: login)
+  else if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    // Usuário já autenticado tentando acessar página de login
     next('/dashboard')
-  } else {
+  }
+  // Caso contrário, permite a navegação
+  else {
     next()
   }
 })
