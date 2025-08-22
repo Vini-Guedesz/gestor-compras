@@ -32,6 +32,24 @@ public class SecurityConfig {
         this.jwtFilter = jwtFilter;
     }
 
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/auth/login",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    };
+
+    private static final String[] USER_ENDPOINTS = {
+            "/api/fornecedores-de-produto/**",
+            "/api/fornecedores-de-servico/**"
+    };
+
+    private static final String[] ADMIN_ENDPOINTS = {
+            "/api/users/**",
+            "/api/enderecos/**",
+            "/api/contatos/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -39,18 +57,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers("/api/users").permitAll()
-                        .requestMatchers("/api/users/**").permitAll()
-                        .requestMatchers("/api/enderecos/**").permitAll()
-                        .requestMatchers("/api/contatos/**").permitAll()
-                        .requestMatchers("/api/fornecedores-de-produto/**").permitAll()
-                        .requestMatchers("/api/fornecedores-de-servico/**").permitAll()
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(USER_ENDPOINTS).hasRole("USER")
+                        .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
