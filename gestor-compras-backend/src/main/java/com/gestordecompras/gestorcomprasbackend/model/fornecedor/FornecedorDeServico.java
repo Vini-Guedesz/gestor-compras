@@ -4,12 +4,10 @@ import com.gestordecompras.gestorcomprasbackend.model.contato.Contato;
 import com.gestordecompras.gestorcomprasbackend.model.endereco.Endereco;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @Entity
 @Table(name = "fornecedor_de_servico")

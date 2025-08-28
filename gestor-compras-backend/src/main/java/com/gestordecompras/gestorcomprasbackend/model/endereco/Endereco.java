@@ -3,13 +3,12 @@ package com.gestordecompras.gestorcomprasbackend.model.endereco;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-@ToString
 @Entity
 @Table(name = "endereco")
 public class Endereco {
