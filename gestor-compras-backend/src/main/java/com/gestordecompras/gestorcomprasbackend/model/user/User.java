@@ -2,6 +2,7 @@ package com.gestordecompras.gestorcomprasbackend.model.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,8 +13,7 @@ import java.util.List;
 
 @Table(name = "users")
 @Entity(name = "users")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")

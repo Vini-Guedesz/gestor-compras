@@ -3,14 +3,11 @@ package com.gestordecompras.gestorcomprasbackend.model.fornecedor;
 import com.gestordecompras.gestorcomprasbackend.model.contato.Contato;
 import com.gestordecompras.gestorcomprasbackend.model.endereco.Endereco;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.Data;
 
 @MappedSuperclass
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class Fornecedor {
