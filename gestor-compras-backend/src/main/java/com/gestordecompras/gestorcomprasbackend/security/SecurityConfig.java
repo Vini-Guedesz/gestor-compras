@@ -38,7 +38,8 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/api/itens-pedido/**",
-            "/api/solicitacoes-pedido/**"
+            "/api/solicitacoes-pedido/**",
+            "/error"
     };
 
     private static final String[] USER_ENDPOINTS = {
@@ -52,13 +53,21 @@ public class SecurityConfig {
             "/api/contatos/**"
     };
 
+    private static final String[] PUBLIC_POST_ENDPOINTS = {
+            "/api/users"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                        .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(USER_ENDPOINTS).hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

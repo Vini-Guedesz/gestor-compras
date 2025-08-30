@@ -1,0 +1,614 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-08-29T18:00:00.000Z",
+  "__export_source": "gemini",
+  "resources": [
+    {
+      "_id": "env_1",
+      "_type": "environment",
+      "name": "Base Environment",
+      "parentId": "wrk_1",
+      "data": {
+        "base_url": "http://localhost:8081"
+      }
+    },
+    {
+      "_id": "wrk_1",
+      "_type": "workspace",
+      "name": "Gestor de Compras",
+      "description": "",
+      "scope": "collection"
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "name": "Auth",
+      "parentId": "wrk_1",
+      "environment": {}
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "name": "Login",
+      "parentId": "fld_auth",
+      "url": "{{ base_url }}/auth/login",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@example.com\",\n  \"senha\": \"admin\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "fld_contatos",
+      "_type": "request_group",
+      "name": "Contatos",
+      "parentId": "wrk_1",
+      "environment": {}
+    },
+    {
+      "_id": "req_get_contatos",
+      "_type": "request",
+      "name": "Get All Contatos",
+      "parentId": "fld_contatos",
+      "url": "{{ base_url }}/api/contatos",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_get_contato_by_id",
+      "_type": "request",
+      "name": "Get Contato by ID",
+      "parentId": "fld_contatos",
+      "url": "{{ base_url }}/api/contatos/1",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_create_contato",
+      "_type": "request",
+      "name": "Create Contato",
+      "parentId": "fld_contatos",
+      "url": "{{ base_url }}/api/contatos",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Nome do Contato\",\n  \"telefone\": \"123456789\",\n  \"email\": \"contato@example.com\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_update_contato",
+      "_type": "request",
+      "name": "Update Contato",
+      "parentId": "fld_contatos",
+      "url": "{{ base_url }}/api/contatos",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": 1,\n  \"nome\": \"Novo Nome do Contato\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_delete_contato",
+      "_type": "request",
+      "name": "Delete Contato",
+      "parentId": "fld_contatos",
+      "url": "{{ base_url }}/api/contatos/1",
+      "method": "DELETE",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "fld_enderecos",
+      "_type": "request_group",
+      "name": "Enderecos",
+      "parentId": "wrk_1",
+      "environment": {}
+    },
+    {
+      "_id": "req_get_enderecos",
+      "_type": "request",
+      "name": "Get All Enderecos",
+      "parentId": "fld_enderecos",
+      "url": "{{ base_url }}/api/enderecos",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_get_endereco_by_id",
+      "_type": "request",
+      "name": "Get Endereco by ID",
+      "parentId": "fld_enderecos",
+      "url": "{{ base_url }}/api/enderecos/1",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_create_endereco",
+      "_type": "request",
+      "name": "Create Endereco",
+      "parentId": "fld_enderecos",
+      "url": "{{ base_url }}/api/enderecos",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"logradouro\": \"Rua Exemplo\",\n  \"numero\": \"123\",\n  \"complemento\": \"Apto 1\",\n  \"bairro\": \"Centro\",\n  \"cidade\": \"Cidade Exemplo\",\n  \"estado\": \"EX\",\n  \"cep\": \"12345-678\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_update_endereco",
+      "_type": "request",
+      "name": "Update Endereco",
+      "parentId": "fld_enderecos",
+      "url": "{{ base_url }}/api/enderecos",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": 1,\n  \"logradouro\": \"Nova Rua Exemplo\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_delete_endereco",
+      "_type": "request",
+      "name": "Delete Endereco",
+      "parentId": "fld_enderecos",
+      "url": "{{ base_url }}/api/enderecos/1",
+      "method": "DELETE",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "fld_fornecedores_produto",
+      "_type": "request_group",
+      "name": "Fornecedores de Produto",
+      "parentId": "wrk_1",
+      "environment": {}
+    },
+    {
+      "_id": "req_get_fornecedores_produto",
+      "_type": "request",
+      "name": "Get All Fornecedores de Produto",
+      "parentId": "fld_fornecedores_produto",
+      "url": "{{ base_url }}/api/fornecedores-de-produto",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_get_fornecedor_produto_by_id",
+      "_type": "request",
+      "name": "Get Fornecedor de Produto by ID",
+      "parentId": "fld_fornecedores_produto",
+      "url": "{{ base_url }}/api/fornecedores-de-produto/1",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_create_fornecedor_produto",
+      "_type": "request",
+      "name": "Create Fornecedor de Produto",
+      "parentId": "fld_fornecedores_produto",
+      "url": "{{ base_url }}/api/fornecedores-de-produto",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Fornecedor de Produto Teste\",\n  \"cnpj\": \"12.345.678/0001-90\",\n  \"email\": \"produto@example.com\",\n  \"telefone\": \"987654321\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_update_fornecedor_produto",
+      "_type": "request",
+      "name": "Update Fornecedor de Produto",
+      "parentId": "fld_fornecedores_produto",
+      "url": "{{ base_url }}/api/fornecedores-de-produto",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": 1,\n  \"nome\": \"Novo Fornecedor de Produto Teste\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_delete_fornecedor_produto",
+      "_type": "request",
+      "name": "Delete Fornecedor de Produto",
+      "parentId": "fld_fornecedores_produto",
+      "url": "{{ base_url }}/api/fornecedores-de-produto/1",
+      "method": "DELETE",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "fld_fornecedores_servico",
+      "_type": "request_group",
+      "name": "Fornecedores de Servico",
+      "parentId": "wrk_1",
+      "environment": {}
+    },
+    {
+      "_id": "req_get_fornecedores_servico",
+      "_type": "request",
+      "name": "Get All Fornecedores de Servico",
+      "parentId": "fld_fornecedores_servico",
+      "url": "{{ base_url }}/api/fornecedores-de-servico",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_get_fornecedor_servico_by_id",
+      "_type": "request",
+      "name": "Get Fornecedor de Servico by ID",
+      "parentId": "fld_fornecedores_servico",
+      "url": "{{ base_url }}/api/fornecedores-de-servico/1",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_create_fornecedor_servico",
+      "_type": "request",
+      "name": "Create Fornecedor de Servico",
+      "parentId": "fld_fornecedores_servico",
+      "url": "{{ base_url }}/api/fornecedores-de-servico",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Fornecedor de Servico Teste\",\n  \"cnpj\": \"98.765.432/0001-21\",\n  \"email\": \"servico@example.com\",\n  \"telefone\": \"123456789\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_update_fornecedor_servico",
+      "_type": "request",
+      "name": "Update Fornecedor de Servico",
+      "parentId": "fld_fornecedores_servico",
+      "url": "{{ base_url }}/api/fornecedores-de-servico",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": 1,\n  \"nome\": \"Novo Fornecedor de Servico Teste\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_delete_fornecedor_servico",
+      "_type": "request",
+      "name": "Delete Fornecedor de Servico",
+      "parentId": "fld_fornecedores_servico",
+      "url": "{{ base_url }}/api/fornecedores-de-servico/1",
+      "method": "DELETE",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "fld_itens_pedido",
+      "_type": "request_group",
+      "name": "Itens Pedido",
+      "parentId": "wrk_1",
+      "environment": {}
+    },
+    {
+      "_id": "req_get_itens_pedido",
+      "_type": "request",
+      "name": "Get All Itens Pedido",
+      "parentId": "fld_itens_pedido",
+      "url": "{{ base_url }}/api/itens-pedido",
+      "method": "GET"
+    },
+    {
+      "_id": "req_get_item_pedido_by_id",
+      "_type": "request",
+      "name": "Get Item Pedido by ID",
+      "parentId": "fld_itens_pedido",
+      "url": "{{ base_url }}/api/itens-pedido/1",
+      "method": "GET"
+    },
+    {
+      "_id": "req_create_item_pedido",
+      "_type": "request",
+      "name": "Create Item Pedido",
+      "parentId": "fld_itens_pedido",
+      "url": "{{ base_url }}/api/itens-pedido",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"produto\": \"Produto Teste\",\n  \"quantidade\": 10,\n  \"valorUnitario\": 100.00\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_update_item_pedido",
+      "_type": "request",
+      "name": "Update Item Pedido",
+      "parentId": "fld_itens_pedido",
+      "url": "{{ base_url }}/api/itens-pedido/1",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": 1,\n  \"produto\": \"Novo Produto Teste\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_delete_item_pedido",
+      "_type": "request",
+      "name": "Delete Item Pedido",
+      "parentId": "fld_itens_pedido",
+      "url": "{{ base_url }}/api/itens-pedido/1",
+      "method": "DELETE"
+    },
+    {
+      "_id": "fld_solicitacoes_pedido",
+      "_type": "request_group",
+      "name": "Solicitacoes Pedido",
+      "parentId": "wrk_1",
+      "environment": {}
+    },
+    {
+      "_id": "req_get_solicitacoes_pedido",
+      "_type": "request",
+      "name": "Get All Solicitacoes Pedido",
+      "parentId": "fld_solicitacoes_pedido",
+      "url": "{{ base_url }}/api/solicitacoes-pedido",
+      "method": "GET"
+    },
+    {
+      "_id": "req_get_solicitacao_pedido_by_id",
+      "_type": "request",
+      "name": "Get Solicitacao Pedido by ID",
+      "parentId": "fld_solicitacoes_pedido",
+      "url": "{{ base_url }}/api/solicitacoes-pedido/1",
+      "method": "GET"
+    },
+    {
+      "_id": "req_create_solicitacao_pedido",
+      "_type": "request",
+      "name": "Create Solicitacao Pedido",
+      "parentId": "fld_solicitacoes_pedido",
+      "url": "{{ base_url }}/api/solicitacoes-pedido",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"descricao\": \"Solicitacao de Pedido Teste\",\n  \"status\": \"PENDENTE\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_update_solicitacao_pedido",
+      "_type": "request",
+      "name": "Update Solicitacao Pedido",
+      "parentId": "fld_solicitacoes_pedido",
+      "url": "{{ base_url }}/api/solicitacoes-pedido/1",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": 1,\n  \"descricao\": \"Nova Solicitacao de Pedido Teste\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_delete_solicitacao_pedido",
+      "_type": "request",
+      "name": "Delete Solicitacao Pedido",
+      "parentId": "fld_solicitacoes_pedido",
+      "url": "{{ base_url }}/api/solicitacoes-pedido/1",
+      "method": "DELETE"
+    },
+    {
+      "_id": "fld_users",
+      "_type": "request_group",
+      "name": "Users",
+      "parentId": "wrk_1",
+      "environment": {}
+    },
+    {
+      "_id": "req_get_users",
+      "_type": "request",
+      "name": "Get All Users",
+      "parentId": "fld_users",
+      "url": "{{ base_url }}/api/users",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_create_user",
+      "_type": "request",
+      "name": "Create User",
+      "parentId": "fld_users",
+      "url": "{{ base_url }}/api/users",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"Administrador\",\n  \"email\": \"admin@gestor.com\",\n  \"senha\": \"admin123\",\n  \"role\": \"ADMIN\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_get_user_by_id",
+      "_type": "request",
+      "name": "Get User by ID",
+      "parentId": "fld_users",
+      "url": "{{ base_url }}/api/users/1",
+      "method": "GET",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_update_user",
+      "_type": "request",
+      "name": "Update User",
+      "parentId": "fld_users",
+      "url": "{{ base_url }}/api/users",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"id\": 1,\n  \"username\": \"Novo Administrador\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    },
+    {
+      "_id": "req_delete_user",
+      "_type": "request",
+      "name": "Delete User",
+      "parentId": "fld_users",
+      "url": "{{ base_url }}/api/users/1",
+      "method": "DELETE",
+      "authentication": {
+        "type": "bearer",
+        "token": "{% response 'body', 'req_login', '$.token', 'never' %}"
+      }
+    }
+  ]
+}
