@@ -47,10 +47,6 @@ export const useAuthStore = defineStore('auth', () => {
           user.value = tokenValidation.user
           token.value = result.token
 
-          // Persiste a sessão no localStorage para manter login entre sessões
-          localStorage.setItem('auth-token', token.value)
-          localStorage.setItem('user', JSON.stringify(user.value))
-
           return { success: true }
         } else {
           throw new Error('Token recebido é inválido')
@@ -79,9 +75,8 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     token.value = null
 
-    // Remove dados persistidos no navegador
-    localStorage.removeItem('auth-token')
-    localStorage.removeItem('user')
+    // Remove token usando o authService
+    authService.logout()
   }
 
   /**
@@ -93,28 +88,31 @@ export const useAuthStore = defineStore('auth', () => {
    * @returns {boolean} True se encontrou e validou uma sessão ativa
    */
   const checkAuth = async () => {
-    // Recupera dados salvos do localStorage
-    const savedToken = localStorage.getItem('auth-token')
-    const savedUser = localStorage.getItem('user')
+    try {
+      // Verifica se existe token e se é válido usando o authService
+      if (authService.isAuthenticated()) {
+        const savedToken = authService.getToken()
 
-    if (savedToken && savedUser) {
-      // Verifica se o token salvo ainda é válido
-      const tokenValidation = await authService.validateToken(savedToken)
+        // Valida o token para obter dados do usuário
+        const tokenValidation = await authService.validateToken(savedToken)
 
-      if (tokenValidation.success) {
-        // Token válido: restaura a sessão
-        token.value = savedToken
-        user.value = JSON.parse(savedUser)
-        isAuthenticated.value = true
-        return true
-      } else {
-        // Token inválido ou expirado: limpa dados salvos
-        logout()
-        return false
+        if (tokenValidation.success) {
+          // Token válido: restaura a sessão
+          token.value = savedToken
+          user.value = tokenValidation.user
+          isAuthenticated.value = true
+          return true
+        }
       }
-    }
 
-    return false
+      // Token inválido ou não existe: garante que o estado está limpo
+      logout()
+      return false
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error)
+      logout()
+      return false
+    }
   }
 
   /**

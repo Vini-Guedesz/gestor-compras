@@ -4,7 +4,7 @@
  * Gerencia todas as operações relacionadas aos pedidos de compra
  */
 
-import api from './api.js';
+import api from './api.js'
 
 // Mock data para desenvolvimento
 const mockPedidos = [
@@ -98,265 +98,213 @@ const mockPedidos = [
         descricao: 'Canetas esferográficas',
         quantidade: 50,
         unidade: 'un',
-        justificativa: 'Reposição de material de escritório'
+        justificativa: 'Material para escritório'
       }
     ]
   }
-];
+]
 
-let nextId = 5;
-let nextNumero = 5;
+const pedidoService = {
+  async listar() {
+    try {
+      const data = await api.get('/api/solicitacoes-pedido')
+      return data
+    } catch (error) {
+      console.error('Erro ao listar pedidos:', error)
 
-/**
- * Gera um novo número de pedido
- */
-const gerarNumeroPedido = () => {
-  const ano = new Date().getFullYear();
-  return `${ano}-${String(nextNumero++).padStart(3, '0')}`;
-};
+      // Fallback para dados mock se a API falhar
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Usando dados mock - backend indisponível')
+        // Simula delay da API
+        await new Promise(resolve => setTimeout(resolve, 800))
+        return mockPedidos
+      }
 
-/**
- * Lista todos os pedidos
- */
-export const listarPedidos = async () => {
-  try {
-    // Em produção, fazer chamada real para a API
-    // const response = await api.get('/pedidos');
-    // return response.data;
+      throw error
+    }
+  },
 
-    // Mock para desenvolvimento
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve([...mockPedidos]);
-      }, 500);
-    });
-  } catch (error) {
-    console.error('Erro ao listar pedidos:', error);
-    throw error;
-  }
-};
+  async listarPedidos() {
+    return this.listar()
+  },
 
-/**
- * Busca um pedido específico por ID
- */
-export const buscarPedido = async (id) => {
-  try {
-    // Em produção, fazer chamada real para a API
-    // const response = await api.get(`/pedidos/${id}`);
-    // return response.data;
+  async obterPorId(id) {
+    try {
+      const data = await api.get(`/api/solicitacoes-pedido/${id}`)
+      return data
+    } catch (error) {
+      console.error(`Erro ao obter pedido ID ${id}:`, error)
 
-    // Mock para desenvolvimento
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const pedido = mockPedidos.find(p => p.id === parseInt(id));
-        if (pedido) {
-          resolve({ ...pedido });
-        } else {
-          reject(new Error('Pedido não encontrado'));
+      // Fallback para dados mock
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        return mockPedidos.find(p => p.id === parseInt(id))
+      }
+
+      throw error
+    }
+  },
+
+  async buscarPedido(id) {
+    return this.obterPorId(id)
+  },
+
+  async criar(pedido) {
+    try {
+      const data = await api.post('/api/solicitacoes-pedido', pedido)
+      return data
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando criação - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 1200))
+        return {
+          ...pedido,
+          id: Date.now(),
+          status: 'pendente',
+          dataCreated: new Date().toISOString().split('T')[0]
         }
-      }, 300);
-    });
-  } catch (error) {
-    console.error('Erro ao buscar pedido:', error);
-    throw error;
+      }
+
+      throw error
+    }
+  },
+
+  async criarPedido(pedido) {
+    return this.criar(pedido)
+  },
+
+  async atualizar(id, pedido) {
+    try {
+      const data = await api.put(`/api/solicitacoes-pedido/${id}`, pedido)
+      return data
+    } catch (error) {
+      console.error(`Erro ao atualizar pedido ID ${id}:`, error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando atualização - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return { ...pedido, id: parseInt(id) }
+      }
+
+      throw error
+    }
+  },
+
+  async atualizarPedido(id, pedido) {
+    return this.atualizar(id, pedido)
+  },
+
+  async remover(id) {
+    try {
+      await api.delete(`/api/solicitacoes-pedido/${id}`)
+      return true
+    } catch (error) {
+      console.error(`Erro ao remover pedido ID ${id}:`, error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando remoção - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 800))
+        return true
+      }
+
+      throw error
+    }
+  },
+
+  async removerPedido(id) {
+    return this.remover(id)
+  },
+
+  async cancelarPedido(id) {
+    return this.remover(id)
+  },
+
+  async aprovar(id) {
+    try {
+      const data = await api.patch(`/api/solicitacoes-pedido/${id}/aprovar`)
+      return data
+    } catch (error) {
+      console.error(`Erro ao aprovar pedido ID ${id}:`, error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando aprovação - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return { success: true, message: 'Pedido aprovado com sucesso' }
+      }
+
+      throw error
+    }
+  },
+
+  async aprovarPedido(id) {
+    return this.aprovar(id)
+  },
+
+  async rejeitar(id, motivo = '') {
+    try {
+      const data = await api.patch(`/api/solicitacoes-pedido/${id}/rejeitar`, { motivo })
+      return data
+    } catch (error) {
+      console.error(`Erro ao rejeitar pedido ID ${id}:`, error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando rejeição - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return { success: true, message: 'Pedido rejeitado com sucesso' }
+      }
+
+      throw error
+    }
+  },
+
+  async rejeitarPedido(id, motivo) {
+    return this.rejeitar(id, motivo)
   }
-};
+}
 
-/**
- * Cria um novo pedido
- */
-export const criarPedido = async (dadosPedido) => {
-  try {
-    // Em produção, fazer chamada real para a API
-    // const response = await api.post('/pedidos', dadosPedido);
-    // return response.data;
+// Utilitários para manipulação de pedidos
+export const pedidoUtils = {
+  calcularTotalItem(item) {
+    return (item.quantidade || 0) * (item.preco || 0)
+  },
 
-    // Mock para desenvolvimento
-    return new Promise(resolve => {
-      setTimeout(() => {
-        const novoPedido = {
-          id: nextId++,
-          numero: gerarNumeroPedido(),
-          ...dadosPedido,
-          status: 'rascunho',
-          dataPedido: new Date().toISOString().split('T')[0],
-          dataUltimaAtualizacao: new Date().toISOString().split('T')[0],
-          itens: dadosPedido.itens.map((item, index) => ({
-            id: Date.now() + index,
-            ...item
-          }))
-        };
+  calcularTotalPedido(pedido) {
+    if (!pedido.itens || !Array.isArray(pedido.itens)) return 0
+    return pedido.itens.reduce((total, item) => total + this.calcularTotalItem(item), 0)
+  },
 
-        mockPedidos.push(novoPedido);
-        resolve({ ...novoPedido });
-      }, 800);
-    });
-  } catch (error) {
-    console.error('Erro ao criar pedido:', error);
-    throw error;
+  formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor || 0)
+  },
+
+  formatarData(data) {
+    if (!data) return ''
+    return new Date(data).toLocaleDateString('pt-BR')
+  },
+
+  statusConfig: {
+    pendente: { label: 'Pendente', class: 'warning' },
+    aprovado: { label: 'Aprovado', class: 'success' },
+    rejeitado: { label: 'Rejeitado', class: 'danger' },
+    em_andamento: { label: 'Em Andamento', class: 'info' },
+    finalizado: { label: 'Finalizado', class: 'success' },
+    cancelado: { label: 'Cancelado', class: 'secondary' }
+  },
+
+  obterStatusInfo(status) {
+    return this.statusConfig[status] || { label: status, class: 'secondary' }
   }
-};
+}
 
-/**
- * Atualiza um pedido existente
- */
-export const atualizarPedido = async (id, dadosPedido) => {
-  try {
-    // Em produção, fazer chamada real para a API
-    // const response = await api.put(`/pedidos/${id}`, dadosPedido);
-    // return response.data;
-
-    // Mock para desenvolvimento
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const index = mockPedidos.findIndex(p => p.id === parseInt(id));
-
-        if (index !== -1) {
-          const pedidoAtualizado = {
-            ...mockPedidos[index],
-            ...dadosPedido,
-            dataUltimaAtualizacao: new Date().toISOString().split('T')[0]
-          };
-
-          mockPedidos[index] = pedidoAtualizado;
-          resolve({ ...pedidoAtualizado });
-        } else {
-          reject(new Error('Pedido não encontrado'));
-        }
-      }, 600);
-    });
-  } catch (error) {
-    console.error('Erro ao atualizar pedido:', error);
-    throw error;
-  }
-};
-
-/**
- * Cancela um pedido
- */
-export const cancelarPedido = async (id) => {
-  try {
-    // Em produção, fazer chamada real para a API
-    // const response = await api.patch(`/pedidos/${id}/cancelar`);
-    // return response.data;
-
-    // Mock para desenvolvimento
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const index = mockPedidos.findIndex(p => p.id === parseInt(id));
-
-        if (index !== -1) {
-          mockPedidos[index].status = 'cancelado';
-          mockPedidos[index].dataUltimaAtualizacao = new Date().toISOString().split('T')[0];
-          resolve({ ...mockPedidos[index] });
-        } else {
-          reject(new Error('Pedido não encontrado'));
-        }
-      }, 400);
-    });
-  } catch (error) {
-    console.error('Erro ao cancelar pedido:', error);
-    throw error;
-  }
-};
-
-/**
- * Envia um pedido para aprovação
- */
-export const enviarPedido = async (id) => {
-  try {
-    // Em produção, fazer chamada real para a API
-    // const response = await api.patch(`/pedidos/${id}/enviar`);
-    // return response.data;
-
-    // Mock para desenvolvimento
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const index = mockPedidos.findIndex(p => p.id === parseInt(id));
-
-        if (index !== -1 && mockPedidos[index].status === 'rascunho') {
-          mockPedidos[index].status = 'enviado';
-          mockPedidos[index].dataUltimaAtualizacao = new Date().toISOString().split('T')[0];
-          resolve({ ...mockPedidos[index] });
-        } else {
-          reject(new Error('Pedido não encontrado ou não pode ser enviado'));
-        }
-      }, 400);
-    });
-  } catch (error) {
-    console.error('Erro ao enviar pedido:', error);
-    throw error;
-  }
-};
-
-/**
- * Remove um pedido (apenas rascunhos)
- */
-export const removerPedido = async (id) => {
-  try {
-    // Em produção, fazer chamada real para a API
-    // const response = await api.delete(`/pedidos/${id}`);
-    // return response.data;
-
-    // Mock para desenvolvimento
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const index = mockPedidos.findIndex(p => p.id === parseInt(id));
-
-        if (index !== -1) {
-          if (mockPedidos[index].status === 'rascunho') {
-            mockPedidos.splice(index, 1);
-            resolve({ message: 'Pedido removido com sucesso' });
-          } else {
-            reject(new Error('Apenas pedidos em rascunho podem ser removidos'));
-          }
-        } else {
-          reject(new Error('Pedido não encontrado'));
-        }
-      }, 300);
-    });
-  } catch (error) {
-    console.error('Erro ao remover pedido:', error);
-    throw error;
-  }
-};
-
-/**
- * Obtém estatísticas dos pedidos
- */
-export const obterEstatisticas = async () => {
-  try {
-    // Em produção, fazer chamada real para a API
-    // const response = await api.get('/pedidos/estatisticas');
-    // return response.data;
-
-    // Mock para desenvolvimento
-    return new Promise(resolve => {
-      setTimeout(() => {
-        const stats = {
-          total: mockPedidos.length,
-          rascunho: mockPedidos.filter(p => p.status === 'rascunho').length,
-          enviado: mockPedidos.filter(p => p.status === 'enviado').length,
-          aprovado: mockPedidos.filter(p => p.status === 'aprovado').length,
-          em_cotacao: mockPedidos.filter(p => p.status === 'em_cotacao').length,
-          cancelado: mockPedidos.filter(p => p.status === 'cancelado').length
-        };
-        resolve(stats);
-      }, 200);
-    });
-  } catch (error) {
-    console.error('Erro ao obter estatísticas:', error);
-    throw error;
-  }
-};
-
-export default {
-  listarPedidos,
-  buscarPedido,
-  criarPedido,
-  atualizarPedido,
-  cancelarPedido,
-  enviarPedido,
-  removerPedido,
-  obterEstatisticas
-};
+// Export default único e limpo
+export default pedidoService

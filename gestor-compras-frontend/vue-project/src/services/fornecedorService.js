@@ -71,67 +71,89 @@ const fornecedoresServicoMock = [
 export const fornecedorProdutoService = {
   listar: async () => {
     try {
-      // Em produção, descomente a linha abaixo e comente a linha de mock
-      // const response = await api.get('/fornecedores/produtos')
-      // return response.data
-      
-      // Mock para desenvolvimento
-      await new Promise(resolve => setTimeout(resolve, 800))
-      return fornecedoresProdutoMock
+      const response = await api.get('/api/fornecedores-de-produto')
+      return response.data
     } catch (error) {
       console.error('Erro ao listar fornecedores de produto:', error)
+
+      // Fallback para dados mock se a API falhar
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Usando dados mock - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 800))
+        return fornecedoresProdutoMock
+      }
+
       throw error
     }
   },
-  
+
   obterPorId: async (id) => {
     try {
-      // const response = await api.get(`/fornecedores/produtos/${id}`)
-      // return response.data
-      
-      await new Promise(resolve => setTimeout(resolve, 500))
-      return fornecedoresProdutoMock.find(f => f.id === id)
+      const response = await api.get(`/api/fornecedores-de-produto/${id}`)
+      return response.data
     } catch (error) {
       console.error(`Erro ao obter fornecedor de produto ID ${id}:`, error)
+
+      // Fallback para dados mock
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        return fornecedoresProdutoMock.find(f => f.id === id)
+      }
+
       throw error
     }
   },
-  
+
   criar: async (fornecedor) => {
     try {
-      // const response = await api.post('/fornecedores/produtos', fornecedor)
-      // return response.data
-      
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      return { ...fornecedor, id: Date.now() }
+      const response = await api.post('/api/fornecedores-de-produto', fornecedor)
+      return response.data
     } catch (error) {
       console.error('Erro ao criar fornecedor de produto:', error)
+
+      // Fallback para simulação se a API falhar
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando criação - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return { ...fornecedor, id: Date.now() }
+      }
+
       throw error
     }
   },
-  
+
   atualizar: async (id, fornecedor) => {
     try {
-      // const response = await api.put(`/fornecedores/produtos/${id}`, fornecedor)
-      // return response.data
-      
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      return { ...fornecedor, id }
+      const response = await api.put(`/api/fornecedores-de-produto/${id}`, fornecedor)
+      return response.data
     } catch (error) {
       console.error(`Erro ao atualizar fornecedor de produto ID ${id}:`, error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando atualização - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return { ...fornecedor, id }
+      }
+
       throw error
     }
   },
-  
+
   remover: async (id) => {
     try {
-      // await api.delete(`/fornecedores/produtos/${id}`)
-      // return true
-      
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await api.delete(`/api/fornecedores-de-produto/${id}`)
       return true
     } catch (error) {
       console.error(`Erro ao remover fornecedor de produto ID ${id}:`, error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando remoção - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 800))
+        return true
+      }
+
       throw error
     }
   }
@@ -141,65 +163,89 @@ export const fornecedorProdutoService = {
 export const fornecedorServicoService = {
   listar: async () => {
     try {
-      // const response = await api.get('/fornecedores/servicos')
-      // return response.data
-      
-      await new Promise(resolve => setTimeout(resolve, 800))
-      return fornecedoresServicoMock
+      const response = await api.get('/api/fornecedores-de-servico')
+      return response.data
     } catch (error) {
       console.error('Erro ao listar fornecedores de serviço:', error)
+
+      // Fallback para dados mock se a API falhar
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Usando dados mock - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 800))
+        return fornecedoresServicoMock
+      }
+
       throw error
     }
   },
-  
+
   obterPorId: async (id) => {
     try {
-      // const response = await api.get(`/fornecedores/servicos/${id}`)
-      // return response.data
-      
-      await new Promise(resolve => setTimeout(resolve, 500))
-      return fornecedoresServicoMock.find(f => f.id === id)
+      const response = await api.get(`/api/fornecedores-de-servico/${id}`)
+      return response.data
     } catch (error) {
       console.error(`Erro ao obter fornecedor de serviço ID ${id}:`, error)
+
+      // Fallback para dados mock
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        return fornecedoresServicoMock.find(f => f.id === id)
+      }
+
       throw error
     }
   },
-  
+
   criar: async (fornecedor) => {
     try {
-      // const response = await api.post('/fornecedores/servicos', fornecedor)
-      // return response.data
-      
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      return { ...fornecedor, id: Date.now() }
+      const response = await api.post('/api/fornecedores-de-servico', fornecedor)
+      return response.data
     } catch (error) {
       console.error('Erro ao criar fornecedor de serviço:', error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando criação - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return { ...fornecedor, id: Date.now() }
+      }
+
       throw error
     }
   },
-  
+
   atualizar: async (id, fornecedor) => {
     try {
-      // const response = await api.put(`/fornecedores/servicos/${id}`, fornecedor)
-      // return response.data
-      
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      return { ...fornecedor, id }
+      const response = await api.put(`/api/fornecedores-de-servico/${id}`, fornecedor)
+      return response.data
     } catch (error) {
       console.error(`Erro ao atualizar fornecedor de serviço ID ${id}:`, error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando atualização - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return { ...fornecedor, id }
+      }
+
       throw error
     }
   },
-  
+
   remover: async (id) => {
     try {
-      // await api.delete(`/fornecedores/servicos/${id}`)
-      // return true
-      
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await api.delete(`/api/fornecedores-de-servico/${id}`)
       return true
     } catch (error) {
       console.error(`Erro ao remover fornecedor de serviço ID ${id}:`, error)
+
+      // Fallback para simulação
+      if (error.code === 'ECONNREFUSED' || error.response?.status === 500) {
+        console.warn('Simulando remoção - backend indisponível')
+        await new Promise(resolve => setTimeout(resolve, 800))
+        return true
+      }
+
       throw error
     }
   }
@@ -209,23 +255,23 @@ export const fornecedorServicoService = {
 export const fornecedorUtils = {
   mascaraCNPJ: (cnpj) => {
     if (!cnpj) return ''
-    
+
     // Remove caracteres não numéricos
     const numeros = cnpj.replace(/\D/g, '')
-    
+
     // Aplica a máscara de CNPJ: 00.000.000/0000-00
     return numeros.replace(
       /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
       '$1.$2.$3/$4-$5'
     )
   },
-  
+
   mascaraTelefone: (telefone) => {
     if (!telefone) return ''
-    
+
     // Remove caracteres não numéricos
     const numeros = telefone.replace(/\D/g, '')
-    
+
     // Verifica se é celular (11 dígitos) ou fixo (10 dígitos)
     if (numeros.length === 11) {
       // Celular: (00) 00000-0000
@@ -241,7 +287,7 @@ export const fornecedorUtils = {
       )
     }
   },
-  
+
   gerarAvaliacaoAleatoria: () => {
     // Gera uma avaliação aleatória entre 1 e 5, com uma casa decimal
     return (Math.random() * 4 + 1).toFixed(1)

@@ -11,17 +11,38 @@ export const authService = {
     try {
       const response = await api.post('/auth/login', {
         email,
-        senha
+        password: senha // Backend espera 'password', não 'senha'
       })
 
-      return {
-        success: true,
-        token: response.token
+      // Verifica se o backend retornou o token
+      if (response.data && response.data.token) {
+        // Armazena o token no localStorage para futuras requisições
+        localStorage.setItem('authToken', response.data.token)
+
+        return {
+          success: true,
+          token: response.data.token
+        }
+      } else {
+        throw new Error('Resposta inválida do servidor')
       }
     } catch (error) {
+      // Remove token inválido se existir
+      localStorage.removeItem('authToken')
+
+      let errorMessage = 'Erro ao fazer login'
+
+      if (error.response) {
+        // Erro de resposta da API (4xx, 5xx)
+        errorMessage = error.response.data?.message || error.response.data?.error || 'Credenciais inválidas'
+      } else if (error.request) {
+        // Erro de conexão
+        errorMessage = 'Erro de conexão com o servidor'
+      }
+
       return {
         success: false,
-        error: error.message || 'Erro ao fazer login'
+        error: errorMessage
       }
     }
   },
@@ -85,6 +106,46 @@ export const authService = {
         success: false,
         error: 'Erro ao solicitar recuperação de senha'
       }
+    }
+  },
+
+  /**
+   * Realiza o logout do usuário
+   */
+  logout() {
+    localStorage.removeItem('authToken')
+  },
+
+  /**
+   * Obtém o token do localStorage
+   * @returns {string|null} Token JWT ou null se não existir
+   */
+  getToken() {
+    return localStorage.getItem('authToken')
+  },
+
+  /**
+   * Verifica se o usuário está logado
+   * @returns {boolean} True se possui token válido
+   */
+  isAuthenticated() {
+    const token = this.getToken()
+    if (!token) return false
+
+    try {
+      // Verifica se o token não expirou
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const now = Math.floor(Date.now() / 1000)
+
+      if (payload.exp && payload.exp < now) {
+        this.logout() // Remove token expirado
+        return false
+      }
+
+      return true
+    } catch (error) {
+      this.logout() // Remove token inválido
+      return false
     }
   }
 }

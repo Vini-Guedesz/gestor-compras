@@ -19,8 +19,8 @@
 import axios from 'axios'
 
 // Configuração da URL base da API usando variável de ambiente
-// Se VITE_API_BASE_URL não estiver definida, usa localhost:8080
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+// Se VITE_API_BASE_URL não estiver definida, usa localhost:8081 (porta do backend)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
 
 /**
  * Instância configurada do Axios
@@ -123,6 +123,17 @@ const api = {
    */
   async post(endpoint, data) {
     const response = await apiClient.post(endpoint, data)
+    return response.data
+  },
+
+  /**
+   * Requisição PATCH
+   * @param {string} endpoint - Endpoint da API
+   * @param {Object} data - Dados a serem enviados no corpo da requisição
+   * @returns {Promise} Dados da resposta
+   */
+  async patch(endpoint, data) {
+    const response = await apiClient.patch(endpoint, data)
     return response.data
   },
 
