@@ -33,31 +33,15 @@
           </li>
 
           <li class="nav-item">
-            <router-link to="/cotacoes" class="nav-link" :class="{ active: isActive('/cotacoes') }">
+            <router-link to="/perfil" class="nav-link" :class="{ active: isActive('/perfil') }">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                <path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
-              <span>Cotações</span>
+              <span>Perfil</span>
             </router-link>
           </li>
 
-          <li class="nav-item">
-            <router-link to="/notas-fiscais" class="nav-link" :class="{ active: isActive('/notas-fiscais') }">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M8,12V14H16V12H8M8,16V18H13V16H8Z"/>
-              </svg>
-              <span>Notas Fiscais</span>
-            </router-link>
-          </li>
-
-          <li class="nav-item">
-            <router-link to="/relatorios" class="nav-link" :class="{ active: isActive('/relatorios') }">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M17,12H15V7H17V12M13,12H11V9H13V12M9,12H7V11H9V12Z"/>
-              </svg>
-              <span>Relatórios</span>
-            </router-link>
-          </li>
+          
         </ul>
       </div>
     </nav>

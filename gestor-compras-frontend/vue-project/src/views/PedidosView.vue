@@ -185,6 +185,7 @@ import DashboardHeader from '@/components/DashboardHeader.vue'
 import DashboardSidebar from '@/components/DashboardSidebar.vue'
 import PedidoForm from '@/components/PedidoForm.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import pedidoService from '@/services/pedidoService.js'
 
 export default {
     name: 'PedidosView',
@@ -215,34 +216,7 @@ export default {
             message: ''
         })
 
-        // Mock de dados para demonstração
-        const pedidosMock = [
-            {
-                id: 1,
-                numero: 'PED-2024-001',
-                dataPedido: new Date(),
-                requisitante: 'João Silva',
-                unidadeFuncional: 'TI',
-                objetivo: 'reposicao',
-                status: 'rascunho',
-                itens: [
-                    { id: 1, produto: 'Mouse USB', quantidade: 10, valorUnitario: 25.50 },
-                    { id: 2, produto: 'Teclado Mecânico', quantidade: 5, valorUnitario: 150.00 }
-                ]
-            },
-            {
-                id: 2,
-                numero: 'PED-2024-002',
-                dataPedido: new Date(Date.now() - 86400000),
-                requisitante: 'Maria Santos',
-                unidadeFuncional: 'RH',
-                objetivo: 'consumo',
-                status: 'aprovado',
-                itens: [
-                    { id: 3, produto: 'Papel A4', quantidade: 100, valorUnitario: 15.00 }
-                ]
-            }
-        ]
+        // Dados carregados do serviço
 
         // Computeds
         const pedidosFiltrados = computed(() => {
@@ -281,9 +255,8 @@ export default {
         const carregarPedidos = async () => {
             isLoading.value = true
             try {
-                // Simular chamada de API
-                await new Promise(resolve => setTimeout(resolve, 1000))
-                pedidos.value = pedidosMock
+                const dadosPedidos = await pedidoService.listarPedidos()
+                pedidos.value = dadosPedidos
             } catch (error) {
                 console.error('Erro ao carregar pedidos:', error)
                 showNotification('error', 'Erro ao carregar pedidos')
@@ -332,14 +305,20 @@ export default {
 
         const confirmarCancelamento = async () => {
             try {
-                // Simular chamada de API
                 const pedido = pedidoParaCancelar.value
-                pedido.status = 'cancelado'
+                await pedidoService.cancelarPedido(pedido.id)
+
+                // Atualizar o status localmente
+                const index = pedidos.value.findIndex(p => p.id === pedido.id)
+                if (index !== -1) {
+                    pedidos.value[index].status = 'cancelado'
+                }
 
                 showNotification('success', `Pedido #${pedido.numero} cancelado com sucesso`)
                 showConfirmCancel.value = false
                 pedidoParaCancelar.value = null
-            } catch {
+            } catch (error) {
+                console.error('Erro ao cancelar pedido:', error)
                 showNotification('error', 'Erro ao cancelar pedido')
             }
         }
@@ -347,25 +326,24 @@ export default {
         const salvarPedido = async (dadosPedido) => {
             try {
                 if (pedidoEditando.value?.id) {
-                    // Atualizar
+                    // Atualizar pedido existente
+                    const pedidoAtualizado = await pedidoService.atualizarPedido(pedidoEditando.value.id, dadosPedido)
                     const index = pedidos.value.findIndex(p => p.id === pedidoEditando.value.id)
-                    pedidos.value[index] = { ...dadosPedido, id: pedidoEditando.value.id }
+                    if (index !== -1) {
+                        pedidos.value[index] = pedidoAtualizado
+                    }
                     showNotification('success', 'Pedido atualizado com sucesso')
                 } else {
-                    // Criar novo
-                    const novoPedido = {
-                        ...dadosPedido,
-                        id: Date.now(),
-                        numero: `PED-2024-${String(pedidos.value.length + 1).padStart(3, '0')}`,
-                        status: 'enviado'
-                    }
+                    // Criar novo pedido
+                    const novoPedido = await pedidoService.criarPedido(dadosPedido)
                     pedidos.value.push(novoPedido)
-                    showNotification('success', 'Pedido criado e enviado com sucesso')
+                    showNotification('success', 'Pedido criado com sucesso')
                 }
 
                 viewMode.value = 'list'
                 pedidoEditando.value = null
-            } catch {
+            } catch (error) {
+                console.error('Erro ao salvar pedido:', error)
                 showNotification('error', 'Erro ao salvar pedido')
             }
         }
