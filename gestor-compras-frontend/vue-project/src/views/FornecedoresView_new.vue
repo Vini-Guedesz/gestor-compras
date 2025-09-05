@@ -226,8 +226,8 @@
       </div>
 
       <!-- Modal de Fornecedor -->
-      <FornecedorForm 
-        :isVisible="showFornecedorForm" 
+      <FornecedorForm
+        :isVisible="showFornecedorForm"
         :fornecedor="fornecedorEditando"
         @close="fecharFormulario"
         @save="salvarFornecedor"
@@ -253,8 +253,8 @@
           </div>
           <div class="perfil-body">
             <div class="perfil-tabs">
-              <button 
-                v-for="tab in perfilTabs" 
+              <button
+                v-for="tab in perfilTabs"
                 :key="tab.id"
                 :class="['tab-button', { active: perfilTabAtiva === tab.id }]"
                 @click="perfilTabAtiva = tab.id"
@@ -262,7 +262,7 @@
                 {{ tab.label }}
               </button>
             </div>
-            
+
             <div class="perfil-content">
               <!-- Aba Informações -->
               <div v-if="perfilTabAtiva === 'info'" class="perfil-section">
@@ -277,13 +277,13 @@
                       <strong>IM:</strong> {{ fornecedorSelecionado.inscricaoMunicipal }}
                     </p>
                   </div>
-                  
+
                   <div class="info-group">
                     <h4>Contato</h4>
                     <p><strong>E-mail:</strong> {{ fornecedorSelecionado?.contato?.email }}</p>
                     <p><strong>Telefone:</strong> {{ formatarTelefone(fornecedorSelecionado?.contato?.numero) }}</p>
                   </div>
-                  
+
                   <div class="info-group">
                     <h4>Endereço</h4>
                     <p v-if="fornecedorSelecionado?.endereco">
@@ -298,7 +298,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <!-- Aba Histórico -->
               <div v-if="perfilTabAtiva === 'historico'" class="perfil-section">
                 <h4>Histórico de Compras</h4>
@@ -318,7 +318,7 @@
                 </div>
                 <p class="empty-message">Funcionalidade em desenvolvimento...</p>
               </div>
-              
+
               <!-- Aba Avaliações -->
               <div v-if="perfilTabAtiva === 'avaliacoes'" class="perfil-section">
                 <h4>Avaliações de Desempenho</h4>
@@ -326,7 +326,7 @@
                   <div class="rating-display">
                     <span class="rating-number">{{ avaliacaoFornecedor.nota }}</span>
                     <div class="stars">
-                      <span v-for="n in 5" :key="n" 
+                      <span v-for="n in 5" :key="n"
                             :class="['star', { filled: n <= avaliacaoFornecedor.nota }]">⭐</span>
                     </div>
                   </div>
@@ -1301,23 +1301,23 @@ onMounted(() => {
   .main-content {
     padding: 16px;
   }
-  
+
   .welcome-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .search-container {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .search-actions {
     justify-content: stretch;
   }
-  
+
   .filter-select {
     flex: 1;
   }
@@ -1330,27 +1330,27 @@ onMounted(() => {
       "header"
       "main";
   }
-  
+
   .metrics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .perfil-modal {
     width: 100%;
     height: 100vh;
     max-height: 100vh;
     border-radius: 0;
   }
-  
+
   .info-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .avaliacao-resumo {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .historico-stats {
     grid-template-columns: 1fr;
   }

@@ -218,8 +218,8 @@
       </div>
 
       <!-- Modal de Pedido -->
-      <PedidoForm 
-        :isVisible="showPedidoForm" 
+      <PedidoForm
+        :isVisible="showPedidoForm"
         :pedido="pedidoEditando"
         @close="fecharFormulario"
         @save="salvarPedido"
@@ -245,8 +245,8 @@
           </div>
           <div class="detalhes-body">
             <div class="detalhes-tabs">
-              <button 
-                v-for="tab in detalhesTabs" 
+              <button
+                v-for="tab in detalhesTabs"
                 :key="tab.id"
                 :class="['tab-button', { active: detalhesTabAtiva === tab.id }]"
                 @click="detalhesTabAtiva = tab.id"
@@ -254,7 +254,7 @@
                 {{ tab.label }}
               </button>
             </div>
-            
+
             <div class="detalhes-content">
               <!-- Aba Informações -->
               <div v-if="detalhesTabAtiva === 'info'" class="detalhes-section">
@@ -262,28 +262,28 @@
                   <div class="info-group">
                     <h4>Dados do Pedido</h4>
                     <p><strong>Número:</strong> #{{ pedidoSelecionado?.numero || pedidoSelecionado?.id }}</p>
-                    <p><strong>Status:</strong> 
+                    <p><strong>Status:</strong>
                       <span class="status-badge" :class="getStatusClass(pedidoSelecionado?.status)">
                         {{ getStatusLabel(pedidoSelecionado?.status) }}
                       </span>
                     </p>
                     <p><strong>Data de Criação:</strong> {{ formatarDataCompleta(pedidoSelecionado?.dataCriacao || pedidoSelecionado?.dataPedido) }}</p>
                   </div>
-                  
+
                   <div class="info-group">
                     <h4>Requisitante</h4>
                     <p><strong>Nome:</strong> {{ pedidoSelecionado?.requisitante || 'Não informado' }}</p>
                     <p><strong>Unidade:</strong> {{ pedidoSelecionado?.unidadeFuncional || 'Não informado' }}</p>
                     <p><strong>Objetivo:</strong> {{ pedidoSelecionado?.objetivo || 'Não informado' }}</p>
                   </div>
-                  
+
                   <div class="info-group full-width">
                     <h4>Observações</h4>
                     <p>{{ pedidoSelecionado?.observacoes || pedidoSelecionado?.observacao || 'Nenhuma observação informada' }}</p>
                   </div>
                 </div>
               </div>
-              
+
               <!-- Aba Itens -->
               <div v-if="detalhesTabAtiva === 'itens'" class="detalhes-section">
                 <h4>Itens do Pedido</h4>
@@ -302,7 +302,7 @@
                 </div>
                 <p v-else class="empty-message">Nenhum item cadastrado neste pedido.</p>
               </div>
-              
+
               <!-- Aba Histórico -->
               <div v-if="detalhesTabAtiva === 'historico'" class="detalhes-section">
                 <h4>Histórico de Aprovação</h4>
@@ -315,7 +315,7 @@
                       <span class="timeline-user">{{ pedidoSelecionado?.requisitante }}</span>
                     </div>
                   </div>
-                  
+
                   <div class="timeline-item" v-if="pedidoSelecionado?.status !== 'rascunho'">
                     <div class="timeline-marker submitted"></div>
                     <div class="timeline-content">
@@ -323,7 +323,7 @@
                       <p>{{ formatarDataCompleta(pedidoSelecionado?.dataUltimaAtualizacao) }}</p>
                     </div>
                   </div>
-                  
+
                   <div class="timeline-item" v-if="['aprovado', 'rejeitado'].includes(pedidoSelecionado?.status)">
                     <div class="timeline-marker" :class="pedidoSelecionado?.status"></div>
                     <div class="timeline-content">
@@ -365,7 +365,7 @@ export default {
     const searchQuery = ref('')
     const filtroStatus = ref('')
     const filtroPeriodo = ref('')
-    
+
     // Modais
     const showPedidoForm = ref(false)
     const showConfirmModal = ref(false)
@@ -373,7 +373,7 @@ export default {
     const pedidoEditando = ref(null)
     const pedidoParaExcluir = ref(null)
     const pedidoSelecionado = ref(null)
-    
+
     // Detalhes modal
     const detalhesTabAtiva = ref('info')
     const detalhesTabs = ref([
@@ -384,7 +384,7 @@ export default {
 
     // Computed properties para métricas
     const totalPedidos = computed(() => pedidos.value.length)
-    
+
     const novosPedidosMes = computed(() => {
       const agora = new Date()
       const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1)
@@ -393,15 +393,15 @@ export default {
         return dataPedido >= inicioMes
       }).length
     })
-    
-    const pedidosPendentes = computed(() => 
+
+    const pedidosPendentes = computed(() =>
       pedidos.value.filter(p => p.status === 'pendente').length
     )
-    
-    const pedidosAprovados = computed(() => 
+
+    const pedidosAprovados = computed(() =>
       pedidos.value.filter(p => p.status === 'aprovado').length
     )
-    
+
     const percentualPendentes = computed(() => {
       if (totalPedidos.value === 0) return 0
       return Math.round((pedidosPendentes.value / totalPedidos.value) * 100)
@@ -416,11 +416,11 @@ export default {
     // Pedidos filtrados
     const pedidosFiltrados = computed(() => {
       let resultado = [...pedidos.value]
-      
+
       // Filtro por texto
       if (searchQuery.value.trim()) {
         const query = searchQuery.value.toLowerCase()
-        resultado = resultado.filter(pedido => 
+        resultado = resultado.filter(pedido =>
           (pedido.numero?.toString().includes(query)) ||
           (pedido.id?.toString().includes(query)) ||
           (pedido.requisitante?.toLowerCase().includes(query)) ||
@@ -428,17 +428,17 @@ export default {
           (pedido.unidadeFuncional?.toLowerCase().includes(query))
         )
       }
-      
+
       // Filtro por status
       if (filtroStatus.value) {
         resultado = resultado.filter(pedido => pedido.status === filtroStatus.value)
       }
-      
+
       // Filtro por período
       if (filtroPeriodo.value) {
         const agora = new Date()
         let dataLimite
-        
+
         switch (filtroPeriodo.value) {
           case 'hoje':
             dataLimite = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate())
@@ -453,7 +453,7 @@ export default {
             dataLimite = new Date(agora.getFullYear(), Math.floor(agora.getMonth() / 3) * 3, 1)
             break
         }
-        
+
         if (dataLimite) {
           resultado = resultado.filter(pedido => {
             const dataPedido = new Date(pedido.dataCriacao || pedido.dataPedido)
@@ -461,14 +461,14 @@ export default {
           })
         }
       }
-      
+
       // Ordenar por data de criação (mais recentes primeiro)
       resultado.sort((a, b) => {
         const dataA = new Date(a.dataCriacao || a.dataPedido || 0)
         const dataB = new Date(b.dataCriacao || b.dataPedido || 0)
         return dataB - dataA
       })
-      
+
       return resultado
     })
 
@@ -477,7 +477,7 @@ export default {
       try {
         isLoading.value = true
         const response = await pedidoService.listarTodos()
-        
+
         if (response && Array.isArray(response)) {
           pedidos.value = response
         } else if (response && response.data && Array.isArray(response.data)) {
@@ -496,17 +496,17 @@ export default {
               dataCriacao: '2024-01-15T10:30:00',
               observacao: 'Urgente para o fechamento do projeto',
               itens: [
-                { 
-                  id: 1, 
-                  produto: 'Notebook Dell Latitude 5520', 
-                  quantidade: 5, 
+                {
+                  id: 1,
+                  produto: 'Notebook Dell Latitude 5520',
+                  quantidade: 5,
                   justificativa: 'Para equipe de desenvolvimento',
                   observacao: 'Configuração mínima: i5, 16GB RAM, SSD 512GB'
                 },
-                { 
-                  id: 2, 
-                  produto: 'Monitor LG 24" Full HD', 
-                  quantidade: 5, 
+                {
+                  id: 2,
+                  produto: 'Monitor LG 24" Full HD',
+                  quantidade: 5,
                   justificativa: 'Complemento para os notebooks'
                 }
               ]
@@ -522,10 +522,10 @@ export default {
               dataCriacao: '2024-01-10T14:20:00',
               observacao: 'Aprovado pela gerência',
               itens: [
-                { 
-                  id: 1, 
-                  produto: 'Apostilas de treinamento', 
-                  quantidade: 50, 
+                {
+                  id: 1,
+                  produto: 'Apostilas de treinamento',
+                  quantidade: 50,
                   justificativa: 'Curso de segurança do trabalho'
                 }
               ]
@@ -540,10 +540,10 @@ export default {
               objetivo: 'Reposição de ferramentas',
               dataCriacao: '2024-01-20T09:15:00',
               itens: [
-                { 
-                  id: 1, 
-                  produto: 'Chaves de fenda variadas', 
-                  quantidade: 10, 
+                {
+                  id: 1,
+                  produto: 'Chaves de fenda variadas',
+                  quantidade: 10,
                   justificativa: 'Reposição do estoque'
                 }
               ]
@@ -646,7 +646,7 @@ export default {
     const salvarPedido = async (dadosPedido) => {
       try {
         isLoading.value = true
-        
+
         if (pedidoEditando.value?.id) {
           // Edição
           const response = await pedidoService.atualizar(pedidoEditando.value.id, dadosPedido)
@@ -665,9 +665,9 @@ export default {
           }
           pedidos.value.unshift(novoPedido)
         }
-        
+
         fecharFormulario()
-        
+
       } catch (error) {
         console.error('Erro ao salvar pedido:', error)
         alert('Erro ao salvar pedido. Tente novamente.')
@@ -704,12 +704,12 @@ export default {
         isLoading.value = true
         const dadosAtualizacao = { ...pedido, status: 'aprovado' }
         await pedidoService.atualizar(pedido.id, dadosAtualizacao)
-        
+
         const index = pedidos.value.findIndex(p => p.id === pedido.id)
         if (index !== -1) {
           pedidos.value[index].status = 'aprovado'
         }
-        
+
       } catch (error) {
         console.error('Erro ao aprovar pedido:', error)
         alert('Erro ao aprovar pedido. Tente novamente.')
@@ -743,7 +743,7 @@ export default {
       searchQuery,
       filtroStatus,
       filtroPeriodo,
-      
+
       // Modais
       showPedidoForm,
       showConfirmModal,
@@ -751,11 +751,11 @@ export default {
       pedidoEditando,
       pedidoParaExcluir,
       pedidoSelecionado,
-      
+
       // Detalhes
       detalhesTabAtiva,
       detalhesTabs,
-      
+
       // Computed
       totalPedidos,
       novosPedidosMes,
@@ -764,7 +764,7 @@ export default {
       percentualPendentes,
       valorTotalFormatado,
       pedidosFiltrados,
-      
+
       // Métodos
       carregarPedidos,
       formatarData,
@@ -795,7 +795,7 @@ export default {
 /* Layout Principal */
 .dashboard-layout {
   display: grid;
-  grid-template-areas: 
+  grid-template-areas:
     "sidebar header"
     "sidebar main";
   grid-template-columns: 280px 1fr;
@@ -1571,36 +1571,36 @@ export default {
 /* Responsividade */
 @media (max-width: 1024px) {
   .dashboard-layout {
-    grid-template-areas: 
+    grid-template-areas:
       "header"
       "main";
     grid-template-columns: 1fr;
     grid-template-rows: 80px 1fr;
   }
-  
+
   .main-content {
     padding: 1rem;
   }
-  
+
   .welcome-header {
     flex-direction: column;
     align-items: stretch;
     text-align: center;
   }
-  
+
   .search-container {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-input-container {
     min-width: auto;
   }
-  
+
   .search-actions {
     justify-content: stretch;
   }
-  
+
   .filter-select {
     flex: 1;
   }
@@ -1610,32 +1610,32 @@ export default {
   .welcome-content h1 {
     font-size: 2rem;
   }
-  
+
   .metrics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .table-container {
     overflow-x: scroll;
   }
-  
+
   .pedidos-table {
     min-width: 800px;
   }
-  
+
   .detalhes-modal {
     margin: 1rem;
     max-width: none;
   }
-  
+
   .info-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .detalhes-tabs {
     overflow-x: auto;
   }
-  
+
   .tab-button {
     white-space: nowrap;
     min-width: 120px;
@@ -1646,27 +1646,27 @@ export default {
   .main-content {
     padding: 0.5rem;
   }
-  
+
   .welcome-section,
   .search-section,
   .table-section {
     margin-bottom: 1rem;
     padding: 1rem;
   }
-  
+
   .metric-card {
     padding: 1rem;
   }
-  
+
   .metric-value {
     font-size: 2rem;
   }
-  
+
   .action-buttons {
     flex-wrap: wrap;
     gap: 0.25rem;
   }
-  
+
   .action-btn {
     width: 28px;
     height: 28px;

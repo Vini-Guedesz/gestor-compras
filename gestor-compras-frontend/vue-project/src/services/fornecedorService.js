@@ -124,7 +124,7 @@ export const fornecedorProdutoService = {
 
   atualizar: async (id, fornecedor) => {
     try {
-      const response = await api.put(`/api/fornecedores-de-produto/${id}`, fornecedor)
+      const response = await api.put(`/api/fornecedores-de-produto`, fornecedor)
       return response.data
     } catch (error) {
       console.error(`Erro ao atualizar fornecedor de produto ID ${id}:`, error)
@@ -216,7 +216,7 @@ export const fornecedorServicoService = {
 
   atualizar: async (id, fornecedor) => {
     try {
-      const response = await api.put(`/api/fornecedores-de-servico/${id}`, fornecedor)
+      const response = await api.put(`/api/fornecedores-de-servico`, fornecedor)
       return response.data
     } catch (error) {
       console.error(`Erro ao atualizar fornecedor de serviço ID ${id}:`, error)

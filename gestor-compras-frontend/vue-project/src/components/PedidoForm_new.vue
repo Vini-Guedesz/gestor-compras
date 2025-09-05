@@ -20,8 +20,8 @@
 
       <!-- Tabs de Navegação -->
       <div class="modal-tabs">
-        <button 
-          v-for="tab in tabs" 
+        <button
+          v-for="tab in tabs"
           :key="tab.id"
           :class="['tab-button', { active: activeTab === tab.id }]"
           @click="activeTab = tab.id"
@@ -34,7 +34,7 @@
       <!-- Conteúdo do Modal -->
       <div class="modal-body">
         <form @submit.prevent="salvarPedido" class="pedido-form">
-          
+
           <!-- Aba: Dados Gerais -->
           <div v-if="activeTab === 'dados'" class="tab-content">
             <div class="form-section">
@@ -44,7 +44,7 @@
                 </svg>
                 Informações do Pedido
               </h3>
-              
+
               <div class="form-grid">
                 <div class="form-group">
                   <label for="requisitante" class="form-label">
@@ -208,16 +208,16 @@
 
               <!-- Lista de Itens -->
               <div class="itens-container" v-if="formData.itens.length > 0">
-                <div 
-                  v-for="(item, index) in formData.itens" 
-                  :key="index" 
+                <div
+                  v-for="(item, index) in formData.itens"
+                  :key="index"
                   class="item-card"
                 >
                   <div class="item-header">
                     <span class="item-numero">Item #{{ index + 1 }}</span>
-                    <button 
-                      type="button" 
-                      @click="removerItem(index)" 
+                    <button
+                      type="button"
+                      @click="removerItem(index)"
                       class="btn-remove-item"
                       :disabled="formData.itens.length === 1"
                     >
@@ -407,12 +407,12 @@
                     </span>
                   </div>
                 </div>
-                
+
                 <div class="revisao-item full-width">
                   <span class="revisao-label">Descrição:</span>
                   <p class="revisao-description">{{ formData.descricao || 'Não informado' }}</p>
                 </div>
-                
+
                 <div class="revisao-item full-width" v-if="formData.observacoes">
                   <span class="revisao-label">Observações:</span>
                   <p class="revisao-description">{{ formData.observacoes }}</p>
@@ -481,9 +481,9 @@
       <!-- Footer do Modal -->
       <div class="modal-footer">
         <div class="footer-navigation">
-          <button 
-            type="button" 
-            @click="voltarTab" 
+          <button
+            type="button"
+            @click="voltarTab"
             class="btn-secondary"
             :disabled="activeTab === 'dados'"
           >
@@ -492,16 +492,16 @@
             </svg>
             Voltar
           </button>
-          
+
           <div class="footer-actions">
             <button type="button" @click="fecharModal" class="btn-cancel">
               Cancelar
             </button>
-            
-            <button 
+
+            <button
               v-if="activeTab !== 'revisao'"
-              type="button" 
-              @click="proximaTab" 
+              type="button"
+              @click="proximaTab"
               class="btn-next"
               :disabled="!podeProximaTab"
             >
@@ -510,11 +510,11 @@
                 <path fill="currentColor" d="M4 11h12.17l-5.59-5.59L12 4l8 8-8 8-1.42-1.41L16.17 13H4v-2z"/>
               </svg>
             </button>
-            
-            <button 
+
+            <button
               v-if="activeTab === 'revisao'"
               type="button"
-              @click="salvarPedido" 
+              @click="salvarPedido"
               class="btn-save"
               :disabled="!podeSerSalvo || isLoading"
             >
@@ -553,7 +553,7 @@ export default {
     // Estados reativos
     const isLoading = ref(false)
     const activeTab = ref('dados')
-    
+
     // Definição das tabs
     const tabs = ref([
       {
@@ -599,11 +599,11 @@ export default {
 
     // Computed properties
     const totalItens = computed(() => formData.value.itens.length)
-    
+
     const quantidadeTotal = computed(() => {
       return formData.value.itens.reduce((total, item) => total + (item.quantidade || 0), 0)
     })
-    
+
     const valorTotalEstimado = computed(() => {
       const total = formData.value.itens.reduce((soma, item) => {
         const valor = (item.valorEstimado || 0) * (item.quantidade || 0)
@@ -615,27 +615,27 @@ export default {
     // Validações
     const validationErrors = computed(() => {
       const errors = []
-      
+
       if (!formData.value.requisitante?.trim()) {
         errors.push('Requisitante é obrigatório')
       }
-      
+
       if (!formData.value.unidadeFuncional?.trim()) {
         errors.push('Unidade Funcional é obrigatória')
       }
-      
+
       if (!formData.value.objetivo?.trim()) {
         errors.push('Objetivo do Pedido é obrigatório')
       }
-      
+
       if (!formData.value.descricao?.trim()) {
         errors.push('Descrição do Pedido é obrigatória')
       }
-      
+
       if (formData.value.itens.length === 0) {
         errors.push('Pelo menos um item deve ser adicionado')
       }
-      
+
       formData.value.itens.forEach((item, index) => {
         if (!item.produto?.trim()) {
           errors.push(`Item ${index + 1}: Nome do produto é obrigatório`)
@@ -647,22 +647,22 @@ export default {
           errors.push(`Item ${index + 1}: Justificativa é obrigatória`)
         }
       })
-      
+
       return errors
     })
 
     const podeProximaTab = computed(() => {
       switch (activeTab.value) {
         case 'dados':
-          return formData.value.requisitante?.trim() && 
-                 formData.value.unidadeFuncional?.trim() && 
-                 formData.value.objetivo?.trim() && 
+          return formData.value.requisitante?.trim() &&
+                 formData.value.unidadeFuncional?.trim() &&
+                 formData.value.objetivo?.trim() &&
                  formData.value.descricao?.trim()
         case 'itens':
-          return formData.value.itens.length > 0 && 
-                 formData.value.itens.every(item => 
-                   item.produto?.trim() && 
-                   item.quantidade > 0 && 
+          return formData.value.itens.length > 0 &&
+                 formData.value.itens.every(item =>
+                   item.produto?.trim() &&
+                   item.quantidade > 0 &&
                    item.justificativa?.trim()
                  )
         default:
@@ -783,7 +783,7 @@ export default {
 
       try {
         isLoading.value = true
-        
+
         // Preparar dados para envio
         const dadosParaEnvio = {
           ...formData.value,
@@ -793,7 +793,7 @@ export default {
 
         // Emitir evento para o componente pai
         emit('save', dadosParaEnvio)
-        
+
       } catch (error) {
         console.error('Erro ao salvar pedido:', error)
         alert('Erro ao salvar pedido. Tente novamente.')
@@ -825,7 +825,7 @@ export default {
       activeTab,
       tabs,
       formData,
-      
+
       // Computed
       totalItens,
       quantidadeTotal,
@@ -833,7 +833,7 @@ export default {
       validationErrors,
       podeProximaTab,
       podeSerSalvo,
-      
+
       // Métodos
       formatarValor,
       getStatusLabel,
@@ -1613,57 +1613,57 @@ export default {
   .modal-overlay {
     padding: 0.5rem;
   }
-  
+
   .pedido-modal {
     max-height: 95vh;
   }
-  
+
   .modal-header {
     padding: 1.5rem;
   }
-  
+
   .modal-title {
     font-size: 1.5rem;
   }
-  
+
   .modal-tabs {
     overflow-x: auto;
   }
-  
+
   .tab-button {
     min-width: 120px;
     white-space: nowrap;
   }
-  
+
   .modal-body {
     padding: 1.5rem;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .item-form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .resumo-grid,
   .resumo-final-grid,
   .revisao-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .footer-navigation {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
   }
-  
+
   .footer-actions {
     justify-content: space-between;
   }
-  
+
   .section-header {
     flex-direction: column;
     align-items: stretch;
@@ -1674,28 +1674,28 @@ export default {
   .modal-header {
     padding: 1rem;
   }
-  
+
   .modal-body {
     padding: 1rem;
   }
-  
+
   .modal-footer {
     padding: 1rem;
   }
-  
+
   .item-card {
     padding: 1rem;
   }
-  
+
   .revisao-section {
     padding: 1rem;
   }
-  
+
   .footer-actions {
     flex-direction: column;
     gap: 0.75rem;
   }
-  
+
   .btn-secondary,
   .btn-cancel,
   .btn-next,

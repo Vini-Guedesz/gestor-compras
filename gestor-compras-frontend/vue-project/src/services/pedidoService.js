@@ -124,6 +124,10 @@ const pedidoService = {
     }
   },
 
+  async listarTodos() {
+    return this.listar()
+  },
+
   async listarPedidos() {
     return this.listar()
   },
@@ -214,6 +218,10 @@ const pedidoService = {
 
       throw error
     }
+  },
+
+  async excluir(id) {
+    return this.remover(id)
   },
 
   async removerPedido(id) {
