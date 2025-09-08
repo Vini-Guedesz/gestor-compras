@@ -1,11 +1,12 @@
 <template>
-  <div v-if="isVisible" class="modal-overlay">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h2 class="modal-title">{{ fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor' }}</h2>
-        <button @click="$emit('close')" class="close-button">&times;</button>
-      </div>
-      <div class="modal-body">
+  <Transition name="modal" appear>
+    <div v-if="isVisible" class="modal-overlay" @click.self="$emit('close')">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2 class="modal-title">{{ fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor' }}</h2>
+          <button @click="$emit('close')" class="close-button">&times;</button>
+        </div>
+        <div class="modal-body">
         <form @submit.prevent="handleSubmit">
           <!-- Tipo de Fornecedor -->
           <div class="form-section">
@@ -282,10 +283,11 @@
       </div>
     </div>
   </div>
+  </Transition>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 
 const props = defineProps({
   isVisible: {
@@ -299,6 +301,30 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save'])
+
+// Prevenir scroll do body quando modal está aberto
+watch(() => props.isVisible, (newValue) => {
+  if (newValue) {
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleEscKey)
+  } else {
+    document.body.style.overflow = ''
+    document.removeEventListener('keydown', handleEscKey)
+  }
+})
+
+// Função para fechar modal com ESC
+const handleEscKey = (event) => {
+  if (event.key === 'Escape') {
+    emit('close')
+  }
+}
+
+// Limpar no unmount
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  document.removeEventListener('keydown', handleEscKey)
+})
 
 // Estados brasileiros
 const estados = ref([
@@ -578,7 +604,8 @@ const handleSubmit = () => {
   width: 95%;
   max-width: 900px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
@@ -620,8 +647,9 @@ const handleSubmit = () => {
 
 .modal-body {
   padding: 24px;
-  max-height: calc(90vh - 140px);
+  flex: 1;
   overflow-y: auto;
+  min-height: 0; /* Permite que o flex item encolha */
 }
 
 .form-section {
@@ -817,32 +845,30 @@ const handleSubmit = () => {
   }
 }
 
-/* Animações */
-.modal-overlay {
-  animation: fadeIn 0.3s ease-out;
+/* Transições Vue */
+.modal-enter-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.modal-container {
-  animation: slideIn 0.3s ease-out;
+.modal-leave-active {
+  transition: all 0.2s ease-in;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.modal-enter-from {
+  opacity: 0;
 }
 
-@keyframes slideIn {
-  from {
-    transform: translate(-50%, -60%);
-    opacity: 0;
-  }
-  to {
-    transform: translate(-50%, -50%);
-    opacity: 1;
-  }
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-container {
+  transform: translateY(40px) scale(0.95);
+  opacity: 0;
+}
+
+.modal-leave-to .modal-container {
+  transform: translateY(-20px) scale(1.05);
+  opacity: 0;
 }
 </style>

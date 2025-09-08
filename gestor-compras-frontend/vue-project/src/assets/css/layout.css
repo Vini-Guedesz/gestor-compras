@@ -1,0 +1,77 @@
+/* Layout Global - Dashboard */
+.dashboard-layout {
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "sidebar main";
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* Header fixo */
+.dashboard-header {
+  grid-area: header;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: white;
+  border-bottom: 1px solid #e0e6ed;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Sidebar fixo */
+.dashboard-sidebar {
+  grid-area: sidebar;
+  position: sticky;
+  top: 70px;
+  height: calc(100vh - 70px);
+  overflow-y: auto;
+}
+
+/* Conteúdo principal */
+.main-content {
+  grid-area: main;
+  padding: 32px;
+  overflow-x: hidden;
+  background: #f8fafc;
+  min-height: calc(100vh - 70px);
+}
+
+/* Responsividade para tablets */
+@media (max-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 220px 1fr;
+  }
+
+  .main-content {
+    padding: 24px 16px;
+  }
+}
+
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "main";
+  }
+
+  .dashboard-sidebar {
+    display: none;
+  }
+
+  .main-content {
+    padding: 16px;
+    min-height: calc(100vh - 70px);
+  }
+}
+
+/* Ajustes adicionais para telas muito pequenas */
+@media (max-width: 480px) {
+  .main-content {
+    padding: 12px;
+  }
+}

@@ -632,24 +632,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Estilos do layout dashboard */
-.dashboard-layout {
-  display: grid;
-  grid-template-areas:
-    "header header"
-    "sidebar main";
-  grid-template-columns: 260px 1fr;
-  grid-template-rows: 70px 1fr;
-  height: 100vh;
-  background: #f8fafc;
-}
-
-.main-content {
-  grid-area: main;
-  padding: 32px;
-  overflow-y: auto;
-  background: #f8fafc;
-}
+/* Importar layout global */
+@import '../assets/css/layout.css';
 
 /* Welcome Section */
 .welcome-section {
@@ -1298,10 +1282,6 @@ onMounted(() => {
 
 /* Responsividade */
 @media (max-width: 1024px) {
-  .main-content {
-    padding: 16px;
-  }
-
   .welcome-header {
     flex-direction: column;
     align-items: flex-start;
@@ -1324,13 +1304,6 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .dashboard-layout {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "header"
-      "main";
-  }
-
   .metrics-grid {
     grid-template-columns: 1fr;
   }

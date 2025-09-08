@@ -172,9 +172,8 @@ const closeUserMenu = () => {
  * Abre a página de perfil do usuário
  */
 const viewProfile = () => {
-  console.log('Visualizar perfil')
   isUserMenuOpen.value = false
-  // TODO: Implementar página de perfil
+  router.push('/perfil')
 }
 
 /**
@@ -249,6 +248,7 @@ const vClickOutside = {
   height: 100%;
   padding: 0 24px;
   max-width: 100%;
+  min-width: 0; /* Permite que o container encolha */
 }
 
 /* Logo Section */
@@ -269,6 +269,7 @@ const vClickOutside = {
   flex: 1;
   max-width: 500px;
   margin: 0 40px;
+  min-width: 0; /* Permite que o flex item encolha */
 }
 
 .search-container {
@@ -314,6 +315,7 @@ const vClickOutside = {
   display: flex;
   align-items: center;
   gap: 20px;
+  min-width: 0; /* Permite que o flex item encolha */
 }
 
 .notification-icon,
@@ -394,6 +396,10 @@ const vClickOutside = {
   font-weight: 600;
   color: #1F285F;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 .user-role {
@@ -401,6 +407,10 @@ const vClickOutside = {
   font-size: 12px;
   color: #6b7280;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 .dropdown-arrow {
@@ -482,6 +492,17 @@ const vClickOutside = {
 }
 
 /* Responsividade */
+@media (max-width: 1024px) {
+  .search-section {
+    margin: 0 20px;
+    max-width: 400px;
+  }
+
+  .header-content {
+    padding: 0 16px;
+  }
+}
+
 @media (max-width: 768px) {
   .search-section {
     display: none;
@@ -493,6 +514,33 @@ const vClickOutside = {
 
   .header-content {
     padding: 0 16px;
+  }
+
+  .logo-section {
+    min-width: auto;
+  }
+
+  .user-section {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 12px;
+  }
+
+  .user-section {
+    gap: 12px;
+  }
+
+  .notification-icon,
+  .settings-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 </style>

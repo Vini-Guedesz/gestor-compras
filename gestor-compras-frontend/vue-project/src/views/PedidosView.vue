@@ -806,24 +806,12 @@ export default {
 </script>
 
 <style scoped>
-/* Layout Principal */
-.dashboard-layout {
-  display: grid;
-  grid-template-areas:
-    "sidebar header"
-    "sidebar main";
-  grid-template-columns: 280px 1fr;
-  grid-template-rows: 80px 1fr;
-  height: 100vh;
-  background-color: #f8fafc;
-}
+/* Importar layout global */
+@import '../assets/css/layout.css';
 
+/* Layout Principal - Override específico da PedidosView */
 .main-content {
-  grid-area: main;
-  padding: 2rem;
-  overflow-y: auto;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: calc(100vh - 80px);
 }
 
 /* Seção de Boas-vindas */
@@ -1596,18 +1584,6 @@ export default {
 
 /* Responsividade */
 @media (max-width: 1024px) {
-  .dashboard-layout {
-    grid-template-areas:
-      "header"
-      "main";
-    grid-template-columns: 1fr;
-    grid-template-rows: 80px 1fr;
-  }
-
-  .main-content {
-    padding: 1rem;
-  }
-
   .welcome-header {
     flex-direction: column;
     align-items: stretch;
