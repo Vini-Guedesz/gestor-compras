@@ -48,7 +48,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Recupera o token do localStorage
-    const token = localStorage.getItem('auth-token')
+    const token = localStorage.getItem('authToken')
     if (token) {
       // Adiciona o token no header de autorização
       config.headers.Authorization = `Bearer ${token}`
@@ -76,7 +76,7 @@ apiClient.interceptors.response.use(
     // Tratamento específico para erro 401 (Não Autorizado)
     if (error.response?.status === 401) {
       // Token provavelmente expirado: limpa dados de autenticação
-      localStorage.removeItem('auth-token')
+      localStorage.removeItem('authToken')
       localStorage.removeItem('user')
       // Redireciona para login
       window.location.href = '/login'
@@ -90,6 +90,14 @@ apiClient.interceptors.response.use(
       return Promise.reject(new Error(message))
     } else if (error.request) {
       // Erro de rede (servidor não respondeu)
+      const errorMessage = error.message || error.code
+      if (errorMessage.includes('CORS') || errorMessage.includes('Access-Control')) {
+        return Promise.reject(new Error('Erro de CORS: Backend não configurado para aceitar requisições do frontend.'))
+      } else if (error.code === 'ECONNREFUSED') {
+        return Promise.reject(new Error('Erro de conexão: Backend não está rodando ou não está acessível.'))
+      } else if (errorMessage.includes('Network Error')) {
+        return Promise.reject(new Error('Erro de rede: Verifique sua conexão ou se o backend está rodando.'))
+      }
       return Promise.reject(new Error('Erro de conexão com o servidor. Verifique se o backend está rodando.'))
     } else {
       // Outros tipos de erro

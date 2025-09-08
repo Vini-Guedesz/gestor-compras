@@ -285,7 +285,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   isVisible: {
@@ -399,6 +399,38 @@ const isFormValid = computed(() => {
          formData.value.endereco.numero
 })
 
+// Resetar formulário
+const resetForm = () => {
+  formData.value = {
+    tipo: 'produto',
+    razaoSocial: '',
+    cnpj: '',
+    inscricao: '',
+    status: 'ativo',
+    contato: {
+      email: '',
+      numero: ''
+    },
+    endereco: {
+      cep: '',
+      estado: '',
+      cidade: '',
+      bairro: '',
+      rua: '',
+      numero: '',
+      complemento: ''
+    },
+    categorias: [],
+    formasPagamento: [],
+    dadosBancarios: {
+      banco: '',
+      agencia: '',
+      conta: '',
+      pix: ''
+    }
+  }
+}
+
 // Watchers para carregar dados do fornecedor editado
 watch(() => props.fornecedor, (newFornecedor) => {
   if (newFornecedor) {
@@ -480,38 +512,6 @@ const loadFornecedorData = (fornecedor) => {
     agencia: '',
     conta: '',
     pix: ''
-  }
-}
-
-// Resetar formulário
-const resetForm = () => {
-  formData.value = {
-    tipo: 'produto',
-    razaoSocial: '',
-    cnpj: '',
-    inscricao: '',
-    status: 'ativo',
-    contato: {
-      email: '',
-      numero: ''
-    },
-    endereco: {
-      cep: '',
-      estado: '',
-      cidade: '',
-      bairro: '',
-      rua: '',
-      numero: '',
-      complemento: ''
-    },
-    categorias: [],
-    formasPagamento: [],
-    dadosBancarios: {
-      banco: '',
-      agencia: '',
-      conta: '',
-      pix: ''
-    }
   }
 }
 

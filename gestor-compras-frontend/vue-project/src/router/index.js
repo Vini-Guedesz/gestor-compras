@@ -20,10 +20,6 @@ import DashboardView from '../views/DashboardView.vue'
 import FornecedoresView from '../views/FornecedoresView.vue'
 import PedidosView from '../views/PedidosView.vue'
 import PerfilView from '../views/PerfilView.vue'
-import CotacoesView from '../views/CotacoesView.vue'
-import AprovacoesView from '../views/AprovacoesView.vue'
-import FinanceiroView from '../views/FinanceiroView.vue'
-import RelatoriosView from '../views/RelatoriosView.vue'
 
 // Criação do router com histórico de navegação do navegador
 const router = createRouter({
@@ -61,30 +57,6 @@ const router = createRouter({
       path: '/perfil',
       name: 'perfil',
       component: PerfilView,
-      meta: { requiresAuth: true } // Requer autenticação
-    },
-    {
-      path: '/cotacoes',
-      name: 'cotacoes',
-      component: CotacoesView,
-      meta: { requiresAuth: true } // Requer autenticação
-    },
-    {
-      path: '/aprovacoes',
-      name: 'aprovacoes',
-      component: AprovacoesView,
-      meta: { requiresAuth: true } // Requer autenticação
-    },
-    {
-      path: '/financeiro',
-      name: 'financeiro',
-      component: FinanceiroView,
-      meta: { requiresAuth: true } // Requer autenticação
-    },
-    {
-      path: '/relatorios',
-      name: 'relatorios',
-      component: RelatoriosView,
       meta: { requiresAuth: true } // Requer autenticação
     }
   ],
