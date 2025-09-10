@@ -30,6 +30,10 @@ public class FornecedorDeProdutoService {
                 .collect(Collectors.toList());
     }
 
+    public List<FornecedorDeProduto> findAllEntities() {
+        return repository.findAll();
+    }
+
     public FornecedorDeProdutoDTO findById(Integer id) {
         return repository.findById(id)
                 .map(mapper::toDTO)

@@ -5,6 +5,7 @@ import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeProdu
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeProdutoUpdateDTO;
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeProduto;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
 
@@ -15,7 +16,9 @@ public interface FornecedorDeProdutoMapper {
 
     FornecedorDeProdutoDTO toDTO(FornecedorDeProduto fornecedor);
 
+    @Mapping(target = "id", ignore = true)
     FornecedorDeProduto toEntity(FornecedorDeProdutoCreateDTO dto);
 
+    @Mapping(target = "id", ignore = true)
     void updateEntityFromDTO(FornecedorDeProdutoUpdateDTO dto, @MappingTarget FornecedorDeProduto fornecedor);
 }

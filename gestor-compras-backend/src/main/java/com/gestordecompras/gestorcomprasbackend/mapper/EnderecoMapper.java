@@ -5,6 +5,7 @@ import com.gestordecompras.gestorcomprasbackend.dto.endereco.EnderecoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.endereco.EnderecoUpdateDTO;
 import com.gestordecompras.gestorcomprasbackend.model.endereco.Endereco;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
 
@@ -15,7 +16,9 @@ public interface EnderecoMapper {
 
     EnderecoDTO toDTO(Endereco endereco);
 
+    @Mapping(target = "id", ignore = true)
     Endereco toEntity(EnderecoCreateDTO dto);
 
+    @Mapping(target = "id", ignore = true)
     void updateEntityFromDTO(EnderecoUpdateDTO dto, @MappingTarget Endereco endereco);
 }

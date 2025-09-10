@@ -2,6 +2,8 @@ package com.gestordecompras.gestorcomprasbackend.controller;
 
 import com.gestordecompras.gestorcomprasbackend.dto.solicitacaodepedido.SolicitacaoDePedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.service.SolicitacaoDePedidoService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +12,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/solicitacoes-pedido")
+@Tag(name = "Solicitações de Pedido", description = "API para gerenciamento de solicitações de pedido")
+@SecurityRequirement(name = "bearerAuth")
 public class SolicitacaoDePedidoController {
 
     private final SolicitacaoDePedidoService solicitacaoDePedidoService;

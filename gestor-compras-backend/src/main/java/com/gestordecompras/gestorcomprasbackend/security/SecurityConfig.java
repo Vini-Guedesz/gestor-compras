@@ -39,12 +39,13 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/api/itens-pedido/**",
             "/api/solicitacoes-pedido/**",
-            "/error"
+            "/relatorios/**",
+            "/error",
+            "/api/fornecedores-de-produto/**",
+            "/api/fornecedores-de-servico/**"
     };
 
     private static final String[] USER_ENDPOINTS = {
-            "/api/fornecedores-de-produto/**",
-            "/api/fornecedores-de-servico/**"
     };
 
     private static final String[] ADMIN_ENDPOINTS = {

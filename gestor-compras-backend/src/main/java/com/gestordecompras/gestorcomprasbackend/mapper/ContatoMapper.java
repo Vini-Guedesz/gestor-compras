@@ -5,6 +5,7 @@ import com.gestordecompras.gestorcomprasbackend.dto.contato.ContatoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.contato.ContatoUpdateDTO;
 import com.gestordecompras.gestorcomprasbackend.model.contato.Contato;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
 
@@ -15,7 +16,9 @@ public interface ContatoMapper {
 
     ContatoDTO toDTO(Contato contato);
 
+    @Mapping(target = "id", ignore = true)
     Contato toEntity(ContatoCreateDTO dto);
 
+    @Mapping(target = "id", ignore = true)
     void updateEntityFromDTO(ContatoUpdateDTO dto, @MappingTarget Contato contato);
 }
