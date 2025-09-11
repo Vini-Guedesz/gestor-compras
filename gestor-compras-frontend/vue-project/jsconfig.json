@@ -4,5 +4,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "src/views/FornecedoresView_old.vue"]
+  "exclude": ["node_modules", "dist", "src/views/FornecedoresView_old.vue", "src/components/PedidoForm_new.vue"]
 }
