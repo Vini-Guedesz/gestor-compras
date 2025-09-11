@@ -9,19 +9,58 @@ export const authService = {
    */
   async login(email, senha) {
     try {
+      console.log('🔄 Tentando login no backend:', { email, backend: 'http://localhost:8081' })
+
       const response = await api.post('/auth/login', {
         email,
-        senha
+        senha // Backend espera 'senha', não 'password'
       })
 
-      return {
-        success: true,
-        token: response.token
+      console.log('✅ Login realizado com sucesso no backend')
+
+      // Verifica se o backend retornou o token
+      if (response && response.token) {
+        // Armazena o token no localStorage para futuras requisições
+        localStorage.setItem('authToken', response.token)
+
+        return {
+          success: true,
+          token: response.token
+        }
+      } else {
+        throw new Error('Resposta inválida do servidor - token não encontrado')
       }
     } catch (error) {
+      console.log('❌ Erro no login do backend:', error.message)
+
+      // Remove token inválido se existir
+      localStorage.removeItem('authToken')
+
+      let errorMessage = 'Erro ao fazer login'
+
+      if (error.response) {
+        // Erro de resposta da API
+        switch (error.response.status) {
+          case 401:
+          case 403:
+            errorMessage = 'Email ou senha incorretos'
+            break
+          case 500:
+            errorMessage = 'Erro interno do servidor'
+            break
+          default:
+            errorMessage = error.response.data?.message || error.response.data?.error || 'Erro do servidor'
+        }
+      } else if (error.request) {
+        // Erro de conexão
+        errorMessage = 'Erro de conexão com o servidor. Verifique se o backend está rodando.'
+      } else {
+        errorMessage = error.message
+      }
+
       return {
         success: false,
-        error: error.message || 'Erro ao fazer login'
+        error: errorMessage
       }
     }
   },
@@ -85,6 +124,46 @@ export const authService = {
         success: false,
         error: 'Erro ao solicitar recuperação de senha'
       }
+    }
+  },
+
+  /**
+   * Realiza o logout do usuário
+   */
+  logout() {
+    localStorage.removeItem('authToken')
+  },
+
+  /**
+   * Obtém o token do localStorage
+   * @returns {string|null} Token JWT ou null se não existir
+   */
+  getToken() {
+    return localStorage.getItem('authToken')
+  },
+
+  /**
+   * Verifica se o usuário está logado
+   * @returns {boolean} True se possui token válido
+   */
+  isAuthenticated() {
+    const token = this.getToken()
+    if (!token) return false
+
+    try {
+      // Verifica se o token não expirou
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const now = Math.floor(Date.now() / 1000)
+
+      if (payload.exp && payload.exp < now) {
+        this.logout() // Remove token expirado
+        return false
+      }
+
+      return true
+    } catch (error) {
+      this.logout() // Remove token inválido
+      return false
     }
   }
 }

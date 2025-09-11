@@ -32,32 +32,7 @@
             </router-link>
           </li>
 
-          <li class="nav-item">
-            <router-link to="/cotacoes" class="nav-link" :class="{ active: isActive('/cotacoes') }">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-              <span>Cotações</span>
-            </router-link>
-          </li>
 
-          <li class="nav-item">
-            <router-link to="/notas-fiscais" class="nav-link" :class="{ active: isActive('/notas-fiscais') }">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M8,12V14H16V12H8M8,16V18H13V16H8Z"/>
-              </svg>
-              <span>Notas Fiscais</span>
-            </router-link>
-          </li>
-
-          <li class="nav-item">
-            <router-link to="/relatorios" class="nav-link" :class="{ active: isActive('/relatorios') }">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M17,12H15V7H17V12M13,12H11V9H13V12M9,12H7V11H9V12Z"/>
-              </svg>
-              <span>Relatórios</span>
-            </router-link>
-          </li>
         </ul>
       </div>
     </nav>
@@ -97,23 +72,6 @@
         </button>
       </div>
     </div>
-
-    <!-- Seção de Logout -->
-    <div class="logout-section">
-      <button class="logout-button" @click="handleLogout">
-        <svg class="logout-icon" viewBox="0 0 24 24" width="20" height="20">
-          <path fill="currentColor" d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-        </svg>
-        <span>Sair</span>
-      </button>
-    </div>
-
-    <!-- Modal de Logout -->
-    <LogoutModal
-      :show="showLogoutModal"
-      @confirm="confirmLogout"
-      @cancel="cancelLogout"
-    />
   </aside>
 </template>
 
@@ -124,19 +82,13 @@
  * Funcionalidades:
  * - Navegação principal
  * - Filtros de status
- * - Botão de logout
  */
 
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import LogoutModal from './LogoutModal.vue'
+import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
 const activeStatus = ref('pendentes')
-const showLogoutModal = ref(false)
 
 const statusCounts = ref({
   pendentes: 23,
@@ -159,41 +111,6 @@ const setActiveStatus = (status) => {
   // Emitir evento ou chamar função para filtrar dados
   console.log('Status ativo:', status)
 }
-
-/**
- * Realiza o logout do usuário
- */
-const handleLogout = () => {
-  showLogoutModal.value = true
-}
-
-/**
- * Confirma o logout após o usuário aceitar no modal
- */
-const confirmLogout = async () => {
-  try {
-    // Realiza o logout
-    authStore.logout()
-
-    // Fecha o modal
-    showLogoutModal.value = false
-
-    // Redireciona para a página de login
-    router.push('/login')
-
-    console.log('Logout realizado com sucesso')
-  } catch (error) {
-    console.error('Erro ao fazer logout:', error)
-    alert('Erro ao sair da aplicação. Tente novamente.')
-  }
-}
-
-/**
- * Cancela o logout
- */
-const cancelLogout = () => {
-  showLogoutModal.value = false
-}
 </script>
 
 <style scoped>
@@ -208,7 +125,6 @@ const cancelLogout = () => {
   top: 70px;
   z-index: 100;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
-  padding-bottom: 80px; /* Espaço para o botão de logout */
 }
 
 /* Menu Principal */
@@ -370,52 +286,6 @@ const cancelLogout = () => {
 .status-filter.active .status-count {
   background: #1F285F;
   color: white;
-}
-
-/* Seção de Logout */
-.logout-section {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
-  background: white;
-}
-
-.logout-button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 16px;
-  background: none;
-  border: none;
-  border-radius: 8px;
-  color: #dc2626;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.logout-button:hover {
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.logout-button:active {
-  transform: translateY(1px);
-}
-
-.logout-icon {
-  color: currentColor;
-  transition: transform 0.2s ease;
-}
-
-.logout-button:hover .logout-icon {
-  transform: translateX(2px);
 }
 
 /* Scrollbar customizada */

@@ -150,16 +150,12 @@ const navigateTo = (path) => {
 </script>
 
 <style scoped>
-.dashboard-layout {
-  min-height: 100vh;
-  background: #f8f9fa;
-}
+/* Importar layout global */
+@import '../assets/css/layout.css';
 
-.main-content {
-  margin-left: 280px;
-  margin-top: 70px;
-  padding: 32px;
-  min-height: calc(100vh - 70px);
+/* Override específico da DashboardView */
+.dashboard-layout {
+  background: #f8f9fa;
 }
 
 /* Welcome Section */

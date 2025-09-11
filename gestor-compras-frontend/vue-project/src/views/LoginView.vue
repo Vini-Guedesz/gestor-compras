@@ -194,9 +194,12 @@ const handleForgotPassword = async () => {
   border: 2px solid #e0e0e0;
   border-radius: 40px;
   padding: 40px;
-  width: 580px;
-  height: 400px;
+  width: 100%;
+  max-width: 580px;
+  min-height: 400px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Título da página de login */
@@ -225,11 +228,13 @@ const handleForgotPassword = async () => {
 .login-form {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 /* Grupo de campos do formulário */
 .form-group {
   margin-bottom: 20px;
+  width: 100%;
 }
 
 /* Labels dos campos */
@@ -273,7 +278,9 @@ const handleForgotPassword = async () => {
   font-family: Arial, sans-serif;
   cursor: pointer;
   transition: background-color 0.3s;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Estados do botão (hover, active, disabled) */
@@ -293,6 +300,8 @@ const handleForgotPassword = async () => {
 /* Container do link "Esqueceu a senha" */
 .forgot-password {
   text-align: center;
+  margin-top: 10px;
+  width: 100%;
 }
 
 /* Link "Esqueceu a senha" */
@@ -315,5 +324,58 @@ const handleForgotPassword = async () => {
   color: #6c757d;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 10px;
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 400px;
+    padding: 30px 20px;
+    min-height: auto;
+  }
+
+  .login-title {
+    font-size: 20px;
+    margin-bottom: 25px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-input {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .login-button {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .forgot-link {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-box {
+    padding: 20px 15px;
+    border-radius: 20px;
+  }
+
+  .login-title {
+    font-size: 18px;
+  }
+
+  .form-input {
+    padding: 8px;
+    font-size: 14px;
+  }
 }
 </style>

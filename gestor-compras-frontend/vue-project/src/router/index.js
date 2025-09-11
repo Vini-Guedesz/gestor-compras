@@ -18,6 +18,8 @@ import { useAuthStore } from '../stores/auth'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import FornecedoresView from '../views/FornecedoresView.vue'
+import PedidosView from '../views/PedidosView.vue'
+import PerfilView from '../views/PerfilView.vue'
 
 // Criação do router com histórico de navegação do navegador
 const router = createRouter({
@@ -43,6 +45,18 @@ const router = createRouter({
       path: '/fornecedores',
       name: 'fornecedores',
       component: FornecedoresView,
+      meta: { requiresAuth: true } // Requer autenticação
+    },
+    {
+      path: '/pedidos',
+      name: 'pedidos',
+      component: PedidosView,
+      meta: { requiresAuth: true } // Requer autenticação
+    },
+    {
+      path: '/perfil',
+      name: 'perfil',
+      component: PerfilView,
       meta: { requiresAuth: true } // Requer autenticação
     }
   ],

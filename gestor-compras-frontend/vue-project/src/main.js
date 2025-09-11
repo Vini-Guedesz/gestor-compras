@@ -14,6 +14,9 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
+// Importar estilos globais
+import './assets/css/layout.css'
+
 // Cria a instância principal da aplicação Vue
 const app = createApp(App)
 
