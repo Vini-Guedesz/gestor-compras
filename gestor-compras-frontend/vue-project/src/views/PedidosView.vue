@@ -17,12 +17,14 @@
               Gerencie solicitações de pedidos e acompanhe o fluxo de aprovação
             </p>
           </div>
-          <button class="action-button" @click="abrirFormularioNovo">
-            <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
-              <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-            </svg>
-            Novo Pedido
-          </button>
+          <div class="action-buttons">
+            <button class="action-button" @click="abrirFormularioNovo">
+              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+              </svg>
+              Novo Pedido
+            </button>
+          </div>
         </div>
       </div>
 
@@ -843,6 +845,12 @@ export default {
   line-height: 1.5;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .action-button {
   display: flex;
   align-items: center;
@@ -855,6 +863,10 @@ export default {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.action-icon {
+  flex-shrink: 0;
 }
 
 .action-button:hover {
@@ -1185,7 +1197,7 @@ export default {
   width: 120px;
 }
 
-.action-buttons {
+.actions-cell .action-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -1637,7 +1649,7 @@ export default {
     font-size: 2rem;
   }
 
-  .action-buttons {
+  .actions-cell .action-buttons {
     flex-wrap: wrap;
     gap: 0.25rem;
   }

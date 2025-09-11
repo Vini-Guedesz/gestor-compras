@@ -17,12 +17,24 @@
               Gerencie cadastro e avaliação de fornecedores de produtos e serviços
             </p>
           </div>
-          <button class="action-button" @click="abrirFormularioNovo">
-            <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
-              <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-            </svg>
-            Novo Fornecedor
-          </button>
+          <div class="action-buttons">
+            <button class="action-button secondary" @click="gerarRelatorioFornecedores" :disabled="gerandoRelatorio">
+              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="white" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+              <span v-if="gerandoRelatorio" class="loading-content">
+                <span class="loading-spinner"></span>
+                Gerando...
+              </span>
+              <span v-else>Gerar Relatório</span>
+            </button>
+            <button class="action-button" @click="abrirFormularioNovo">
+              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+              </svg>
+              Novo Fornecedor
+            </button>
+          </div>
         </div>
       </div>
 
@@ -368,6 +380,7 @@ import DashboardSidebar from '@/components/DashboardSidebar.vue'
 import FornecedorForm from '@/components/FornecedorForm.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import fornecedorService from '@/services/fornecedorService.js'
+import relatorioService from '@/services/relatorioService.js'
 
 // Estados reativo
 const isLoading = ref(true)
@@ -377,6 +390,7 @@ const showPerfilModal = ref(false)
 const fornecedorEditando = ref(null)
 const fornecedorParaExcluir = ref(null)
 const fornecedorSelecionado = ref(null)
+const gerandoRelatorio = ref(false)
 
 // Dados
 const fornecedoresProduto = ref([])
@@ -625,6 +639,21 @@ const limparFiltros = () => {
   filtroStatus.value = ''
 }
 
+// Função para gerar relatório de fornecedores
+const gerarRelatorioFornecedores = async () => {
+  if (gerandoRelatorio.value) return
+
+  try {
+    gerandoRelatorio.value = true
+    await relatorioService.gerarRelatorioFornecedores()
+  } catch (error) {
+    console.error('Erro ao gerar relatório:', error)
+    alert('Erro ao gerar relatório. Tente novamente.')
+  } finally {
+    gerandoRelatorio.value = false
+  }
+}
+
 // Lifecycle
 onMounted(() => {
   carregarFornecedores()
@@ -669,6 +698,12 @@ onMounted(() => {
   line-height: 1.5;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .action-button {
   display: flex;
   align-items: center;
@@ -683,9 +718,47 @@ onMounted(() => {
   transition: all 0.2s;
 }
 
+.action-button.secondary {
+  background: #6b7280;
+}
+
+.action-button.secondary:hover {
+  background: #4b5563;
+}
+
 .action-button:hover {
   background: #2563eb;
   transform: translateY(-1px);
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-icon {
+  flex-shrink: 0;
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Métricas */
