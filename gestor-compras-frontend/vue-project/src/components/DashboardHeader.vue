@@ -34,6 +34,29 @@
           <span v-if="notificationCount" class="notification-badge">{{ notificationCount }}</span>
         </div>
 
+        <!-- Relatórios -->
+        <div class="reports-dropdown" v-click-outside="closeReportsMenu">
+          <div class="reports-icon" @click="toggleReportsMenu" :class="{ active: isReportsMenuOpen }">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+            </svg>
+          </div>
+
+          <!-- Dropdown Menu de Relatórios -->
+          <div v-if="isReportsMenuOpen" class="reports-dropdown-menu">
+            <div class="dropdown-item" @click="gerarRelatorioFornecedores" :class="{ disabled: gerandoRelatorio }">
+              <svg class="item-icon" viewBox="0 0 24 24" width="16" height="16">
+                <path fill="currentColor" d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A2 2 0 0 0 18.04 7H16c-.8 0-1.54.37-2.01.99L12 10l2.01-2.01C14.54 7.37 15.2 7 16 7h2.04c1.23 0 2.18 1.24 1.92 2.63l2.54 7.63H20v6h-4z"/>
+              </svg>
+              <span v-if="gerandoRelatorio" class="loading-content">
+                <span class="loading-spinner"></span>
+                Gerando...
+              </span>
+              <span v-else>Relatório de Fornecedores</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Configurações -->
         <div class="settings-icon" @click="openSettings">
           <svg viewBox="0 0 24 24" width="24" height="24">
@@ -108,6 +131,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import LogoutModal from './LogoutModal.vue'
+import relatorioService from '../services/relatorioService'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -115,6 +139,10 @@ const searchQuery = ref('')
 const notificationCount = ref(3)
 const isUserMenuOpen = ref(false)
 const showLogoutModal = ref(false)
+
+// Estados para o menu de relatórios
+const isReportsMenuOpen = ref(false)
+const gerandoRelatorio = ref(false)
 
 const userName = computed(() => authStore.user?.name || 'Ana Silva')
 const userRole = computed(() => authStore.user?.role || 'Gestora de Compras')
@@ -174,6 +202,38 @@ const closeUserMenu = () => {
 const viewProfile = () => {
   isUserMenuOpen.value = false
   router.push('/perfil')
+}
+
+/**
+ * Abre/fecha o menu de relatórios
+ */
+const toggleReportsMenu = () => {
+  isReportsMenuOpen.value = !isReportsMenuOpen.value
+}
+
+/**
+ * Fecha o menu de relatórios
+ */
+const closeReportsMenu = () => {
+  isReportsMenuOpen.value = false
+}
+
+/**
+ * Gera relatório de fornecedores
+ */
+const gerarRelatorioFornecedores = async () => {
+  if (gerandoRelatorio.value) return
+
+  try {
+    gerandoRelatorio.value = true
+    await relatorioService.gerarRelatorioFornecedores()
+    isReportsMenuOpen.value = false // Fecha o menu após gerar
+  } catch (error) {
+    console.error('Erro ao gerar relatório:', error)
+    alert('Erro ao gerar relatório. Tente novamente.')
+  } finally {
+    gerandoRelatorio.value = false
+  }
 }
 
 /**
@@ -319,7 +379,8 @@ const vClickOutside = {
 }
 
 .notification-icon,
-.settings-icon {
+.settings-icon,
+.reports-icon {
   position: relative;
   width: 40px;
   height: 40px;
@@ -334,9 +395,78 @@ const vClickOutside = {
 }
 
 .notification-icon:hover,
-.settings-icon:hover {
+.settings-icon:hover,
+.reports-icon:hover,
+.reports-icon.active {
   background: #e5e7eb;
   color: #1F285F;
+}
+
+/* Reports Dropdown */
+.reports-dropdown {
+  position: relative;
+}
+
+.reports-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: white;
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 220px;
+  padding: 8px 0;
+}
+
+.reports-dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  color: #374151;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.reports-dropdown-menu .dropdown-item:hover:not(.disabled) {
+  background: #f8f9fa;
+}
+
+.reports-dropdown-menu .dropdown-item.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reports-dropdown-menu .item-icon {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #1F285F;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .notification-badge {
