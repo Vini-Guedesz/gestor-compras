@@ -24,6 +24,15 @@
           </li>
 
           <li class="nav-item">
+            <router-link to="/cotacoes" class="nav-link" :class="{ active: isActive('/cotacoes') }">
+              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="currentColor" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>Cotações</span>
+            </router-link>
+          </li>
+
+          <li class="nav-item">
             <router-link to="/fornecedores" class="nav-link" :class="{ active: isActive('/fornecedores') }">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="currentColor" d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A2 2 0 0 0 18.04 7H16c-.8 0-1.54.37-2.01.99L12 10l2.01-2.01C14.54 7.37 15.2 7 16 7h2.04c1.23 0 2.18 1.24 1.92 2.63l2.54 7.63H20v6h-4z"/>
