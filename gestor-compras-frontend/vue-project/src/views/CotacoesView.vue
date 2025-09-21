@@ -365,13 +365,15 @@
         </div>
       </div>
 
-      <!-- Loading Spinner -->
+      <!-- Loading Spinner - REMOVIDO -->
+      <!--
       <div v-if="carregando" class="loading-overlay">
         <div class="loading-content">
           <div class="loading-spinner"></div>
           <p>Carregando cotações...</p>
         </div>
       </div>
+      -->
     </main>
 
     <!-- Modal de Nova Cotação -->
@@ -394,7 +396,6 @@ import CotacaoForm from '../components/CotacaoForm.vue'
 const router = useRouter()
 
 // Estado reativo
-const carregando = ref(false)
 const gerandoRelatorio = ref(false)
 const showCotacaoForm = ref(false)
 const cotacaoSelecionada = ref(null)
@@ -596,14 +597,10 @@ const paginasVisiveis = computed(() => {
 // Métodos
 const carregarCotacoes = async () => {
   try {
-    carregando.value = true
-    // Simulação de API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Simulação de API call - loading removido
     cotacoes.value = cotacoesExemplo
   } catch (error) {
     console.error('Erro ao carregar cotações:', error)
-  } finally {
-    carregando.value = false
   }
 }
 
@@ -1435,7 +1432,8 @@ onMounted(() => {
   border-color: #3b82f6;
 }
 
-/* Loading */
+/* Loading - REMOVIDO */
+/*
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -1462,6 +1460,7 @@ onMounted(() => {
   animation: spin 1s linear infinite;
   margin: 0 auto 16px;
 }
+*/
 
 /* Responsividade */
 @media (max-width: 768px) {
