@@ -37,7 +37,9 @@ const pedidoService = {
       console.error(`❌ Erro ao obter pedido ID ${id} no backend:`, error.message)
       throw error
     }
-  },  async buscarPedido(id) {
+  },
+
+  async buscarPedido(id) {
     return this.obterPorId(id)
   },
 

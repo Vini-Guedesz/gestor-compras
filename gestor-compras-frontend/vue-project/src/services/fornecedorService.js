@@ -5,7 +5,7 @@ const fornecedorService = {
   async listarFornecedoresProduto() {
     try {
       console.log('🔄 Buscando fornecedores de produto no backend...')
-      const data = await api.get('/api/fornecedores-produto')
+      const data = await api.get('/api/fornecedores-de-produto')
       console.log('✅ Fornecedores de produto carregados do backend:', data.length, 'fornecedores')
       return data
     } catch (error) {
@@ -17,7 +17,7 @@ const fornecedorService = {
   async obterFornecedorProdutoPorId(id) {
     try {
       console.log(`🔄 Buscando fornecedor de produto ID ${id} no backend...`)
-      const data = await api.get(`/api/fornecedores-produto/${id}`)
+      const data = await api.get(`/api/fornecedores-de-produto/${id}`)
       console.log('✅ Fornecedor de produto carregado do backend')
       return data
     } catch (error) {
@@ -29,7 +29,7 @@ const fornecedorService = {
   async criarFornecedorProduto(fornecedor) {
     try {
       console.log('🔄 Criando fornecedor de produto no backend...')
-      const data = await api.post('/api/fornecedores-produto', fornecedor)
+      const data = await api.post('/api/fornecedores-de-produto', fornecedor)
       console.log('✅ Fornecedor de produto criado no backend:', data.id)
       return data
     } catch (error) {
@@ -41,7 +41,7 @@ const fornecedorService = {
   async atualizarFornecedorProduto(id, fornecedor) {
     try {
       console.log(`🔄 Atualizando fornecedor de produto ID ${id} no backend...`)
-      const data = await api.put(`/api/fornecedores-produto/${id}`, fornecedor)
+      const data = await api.put(`/api/fornecedores-de-produto`, fornecedor)
       console.log('✅ Fornecedor de produto atualizado no backend')
       return data
     } catch (error) {
@@ -53,7 +53,7 @@ const fornecedorService = {
   async removerFornecedorProduto(id) {
     try {
       console.log(`🔄 Removendo fornecedor de produto ID ${id} no backend...`)
-      await api.delete(`/api/fornecedores-produto/${id}`)
+      await api.delete(`/api/fornecedores-de-produto/${id}`)
       console.log('✅ Fornecedor de produto removido do backend')
       return true
     } catch (error) {
@@ -66,7 +66,7 @@ const fornecedorService = {
   async listarFornecedoresServico() {
     try {
       console.log('🔄 Buscando fornecedores de serviço no backend...')
-      const data = await api.get('/api/fornecedores-servico')
+      const data = await api.get('/api/fornecedores-de-servico')
       console.log('✅ Fornecedores de serviço carregados do backend:', data.length, 'fornecedores')
       return data
     } catch (error) {
@@ -78,7 +78,7 @@ const fornecedorService = {
   async obterFornecedorServicoPorId(id) {
     try {
       console.log(`🔄 Buscando fornecedor de serviço ID ${id} no backend...`)
-      const data = await api.get(`/api/fornecedores-servico/${id}`)
+      const data = await api.get(`/api/fornecedores-de-servico/${id}`)
       console.log('✅ Fornecedor de serviço carregado do backend')
       return data
     } catch (error) {
@@ -90,7 +90,7 @@ const fornecedorService = {
   async criarFornecedorServico(fornecedor) {
     try {
       console.log('🔄 Criando fornecedor de serviço no backend...')
-      const data = await api.post('/api/fornecedores-servico', fornecedor)
+      const data = await api.post('/api/fornecedores-de-servico', fornecedor)
       console.log('✅ Fornecedor de serviço criado no backend:', data.id)
       return data
     } catch (error) {
@@ -102,7 +102,7 @@ const fornecedorService = {
   async atualizarFornecedorServico(id, fornecedor) {
     try {
       console.log(`🔄 Atualizando fornecedor de serviço ID ${id} no backend...`)
-      const data = await api.put(`/api/fornecedores-servico/${id}`, fornecedor)
+      const data = await api.put(`/api/fornecedores-de-servico`, fornecedor)
       console.log('✅ Fornecedor de serviço atualizado no backend')
       return data
     } catch (error) {
@@ -114,7 +114,7 @@ const fornecedorService = {
   async removerFornecedorServico(id) {
     try {
       console.log(`🔄 Removendo fornecedor de serviço ID ${id} no backend...`)
-      await api.delete(`/api/fornecedores-servico/${id}`)
+      await api.delete(`/api/fornecedores-de-servico/${id}`)
       console.log('✅ Fornecedor de serviço removido do backend')
       return true
     } catch (error) {

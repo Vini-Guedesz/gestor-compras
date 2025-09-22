@@ -1,6 +1,6 @@
 import api from './api.js'
 
-const BASE_URL = '/cotacoes'
+const BASE_URL = '/api/cotacoes'
 
 export const cotacaoService = {
   // Listar todas as cotações
@@ -17,7 +17,7 @@ export const cotacaoService = {
 
       const url = params.toString() ? `${BASE_URL}?${params}` : BASE_URL
       const response = await api.get(url)
-      return response.data
+      return response
     } catch (error) {
       console.error('Erro ao listar cotações:', error)
       throw error
@@ -28,7 +28,7 @@ export const cotacaoService = {
   async buscarPorId(id) {
     try {
       const response = await api.get(`${BASE_URL}/${id}`)
-      return response.data
+      return response
     } catch (error) {
       console.error('Erro ao buscar cotação:', error)
       throw error
@@ -39,7 +39,7 @@ export const cotacaoService = {
   async criar(cotacao) {
     try {
       const response = await api.post(BASE_URL, cotacao)
-      return response.data
+      return response
     } catch (error) {
       console.error('Erro ao criar cotação:', error)
       throw error
@@ -50,7 +50,7 @@ export const cotacaoService = {
   async atualizar(id, cotacao) {
     try {
       const response = await api.put(`${BASE_URL}/${id}`, cotacao)
-      return response.data
+      return response
     } catch (error) {
       console.error('Erro ao atualizar cotação:', error)
       throw error
@@ -61,7 +61,7 @@ export const cotacaoService = {
   async deletar(id) {
     try {
       const response = await api.delete(`${BASE_URL}/${id}`)
-      return response.data
+      return response
     } catch (error) {
       console.error('Erro ao deletar cotação:', error)
       throw error
