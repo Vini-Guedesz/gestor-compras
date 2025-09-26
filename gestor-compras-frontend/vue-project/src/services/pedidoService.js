@@ -46,11 +46,28 @@ const pedidoService = {
   async criar(pedido) {
     try {
       console.log('🔄 Criando pedido no backend...')
+      console.log('📋 Dados do pedido recebidos:', JSON.stringify(pedido, null, 2))
+
+      // Validar estrutura de dados
+      if (!pedido.itens || pedido.itens.length === 0) {
+        throw new Error('Pedido deve ter pelo menos um item')
+      }
+
+      pedido.itens.forEach((item, index) => {
+        if (!item.nome) {
+          throw new Error(`Item ${index + 1}: Nome é obrigatório`)
+        }
+        if (!item.quantidade || item.quantidade <= 0) {
+          throw new Error(`Item ${index + 1}: Quantidade deve ser maior que zero`)
+        }
+      })
+
+      // Usar API real do backend
       const data = await api.post('/api/solicitacoes-pedido', pedido)
       console.log('✅ Pedido criado no backend:', data.id)
-      return data
+      return { data: data }
     } catch (error) {
-      console.error('❌ Erro ao criar pedido no backend:', error.message)
+      console.error('❌ Erro ao criar pedido:', error.message)
       throw error
     }
   },

@@ -8,356 +8,80 @@
         </div>
         <div class="modal-body">
           <form @submit.prevent="handleSubmit">
-            <!-- Dados Básicos da Cotação -->
+            <!-- Dados da Cotação -->
             <div class="form-section">
-              <h3 class="section-title">Dados Básicos da Cotação</h3>
+              <h3 class="section-title">Dados da Cotação</h3>
               <div class="form-grid">
                 <div class="form-group">
-                  <label class="form-label">Número da Cotação *</label>
+                  <label class="form-label">Fornecedor *</label>
+                  <select v-model="formData.fornecedorId" class="form-select" required>
+                    <option value="">Selecione um fornecedor...</option>
+                    <option
+                      v-for="fornecedor in fornecedoresDisponiveis"
+                      :key="fornecedor.id"
+                      :value="fornecedor.id"
+                    >
+                      {{ fornecedor.razaoSocial }} - {{ fornecedor.cnpj }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Item do Pedido *</label>
+                  <select v-model="formData.itemPedidoId" class="form-select" required>
+                    <option value="">Selecione um item...</option>
+                    <option
+                      v-for="item in itensDisponiveis"
+                      :key="item.id"
+                      :value="item.id"
+                    >
+                      {{ item.nome }} (Qtd: {{ item.quantidade }}) - {{ item.descricao }}
+                    </option>
+                  </select>
+                  <small class="form-hint">TODO: Carregar itens do pedido do backend</small>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Preço (R$) *</label>
                   <input
-                    type="text"
-                    v-model="numeroCotacaoGerado"
+                    type="number"
+                    v-model="formData.preco"
                     class="form-input"
                     required
-                    placeholder="Ex: COT-2025-001"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="0,00"
                   />
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label">Descrição *</label>
-                  <input
-                    type="text"
-                    v-model="formData.descricao"
-                    class="form-input"
-                    required
-                    placeholder="Ex: Toners e cartuchos para impressoras HP"
-                    minlength="10"
-                    maxlength="200"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Data da Solicitação *</label>
+                  <label class="form-label">Prazo de Entrega</label>
                   <input
                     type="date"
-                    v-model="formData.dataSolicitacao"
+                    v-model="formData.prazoEntrega"
                     class="form-input"
-                    required
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Prazo Limite para Resposta *</label>
-                  <input
-                    type="date"
-                    v-model="formData.dataLimiteResposta"
-                    class="form-input"
-                    required
                     :min="dataMinima"
                   />
                 </div>
-
-                <div class="form-group">
-                  <label class="form-label">Status</label>
-                  <select v-model="formData.status" class="form-select">
-                    <option value="enviada">Enviada</option>
-                    <option value="em-analise">Em Análise</option>
-                    <option value="finalizada">Finalizada</option>
-                  </select>
-                </div>
               </div>
             </div>
 
-            <!-- Formas de Pagamento (RF10, RF20, RF21, RF22) -->
+            <!-- Anexos e Documentos -->
             <div class="form-section">
-              <h3 class="section-title">Formas de Pagamento</h3>
-
+              <h3 class="section-title">Anexo PDF</h3>
               <div class="form-group">
-                <label class="form-label">Formas de Pagamento Aceitas *</label>
-                <div class="checkbox-group">
-                  <label v-for="forma in formasPagamentoOptions" :key="forma.value" class="checkbox-option">
-                    <input
-                      type="checkbox"
-                      :value="forma.value"
-                      v-model="formData.formasPagamentoAceitas"
-                    />
-                    <span class="checkbox-label">{{ forma.label }}</span>
-                  </label>
-                </div>
+                <label class="form-label">Anexar Documento PDF</label>
+                <input
+                  ref="fileInput"
+                  type="file"
+                  accept=".pdf"
+                  @change="handleFileSelect"
+                  class="form-input"
+                />
+                <small class="form-hint">Máximo 5MB</small>
               </div>
 
-              <div class="form-grid" style="margin-top: 24px;">
-                <div class="form-group">
-                  <label class="form-label">Condição de Pagamento *</label>
-                  <select v-model="formData.condicoesPagamento.tipo" class="form-select" required>
-                    <option value="">Selecione uma condição</option>
-                    <option value="a_vista">À Vista</option>
-                    <option value="15_dias">15 Dias</option>
-                    <option value="30_dias">30 Dias</option>
-                    <option value="45_dias">45 Dias</option>
-                    <option value="60_dias">60 Dias</option>
-                    <option value="parcelado">Parcelado</option>
-                  </select>
-                </div>
 
-                <div v-if="formData.condicoesPagamento.tipo === 'parcelado'" class="form-group">
-                  <label class="form-label">Número de Parcelas *</label>
-                  <input
-                    type="number"
-                    v-model="formData.condicoesPagamento.numeroParcelas"
-                    class="form-input"
-                    required
-                    min="2"
-                    max="12"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Moeda *</label>
-                  <select v-model="formData.moeda" class="form-select" required>
-                    <option value="BRL">Real (R$)</option>
-                    <option value="USD">Dólar (US$)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group" style="margin-top: 20px;">
-                <label class="form-label">Observações sobre Pagamento</label>
-                <textarea
-                  v-model="formData.observacoesPagamento"
-                  class="form-textarea"
-                  rows="3"
-                  maxlength="500"
-                  placeholder="Condições específicas de pagamento, descontos, etc."
-                  style="margin-top: 8px;"
-                ></textarea>
-              </div>
-            </div>
-
-            <!-- Itens da Cotação -->
-            <div class="form-section">
-              <div class="section-header">
-                <h3 class="section-title">Itens da Cotação</h3>
-                <button type="button" @click="adicionarItem" class="btn-add-item">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
-                    <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
-                  </svg>
-                  Adicionar Item
-                </button>
-              </div>
-
-              <div class="items-container">
-                <div v-for="(item, index) in formData.itens" :key="index" class="item-card">
-                  <div class="item-header">
-                    <span class="item-number">Item {{ index + 1 }}</span>
-                    <button type="button" @click="removerItem(index)" class="btn-remove-item">
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M7,6H17V19H7V6M9,8V17H11V8H9M13,8V17H15V8H13Z"/>
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div class="item-content">
-                    <div class="form-grid">
-                      <div class="form-group">
-                        <label class="form-label">Descrição *</label>
-                        <input
-                          type="text"
-                          v-model="item.descricao"
-                          class="form-input"
-                          required
-                          placeholder="Ex: Cartucho HP 667XL Preto Original"
-                          minlength="5"
-                        />
-                      </div>
-
-                      <div class="form-group">
-                        <label class="form-label">Quantidade *</label>
-                        <input
-                          type="number"
-                          v-model="item.quantidade"
-                          class="form-input"
-                          required
-                          min="1"
-                          step="1"
-                        />
-                      </div>
-
-                      <div class="form-group">
-                        <label class="form-label">Unidade de Medida *</label>
-                        <select v-model="item.unidadeMedida" class="form-select" required>
-                          <option value="UN">Unidade (UN)</option>
-                          <option value="CX">Caixa (CX)</option>
-                          <option value="PCT">Pacote (PCT)</option>
-                          <option value="KG">Quilograma (KG)</option>
-                          <option value="L">Litro (L)</option>
-                          <option value="M">Metro (M)</option>
-                          <option value="M2">Metro² (M²)</option>
-                          <option value="M3">Metro³ (M³)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">Especificações Técnicas</label>
-                      <textarea
-                        v-model="item.especificacoesTecnicas"
-                        class="form-textarea"
-                        rows="2"
-                        maxlength="500"
-                        placeholder="Marca, modelo, características específicas..."
-                      ></textarea>
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">Observações do Item</label>
-                      <textarea
-                        v-model="item.observacoes"
-                        class="form-textarea"
-                        rows="2"
-                        maxlength="200"
-                        placeholder="Observações específicas deste item..."
-                      ></textarea>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="!formData.itens.length" class="empty-items">
-                  <div class="empty-icon">📋</div>
-                  <p>Nenhum item adicionado ainda</p>
-                  <button type="button" @click="adicionarItem" class="btn-add-first">
-                    Adicionar Primeiro Item
-                  </button>
-                </div>
-              </div>
-            </div>            <!-- Fornecedores -->
-            <div class="form-section">
-              <div class="section-header">
-                <h3 class="section-title">Fornecedores Convidados (Mínimo 3)</h3>
-              </div>
-
-              <!-- Seleção de Fornecedores -->
-              <div class="form-group">
-                <label class="form-label">Selecionar Fornecedores *</label>
-                <select
-                  v-model="fornecedorSelecionado"
-                  @change="adicionarFornecedor"
-                  class="form-select"
-                >
-                  <option value="">Escolha um fornecedor...</option>
-                  <option
-                    v-for="fornecedor in fornecedoresDisponiveis.filter(f => !formData.fornecedores.find(invited => invited.id === f.id))"
-                    :key="fornecedor.id"
-                    :value="fornecedor"
-                  >
-                    {{ fornecedor.nomeFantasia }} - {{ fornecedor.cnpj }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Critérios de Seleção -->
-              <div class="form-subsection">
-                <h4 class="subsection-title">Critérios de Seleção</h4>
-                <div class="form-grid">
-                  <div class="form-group">
-                    <label class="form-label">Categorias</label>
-                    <div class="checkbox-group">
-                      <label v-for="categoria in categoriasOptions" :key="categoria" class="checkbox-option">
-                        <input
-                          type="checkbox"
-                          :value="categoria"
-                          v-model="formData.criteriosSelecao.categorias"
-                        />
-                        <span class="checkbox-label">{{ categoria }}</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="fornecedores-lista">
-                <div v-for="fornecedor in formData.fornecedores" :key="fornecedor.id" class="fornecedor-item">
-                  <div class="fornecedor-avatar">
-                    {{ fornecedor.nomeFantasia.charAt(0) }}
-                  </div>
-                  <div class="fornecedor-info">
-                    <div class="fornecedor-nome">{{ fornecedor.nomeFantasia }}</div>
-                    <div class="fornecedor-cnpj">{{ fornecedor.cnpj }}</div>
-                  </div>
-                  <button type="button" @click="removerFornecedor(fornecedor.id)" class="btn-remove-fornecedor">
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                      <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
-                    </svg>
-                  </button>
-                </div>
-
-                <div v-if="formData.fornecedores.length < 3" class="warning-message">
-                  ⚠️ Selecione pelo menos 3 fornecedores para uma cotação válida
-                </div>
-
-                <div v-if="!formData.fornecedores.length" class="empty-fornecedores">
-                  <div class="empty-icon">👥</div>
-                  <p>Selecione fornecedores da lista acima</p>
-                  <button type="button" @click="scrollToFornecedorSelect" class="btn-add-first">
-                    Selecionar Fornecedores
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Anexos e Documentos (RF14) -->
-            <div class="form-section">
-              <h3 class="section-title">Anexos e Documentos</h3>
-
-              <div class="form-group">
-                <label class="form-label">Anexar Documentos</label>
-                <div class="file-upload-area" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent="handleFileDrop">
-                  <input
-                    ref="fileInput"
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
-                    @change="handleFileSelect"
-                    style="display: none"
-                  />
-                  <div class="upload-content">
-                    <svg viewBox="0 0 24 24" width="48" height="48" class="upload-icon">
-                      <path fill="#6b7280" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                    </svg>
-                    <p>Clique ou arraste arquivos aqui</p>
-                    <p class="upload-help">PDF, DOC, XLS, JPG, PNG (máx. 5MB cada)</p>
-                  </div>
-                </div>
-
-                <div v-if="formData.anexos.length" class="anexos-lista">
-                  <div v-for="(anexo, index) in formData.anexos" :key="index" class="anexo-item">
-                    <div class="anexo-info">
-                      <span class="anexo-nome">{{ anexo.name }}</span>
-                      <span class="anexo-tamanho">{{ formatarTamanhoArquivo(anexo.size) }}</span>
-                    </div>
-                    <button type="button" @click="removerAnexo(index)" class="btn-remove-anexo">
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Observações Gerais (RF13) -->
-            <div class="form-section">
-              <h3 class="section-title">Observações Gerais</h3>
-              <div class="form-group">
-                <label class="form-label">Observações Gerais da Cotação</label>
-                <textarea
-                  v-model="formData.observacoesGerais"
-                  class="form-textarea"
-                  rows="4"
-                  maxlength="1000"
-                  placeholder="Informações importantes sobre prazos, condições especiais, critérios de avaliação, etc."
-                ></textarea>
-              </div>
             </div>
           </form>
         </div>
@@ -381,6 +105,9 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import fornecedorService from '../services/fornecedorService.js'
+import itemPedidoService from '../services/itemPedidoService.js'
+import { cotacaoService } from '../services/cotacaoService.js'
 
 // Props
 const props = defineProps({
@@ -400,331 +127,148 @@ const emit = defineEmits(['close', 'save'])
 // Estado reativo
 const carregando = ref(false)
 
-// Dados do formulário
+// Dados do formulário - alinhado com CotacaoCreateDTO/CotacaoUpdateDTO
 const formData = ref({
-  // Dados Básicos
-  numeroCotacao: '', // Gerado automaticamente
-  descricao: '',
-  dataSolicitacao: new Date().toISOString().split('T')[0],
-  dataLimiteResposta: '',
-  status: 'enviada',
-
-  // Fornecedores (mínimo 3)
-  fornecedores: [],
-  criteriosSelecao: {
-    categorias: []
-  },
-
-  // Itens da cotação
-  itens: [],
-
-  // Formas de Pagamento (RF10, RF20, RF21, RF22)
-  formasPagamentoAceitas: [],
-  condicoesPagamento: {
-    tipo: '',
-    numeroParcelas: null
-  },
-  moeda: 'BRL',
-
-    // Observações e Especificações (RF13)
-  observacoesGerais: '',
-  observacoesPagamento: '',
-
-  // Anexos (RF14)
-  anexos: []
+  fornecedorId: null,
+  itemPedidoId: null,
+  preco: null,
+  prazoEntrega: null
 })
 
-// Lista de fornecedores disponíveis (simulação)
-const fornecedoresDisponiveis = ref([
-  {
-    id: 1,
-    nomeFantasia: 'Papelaria Central',
-    cnpj: '12.345.678/0001-90'
-  },
-  {
-    id: 2,
-    nomeFantasia: 'Office Max',
-    cnpj: '98.765.432/0001-10'
-  },
-  {
-    id: 3,
-    nomeFantasia: 'Kalunga',
-    cnpj: '11.222.333/0001-44'
-  },
-  {
-    id: 4,
-    nomeFantasia: 'TechSupply',
-    cnpj: '11.222.333/0001-55'
-  },
-  {
-    id: 5,
-    nomeFantasia: 'PrintCenter',
-    cnpj: '11.222.333/0001-66'
-  }
-])
-
-// Opções para forms
-const formasPagamentoOptions = ref([
-  { value: 'boleto', label: 'Boleto Bancário' },
-  { value: 'ted', label: 'TED' },
-  { value: 'pix', label: 'PIX' },
-  { value: 'cartao_credito', label: 'Cartão de Crédito' },
-  { value: 'cartao_debito', label: 'Cartão de Débito' },
-  { value: 'deposito', label: 'Depósito Bancário' },
-  { value: 'cheque', label: 'Cheque' }
-])
-
-const categoriasOptions = ref([
-  'Material de Escritório',
-  'Equipamentos',
-  'Serviços',
-  'Consumíveis'
-])
+// Lista de fornecedores e itens (será carregada do backend)
+const fornecedoresDisponiveis = ref([])
+const itensDisponiveis = ref([])
 
 // Computadas
-const numeroCotacaoGerado = computed(() => {
-  const ano = new Date().getFullYear()
-  const numero = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')
-  return `COT-${ano}-${numero}`
-})
-
 const dataMinima = computed(() => {
-  const amanha = new Date()
-  amanha.setDate(amanha.getDate() + 2) // Mínimo 2 dias no futuro
-  return amanha.toISOString().split('T')[0]
+  const hoje = new Date()
+  return hoje.toISOString().split('T')[0]
 })
 
 // Métodos
-const adicionarItem = () => {
-  formData.value.itens.push({
-    sequencia: formData.value.itens.length + 1,
-    descricao: '',
-    quantidade: 1,
-    unidadeMedida: 'UN',
-    especificacoesTecnicas: '',
-    observacoes: ''
-  })
-}
-
-const removerItem = (index) => {
-  formData.value.itens.splice(index, 1)
-  // Renumerar sequências
-  formData.value.itens.forEach((item, idx) => {
-    item.sequencia = idx + 1
-  })
-}
-
-// Nova variável para seleção de fornecedor
-const fornecedorSelecionado = ref('')
-
-const adicionarFornecedor = () => {
-  if (fornecedorSelecionado.value && typeof fornecedorSelecionado.value === 'object') {
-    const fornecedor = fornecedorSelecionado.value
-    const jaAdicionado = formData.value.fornecedores.find(f => f.id === fornecedor.id)
-
-    if (!jaAdicionado) {
-      formData.value.fornecedores.push(fornecedor)
-    }
-
-    // Limpar seleção
-    fornecedorSelecionado.value = ''
-  }
-}
-
-const scrollToFornecedorSelect = () => {
-  // Scroll para o campo de seleção de fornecedores
-  const elemento = document.querySelector('select[v-model="fornecedorSelecionado"]')
-  if (elemento) {
-    elemento.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    elemento.focus()
-  }
-}
-
-const removerFornecedor = (fornecedorId) => {
-  const index = formData.value.fornecedores.findIndex(f => f.id === fornecedorId)
-  if (index > -1) {
-    formData.value.fornecedores.splice(index, 1)
-  }
-}
-
 const handleFileSelect = (event) => {
-  const files = Array.from(event.target.files)
-  adicionarAnexos(files)
-}
-
-const handleFileDrop = (event) => {
-  const files = Array.from(event.dataTransfer.files)
-  adicionarAnexos(files)
-}
-
-const adicionarAnexos = (files) => {
-  const arquivosValidos = files.filter(file => {
-    const tiposAceitos = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.png']
-    const extensao = '.' + file.name.split('.').pop().toLowerCase()
-    const tamanhoMaximo = 5 * 1024 * 1024 // 5MB
-
-    if (!tiposAceitos.includes(extensao)) {
-      alert(`Arquivo ${file.name}: tipo não permitido`)
-      return false
+  const file = event.target.files[0]
+  if (file) {
+    if (file.type !== 'application/pdf') {
+      alert('Apenas arquivos PDF são aceitos')
+      return
     }
 
-    if (file.size > tamanhoMaximo) {
-      alert(`Arquivo ${file.name}: tamanho máximo de 5MB excedido`)
-      return false
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+      alert('Arquivo muito grande. Máximo 5MB')
+      return
     }
 
-    return true
-  })
-
-  if (formData.value.anexos.length + arquivosValidos.length > 10) {
-    alert('Máximo de 10 arquivos permitidos')
-    return
+    // Aqui você pode processar o arquivo PDF
+    // TODO: Implementar upload do arquivo para o servidor
   }
-
-  formData.value.anexos.push(...arquivosValidos)
-}
-
-const removerAnexo = (index) => {
-  formData.value.anexos.splice(index, 1)
-}
-
-const formatarTamanhoArquivo = (bytes) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 const handleSubmit = async () => {
   try {
     carregando.value = true
 
-    // Validações dos requisitos RF09-RF14
-    if (!formData.value.descricao.trim() || formData.value.descricao.length < 10) {
-      alert('Descrição é obrigatória e deve ter pelo menos 10 caracteres')
+    // Validações básicas alinhadas com CotacaoCreateDTO
+    if (!fornecedoresDisponiveis.value || fornecedoresDisponiveis.value.length === 0) {
+      alert('Nenhum fornecedor foi carregado. Verifique se há fornecedores cadastrados.')
       return
     }
 
-    if (!formData.value.dataLimiteResposta) {
-      alert('Data limite para resposta é obrigatória')
+    if (!formData.value.fornecedorId) {
+      alert('Fornecedor é obrigatório')
       return
     }
 
-    // Validar data limite (mínimo 2 dias no futuro)
-    const dataLimite = new Date(formData.value.dataLimiteResposta)
-    const dataMinima = new Date()
-    dataMinima.setDate(dataMinima.getDate() + 2)
-
-    if (dataLimite < dataMinima) {
-      alert('A data limite deve ser pelo menos 2 dias após hoje')
+    if (!itensDisponiveis.value || itensDisponiveis.value.length === 0) {
+      alert('Nenhum item de pedido foi carregado. Verifique se há itens de pedido cadastrados.')
       return
     }
 
-    if (!formData.value.itens.length) {
-      alert('Adicione pelo menos um item à cotação')
+    if (!formData.value.itemPedidoId) {
+      alert('Item do pedido é obrigatório')
       return
     }
 
-    // Validar itens
-    for (const item of formData.value.itens) {
-      if (!item.descricao.trim() || item.descricao.length < 5) {
-        alert(`Item ${item.sequencia}: Descrição deve ter pelo menos 5 caracteres`)
-        return
-      }
-      if (!item.quantidade || item.quantidade < 1) {
-        alert(`Item ${item.sequencia}: Quantidade deve ser maior que zero`)
-        return
-      }
-    }
-
-    if (formData.value.fornecedores.length < 3) {
-      alert('Selecione pelo menos 3 fornecedores para uma cotação válida')
+    if (!formData.value.preco || formData.value.preco <= 0) {
+      alert('Preço é obrigatório e deve ser maior que zero')
       return
     }
 
-    if (!formData.value.formasPagamentoAceitas.length) {
-      alert('Selecione pelo menos uma forma de pagamento')
-      return
-    }
+    // Salvar cotação no backend
+    console.log('Dados da cotação para salvar:', formData.value)
 
-    if (!formData.value.condicoesPagamento.tipo) {
-      alert('Selecione uma condição de pagamento')
-      return
-    }
+    const response = await cotacaoService.criar(formData.value)
+    console.log('✅ Cotação criada com sucesso:', response)
 
-    if (formData.value.condicoesPagamento.tipo === 'parcelado' && !formData.value.condicoesPagamento.numeroParcelas) {
-      alert('Número de parcelas é obrigatório para pagamento parcelado')
-      return
-    }
-
-    // Simular salvamento
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    console.log('Salvando cotação:', formData.value)
-
-    emit('save', formData.value)
+    alert('Cotação criada com sucesso!')
+    emit('save', response)
     emit('close')
 
   } catch (error) {
     console.error('Erro ao salvar cotação:', error)
-    alert('Erro ao salvar cotação')
+    alert('Erro ao salvar cotação. Tente novamente.')
   } finally {
     carregando.value = false
   }
 }
 
-const preencherFormulario = () => {
-  if (props.cotacao) {
-    formData.value = { ...props.cotacao }
-  } else {
-    // Resetar formulário para nova cotação
-    formData.value = {
-      // Dados Básicos
-      numeroCotacao: '',
-      descricao: '',
-      dataSolicitacao: new Date().toISOString().split('T')[0],
-      dataLimiteResposta: '',
-      status: 'enviada',
+// Carregar dados ao montar o componente
+onMounted(async () => {
+  try {
+    console.log('🔄 Carregando dados para o formulário de cotação...')
 
-      // Fornecedores
-      fornecedores: [],
-      criteriosSelecao: {
-        categorias: []
-      },
+    // Carregar fornecedores - função correta é listarTodos()
+    try {
+      const fornecedores = await fornecedorService.listarTodos()
+      fornecedoresDisponiveis.value = fornecedores || []
+      console.log('✅ Fornecedores carregados:', fornecedores?.length || 0)
 
-      // Itens
-      itens: [],
-
-      // Formas de Pagamento
-      formasPagamentoAceitas: [],
-      condicoesPagamento: {
-        tipo: '',
-        numeroParcelas: null
-      },
-      moeda: 'BRL',
-
-      // Observações e Especificações
-      observacoesGerais: '',
-      observacoesPagamento: '',
-
-      // Anexos
-      anexos: []
+      if (!fornecedores || fornecedores.length === 0) {
+        console.warn('⚠️ Nenhum fornecedor encontrado no sistema')
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar fornecedores:', error)
+      fornecedoresDisponiveis.value = []
+      alert('Erro ao carregar fornecedores. Verifique se o backend está funcionando.')
     }
-  }
-}
 
-// Watchers
-watch(() => props.isVisible, (newVal) => {
-  if (newVal) {
-    preencherFormulario()
+    // Carregar itens de pedido disponíveis
+    try {
+      const itens = await itemPedidoService.listarTodos()
+      itensDisponiveis.value = itens || []
+      console.log('✅ Itens de pedido carregados:', itens?.length || 0)
+
+      if (!itens || itens.length === 0) {
+        console.warn('⚠️ Nenhum item de pedido encontrado no sistema')
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar itens de pedido:', error)
+      itensDisponiveis.value = []
+      alert('Erro ao carregar itens de pedido. Verifique se o backend está funcionando.')
+    }
+
+    // Se editando, preencher formulário
+    if (props.cotacao) {
+      formData.value.fornecedorId = props.cotacao.fornecedorId
+      formData.value.itemPedidoId = props.cotacao.itemPedidoId
+      formData.value.preco = props.cotacao.preco
+      formData.value.prazoEntrega = props.cotacao.prazoEntrega
+    }
+  } catch (error) {
+    console.error('❌ Erro geral ao carregar dados:', error)
   }
 })
 
-// Lifecycle
-onMounted(() => {
-  if (props.isVisible) {
-    preencherFormulario()
+// Watchers para resetar form quando modal abre/fecha
+watch(() => props.isVisible, (newVal) => {
+  if (newVal && !props.cotacao) {
+    // Resetar formulário quando abrindo modal para nova cotação
+    formData.value = {
+      fornecedorId: null,
+      itemPedidoId: null,
+      preco: null,
+      prazoEntrega: null
+    }
   }
 })
 </script>
@@ -1284,5 +828,12 @@ onMounted(() => {
     width: 100%;
     justify-content: space-between;
   }
+}
+
+.form-hint {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  font-style: italic;
 }
 </style>

@@ -45,42 +45,6 @@
         </ul>
       </div>
     </nav>
-
-    <!-- Seção Status -->
-    <div class="status-section">
-      <h3 class="status-title">Status</h3>
-      <div class="status-filters">
-        <button
-          class="status-filter"
-          :class="{ active: activeStatus === 'pendentes' }"
-          @click="setActiveStatus('pendentes')"
-        >
-          <div class="status-indicator pending"></div>
-          <span>Pendentes</span>
-          <span class="status-count">{{ statusCounts.pendentes }}</span>
-        </button>
-
-        <button
-          class="status-filter"
-          :class="{ active: activeStatus === 'aprovados' }"
-          @click="setActiveStatus('aprovados')"
-        >
-          <div class="status-indicator approved"></div>
-          <span>Aprovados</span>
-          <span class="status-count">{{ statusCounts.aprovados }}</span>
-        </button>
-
-        <button
-          class="status-filter"
-          :class="{ active: activeStatus === 'urgentes' }"
-          @click="setActiveStatus('urgentes')"
-        >
-          <div class="status-indicator urgent"></div>
-          <span>Urgentes</span>
-          <span class="status-count">{{ statusCounts.urgentes }}</span>
-        </button>
-      </div>
-    </div>
   </aside>
 </template>
 
@@ -93,32 +57,15 @@
  * - Filtros de status
  */
 
-import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const activeStatus = ref('pendentes')
-
-const statusCounts = ref({
-  pendentes: 23,
-  aprovados: 156,
-  urgentes: 8
-})
 
 /**
  * Verifica se uma rota está ativa
  */
 const isActive = (path) => {
   return route.path === path || route.path.startsWith(path + '/')
-}
-
-/**
- * Define o status ativo para filtros
- */
-const setActiveStatus = (status) => {
-  activeStatus.value = status
-  // Emitir evento ou chamar função para filtrar dados
-  console.log('Status ativo:', status)
 }
 </script>
 
@@ -206,96 +153,7 @@ const setActiveStatus = (status) => {
   color: inherit;
 }
 
-/* Seção Status */
-.status-section {
-  padding: 24px;
-  border-top: 1px solid #e0e6ed;
-  background: #f8f9fa;
-  margin-top: auto;
-}
 
-.status-title {
-  font-family: Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1F285F;
-  margin-bottom: 16px;
-  margin-top: 0;
-}
-
-.status-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.status-filter {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: white;
-  border: 1px solid #e0e6ed;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  color: #374151;
-  width: 100%;
-  text-align: left;
-}
-
-.status-filter:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-}
-
-.status-filter.active {
-  background: #EAF0FC;
-  border-color: #1F285F;
-  color: #1F285F;
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.status-indicator.pending {
-  background: #f59e0b;
-}
-
-.status-indicator.approved {
-  background: #10b981;
-}
-
-.status-indicator.urgent {
-  background: #ef4444;
-}
-
-.status-filter.active .status-indicator {
-  background: #1F285F;
-}
-
-.status-count {
-  margin-left: auto;
-  background: #e5e7eb;
-  color: #374151;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  min-width: 24px;
-  text-align: center;
-}
-
-.status-filter.active .status-count {
-  background: #1F285F;
-  color: white;
-}
 
 /* Scrollbar customizada */
 .sidebar::-webkit-scrollbar {

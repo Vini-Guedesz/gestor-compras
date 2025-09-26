@@ -135,8 +135,10 @@
                   class="form-textarea"
                   placeholder="Descreva detalhadamente o que está sendo solicitado..."
                   rows="4"
+                  maxlength="255"
                   required
                 ></textarea>
+                <small class="form-hint">{{ (formData.descricao || '').length }}/255 caracteres</small>
               </div>
 
               <div class="form-group observacoes-group">
@@ -149,7 +151,9 @@
                   class="form-textarea"
                   placeholder="Justificativa para o pedido, observações importantes, prazos especiais..."
                   rows="3"
+                  maxlength="255"
                 ></textarea>
+                <small class="form-hint">{{ (formData.observacoes || '').length }}/255 caracteres</small>
               </div>
             </div>
 
@@ -194,8 +198,10 @@
                         v-model="item.produto"
                         class="form-input"
                         placeholder="Ex: Notebook Dell Latitude 5520"
+                        maxlength="255"
                         required
                       />
+                      <small class="form-hint">{{ (item.produto || '').length }}/255 caracteres</small>
                     </div>
 
                     <div class="form-group">
@@ -256,7 +262,9 @@
                       class="form-textarea"
                       placeholder="Descrição detalhada das especificações técnicas, modelo, marca preferencial..."
                       rows="2"
+                      maxlength="255"
                     ></textarea>
+                    <small class="form-hint">{{ (item.especificacao || '').length }}/255 caracteres</small>
                   </div>
 
                   <div class="form-group justificativa-group">
@@ -268,8 +276,10 @@
                       class="form-textarea"
                       placeholder="Justifique a necessidade deste item..."
                       rows="2"
+                      maxlength="255"
                       required
                     ></textarea>
+                    <small class="form-hint">{{ (item.justificativa || '').length }}/255 caracteres</small>
                   </div>
 
                   <div class="form-group observacoes-item-group">
@@ -281,7 +291,9 @@
                       class="form-textarea"
                       placeholder="Observações adicionais sobre este item..."
                       rows="2"
+                      maxlength="255"
                     ></textarea>
+                    <small class="form-hint">{{ (item.observacao || '').length }}/255 caracteres</small>
                   </div>
                 </div>
 
@@ -390,25 +402,9 @@ export default {
       return formatarValor(total)
     })
 
-    // Validações
+    // Validações - focadas nos campos que vão para o backend
     const validationErrors = computed(() => {
       const errors = []
-
-      if (!formData.value.requisitante?.trim()) {
-        errors.push('Requisitante é obrigatório')
-      }
-
-      if (!formData.value.unidadeFuncional?.trim()) {
-        errors.push('Unidade Funcional é obrigatória')
-      }
-
-      if (!formData.value.objetivo?.trim()) {
-        errors.push('Objetivo do Pedido é obrigatório')
-      }
-
-      if (!formData.value.descricao?.trim()) {
-        errors.push('Descrição do Pedido é obrigatória')
-      }
 
       if (formData.value.itens.length === 0) {
         errors.push('Pelo menos um item deve ser adicionado')
@@ -420,9 +416,6 @@ export default {
         }
         if (!item.quantidade || item.quantidade <= 0) {
           errors.push(`Item ${index + 1}: Quantidade deve ser maior que zero`)
-        }
-        if (!item.justificativa?.trim()) {
-          errors.push(`Item ${index + 1}: Justificativa é obrigatória`)
         }
       })
 
@@ -474,7 +467,7 @@ export default {
         status: 'rascunho',
         descricao: '',
         observacoes: '',
-        itens: []
+        itens: [novoItemTemplate()]
       }
     }
 
@@ -519,23 +512,43 @@ export default {
     }
 
     const salvarPedido = async () => {
+      console.log('FormData atual:', formData.value)
+      console.log('Pode ser salvo:', podeSerSalvo.value)
+      console.log('Erros de validação:', validationErrors.value)
+
       if (!podeSerSalvo.value) {
-        alert('Por favor, corrija os erros antes de salvar.')
+        console.log('Erros de validação:', validationErrors.value)
+        alert('Por favor, corrija os erros antes de salvar: ' + validationErrors.value.join(', '))
         return
       }
 
       try {
         isLoading.value = true
 
-        const dadosParaEnvio = {
-          ...formData.value,
-          itens: formData.value.itens.map(item => ({
-            ...item,
-            quantidade: parseInt(item.quantidade) || 1,
-            valorEstimado: parseFloat(item.valorEstimado) || 0
-          }))
+        // Mapear status do frontend para o backend
+        const statusMap = {
+          'rascunho': 'PENDENTE',
+          'pendente': 'PENDENTE',
+          'aprovado': 'APROVADO',
+          'rejeitado': 'CANCELADO',
+          'cancelado': 'CANCELADO'
         }
 
+        const dadosParaEnvio = {
+          id: props.pedido?.id || null, // ID apenas se for edição
+          itens: formData.value.itens.map(item => ({
+            id: null, // Sempre null para novos itens
+            nome: item.produto || '',
+            quantidade: parseInt(item.quantidade) || 1,
+            descricao: item.especificacao || '',
+            observacao: item.observacao || ''
+          })),
+          status: statusMap[formData.value.status] || 'PENDENTE',
+          observacao: formData.value.observacoes || '',
+          dataCriacao: null // Será definido automaticamente pelo backend
+        }
+
+        console.log('Dados para envio:', dadosParaEnvio)
         emit('save', dadosParaEnvio)
       } catch (error) {
         console.error('Erro ao salvar pedido:', error)
@@ -893,6 +906,13 @@ export default {
 .btn-save:disabled {
   background: #9ca3af;
   cursor: not-allowed;
+}
+
+.form-hint {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  font-style: italic;
 }
 
 /* Transitions */

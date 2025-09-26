@@ -19,8 +19,8 @@
 import axios from 'axios'
 
 // Configuração da URL base da API usando variável de ambiente
-// Se VITE_API_BASE_URL não estiver definida, usa localhost:8081 (porta do backend)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+// Se VITE_API_BASE_URL não estiver definida, usa localhost:8080 (porta do backend)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 /**
  * Instância configurada do Axios

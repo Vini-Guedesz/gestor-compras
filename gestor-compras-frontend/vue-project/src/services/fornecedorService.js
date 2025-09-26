@@ -41,7 +41,9 @@ const fornecedorService = {
   async atualizarFornecedorProduto(id, fornecedor) {
     try {
       console.log(`🔄 Atualizando fornecedor de produto ID ${id} no backend...`)
-      const data = await api.put(`/api/fornecedores-de-produto`, fornecedor)
+      // O ID deve ser incluído no body da requisição conforme o DTO
+      const fornecedorComId = { ...fornecedor, id: id }
+      const data = await api.put(`/api/fornecedores-de-produto`, fornecedorComId)
       console.log('✅ Fornecedor de produto atualizado no backend')
       return data
     } catch (error) {
@@ -102,7 +104,7 @@ const fornecedorService = {
   async atualizarFornecedorServico(id, fornecedor) {
     try {
       console.log(`🔄 Atualizando fornecedor de serviço ID ${id} no backend...`)
-      const data = await api.put(`/api/fornecedores-de-servico`, fornecedor)
+      const data = await api.put(`/api/fornecedores-de-servico/${id}`, fornecedor)
       console.log('✅ Fornecedor de serviço atualizado no backend')
       return data
     } catch (error) {

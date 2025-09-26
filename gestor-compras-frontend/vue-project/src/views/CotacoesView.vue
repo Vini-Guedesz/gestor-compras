@@ -392,6 +392,7 @@ import { useRouter } from 'vue-router'
 import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
 import CotacaoForm from '../components/CotacaoForm.vue'
+import { cotacaoService } from '../services/cotacaoService.js'
 
 const router = useRouter()
 
@@ -416,85 +417,6 @@ const ordenacao = ref({
   campo: 'id',
   direcao: 'desc'
 })
-
-// Dados de exemplo
-const cotacoesExemplo = [
-  {
-    id: 1,
-    descricao: 'Material de Escritório Q4 2024',
-    centroCusto: { nome: 'Administrativo' },
-    numeroFornecedores: 5,
-    fornecedores: [
-      { id: 1, nomeFantasia: 'Papelaria Central' },
-      { id: 2, nomeFantasia: 'Office Max' },
-      { id: 3, nomeFantasia: 'Kalunga' },
-      { id: 4, nomeFantasia: 'Oficina dos Papéis' },
-      { id: 5, nomeFantasia: 'Material Total' }
-    ],
-    status: 'em-analise',
-    dataLimite: '2024-12-30',
-    dataCriacao: '2024-12-15'
-  },
-  {
-    id: 2,
-    descricao: 'Toners e Cartuchos HP',
-    centroCusto: { nome: 'TI - Suprimentos' },
-    numeroFornecedores: 3,
-    fornecedores: [
-      { id: 6, nomeFantasia: 'TechSupply' },
-      { id: 7, nomeFantasia: 'PrintCenter' },
-      { id: 8, nomeFantasia: 'InfoSupply' }
-    ],
-    status: 'em-analise',
-    dataLimite: '2024-12-28',
-    dataCriacao: '2024-12-10'
-  },
-  {
-    id: 3,
-    descricao: 'Equipamentos de Segurança',
-    centroCusto: { nome: 'Segurança do Trabalho' },
-    numeroFornecedores: 2,
-    fornecedores: [
-      { id: 9, nomeFantasia: 'Safety Pro' },
-      { id: 10, nomeFantasia: 'SecureMax' }
-    ],
-    status: 'finalizada',
-    dataLimite: '2024-12-20',
-    dataCriacao: '2024-12-05'
-  },
-  {
-    id: 4,
-    descricao: 'Produtos de Limpeza',
-    centroCusto: { nome: 'Manutenção' },
-    numeroFornecedores: 4,
-    fornecedores: [
-      { id: 11, nomeFantasia: 'Clean Master' },
-      { id: 12, nomeFantasia: 'Hygiene Plus' },
-      { id: 13, nomeFantasia: 'LimpTech' },
-      { id: 14, nomeFantasia: 'CleanCorp' }
-    ],
-    status: 'vencida',
-    dataLimite: '2024-12-15',
-    dataCriacao: '2024-11-30'
-  },
-  {
-    id: 5,
-    descricao: 'Mobiliário Corporativo',
-    centroCusto: { nome: 'Facilities' },
-    numeroFornecedores: 6,
-    fornecedores: [
-      { id: 15, nomeFantasia: 'Móveis & Cia' },
-      { id: 16, nomeFantasia: 'Office Furniture' },
-      { id: 17, nomeFantasia: 'Design Corp' },
-      { id: 18, nomeFantasia: 'Modern Office' },
-      { id: 19, nomeFantasia: 'Workspace Pro' },
-      { id: 20, nomeFantasia: 'Elite Móveis' }
-    ],
-    status: 'enviada',
-    dataLimite: '2025-01-15',
-    dataCriacao: '2024-12-18'
-  }
-]
 
 // Dados calculados
 const novasCotacoesMes = ref(8)
@@ -597,10 +519,24 @@ const paginasVisiveis = computed(() => {
 // Métodos
 const carregarCotacoes = async () => {
   try {
-    // Simulação de API call - loading removido
-    cotacoes.value = cotacoesExemplo
+    console.log('🔄 Carregando cotações...')
+    // Chamar o serviço real de cotações
+    const response = await cotacaoService.listar()
+
+    // Verificar estrutura da resposta
+    if (response && Array.isArray(response)) {
+      cotacoes.value = response
+    } else if (response && response.data && Array.isArray(response.data)) {
+      cotacoes.value = response.data
+    } else {
+      console.warn('⚠️ Resposta do backend não é um array válido:', response)
+      cotacoes.value = []
+    }
+
+    console.log('✅ Cotações carregadas:', cotacoes.value.length)
   } catch (error) {
-    console.error('Erro ao carregar cotações:', error)
+    console.error('❌ Erro ao carregar cotações:', error)
+    cotacoes.value = []
   }
 }
 

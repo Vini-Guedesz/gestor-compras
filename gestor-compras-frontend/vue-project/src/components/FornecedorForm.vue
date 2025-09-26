@@ -45,7 +45,9 @@
                   class="form-input"
                   required
                   placeholder="Nome da empresa"
+                  maxlength="255"
                 />
+                <small class="form-hint">{{ formData.razaoSocial.length }}/255 caracteres</small>
               </div>
 
               <div class="form-group">
@@ -56,8 +58,10 @@
                   class="form-input"
                   required
                   placeholder="00.000.000/0000-00"
+                  maxlength="18"
                   @input="formatCNPJ"
                 />
+                <small class="form-hint">Formato: 00.000.000/0000-00</small>
               </div>
 
               <div class="form-group">
@@ -69,16 +73,12 @@
                   v-model="formData.inscricao"
                   class="form-input"
                   :placeholder="formData.tipo === 'produto' ? 'Inscrição Estadual' : 'Inscrição Municipal'"
+                  maxlength="255"
                 />
+                <small class="form-hint">{{ formData.inscricao.length }}/255 caracteres</small>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Status</label>
-                <select v-model="formData.status" class="form-select">
-                  <option value="ativo">Ativo</option>
-                  <option value="inativo">Inativo</option>
-                </select>
-              </div>
+
             </div>
           </div>
 
@@ -94,7 +94,9 @@
                   class="form-input"
                   required
                   placeholder="contato@empresa.com"
+                  maxlength="100"
                 />
+                <small class="form-hint">{{ formData.contato.email.length }}/100 caracteres</small>
               </div>
 
               <div class="form-group">
@@ -105,8 +107,10 @@
                   class="form-input"
                   required
                   placeholder="(00) 00000-0000"
+                  maxlength="15"
                   @input="formatTelefone"
                 />
+                <small class="form-hint">Formato: (00) 00000-0000</small>
               </div>
             </div>
           </div>
@@ -123,9 +127,11 @@
                   class="form-input"
                   required
                   placeholder="00000-000"
+                  maxlength="9"
                   @input="formatCEP"
                   @blur="buscarCEP"
                 />
+                <small class="form-hint">Formato: 00000-000</small>
               </div>
 
               <div class="form-group">
@@ -146,7 +152,9 @@
                   class="form-input"
                   required
                   placeholder="Nome da cidade"
+                  maxlength="50"
                 />
+                <small class="form-hint">{{ formData.endereco.cidade.length }}/50 caracteres</small>
               </div>
 
               <div class="form-group">
@@ -157,7 +165,9 @@
                   class="form-input"
                   required
                   placeholder="Nome do bairro"
+                  maxlength="60"
                 />
+                <small class="form-hint">{{ formData.endereco.bairro.length }}/60 caracteres</small>
               </div>
 
               <div class="form-group">
@@ -168,7 +178,9 @@
                   class="form-input"
                   required
                   placeholder="Nome da rua"
+                  maxlength="100"
                 />
+                <small class="form-hint">{{ formData.endereco.rua.length }}/100 caracteres</small>
               </div>
 
               <div class="form-group">
@@ -179,7 +191,9 @@
                   class="form-input"
                   required
                   placeholder="123"
+                  maxlength="10"
                 />
+                <small class="form-hint">{{ formData.endereco.numero.length }}/10 caracteres</small>
               </div>
 
               <div class="form-group full-width">
@@ -189,90 +203,14 @@
                   v-model="formData.endereco.complemento"
                   class="form-input"
                   placeholder="Apto, sala, andar..."
+                  maxlength="100"
                 />
+                <small class="form-hint">{{ formData.endereco.complemento.length }}/100 caracteres</small>
               </div>
             </div>
           </div>
 
-          <!-- Categorias e Formas de Pagamento -->
-          <div class="form-section">
-            <h3 class="section-title">Informações Comerciais</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Categorias</label>
-                <div class="checkbox-group">
-                  <label v-for="categoria in categorias" :key="categoria" class="checkbox-option">
-                    <input
-                      type="checkbox"
-                      v-model="formData.categorias"
-                      :value="categoria"
-                    />
-                    <span class="checkbox-label">{{ categoria }}</span>
-                  </label>
-                </div>
-              </div>
 
-              <div class="form-group">
-                <label class="form-label">Formas de Pagamento</label>
-                <div class="checkbox-group">
-                  <label v-for="forma in formasPagamento" :key="forma" class="checkbox-option">
-                    <input
-                      type="checkbox"
-                      v-model="formData.formasPagamento"
-                      :value="forma"
-                    />
-                    <span class="checkbox-label">{{ forma }}</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Dados Bancários -->
-          <div class="form-section">
-            <h3 class="section-title">Dados Bancários</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Banco</label>
-                <input
-                  type="text"
-                  v-model="formData.dadosBancarios.banco"
-                  class="form-input"
-                  placeholder="Nome do banco"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Agência</label>
-                <input
-                  type="text"
-                  v-model="formData.dadosBancarios.agencia"
-                  class="form-input"
-                  placeholder="0000"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Conta</label>
-                <input
-                  type="text"
-                  v-model="formData.dadosBancarios.conta"
-                  class="form-input"
-                  placeholder="00000-0"
-                />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">PIX</label>
-                <input
-                  type="text"
-                  v-model="formData.dadosBancarios.pix"
-                  class="form-input"
-                  placeholder="Chave PIX"
-                />
-              </div>
-            </div>
-          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -357,29 +295,7 @@ const estados = ref([
   { sigla: 'TO', nome: 'Tocantins' }
 ])
 
-// Categorias disponíveis
-const categorias = ref([
-  'Equipamentos de TI',
-  'Material de Escritório',
-  'Móveis e Decoração',
-  'Serviços de Limpeza',
-  'Manutenção Predial',
-  'Consultoria',
-  'Treinamento',
-  'Segurança',
-  'Alimentação',
-  'Transporte'
-])
 
-// Formas de pagamento
-const formasPagamento = ref([
-  'À vista',
-  'Boleto 30 dias',
-  'Boleto 60 dias',
-  'PIX',
-  'Transferência bancária',
-  'Cartão de crédito'
-])
 
 // Dados do formulário
 const formData = ref({
@@ -387,7 +303,6 @@ const formData = ref({
   razaoSocial: '',
   cnpj: '',
   inscricao: '',
-  status: 'ativo',
   contato: {
     email: '',
     numero: ''
@@ -400,29 +315,37 @@ const formData = ref({
     rua: '',
     numero: '',
     complemento: ''
-  },
-  categorias: [],
-  formasPagamento: [],
-  dadosBancarios: {
-    banco: '',
-    agencia: '',
-    conta: '',
-    pix: ''
   }
 })
 
 // Validação do formulário
 const isFormValid = computed(() => {
+  const cnpjSemFormatacao = formData.value.cnpj.replace(/\D/g, '')
+  const telefoneSemFormatacao = formData.value.contato.numero.replace(/\D/g, '')
+  const cepSemFormatacao = formData.value.endereco.cep.replace(/\D/g, '')
+
   return formData.value.razaoSocial &&
-         formData.value.cnpj &&
+         formData.value.razaoSocial.length <= 255 &&
+         cnpjSemFormatacao &&
+         cnpjSemFormatacao.length === 14 &&
          formData.value.contato.email &&
-         formData.value.contato.numero &&
-         formData.value.endereco.cep &&
+         formData.value.contato.email.length <= 100 &&
+         telefoneSemFormatacao &&
+         telefoneSemFormatacao.length >= 10 &&
+         telefoneSemFormatacao.length <= 11 &&
+         cepSemFormatacao &&
+         cepSemFormatacao.length === 8 &&
          formData.value.endereco.estado &&
          formData.value.endereco.cidade &&
+         formData.value.endereco.cidade.length <= 50 &&
          formData.value.endereco.bairro &&
+         formData.value.endereco.bairro.length <= 60 &&
          formData.value.endereco.rua &&
-         formData.value.endereco.numero
+         formData.value.endereco.rua.length <= 100 &&
+         formData.value.endereco.numero &&
+         formData.value.endereco.numero.length <= 10 &&
+         (!formData.value.inscricao || formData.value.inscricao.length <= 255) &&
+         (!formData.value.endereco.complemento || formData.value.endereco.complemento.length <= 100)
 })
 
 // Resetar formulário
@@ -432,7 +355,6 @@ const resetForm = () => {
     razaoSocial: '',
     cnpj: '',
     inscricao: '',
-    status: 'ativo',
     contato: {
       email: '',
       numero: ''
@@ -445,14 +367,6 @@ const resetForm = () => {
       rua: '',
       numero: '',
       complemento: ''
-    },
-    categorias: [],
-    formasPagamento: [],
-    dadosBancarios: {
-      banco: '',
-      agencia: '',
-      conta: '',
-      pix: ''
     }
   }
 }
@@ -469,6 +383,8 @@ watch(() => props.fornecedor, (newFornecedor) => {
 // Funções de formatação
 const formatCNPJ = (event) => {
   let value = event.target.value.replace(/\D/g, '')
+  // Limita a 14 dígitos
+  value = value.substring(0, 14)
   value = value.replace(/^(\d{2})(\d)/, '$1.$2')
   value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
   value = value.replace(/\.(\d{3})(\d)/, '.$1/$2')
@@ -478,6 +394,8 @@ const formatCNPJ = (event) => {
 
 const formatTelefone = (event) => {
   let value = event.target.value.replace(/\D/g, '')
+  // Limita a 11 dígitos (DDD + 9 dígitos)
+  value = value.substring(0, 11)
   value = value.replace(/^(\d{2})(\d)/, '($1) $2')
   value = value.replace(/(\d{4,5})(\d{4})$/, '$1-$2')
   formData.value.contato.numero = value
@@ -485,6 +403,8 @@ const formatTelefone = (event) => {
 
 const formatCEP = (event) => {
   let value = event.target.value.replace(/\D/g, '')
+  // Limita a 8 dígitos
+  value = value.substring(0, 8)
   value = value.replace(/^(\d{5})(\d)/, '$1-$2')
   formData.value.endereco.cep = value
 }
@@ -520,7 +440,6 @@ const loadFornecedorData = (fornecedor) => {
   formData.value.razaoSocial = fornecedor.razaoSocial || ''
   formData.value.cnpj = fornecedor.cnpj || ''
   formData.value.inscricao = fornecedor.inscricaoEstadual || fornecedor.inscricaoMunicipal || ''
-  formData.value.status = fornecedor.status || 'ativo'
 
   if (fornecedor.contato) {
     formData.value.contato.email = fornecedor.contato.email || ''
@@ -529,15 +448,6 @@ const loadFornecedorData = (fornecedor) => {
 
   if (fornecedor.endereco) {
     formData.value.endereco = { ...fornecedor.endereco }
-  }
-
-  formData.value.categorias = fornecedor.categorias || []
-  formData.value.formasPagamento = fornecedor.formasPagamento || []
-  formData.value.dadosBancarios = fornecedor.dadosBancarios || {
-    banco: '',
-    agencia: '',
-    conta: '',
-    pix: ''
   }
 }
 
@@ -573,12 +483,8 @@ const handleSubmit = () => {
     dadosParaEnvio.inscricaoMunicipal = formData.value.inscricao || null
   }
 
-  // Adicionar dados extras (não obrigatórios para o backend atual)
+  // Adicionar tipo para o frontend saber qual endpoint usar
   dadosParaEnvio.tipo = formData.value.tipo
-  dadosParaEnvio.status = formData.value.status
-  dadosParaEnvio.categorias = formData.value.categorias
-  dadosParaEnvio.formasPagamento = formData.value.formasPagamento
-  dadosParaEnvio.dadosBancarios = formData.value.dadosBancarios
 
   emit('save', dadosParaEnvio)
 }
@@ -711,6 +617,13 @@ const handleSubmit = () => {
   min-height: 80px;
 }
 
+.form-hint {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  font-style: italic;
+}
+
 .radio-group {
   display: flex;
   gap: 24px;
@@ -734,35 +647,7 @@ const handleSubmit = () => {
   font-weight: 500;
 }
 
-.checkbox-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 8px;
-  margin-top: 8px;
-}
 
-.checkbox-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.checkbox-option:hover {
-  background: #f3f4f6;
-}
-
-.checkbox-option input[type="checkbox"] {
-  margin: 0;
-}
-
-.checkbox-label {
-  color: #374151;
-}
 
 .modal-footer {
   display: flex;
@@ -840,9 +725,7 @@ const handleSubmit = () => {
     gap: 12px;
   }
 
-  .checkbox-group {
-    grid-template-columns: 1fr;
-  }
+
 }
 
 /* Transições Vue */

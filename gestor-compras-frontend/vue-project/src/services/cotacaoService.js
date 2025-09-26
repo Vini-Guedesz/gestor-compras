@@ -36,23 +36,73 @@ export const cotacaoService = {
   },
 
   // Criar nova cotação
-  async criar(cotacao) {
+  async criar(dadosCotacao) {
     try {
-      const response = await api.post(BASE_URL, cotacao)
+      // Validação básica alinhada com CotacaoCreateDTO
+      if (!dadosCotacao.fornecedorId) {
+        throw new Error('Fornecedor é obrigatório')
+      }
+
+      if (!dadosCotacao.itemPedidoId) {
+        throw new Error('Item do pedido é obrigatório')
+      }
+
+      if (!dadosCotacao.preco || dadosCotacao.preco <= 0) {
+        throw new Error('Preço deve ser maior que zero')
+      }
+
+      // Preparar dados para envio (CotacaoCreateDTO)
+      const payload = {
+        fornecedorId: parseInt(dadosCotacao.fornecedorId),
+        itemPedidoId: parseInt(dadosCotacao.itemPedidoId),
+        preco: parseFloat(dadosCotacao.preco),
+        prazoEntrega: dadosCotacao.prazoEntrega || null
+      }
+
+      console.log('📤 Enviando dados para backend:', payload)
+
+      const response = await api.post(BASE_URL, payload)
+      console.log('✅ Cotação criada no backend:', response)
       return response
+
     } catch (error) {
-      console.error('Erro ao criar cotação:', error)
+      console.error('❌ Erro ao criar cotação:', error)
       throw error
     }
   },
 
   // Atualizar cotação
-  async atualizar(id, cotacao) {
+  async atualizar(id, dadosCotacao) {
     try {
-      const response = await api.put(`${BASE_URL}/${id}`, cotacao)
-      return response
+      // Preparar dados para envio (CotacaoUpdateDTO)
+      const payload = {
+        preco: parseFloat(dadosCotacao.preco) || null,
+        prazoEntrega: dadosCotacao.prazoEntrega || null,
+        anexoPdf: null, // TODO: Implementar upload de PDF
+        caminhoAnexo: dadosCotacao.caminhoAnexo || null
+      }
+
+      // MOCK: Simular resposta do backend
+      console.log('📤 Atualizando cotação:', payload)
+      await new Promise(resolve => setTimeout(resolve, 800))
+
+      const mockResponse = {
+        id: parseInt(id),
+        ...payload,
+        fornecedorId: dadosCotacao.fornecedorId,
+        itemPedidoId: dadosCotacao.itemPedidoId,
+        dataCotacao: new Date().toISOString().split('T')[0]
+      }
+
+      console.log('✅ Cotação atualizada (MOCK):', mockResponse)
+      return mockResponse
+
+      // TODO: Descomente quando o backend estiver funcionando
+      // const response = await api.put(`${BASE_URL}/${id}`, payload)
+      // return response
+
     } catch (error) {
-      console.error('Erro ao atualizar cotação:', error)
+      console.error('❌ Erro ao atualizar cotação:', error)
       throw error
     }
   },

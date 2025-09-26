@@ -104,7 +104,7 @@
         <div class="section-header">
           <h2 class="section-title">Comparativo de Propostas</h2>
           <div class="view-controls">
-            <button 
+            <button
               :class="['view-button', { active: visualizacao === 'tabela' }]"
               @click="visualizacao = 'tabela'"
             >
@@ -113,7 +113,7 @@
               </svg>
               Tabela
             </button>
-            <button 
+            <button
               :class="['view-button', { active: visualizacao === 'cards' }]"
               @click="visualizacao = 'cards'"
             >
@@ -217,7 +217,7 @@
                 🏆 Melhor Preço
               </div>
             </div>
-            
+
             <div class="card-body">
               <div class="card-meta">
                 <div class="meta-item">
@@ -243,7 +243,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="card-actions">
               <button @click="visualizarDetalhes(proposta)" class="card-action-btn secondary">
                 Ver Detalhes
@@ -281,58 +281,15 @@ const route = useRoute()
 const carregando = ref(false)
 const visualizacao = ref('tabela')
 
-// Dados da cotação
+// Dados da cotação (será carregada do backend)
 const cotacao = ref({
-  id: 1,
-  descricao: 'Material de Escritório Q4 2024',
-  status: 'em-analise'
+  id: null,
+  descricao: '',
+  status: ''
 })
 
-// Propostas de exemplo
-const propostas = ref([
-  {
-    id: 1,
-    fornecedor: {
-      id: 1,
-      nomeFantasia: 'Papelaria Central',
-      cnpj: '12.345.678/0001-90'
-    },
-    precoTotal: 2850.00,
-    prazoEntrega: 5,
-    condicoesPagamento: '30 dias',
-    garantia: '12 meses',
-    avaliacao: 4.5,
-    melhorPreco: true
-  },
-  {
-    id: 2,
-    fornecedor: {
-      id: 2,
-      nomeFantasia: 'Office Max',
-      cnpj: '98.765.432/0001-10'
-    },
-    precoTotal: 3120.00,
-    prazoEntrega: 3,
-    condicoesPagamento: '15 dias',
-    garantia: '6 meses',
-    avaliacao: 4.2,
-    melhorPreco: false
-  },
-  {
-    id: 3,
-    fornecedor: {
-      id: 3,
-      nomeFantasia: 'Kalunga',
-      cnpj: '11.222.333/0001-44'
-    },
-    precoTotal: 2950.00,
-    prazoEntrega: 7,
-    condicoesPagamento: '45 dias',
-    garantia: '18 meses',
-    avaliacao: 4.8,
-    melhorPreco: false
-  }
-])
+// Propostas (serão carregadas do backend)
+const propostas = ref([])
 
 // Computadas
 const menorPreco = computed(() => {
@@ -421,18 +378,30 @@ const exportarComparacao = () => {
 const carregarComparacao = async () => {
   try {
     carregando.value = true
-    // Simular carregamento de dados
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Marcar melhor preço
-    if (propostas.value.length) {
-      const menorPrecoValue = Math.min(...propostas.value.map(p => p.precoTotal))
-      propostas.value.forEach(p => {
-        p.melhorPreco = p.precoTotal === menorPrecoValue
-      })
+    const cotacaoId = route.params.id
+
+    if (cotacaoId) {
+      // Carregar dados da cotação
+      const responseCotacao = await cotacaoService.buscarPorId(cotacaoId)
+      cotacao.value = responseCotacao.data
+
+      // Carregar propostas da cotação
+      const responsePropostas = await cotacaoService.obterPropostas(cotacaoId)
+      propostas.value = responsePropostas.data || []
+
+      // Marcar melhor preço
+      if (propostas.value.length) {
+        const menorPrecoValue = Math.min(...propostas.value.map(p => p.precoTotal))
+        propostas.value.forEach(p => {
+          p.melhorPreco = p.precoTotal === menorPrecoValue
+        })
+      }
     }
   } catch (error) {
     console.error('Erro ao carregar comparação:', error)
+    // Em caso de erro, limpar os dados
+    cotacao.value = { id: null, descricao: '', status: '' }
+    propostas.value = []
   } finally {
     carregando.value = false
   }
