@@ -92,6 +92,28 @@ const pedidoService = {
     return this.atualizar(id, pedido)
   },
 
+  async alterarStatus(id, novoStatus) {
+    try {
+      console.log(`🔄 Alterando status do pedido ID ${id} para ${novoStatus}...`)
+
+      // Primeiro busca o pedido atual
+      const pedidoAtual = await this.obterPorId(id)
+
+      // Atualiza apenas o status
+      const pedidoAtualizado = {
+        ...pedidoAtual,
+        status: novoStatus
+      }
+
+      const data = await api.put(`/api/solicitacoes-pedido/${id}`, pedidoAtualizado)
+      console.log('✅ Status do pedido alterado com sucesso')
+      return data
+    } catch (error) {
+      console.error(`❌ Erro ao alterar status do pedido ID ${id}:`, error.message)
+      throw error
+    }
+  },
+
   async remover(id) {
     try {
       console.log(`🔄 Removendo pedido ID ${id} no backend...`)

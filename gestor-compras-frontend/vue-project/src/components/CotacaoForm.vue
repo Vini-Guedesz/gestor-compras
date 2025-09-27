@@ -7,7 +7,7 @@
           <button @click="$emit('close')" class="close-button">&times;</button>
         </div>
         <div class="modal-body">
-          <form @submit.prevent="handleSubmit">
+          <form>
             <!-- Dados da Cotação -->
             <div class="form-section">
               <h3 class="section-title">Dados da Cotação</h3>
@@ -92,7 +92,12 @@
             Cancelar
           </button>
           <div class="footer-actions">
-            <button type="submit" @click="handleSubmit" class="btn-primary" :disabled="carregando">
+            <button
+              type="button"
+              @click.stop="handleSubmit"
+              class="btn-primary"
+              :disabled="carregando"
+            >
               <span v-if="carregando" class="loading-spinner"></span>
               {{ cotacao ? 'Atualizar Cotação' : 'Criar Cotação' }}
             </button>
@@ -107,7 +112,6 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import fornecedorService from '../services/fornecedorService.js'
 import itemPedidoService from '../services/itemPedidoService.js'
-import { cotacaoService } from '../services/cotacaoService.js'
 
 // Props
 const props = defineProps({
@@ -165,27 +169,26 @@ const handleFileSelect = (event) => {
 }
 
 const handleSubmit = async () => {
+  // Proteção contra execução múltipla
+  if (carregando.value) {
+    console.log('⚠️ Já está processando uma cotação, aguarde...')
+    return
+  }
+
+  console.log('🚀 Iniciando criação de cotação...')
+  console.log('📋 Dados do formulário:', formData.value)
+
   try {
     carregando.value = true
 
-    // Validações básicas alinhadas com CotacaoCreateDTO
-    if (!fornecedoresDisponiveis.value || fornecedoresDisponiveis.value.length === 0) {
-      alert('Nenhum fornecedor foi carregado. Verifique se há fornecedores cadastrados.')
-      return
-    }
-
+    // Validações dos dados obrigatórios
     if (!formData.value.fornecedorId) {
-      alert('Fornecedor é obrigatório')
-      return
-    }
-
-    if (!itensDisponiveis.value || itensDisponiveis.value.length === 0) {
-      alert('Nenhum item de pedido foi carregado. Verifique se há itens de pedido cadastrados.')
+      alert('Por favor, selecione um fornecedor')
       return
     }
 
     if (!formData.value.itemPedidoId) {
-      alert('Item do pedido é obrigatório')
+      alert('Por favor, selecione um item do pedido')
       return
     }
 
@@ -194,19 +197,59 @@ const handleSubmit = async () => {
       return
     }
 
-    // Salvar cotação no backend
-    console.log('Dados da cotação para salvar:', formData.value)
+    // Preparar dados com tipos corretos para o backend
+    const fornecedorIdInt = parseInt(formData.value.fornecedorId)
+    const itemPedidoIdInt = parseInt(formData.value.itemPedidoId)
+    const precoFloat = parseFloat(formData.value.preco)
 
-    const response = await cotacaoService.criar(formData.value)
-    console.log('✅ Cotação criada com sucesso:', response)
+    // Validar conversões
+    if (isNaN(fornecedorIdInt) || fornecedorIdInt <= 0) {
+      alert('Fornecedor inválido')
+      return
+    }
 
-    alert('Cotação criada com sucesso!')
-    emit('save', response)
+    if (isNaN(itemPedidoIdInt) || itemPedidoIdInt <= 0) {
+      alert('Item do pedido inválido')
+      return
+    }
+
+    if (isNaN(precoFloat) || precoFloat <= 0) {
+      alert('Preço inválido')
+      return
+    }
+
+    const dadosParaSalvar = {
+      fornecedorId: fornecedorIdInt,           // Integer no backend
+      itemPedidoId: itemPedidoIdInt,           // Long no backend
+      preco: precoFloat,                       // BigDecimal no backend
+      prazoEntrega: formData.value.prazoEntrega || null  // LocalDate no backend (nullable)
+    }
+
+    console.log('📤 Enviando dados para a view pai:', dadosParaSalvar)
+
+    // Emitir os dados para a view pai processar
+    emit('save', dadosParaSalvar)
     emit('close')
 
   } catch (error) {
-    console.error('Erro ao salvar cotação:', error)
-    alert('Erro ao salvar cotação. Tente novamente.')
+    console.error('❌ Erro detalhado ao salvar cotação:', error)
+    console.error('❌ Erro response:', error.response)
+    console.error('❌ Erro message:', error.message)
+
+    let mensagemErro = 'Erro ao salvar cotação. Tente novamente.'
+
+    if (error.response) {
+      // Erro da resposta HTTP
+      mensagemErro = `Erro ${error.response.status}: ${error.response.data?.message || error.response.statusText}`
+    } else if (error.request) {
+      // Erro de rede/conexão
+      mensagemErro = 'Erro de conexão. Verifique se o backend está rodando.'
+    } else {
+      // Erro interno
+      mensagemErro = `Erro interno: ${error.message}`
+    }
+
+    alert(mensagemErro)
   } finally {
     carregando.value = false
   }

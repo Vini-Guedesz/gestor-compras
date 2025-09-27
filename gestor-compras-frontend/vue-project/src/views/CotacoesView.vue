@@ -191,9 +191,9 @@
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
-                <th @click="ordenar('dataLimite')" class="sortable">
+                <th @click="ordenar('prazoEntrega')" class="sortable">
                   Prazo
-                  <svg v-if="ordenacao.campo === 'dataLimite'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
+                  <svg v-if="ordenacao.campo === 'prazoEntrega'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
@@ -201,7 +201,29 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="cotacao in cotacoesPaginadas" :key="cotacao.id" class="table-row">
+              <!-- Loading State -->
+              <tr v-if="carregandoCotacoes" class="loading-row">
+                <td colspan="6" class="loading-cell">
+                  <div class="loading-content">
+                    <span class="loading-spinner"></span>
+                    <span>Carregando cotações...</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Empty State -->
+              <tr v-else-if="cotacoes.length === 0" class="empty-row">
+                <td colspan="6" class="empty-cell">
+                  <div class="empty-content">
+                    <svg viewBox="0 0 24 24" width="48" height="48" class="empty-icon">
+                      <path fill="#9CA3AF" d="M9,12L11,14L15,10M20,6C20.58,6 21.05,6.2 21.42,6.59C21.8,7 22,7.45 22,8V16C22,16.55 21.8,17 21.42,17.41C21.05,17.8 20.58,18 20,18H4C3.42,18 2.95,17.8 2.58,17.41C2.2,17 2,16.55 2,16V8C2,7.45 2.2,7 2.58,6.59C2.95,6.2 3.42,6 4,6H20M20,8H4V16H20V8Z"/>
+                    </svg>
+                    <h3>Nenhuma cotação encontrada</h3>
+                    <p>Crie sua primeira cotação clicando no botão "Nova Cotação"</p>
+                  </div>
+                </td>
+              </tr>
+              <!-- Data Rows -->
+              <tr v-else v-for="cotacao in cotacoesPaginadas" :key="cotacao.id" class="table-row">
                 <td>
                   <span class="id-badge">{{ String(cotacao.id).padStart(3, '0') }}</span>
                 </td>
@@ -235,9 +257,9 @@
                   </span>
                 </td>
                 <td>
-                  <div class="deadline-cell" :class="{ 'deadline-expired': isPrazoVencido(cotacao.dataLimite) }">
-                    <div class="deadline-date">{{ formatarData(cotacao.dataLimite) }}</div>
-                    <div class="deadline-remaining">{{ getDiasRestantes(cotacao.dataLimite) }}</div>
+                  <div class="deadline-cell" :class="{ 'deadline-expired': isPrazoVencido(cotacao.prazoEntrega) }">
+                    <div class="deadline-date">{{ formatarData(cotacao.prazoEntrega) }}</div>
+                    <div class="deadline-remaining">{{ getDiasRestantes(cotacao.prazoEntrega) }}</div>
                   </div>
                 </td>
                 <td>
@@ -267,10 +289,17 @@
                         <path fill="currentColor" d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M7,10H9V17H7V10M11,7H13V17H11V7M15,13H17V17H15V13Z"/>
                       </svg>
                     </button>
-                    <button @click="deletarCotacao(cotacao.id)" class="action-btn delete" title="Excluir">
-                      <svg viewBox="0 0 24 24" width="16" height="16">
+                    <button
+                      v-if="podeDeletar(cotacao.status)"
+                      @click="deletarCotacao(cotacao.id)"
+                      class="action-btn delete"
+                      title="Excluir"
+                      :disabled="operacaoEmAndamento"
+                    >
+                      <svg v-if="!operacaoEmAndamento" viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
                       </svg>
+                      <span v-else class="loading-spinner-small"></span>
                     </button>
                   </div>
                 </td>
@@ -298,8 +327,8 @@
                 </div>
                 <div class="meta-item">
                   <span class="meta-label">Prazo:</span>
-                  <span class="meta-value" :class="{ expired: isPrazoVencido(cotacao.dataLimite) }">
-                    {{ formatarData(cotacao.dataLimite) }}
+                  <span class="meta-value" :class="{ expired: isPrazoVencido(cotacao.prazoEntrega) }">
+                    {{ formatarData(cotacao.prazoEntrega) }}
                   </span>
                 </div>
               </div>
@@ -321,6 +350,16 @@
                 class="card-action-btn warning"
               >
                 Comparar
+              </button>
+              <button
+                v-if="podeDeletar(cotacao.status)"
+                @click="deletarCotacao(cotacao.id)"
+                class="card-action-btn danger"
+                title="Excluir Cotação"
+                :disabled="operacaoEmAndamento"
+              >
+                <span v-if="operacaoEmAndamento" class="loading-spinner-small"></span>
+                {{ operacaoEmAndamento ? 'Excluindo...' : 'Excluir' }}
               </button>
             </div>
           </div>
@@ -405,6 +444,8 @@ const termoBusca = ref('')
 const visualizacao = ref('tabela')
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
+const carregandoCotacoes = ref(false)
+const operacaoEmAndamento = ref(false)
 
 // Filtros
 const filtros = ref({
@@ -519,7 +560,9 @@ const paginasVisiveis = computed(() => {
 // Métodos
 const carregarCotacoes = async () => {
   try {
+    carregandoCotacoes.value = true
     console.log('🔄 Carregando cotações...')
+
     // Chamar o serviço real de cotações
     const response = await cotacaoService.listar()
 
@@ -537,6 +580,8 @@ const carregarCotacoes = async () => {
   } catch (error) {
     console.error('❌ Erro ao carregar cotações:', error)
     cotacoes.value = []
+  } finally {
+    carregandoCotacoes.value = false
   }
 }
 
@@ -586,12 +631,19 @@ const getStatusTexto = (status) => {
 }
 
 const formatarData = (data) => {
-  return new Date(data).toLocaleDateString('pt-BR')
+  if (!data) return 'Não informado'
+  const date = new Date(data)
+  if (isNaN(date.getTime())) return 'Data inválida'
+  return date.toLocaleDateString('pt-BR')
 }
 
 const getDiasRestantes = (dataLimite) => {
+  if (!dataLimite) return 'Não informado'
   const hoje = new Date()
   const limite = new Date(dataLimite)
+
+  if (isNaN(limite.getTime())) return 'Data inválida'
+
   const diferenca = Math.ceil((limite - hoje) / (1000 * 60 * 60 * 24))
 
   if (diferenca < 0) return 'Vencido'
@@ -601,15 +653,25 @@ const getDiasRestantes = (dataLimite) => {
 }
 
 const isPrazoVencido = (dataLimite) => {
-  return new Date(dataLimite) < new Date()
+  if (!dataLimite) return false
+  const limite = new Date(dataLimite)
+  if (isNaN(limite.getTime())) return false
+  return limite < new Date()
 }
 
 const podeEditar = (status) => {
-  return ['enviada'].includes(status)
+  // Permite editar cotações em rascunho, pendentes, enviadas ou rejeitadas
+  return ['rascunho', 'pendente', 'enviada', 'rejeitada'].includes(status)
 }
 
 const podeComparar = (status) => {
-  return ['em-analise'].includes(status)
+  // Permite comparar cotações em análise ou respondidas
+  return ['em-analise', 'respondida', 'finalizada'].includes(status)
+}
+
+const podeDeletar = (status) => {
+  // Não permite deletar cotações já finalizadas ou aprovadas
+  return !['finalizada', 'aprovada', 'contratada'].includes(status)
 }
 
 // Ações
@@ -628,13 +690,33 @@ const fecharFormulario = () => {
   cotacaoSelecionada.value = null
 }
 
-const salvarCotacao = (dadosCotacao) => {
-  console.log('Salvando cotação:', dadosCotacao)
-  // Aqui você implementaria a lógica de salvamento
-  // Exemplo: chamar o service de cotação
+const salvarCotacao = async (dadosCotacao) => {
+  try {
+    operacaoEmAndamento.value = true
+    console.log('🔄 CotacoesView: Salvando cotação recebida do formulário:', dadosCotacao)
 
-  // Recarregar a lista de cotações
-  carregarCotacoes()
+    let response
+    if (cotacaoSelecionada.value && cotacaoSelecionada.value.id) {
+      // Editar cotação existente
+      response = await cotacaoService.atualizar(cotacaoSelecionada.value.id, dadosCotacao)
+      console.log('✅ Cotação atualizada com sucesso')
+    } else {
+      // Criar nova cotação
+      response = await cotacaoService.criar(dadosCotacao)
+      console.log('✅ Cotação criada com sucesso')
+    }
+
+    // Recarregar a lista de cotações
+    await carregarCotacoes()
+
+    console.log('Cotação salva:', response)
+  } catch (error) {
+    console.error('❌ Erro ao salvar cotação:', error)
+    // O erro já é tratado no formulário, então não precisamos fazer nada aqui
+    throw error
+  } finally {
+    operacaoEmAndamento.value = false
+  }
 }
 
 const visualizarCotacao = (id) => {
@@ -645,9 +727,65 @@ const compararCotacao = (id) => {
   router.push(`/cotacoes/${id}/comparacao`)
 }
 
-const deletarCotacao = (id) => {
-  if (confirm('Tem certeza que deseja excluir esta cotação?')) {
-    cotacoes.value = cotacoes.value.filter(c => c.id !== id)
+const deletarCotacao = async (id) => {
+  // Evitar múltiplas operações simultâneas
+  if (operacaoEmAndamento.value) {
+    alert('Aguarde a operação anterior ser concluída.')
+    return
+  }
+
+  // Confirmação mais detalhada
+  const confirmacao = confirm(
+    'Tem certeza que deseja excluir esta cotação?\n\n' +
+    'Esta ação não pode ser desfeita e todos os dados da cotação serão perdidos permanentemente.'
+  )
+
+  if (confirmacao) {
+    try {
+      operacaoEmAndamento.value = true
+      console.log('🔄 Excluindo cotação ID:', id)
+
+      // Validar se o ID é válido
+      if (!id || isNaN(id)) {
+        throw new Error('ID da cotação inválido')
+      }
+
+      await cotacaoService.deletar(id)
+      console.log('✅ Cotação excluída com sucesso')
+
+      // Recarregar lista após exclusão
+      await carregarCotacoes()
+
+      alert('Cotação excluída com sucesso!')
+    } catch (error) {
+      console.error('❌ Erro ao excluir cotação:', error)
+
+      // Mensagens de erro mais específicas
+      let mensagemErro = 'Erro ao excluir cotação.'
+
+      if (error.response) {
+        // Erro do servidor
+        switch (error.response.status) {
+          case 404:
+            mensagemErro = 'Cotação não encontrada. Pode já ter sido excluída.'
+            break
+          case 403:
+            mensagemErro = 'Você não tem permissão para excluir esta cotação.'
+            break
+          case 409:
+            mensagemErro = 'Não é possível excluir esta cotação pois ela possui dependências.'
+            break
+          default:
+            mensagemErro = `Erro no servidor: ${error.response.status}. Tente novamente.`
+        }
+      } else if (error.message) {
+        mensagemErro = error.message
+      }
+
+      alert(mensagemErro)
+    } finally {
+      operacaoEmAndamento.value = false
+    }
   }
 }
 
@@ -1315,6 +1453,92 @@ onMounted(() => {
 
 .card-action-btn.warning:hover {
   background: #fed7aa;
+}
+
+.card-action-btn.danger {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #ef4444;
+}
+
+.card-action-btn.danger:hover {
+  background: #fecaca;
+}
+
+.card-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.card-action-btn:disabled:hover {
+  background: inherit;
+}
+
+/* Loading Spinner Pequeno */
+.loading-spinner-small {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 4px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Estados da Tabela */
+.loading-row, .empty-row {
+  background: #f9fafb;
+}
+
+.loading-cell, .empty-cell {
+  text-align: center;
+  padding: 48px 24px;
+  border: none;
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #6b7280;
+}
+
+.empty-content h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.empty-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.empty-icon {
+  opacity: 0.5;
 }
 
 /* Paginação */

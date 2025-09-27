@@ -51,17 +51,9 @@ export const cotacaoService = {
         throw new Error('Preço deve ser maior que zero')
       }
 
-      // Preparar dados para envio (CotacaoCreateDTO)
-      const payload = {
-        fornecedorId: parseInt(dadosCotacao.fornecedorId),
-        itemPedidoId: parseInt(dadosCotacao.itemPedidoId),
-        preco: parseFloat(dadosCotacao.preco),
-        prazoEntrega: dadosCotacao.prazoEntrega || null
-      }
+      console.log('📤 Enviando dados para backend:', dadosCotacao)
 
-      console.log('📤 Enviando dados para backend:', payload)
-
-      const response = await api.post(BASE_URL, payload)
+      const response = await api.post(BASE_URL, dadosCotacao)
       console.log('✅ Cotação criada no backend:', response)
       return response
 

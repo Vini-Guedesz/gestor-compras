@@ -103,11 +103,10 @@
           <div class="search-actions">
             <select v-model="filtroStatus" @change="filtrarPedidos" class="form-select">
               <option value="">Todos os status</option>
-              <option value="rascunho">Rascunho</option>
-              <option value="pendente">Pendente</option>
-              <option value="aprovado">Aprovado</option>
-              <option value="rejeitado">Rejeitado</option>
-              <option value="cancelado">Cancelado</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="EM_ANDAMENTO">Em Andamento</option>
+              <option value="APROVADO">Aprovado</option>
+              <option value="CANCELADO">Cancelado</option>
             </select>
             <select v-model="filtroPeriodo" @change="filtrarPedidos" class="form-select">
               <option value="">Todos os períodos</option>
@@ -187,7 +186,22 @@
                           d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                       </svg>
                     </button>
-                    <button class="action-btn approve" @click="aprovarPedido(pedido)" title="Aprovar" v-if="podeAprovar(pedido)">
+                    <div class="status-actions" v-if="podeAlterarStatus(pedido)">
+                      <select
+                        @change="alterarStatus(pedido, $event.target.value)"
+                        class="status-select"
+                        :value="pedido.status"
+                        title="Alterar Status"
+                      >
+                        <option :value="pedido.status" disabled>{{ getStatusLabel(pedido.status) }}</option>
+                        <option v-for="status in getStatusDisponiveis(pedido.status)"
+                                :key="status.value"
+                                :value="status.value">
+                          {{ status.label }}
+                        </option>
+                      </select>
+                    </div>
+                    <button class="action-btn approve" @click="aprovarPedido(pedido)" title="Aprovar" v-else-if="podeAprovar(pedido)">
                       <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                       </svg>
@@ -718,14 +732,19 @@ export default {
     const aprovarPedido = async (pedido) => {
       try {
         isLoading.value = true
-        const dadosAtualizacao = { ...pedido, status: 'aprovado' }
+        // Usar o enum correto do backend: APROVADO
+        const dadosAtualizacao = {
+          ...pedido,
+          status: 'APROVADO'
+        }
         await pedidoService.atualizar(pedido.id, dadosAtualizacao)
 
         const index = pedidos.value.findIndex(p => p.id === pedido.id)
         if (index !== -1) {
-          pedidos.value[index].status = 'aprovado'
+          pedidos.value[index].status = 'APROVADO'
         }
 
+        alert('Pedido aprovado com sucesso!')
       } catch (error) {
         console.error('Erro ao aprovar pedido:', error)
         alert('Erro ao aprovar pedido. Tente novamente.')
@@ -736,15 +755,73 @@ export default {
 
     // Métodos de permissão
     const podeEditar = (pedido) => {
-      return ['rascunho', 'rejeitado'].includes(pedido.status)
+      // Permite editar pedidos pendentes ou em andamento
+      return ['PENDENTE', 'EM_ANDAMENTO'].includes(pedido.status)
     }
 
     const podeAprovar = (pedido) => {
-      return pedido.status === 'pendente'
+      // Só pode aprovar pedidos pendentes
+      return ['PENDENTE'].includes(pedido.status)
     }
 
     const podeExcluir = (pedido) => {
-      return ['rascunho', 'rejeitado'].includes(pedido.status)
+      // Pode excluir pedidos que ainda não foram aprovados
+      return ['PENDENTE'].includes(pedido.status)
+    }
+
+    const podeAlterarStatus = (pedido) => {
+      // Pode alterar status de pedidos que não estão finalizados
+      return !['APROVADO', 'CANCELADO'].includes(pedido.status)
+    }
+
+    const getStatusDisponiveis = (statusAtual) => {
+      const todosStatus = [
+        { value: 'PENDENTE', label: 'Pendente' },
+        { value: 'EM_ANDAMENTO', label: 'Em Andamento' },
+        { value: 'APROVADO', label: 'Aprovado' },
+        { value: 'CANCELADO', label: 'Cancelado' }
+      ]
+
+      // Filtrar status disponíveis baseado no status atual
+      switch (statusAtual) {
+        case 'PENDENTE':
+          return todosStatus.filter(s => ['EM_ANDAMENTO', 'APROVADO', 'CANCELADO'].includes(s.value))
+        case 'EM_ANDAMENTO':
+          return todosStatus.filter(s => ['APROVADO', 'CANCELADO'].includes(s.value))
+        default:
+          return []
+      }
+    }
+
+    const alterarStatus = async (pedido, novoStatus) => {
+      try {
+        isLoading.value = true
+
+        // Confirmação antes de alterar
+        const confirmacao = confirm(
+          `Tem certeza que deseja alterar o status do pedido #${pedido.numero || pedido.id} para "${getStatusLabel(novoStatus)}"?`
+        )
+
+        if (!confirmacao) {
+          // Reset do select
+          document.querySelector(`select[value="${novoStatus}"]`).value = pedido.status
+          return
+        }
+
+        await pedidoService.alterarStatus(pedido.id, novoStatus)
+
+        const index = pedidos.value.findIndex(p => p.id === pedido.id)
+        if (index !== -1) {
+          pedidos.value[index].status = novoStatus
+        }
+
+        alert(`Status do pedido alterado para "${getStatusLabel(novoStatus)}" com sucesso!`)
+      } catch (error) {
+        console.error('Erro ao alterar status do pedido:', error)
+        alert('Erro ao alterar status do pedido. Tente novamente.')
+      } finally {
+        isLoading.value = false
+      }
     }
 
     // Lifecycle
@@ -801,7 +878,10 @@ export default {
       aprovarPedido,
       podeEditar,
       podeAprovar,
-      podeExcluir
+      podeExcluir,
+      podeAlterarStatus,
+      getStatusDisponiveis,
+      alterarStatus
     }
   }
 }
@@ -1249,6 +1329,36 @@ export default {
 
 .action-btn.delete:hover {
   background: #fecaca;
+}
+
+/* Status Actions */
+.status-actions {
+  position: relative;
+}
+
+.status-select {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.status-select:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* Estado vazio */
