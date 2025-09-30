@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.5.final using JasperReports Library version 6.21.5-74d586df47b25dbd05bd0957999819196e59934a  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Coffee_1" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30" uuid="f34858c0-9f74-4dac-8bcb-5848b7ba2975">
+    <style name="Title" fontName="Times New Roman" fontSize="36" isBold="true"/>
+    <style name="SubTitle" forecolor="#736343" fontName="Arial" fontSize="14" isBold="true"/>
+    <style name="Header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+    <style name="Detail" fontName="Arial" fontSize="11"/>
+    <style name="Row" mode="Transparent">
+        <conditionalStyle>
+            <conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+            <style backcolor="#F5F5F5"/>
+        </conditionalStyle>
+    </style>
+    <queryString>
+        <![CDATA[SELECT id, nome, quantidade, solicitacao_de_pedido_id FROM item_pedido]]>
+    </queryString>
+    <field name="id" class="java.lang.Long"/>
+    <field name="nome" class="java.lang.String"/>
+    <field name="quantidade" class="java.lang.Integer"/>
+    <field name="solicitacaoDePedido" class="com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido"/>
+    <title>
+        <band height="60">
+            <staticText>
+                <reportElement style="Title" x="0" y="10" width="535" height="40" uuid="378ca6fc-da86-446a-ae65-76f94991e090"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Relatório de Pedidos]]></text>
+            </staticText>
+        </band>
+    </title>
+    <pageHeader>
+        <band height="20">
+            <line>
+                <reportElement x="0" y="18" width="535" height="1" uuid="a4e89289-c728-4399-bb5a-58c7a61d7647"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#999999"/>
+                </graphicElement>
+            </line>
+        </band>
+    </pageHeader>
+    <columnHeader>
+        <band height="20">
+            <staticText>
+                <reportElement style="Header" x="0" y="0" width="50" height="20" uuid="5ff96565-b19f-4a4d-bb97-145999dac39c"/>
+                <text><![CDATA[ID]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="60" y="0" width="250" height="20" uuid="297df0d5-c894-47a7-a2f6-cb47dc151873"/>
+                <text><![CDATA[Nome]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="320" y="0" width="100" height="20" uuid="f6c5c11b-adb3-40ba-a716-eb84af0f66a6"/>
+                <text><![CDATA[Quantidade]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="430" y="0" width="100" height="20" uuid="3664a4ff-da7d-4ef7-8e3c-dca7c8e2eac9"/>
+                <text><![CDATA[Solicitação]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement style="Detail" x="0" y="0" width="50" height="20" uuid="5374f1ed-4d11-4742-95d2-44de417059ab"/>
+                <textFieldExpression><![CDATA[$F{id}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Detail" x="60" y="0" width="250" height="20" uuid="f7031e22-31fc-4975-ade0-9899bf5bc18a"/>
+                <textFieldExpression><![CDATA[$F{nome}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Detail" x="320" y="0" width="100" height="20" uuid="e04c19dc-c377-4a59-bc1a-c1873df274c8"/>
+                <textFieldExpression><![CDATA[$F{quantidade}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Detail" x="430" y="0" width="100" height="20" uuid="15aae5b9-1ad3-4912-990f-b0c4415147c6"/>
+                <textFieldExpression><![CDATA[$F{solicitacaoDePedido} != null ? $F{solicitacaoDePedido}.getId() : null]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+    <pageFooter>
+        <band height="20">
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement style="Detail" x="0" y="0" width="200" height="20" uuid="9f30a09f-dcb8-4bb8-9e2d-2ec11b0675d4"/>
+                <textElement textAlignment="Left"/>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Detail" x="350" y="0" width="185" height="20" uuid="6f1837c7-7e2d-45ba-9af3-48fca3935581"/>
+                <textElement textAlignment="Right"/>
+                <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER} + " de"]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

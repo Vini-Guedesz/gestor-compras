@@ -52,4 +52,12 @@ public class ItemPedidoService {
     public void deleteItem(Long id) {
         itemPedidoRepository.deleteById(id);
     }
+
+    public List<ItemPedido> findAllEntities() {
+        return itemPedidoRepository.findAll();
+    }
+
+    public ItemPedido findEntityById(Long id) {
+        return itemPedidoRepository.findById(id).orElse(null);
+    }
 }
