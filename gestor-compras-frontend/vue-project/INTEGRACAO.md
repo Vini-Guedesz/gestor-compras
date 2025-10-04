@@ -53,6 +53,30 @@ npm run dev
 
 ## 🔧 ESTRUTURA DE DADOS ALINHADA
 
+### **SolicitacaoDePedidoDTO** ⚠️ **LIMITADO**
+```json
+{
+  "id": "Long",
+  "itens": [
+    {
+      "id": "Long",
+      "nome": "string",
+      "quantidade": "int",
+      "descricao": "string", 
+      "observacao": "string"
+    }
+  ],
+  "status": "PENDENTE|APROVADO|CANCELADO|EM_ANDAMENTO",
+  "observacao": "string (CONTÉM DADOS DO FORMULÁRIO)",
+  "dataCriacao": "LocalDateTime"
+}
+```
+
+**⚠️ WORKAROUND IMPLEMENTADO:**
+- **Frontend**: Concatena dados do formulário no campo `observacao`
+- **Backend**: Armazena apenas `itens`, `status`, `observacao` e `dataCriacao`
+- **Extração**: Frontend extrai dados estruturados da `observacao` para exibição
+
 ### **FornecedorDeProdutoCreateDTO**
 ```json
 {
@@ -179,13 +203,37 @@ curl -X GET http://localhost:8081/relatorios/fornecedores \
 - ✅ Build do frontend funcionando
 - ✅ Swagger documentação disponível
 
+## 🔄 **AJUSTES REALIZADOS EM PEDIDOS**
+
+### **Problema Identificado:**
+- ✅ **Frontend** coletava: `requisitante`, `unidadeFuncional`, `centroCusto`, etc.
+- ❌ **Backend** aceita apenas: `itens`, `status`, `observacao`, `dataCriacao`
+- ❌ **Dados eram perdidos** na integração
+
+### **Solução Implementada:**
+1. **PedidoForm.vue:** ✅ **SIMPLIFICADO**
+   - Removidos campos não suportados pelo backend
+   - Mantém apenas: `status`, `observacao` e `itens`
+   - Formulário alinhado 100% com estrutura do backend
+
+2. **PedidosView.vue:** ✅ **SIMPLIFICADO**
+   - Exibe dados diretamente do backend
+   - Sem necessidade de processamento complexo
+   - Mapeia status do backend (`PENDENTE`, `APROVADO`, etc.)
+
+### **Campos Mantidos:**
+- **Status**: Rascunho, Pendente, Aprovado, Cancelado
+- **Observação**: Campo livre para descrição e observações
+- **Itens**: Nome, quantidade, descrição, observações do item
+
 ## 🎯 PRÓXIMOS PASSOS
 
 1. **Testar Login**: Verificar autenticação JWT
-2. **Testar CRUD**: Fornecedores, Pedidos, Cotações
+2. **Testar CRUD**: Fornecedores, Pedidos ✅ **AJUSTADO**, Cotações
 3. **Testar Relatórios**: Download de PDF
 4. **Testar Upload**: Anexos de cotações
 5. **Configurar Produção**: URLs e variáveis de ambiente
+6. **[OPCIONAL]** Expandir backend com campos específicos para pedidos
 
 ---
 
