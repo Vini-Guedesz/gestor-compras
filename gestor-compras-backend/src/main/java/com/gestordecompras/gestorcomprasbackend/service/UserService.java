@@ -3,6 +3,7 @@ package com.gestordecompras.gestorcomprasbackend.service;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserUpdateDTO;
+import com.gestordecompras.gestorcomprasbackend.exception.DataIntegrityConflictException;
 import com.gestordecompras.gestorcomprasbackend.model.user.User;
 import com.gestordecompras.gestorcomprasbackend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -40,7 +41,7 @@ public class UserService {
     @Transactional
     public UserDTO create(UserCreateDTO dto) {
         if (repository.findByUsername(dto.username()) != null) {
-            throw new IllegalArgumentException("Nome de usuário já cadastrado");
+            throw new DataIntegrityConflictException("Nome de usuário já cadastrado");
         }
 
         User user = new User(null, dto.username(), encoder.encode(dto.senha()), dto.role(), dto.email());

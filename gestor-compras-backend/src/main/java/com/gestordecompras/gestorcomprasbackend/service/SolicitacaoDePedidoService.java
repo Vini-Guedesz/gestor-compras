@@ -5,6 +5,7 @@ import com.gestordecompras.gestorcomprasbackend.mapper.SolicitacaoDePedidoMapper
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.repository.SolicitacaoDePedidoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class SolicitacaoDePedidoService {
     public SolicitacaoDePedidoDTO getSolicitacaoById(Long id) {
         return solicitacaoDePedidoRepository.findById(id)
                 .map(solicitacaoDePedidoMapper::toDTO)
-                .orElse(null);
+                .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com o id: " + id));
     }
 
     public SolicitacaoDePedidoDTO createSolicitacao(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
@@ -68,7 +69,7 @@ public class SolicitacaoDePedidoService {
                     // Itens are handled via their own endpoints, but you could add logic here to update them if needed.
                     return solicitacaoDePedidoMapper.toDTO(solicitacaoDePedidoRepository.save(solicitacao));
                 })
-                .orElse(null);
+                .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com o id: " + id));
     }
 
     public void deleteSolicitacao(Long id) {

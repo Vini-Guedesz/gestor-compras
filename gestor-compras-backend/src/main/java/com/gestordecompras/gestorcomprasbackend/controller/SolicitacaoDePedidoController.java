@@ -29,8 +29,7 @@ public class SolicitacaoDePedidoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<SolicitacaoDePedidoDTO> getSolicitacaoById(@PathVariable Long id) {
-        SolicitacaoDePedidoDTO solicitacao = solicitacaoDePedidoService.getSolicitacaoById(id);
-        return solicitacao != null ? ResponseEntity.ok(solicitacao) : ResponseEntity.notFound().build();
+        return ResponseEntity.ok(solicitacaoDePedidoService.getSolicitacaoById(id));
     }
 
     @PostMapping
@@ -40,8 +39,7 @@ public class SolicitacaoDePedidoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<SolicitacaoDePedidoDTO> updateSolicitacao(@PathVariable Long id, @RequestBody SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
-        SolicitacaoDePedidoDTO updatedSolicitacao = solicitacaoDePedidoService.updateSolicitacao(id, solicitacaoDePedidoDTO);
-        return updatedSolicitacao != null ? ResponseEntity.ok(updatedSolicitacao) : ResponseEntity.notFound().build();
+        return ResponseEntity.ok(solicitacaoDePedidoService.updateSolicitacao(id, solicitacaoDePedidoDTO));
     }
 
     @DeleteMapping("/{id}")

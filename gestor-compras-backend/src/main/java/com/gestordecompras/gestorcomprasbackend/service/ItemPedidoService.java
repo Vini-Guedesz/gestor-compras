@@ -4,6 +4,7 @@ import com.gestordecompras.gestorcomprasbackend.dto.itempedido.ItemPedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.mapper.ItemPedidoMapper;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.repository.ItemPedidoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class ItemPedidoService {
     public ItemPedidoDTO getItemById(Long id) {
         return itemPedidoRepository.findById(id)
                 .map(itemPedidoMapper::toDTO)
-                .orElse(null);
+                .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com o id: " + id));
     }
 
     public ItemPedidoDTO createItem(ItemPedidoDTO itemPedidoDTO) {
@@ -46,10 +47,13 @@ public class ItemPedidoService {
                     itemPedido.setObservacao(itemPedidoDTO.observacao());
                     return itemPedidoMapper.toDTO(itemPedidoRepository.save(itemPedido));
                 })
-                .orElse(null);
+                .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com o id: " + id));
     }
 
     public void deleteItem(Long id) {
+        if (!itemPedidoRepository.existsById(id)) {
+            throw new EntityNotFoundException("Item de pedido não encontrado com o id: " + id);
+        }
         itemPedidoRepository.deleteById(id);
     }
 
@@ -58,6 +62,6 @@ public class ItemPedidoService {
     }
 
     public ItemPedido findEntityById(Long id) {
-        return itemPedidoRepository.findById(id).orElse(null);
+        return itemPedidoRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com o id: " + id));
     }
 }

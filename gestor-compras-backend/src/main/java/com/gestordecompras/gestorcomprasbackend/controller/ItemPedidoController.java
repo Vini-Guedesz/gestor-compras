@@ -29,8 +29,7 @@ public class ItemPedidoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ItemPedidoDTO> getItemById(@PathVariable Long id) {
-        ItemPedidoDTO item = itemPedidoService.getItemById(id);
-        return item != null ? ResponseEntity.ok(item) : ResponseEntity.notFound().build();
+        return ResponseEntity.ok(itemPedidoService.getItemById(id));
     }
 
     @PostMapping
@@ -40,8 +39,7 @@ public class ItemPedidoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ItemPedidoDTO> updateItem(@PathVariable Long id, @RequestBody ItemPedidoDTO itemPedidoDTO) {
-        ItemPedidoDTO updatedItem = itemPedidoService.updateItem(id, itemPedidoDTO);
-        return updatedItem != null ? ResponseEntity.ok(updatedItem) : ResponseEntity.notFound().build();
+        return ResponseEntity.ok(itemPedidoService.updateItem(id, itemPedidoDTO));
     }
 
     @DeleteMapping("/{id}")

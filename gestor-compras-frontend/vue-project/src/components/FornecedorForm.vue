@@ -54,10 +54,12 @@
                   type="text"
                   v-model="formData.cnpj"
                   class="form-input"
+                  :class="{ 'invalid-field': !isCnpjValid }"
                   required
                   placeholder="00.000.000/0000-00"
                   @input="formatCNPJ"
                 />
+                <span v-if="!isCnpjValid" class="error-message">CNPJ inválido</span>
               </div>
 
               <div class="form-group">
@@ -103,10 +105,12 @@
                   type="text"
                   v-model="formData.contato.numero"
                   class="form-input"
+                  :class="{ 'invalid-field': !isTelefoneValid }"
                   required
                   placeholder="(00) 00000-0000"
                   @input="formatTelefone"
                 />
+                <span v-if="!isTelefoneValid" class="error-message">Telefone inválido</span>
               </div>
             </div>
           </div>
@@ -412,11 +416,24 @@ const formData = ref({
 })
 
 // Validação do formulário
+const isTelefoneValid = computed(() => {
+  const telefone = formData.value.contato.numero.replace(/\D/g, '');
+  return telefone.length === 10 || telefone.length === 11;
+});
+
+const isCnpjValid = computed(() => {
+  const cnpj = formData.value.cnpj.replace(/\D/g, '');
+  return cnpj.length === 14;
+});
+
 const isFormValid = computed(() => {
+  const cnpj = formData.value.cnpj.replace(/\D/g, '');
+  const telefone = formData.value.contato.numero.replace(/\D/g, '');
+
   return formData.value.razaoSocial &&
-         formData.value.cnpj &&
+         (cnpj.length === 14) &&
          formData.value.contato.email &&
-         formData.value.contato.numero &&
+         (telefone.length === 10 || telefone.length === 11) &&
          formData.value.endereco.cep &&
          formData.value.endereco.estado &&
          formData.value.endereco.cidade &&
@@ -704,6 +721,16 @@ const handleSubmit = () => {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.invalid-field {
+  border-color: #ef4444;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 4px;
 }
 
 .form-textarea {

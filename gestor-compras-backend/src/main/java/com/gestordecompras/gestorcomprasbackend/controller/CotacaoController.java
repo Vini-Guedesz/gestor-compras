@@ -42,8 +42,7 @@ public class CotacaoController {
             @ApiResponse(responseCode = "404", description = "Cotação não encontrada")
     })
     public ResponseEntity<CotacaoDTO> getCotacaoById(@PathVariable Long id) {
-        CotacaoDTO cotacao = cotacaoService.getCotacaoById(id);
-        return cotacao != null ? ResponseEntity.ok(cotacao) : ResponseEntity.notFound().build();
+        return ResponseEntity.ok(cotacaoService.getCotacaoById(id));
     }
 
     @PostMapping
@@ -64,8 +63,7 @@ public class CotacaoController {
             @ApiResponse(responseCode = "404", description = "Cotação não encontrada")
     })
     public ResponseEntity<CotacaoDTO> updateCotacao(@PathVariable Long id, @RequestBody CotacaoUpdateDTO cotacaoUpdateDTO) {
-        CotacaoDTO updatedCotacao = cotacaoService.updateCotacao(id, cotacaoUpdateDTO);
-        return updatedCotacao != null ? ResponseEntity.ok(updatedCotacao) : ResponseEntity.notFound().build();
+        return ResponseEntity.ok(cotacaoService.updateCotacao(id, cotacaoUpdateDTO));
     }
 
     @DeleteMapping("/{id}")

@@ -64,9 +64,6 @@ public class JasperReportService {
 
     public byte[] gerarRelatorioItemPedidoPorId(Long id) throws JRException {
         ItemPedido item = itemPedidoService.findEntityById(id);
-        if (item == null) {
-            throw new RuntimeException("Item de pedido não encontrado com o id: " + id);
-        }
 
         InputStream inputStream = getClass().getResourceAsStream("/relatorios/item_produto_detalhe.jrxml");
         if (inputStream == null) {
