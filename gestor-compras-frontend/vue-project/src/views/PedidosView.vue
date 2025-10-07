@@ -97,17 +97,15 @@
               <path fill="currentColor"
                 d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
             </svg>
-            <input type="text" v-model="searchQuery" placeholder="Pesquisar por número, requisitante, descrição..."
+            <input type="text" v-model="searchQuery" placeholder="Pesquisar por ID..."
               class="search-input" @input="filtrarPedidos" />
           </div>
           <div class="search-actions">
             <select v-model="filtroStatus" @change="filtrarPedidos" class="form-select">
               <option value="">Todos os status</option>
-              <option value="rascunho">Rascunho</option>
-              <option value="pendente">Pendente</option>
-              <option value="aprovado">Aprovado</option>
-              <option value="rejeitado">Rejeitado</option>
-              <option value="cancelado">Cancelado</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="APROVADO">Aprovado</option>
+              <option value="CANCELADO">Cancelado</option>
             </select>
             <select v-model="filtroPeriodo" @change="filtrarPedidos" class="form-select">
               <option value="">Todos os períodos</option>
@@ -140,8 +138,6 @@
             <thead>
               <tr>
                 <th>Pedido</th>
-                <th>Requisitante</th>
-                <th>Unidade</th>
                 <th>Status</th>
                 <th>Itens</th>
                 <th>Data</th>
@@ -152,15 +148,8 @@
               <tr v-for="pedido in pedidosFiltrados" :key="pedido.id" class="table-row">
                 <td class="pedido-cell">
                   <div class="pedido-info">
-                    <span class="pedido-numero">#{{ pedido.numero || pedido.id }}</span>
-                    <span class="pedido-descricao" v-if="pedido.descricao">{{ pedido.descricao }}</span>
+                    <span class="pedido-numero">#{{ pedido.id }}</span>
                   </div>
-                </td>
-                <td class="requisitante-cell">
-                  <span class="requisitante-name">{{ pedido.requisitante || 'Não informado' }}</span>
-                </td>
-                <td class="unidade-cell">
-                  <span class="unidade-tag">{{ pedido.unidadeFuncional || 'N/A' }}</span>
                 </td>
                 <td>
                   <span class="status-badge" :class="getStatusClass(pedido.status)">
@@ -187,7 +176,22 @@
                           d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                       </svg>
                     </button>
-                    <button class="action-btn approve" @click="aprovarPedido(pedido)" title="Aprovar" v-if="podeAprovar(pedido)">
+                    <div class="status-actions" v-if="podeAlterarStatus(pedido)">
+                      <select
+                        @change="alterarStatus(pedido, $event.target.value)"
+                        class="status-select"
+                        :value="pedido.status"
+                        title="Alterar Status"
+                      >
+                        <option :value="pedido.status" disabled>{{ getStatusLabel(pedido.status) }}</option>
+                        <option v-for="status in getStatusDisponiveis(pedido.status)"
+                                :key="status.value"
+                                :value="status.value">
+                          {{ status.label }}
+                        </option>
+                      </select>
+                    </div>
+                    <button class="action-btn approve" @click="aprovarPedido(pedido)" title="Aprovar" v-else-if="podeAprovar(pedido)">
                       <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                       </svg>
@@ -231,7 +235,7 @@
       <ConfirmModal
         :isVisible="showConfirmModal"
         title="Confirmar Exclusão"
-        :message="`Tem certeza que deseja excluir o pedido #${pedidoParaExcluir?.numero || pedidoParaExcluir?.id}?`"
+        :message="`Tem certeza que deseja excluir o pedido #${pedidoParaExcluir?.id}?`"
         confirmText="Excluir"
         confirmClass="btn-danger"
         @confirm="excluirPedido"
@@ -242,7 +246,7 @@
       <div v-if="showDetalhesModal" class="modal-overlay" @click="fecharDetalhes">
         <div class="detalhes-modal" @click.stop>
           <div class="detalhes-header">
-            <h2>Pedido #{{ pedidoSelecionado?.numero || pedidoSelecionado?.id }}</h2>
+            <h2>Pedido #{{ pedidoSelecionado?.id }}</h2>
             <button @click="fecharDetalhes" class="close-button">&times;</button>
           </div>
           <div class="detalhes-body">
@@ -263,7 +267,7 @@
                 <div class="info-grid">
                   <div class="info-group">
                     <h4>Dados do Pedido</h4>
-                    <p><strong>Número:</strong> #{{ pedidoSelecionado?.numero || pedidoSelecionado?.id }}</p>
+                    <p><strong>ID:</strong> #{{ pedidoSelecionado?.id }}</p>
                     <p><strong>Status:</strong>
                       <span class="status-badge" :class="getStatusClass(pedidoSelecionado?.status)">
                         {{ getStatusLabel(pedidoSelecionado?.status) }}
@@ -272,16 +276,9 @@
                     <p><strong>Data de Criação:</strong> {{ formatarDataCompleta(pedidoSelecionado?.dataCriacao || pedidoSelecionado?.dataPedido) }}</p>
                   </div>
 
-                  <div class="info-group">
-                    <h4>Requisitante</h4>
-                    <p><strong>Nome:</strong> {{ pedidoSelecionado?.requisitante || 'Não informado' }}</p>
-                    <p><strong>Unidade:</strong> {{ pedidoSelecionado?.unidadeFuncional || 'Não informado' }}</p>
-                    <p><strong>Objetivo:</strong> {{ pedidoSelecionado?.objetivo || 'Não informado' }}</p>
-                  </div>
-
                   <div class="info-group full-width">
-                    <h4>Observações</h4>
-                    <p>{{ pedidoSelecionado?.observacoes || pedidoSelecionado?.observacao || 'Nenhuma observação informada' }}</p>
+                    <h4>Descrição/Observações</h4>
+                    <p>{{ pedidoSelecionado?.observacao || 'Nenhuma descrição informada' }}</p>
                   </div>
                 </div>
               </div>
@@ -314,7 +311,7 @@
                     <div class="timeline-content">
                       <h5>Pedido Criado</h5>
                       <p>{{ formatarDataCompleta(pedidoSelecionado?.dataCriacao || pedidoSelecionado?.dataPedido) }}</p>
-                      <span class="timeline-user">{{ pedidoSelecionado?.requisitante }}</span>
+                      <span class="timeline-user">Sistema</span>
                     </div>
                   </div>
 
@@ -367,6 +364,8 @@ export default {
     const searchQuery = ref('')
     const filtroStatus = ref('')
     const filtroPeriodo = ref('')
+
+    // Como simplificamos o formulário, não precisamos mais de extração complexa
 
     // Modais
     const showPedidoForm = ref(false)
@@ -423,11 +422,7 @@ export default {
       if (searchQuery.value.trim()) {
         const query = searchQuery.value.toLowerCase()
         resultado = resultado.filter(pedido =>
-          (pedido.numero?.toString().includes(query)) ||
-          (pedido.id?.toString().includes(query)) ||
-          (pedido.requisitante?.toLowerCase().includes(query)) ||
-          (pedido.descricao?.toLowerCase().includes(query)) ||
-          (pedido.unidadeFuncional?.toLowerCase().includes(query))
+          (pedido.id?.toString().includes(query))
         )
       }
 
@@ -478,20 +473,32 @@ export default {
     const carregarPedidos = async () => {
       try {
         isLoading.value = true
+        console.log('🔄 Carregando pedidos...')
+
         const response = await pedidoService.listarTodos()
 
+        // Processar dados do backend - estrutura simplificada
         if (response && Array.isArray(response)) {
-          pedidos.value = response
+          pedidos.value = response.map(pedido => ({
+            ...pedido,
+            // Usar observacao diretamente como descrição
+            descricao: pedido.observacao || 'Sem descrição',
+            // Garantir que dataCriacao seja tratada corretamente
+            dataPedido: pedido.dataCriacao || pedido.dataPedido
+          }))
+          console.log('✅ Pedidos carregados:', pedidos.value.length)
         } else if (response && response.data && Array.isArray(response.data)) {
-          pedidos.value = response.data
+          pedidos.value = response.data.map(pedido => ({
+            ...pedido,
+            descricao: pedido.observacao || 'Sem descrição',
+            dataPedido: pedido.dataCriacao || pedido.dataPedido
+          }))
+          console.log('✅ Pedidos carregados:', pedidos.value.length)
         } else {
           // Dados de exemplo se a API não estiver funcionando
           pedidos.value = [
             {
               id: 1,
-              numero: '2024001',
-              requisitante: 'João Silva',
-              unidadeFuncional: 'TI - Infraestrutura',
               status: 'pendente',
               descricao: 'Compra de equipamentos de informática',
               objetivo: 'Renovação do parque tecnológico',
@@ -500,53 +507,44 @@ export default {
               itens: [
                 {
                   id: 1,
-                  produto: 'Notebook Dell Latitude 5520',
+                  nome: 'Notebook Dell Latitude 5520',
                   quantidade: 5,
-                  justificativa: 'Para equipe de desenvolvimento',
+                  descricao: 'Para equipe de desenvolvimento',
                   observacao: 'Configuração mínima: i5, 16GB RAM, SSD 512GB'
                 },
                 {
                   id: 2,
-                  produto: 'Monitor LG 24" Full HD',
+                  nome: 'Monitor LG 24" Full HD',
                   quantidade: 5,
-                  justificativa: 'Complemento para os notebooks'
+                  descricao: 'Complemento para os notebooks'
                 }
               ]
             },
             {
               id: 2,
-              numero: '2024002',
-              requisitante: 'Maria Santos',
-              unidadeFuncional: 'RH - Treinamento',
               status: 'aprovado',
-              descricao: 'Material para treinamentos',
-              objetivo: 'Capacitação de funcionários',
               dataCriacao: '2024-01-10T14:20:00',
               observacao: 'Aprovado pela gerência',
               itens: [
                 {
                   id: 1,
-                  produto: 'Apostilas de treinamento',
+                  nome: 'Apostilas de treinamento',
                   quantidade: 50,
-                  justificativa: 'Curso de segurança do trabalho'
+                  descricao: 'Curso de segurança do trabalho'
                 }
               ]
             },
             {
               id: 3,
-              numero: '2024003',
-              requisitante: 'Carlos Oliveira',
-              unidadeFuncional: 'Manutenção',
-              status: 'rascunho',
-              descricao: 'Ferramentas para manutenção',
-              objetivo: 'Reposição de ferramentas',
+              status: 'pendente',
+              observacao: 'Ferramentas para manutenção - Reposição de ferramentas',
               dataCriacao: '2024-01-20T09:15:00',
               itens: [
                 {
                   id: 1,
-                  produto: 'Chaves de fenda variadas',
+                  nome: 'Chaves de fenda variadas',
                   quantidade: 10,
-                  justificativa: 'Reposição do estoque'
+                  descricao: 'Reposição do estoque'
                 }
               ]
             }
@@ -585,15 +583,11 @@ export default {
         // Status do backend (uppercase)
         'PENDENTE': 'Pendente',
         'APROVADO': 'Aprovado',
-        'EM_ANDAMENTO': 'Em Andamento',
         'CANCELADO': 'Cancelado',
         // Status antigos (lowercase) - compatibilidade
-        'rascunho': 'Rascunho',
         'pendente': 'Pendente',
         'aprovado': 'Aprovado',
-        'rejeitado': 'Rejeitado',
-        'cancelado': 'Cancelado',
-        'em_andamento': 'Em Andamento'
+        'cancelado': 'Cancelado'
       }
       return labels[status] || status || 'Indefinido'
     }
@@ -603,15 +597,11 @@ export default {
         // Status do backend (uppercase)
         'PENDENTE': 'status-pending',
         'APROVADO': 'status-approved',
-        'EM_ANDAMENTO': 'status-progress',
         'CANCELADO': 'status-canceled',
         // Status antigos (lowercase) - compatibilidade
-        'rascunho': 'status-draft',
         'pendente': 'status-pending',
         'aprovado': 'status-approved',
-        'rejeitado': 'status-rejected',
-        'cancelado': 'status-canceled',
-        'em_andamento': 'status-progress'
+        'cancelado': 'status-canceled'
       }
       return classes[status] || 'status-default'
     }
@@ -675,7 +665,7 @@ export default {
           const response = await pedidoService.criar(dadosPedido)
           const novoPedido = response.data || {
             id: Date.now(),
-            numero: `2024${String(pedidos.value.length + 1).padStart(3, '0')}`,
+
             dataCriacao: new Date().toISOString(),
             ...dadosPedido
           }
@@ -718,14 +708,19 @@ export default {
     const aprovarPedido = async (pedido) => {
       try {
         isLoading.value = true
-        const dadosAtualizacao = { ...pedido, status: 'aprovado' }
+        // Usar o enum correto do backend: APROVADO
+        const dadosAtualizacao = {
+          ...pedido,
+          status: 'APROVADO'
+        }
         await pedidoService.atualizar(pedido.id, dadosAtualizacao)
 
         const index = pedidos.value.findIndex(p => p.id === pedido.id)
         if (index !== -1) {
-          pedidos.value[index].status = 'aprovado'
+          pedidos.value[index].status = 'APROVADO'
         }
 
+        alert('Pedido aprovado com sucesso!')
       } catch (error) {
         console.error('Erro ao aprovar pedido:', error)
         alert('Erro ao aprovar pedido. Tente novamente.')
@@ -736,15 +731,70 @@ export default {
 
     // Métodos de permissão
     const podeEditar = (pedido) => {
-      return ['rascunho', 'rejeitado'].includes(pedido.status)
+      // Permite editar pedidos pendentes ou em andamento
+      return ['PENDENTE', 'EM_ANDAMENTO'].includes(pedido.status)
     }
 
     const podeAprovar = (pedido) => {
-      return pedido.status === 'pendente'
+      // Só pode aprovar pedidos pendentes
+      return ['PENDENTE'].includes(pedido.status)
     }
 
     const podeExcluir = (pedido) => {
-      return ['rascunho', 'rejeitado'].includes(pedido.status)
+      // Pode excluir pedidos que ainda não foram aprovados
+      return ['PENDENTE'].includes(pedido.status)
+    }
+
+    const podeAlterarStatus = (pedido) => {
+      // Pode alterar status de pedidos que não estão finalizados
+      return !['APROVADO', 'CANCELADO'].includes(pedido.status)
+    }
+
+    const getStatusDisponiveis = (statusAtual) => {
+      const todosStatus = [
+        { value: 'PENDENTE', label: 'Pendente' },
+        { value: 'APROVADO', label: 'Aprovado' },
+        { value: 'CANCELADO', label: 'Cancelado' }
+      ]
+
+      // Filtrar status disponíveis baseado no status atual
+      switch (statusAtual) {
+        case 'PENDENTE':
+          return todosStatus.filter(s => ['APROVADO', 'CANCELADO'].includes(s.value))
+        default:
+          return []
+      }
+    }
+
+    const alterarStatus = async (pedido, novoStatus) => {
+      try {
+        isLoading.value = true
+
+        // Confirmação antes de alterar
+        const confirmacao = confirm(
+          `Tem certeza que deseja alterar o status do pedido #${pedido.id} para "${getStatusLabel(novoStatus)}"?`
+        )
+
+        if (!confirmacao) {
+          // Reset do select
+          document.querySelector(`select[value="${novoStatus}"]`).value = pedido.status
+          return
+        }
+
+        await pedidoService.alterarStatus(pedido.id, novoStatus)
+
+        const index = pedidos.value.findIndex(p => p.id === pedido.id)
+        if (index !== -1) {
+          pedidos.value[index].status = novoStatus
+        }
+
+        alert(`Status do pedido alterado para "${getStatusLabel(novoStatus)}" com sucesso!`)
+      } catch (error) {
+        console.error('Erro ao alterar status do pedido:', error)
+        alert('Erro ao alterar status do pedido. Tente novamente.')
+      } finally {
+        isLoading.value = false
+      }
     }
 
     // Lifecycle
@@ -801,7 +851,10 @@ export default {
       aprovarPedido,
       podeEditar,
       podeAprovar,
-      podeExcluir
+      podeExcluir,
+      podeAlterarStatus,
+      getStatusDisponiveis,
+      alterarStatus
     }
   }
 }
@@ -1116,28 +1169,11 @@ export default {
   font-size: 0.875rem;
 }
 
-.pedido-descricao {
-  color: #6b7280;
-  font-size: 0.875rem;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.requisitante-name {
-  font-weight: 500;
-  color: #374151;
-}
 
-.unidade-tag {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
+
+
+
 
 .itens-count {
   color: #6b7280;
@@ -1249,6 +1285,36 @@ export default {
 
 .action-btn.delete:hover {
   background: #fecaca;
+}
+
+/* Status Actions */
+.status-actions {
+  position: relative;
+}
+
+.status-select {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.status-select:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* Estado vazio */

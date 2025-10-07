@@ -10,145 +10,23 @@
         <div class="modal-body">
           <form @submit.prevent="salvarPedido" class="pedido-form">
 
-            <!-- Dados Gerais -->
+            <!-- Dados Gerais - Simplificados -->
             <div class="form-section">
               <h3 class="section-title">Informações do Pedido</h3>
 
-              <div class="form-grid">
-                <div class="form-group">
-                  <label for="requisitante" class="form-label">
-                    Requisitante <span class="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="requisitante"
-                    v-model="formData.requisitante"
-                    class="form-input"
-                    placeholder="Nome do requisitante"
-                    required
-                  />
-                </div>
 
-                <div class="form-group">
-                  <label for="unidadeFuncional" class="form-label">
-                    Unidade Funcional <span class="required">*</span>
-                  </label>
-                  <select
-                    id="unidadeFuncional"
-                    v-model="formData.unidadeFuncional"
-                    class="form-select"
-                    required
-                  >
-                    <option value="">Selecione a unidade</option>
-                    <option value="TI - Infraestrutura">TI - Infraestrutura</option>
-                    <option value="TI - Desenvolvimento">TI - Desenvolvimento</option>
-                    <option value="RH - Recursos Humanos">RH - Recursos Humanos</option>
-                    <option value="RH - Treinamento">RH - Treinamento</option>
-                    <option value="Financeiro">Financeiro</option>
-                    <option value="Compras">Compras</option>
-                    <option value="Manutenção">Manutenção</option>
-                    <option value="Operacional">Operacional</option>
-                    <option value="Administrativo">Administrativo</option>
-                    <option value="Comercial">Comercial</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="centroCusto" class="form-label">
-                    Centro de Custo
-                  </label>
-                  <select
-                    id="centroCusto"
-                    v-model="formData.centroCusto"
-                    class="form-select"
-                  >
-                    <option value="">Selecione o centro de custo</option>
-                    <option value="CC-001">CC-001 - Tecnologia da Informação</option>
-                    <option value="CC-002">CC-002 - Recursos Humanos</option>
-                    <option value="CC-003">CC-003 - Financeiro</option>
-                    <option value="CC-004">CC-004 - Operações</option>
-                    <option value="CC-005">CC-005 - Administrativo</option>
-                    <option value="CC-006">CC-006 - Comercial</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="projeto" class="form-label">
-                    Projeto/Atividade
-                  </label>
-                  <input
-                    type="text"
-                    id="projeto"
-                    v-model="formData.projeto"
-                    class="form-input"
-                    placeholder="Nome do projeto ou atividade relacionada"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label for="objetivo" class="form-label">
-                    Objetivo do Pedido <span class="required">*</span>
-                  </label>
-                  <select
-                    id="objetivo"
-                    v-model="formData.objetivo"
-                    class="form-select"
-                    required
-                  >
-                    <option value="">Selecione o objetivo</option>
-                    <option value="Aquisição de Material">Aquisição de Material</option>
-                    <option value="Contratação de Serviço">Contratação de Serviço</option>
-                    <option value="Manutenção Preventiva">Manutenção Preventiva</option>
-                    <option value="Manutenção Corretiva">Manutenção Corretiva</option>
-                    <option value="Investimento">Investimento</option>
-                    <option value="Custeio">Custeio</option>
-                    <option value="Emergencial">Emergencial</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="status" class="form-label">
-                    Status
-                  </label>
-                  <select
-                    id="status"
-                    v-model="formData.status"
-                    class="form-select"
-                    :disabled="!pedido?.id"
-                  >
-                    <option value="rascunho">Rascunho</option>
-                    <option value="pendente">Pendente</option>
-                    <option value="aprovado">Aprovado</option>
-                    <option value="rejeitado">Rejeitado</option>
-                    <option value="cancelado">Cancelado</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group description-group">
-                <label for="descricao" class="form-label">
-                  Descrição do Pedido <span class="required">*</span>
-                </label>
-                <textarea
-                  id="descricao"
-                  v-model="formData.descricao"
-                  class="form-textarea"
-                  placeholder="Descreva detalhadamente o que está sendo solicitado..."
-                  rows="4"
-                  required
-                ></textarea>
-              </div>
 
               <div class="form-group observacoes-group">
-                <label for="observacoes" class="form-label">
-                  Observações / Justificativa
+                <label for="observacao" class="form-label">
+                  Observações / Descrição
                 </label>
                 <textarea
-                  id="observacoes"
-                  v-model="formData.observacoes"
+                  id="observacao"
+                  v-model="formData.observacao"
                   class="form-textarea"
-                  placeholder="Justificativa para o pedido, observações importantes, prazos especiais..."
-                  rows="3"
+                  placeholder="Descreva o pedido, observações, justificativa..."
+                  rows="4"
+                  maxlength="1000"
                 ></textarea>
               </div>
             </div>
@@ -184,16 +62,17 @@
                     </button>
                   </div>
 
-                  <div class="form-grid">
+                  <div class="form-grid item-grid">
                     <div class="form-group">
                       <label class="form-label">
-                        Nome do Produto/Serviço <span class="required">*</span>
+                        Nome do Item <span class="required">*</span>
                       </label>
                       <input
                         type="text"
-                        v-model="item.produto"
+                        v-model="item.nome"
                         class="form-input"
                         placeholder="Ex: Notebook Dell Latitude 5520"
+                        maxlength="255"
                         required
                       />
                     </div>
@@ -211,68 +90,22 @@
                         required
                       />
                     </div>
-
-                    <div class="form-group">
-                      <label class="form-label">
-                        Unidade de Medida
-                      </label>
-                      <select v-model="item.unidadeMedida" class="form-select">
-                        <option value="unidade">Unidade</option>
-                        <option value="par">Par</option>
-                        <option value="conjunto">Conjunto</option>
-                        <option value="kg">Quilograma</option>
-                        <option value="litro">Litro</option>
-                        <option value="metro">Metro</option>
-                        <option value="caixa">Caixa</option>
-                        <option value="pacote">Pacote</option>
-                        <option value="resma">Resma</option>
-                        <option value="hora">Hora</option>
-                        <option value="mes">Mês</option>
-                        <option value="licenca">Licença</option>
-                      </select>
-                    </div>
-
-                    <div class="form-group">
-                      <label class="form-label">
-                        Valor Estimado (R$)
-                      </label>
-                      <input
-                        type="number"
-                        v-model.number="item.valorEstimado"
-                        class="form-input"
-                        placeholder="0,00"
-                        step="0.01"
-                        min="0"
-                      />
-                    </div>
                   </div>
 
-                  <div class="form-group especificacao-group">
+                  <div class="form-group">
                     <label class="form-label">
-                      Especificação Técnica
+                      Descrição
                     </label>
                     <textarea
-                      v-model="item.especificacao"
+                      v-model="item.descricao"
                       class="form-textarea"
-                      placeholder="Descrição detalhada das especificações técnicas, modelo, marca preferencial..."
+                      placeholder="Descrição detalhada do item, especificações técnicas..."
                       rows="2"
+                      maxlength="500"
                     ></textarea>
                   </div>
 
-                  <div class="form-group justificativa-group">
-                    <label class="form-label">
-                      Justificativa <span class="required">*</span>
-                    </label>
-                    <textarea
-                      v-model="item.justificativa"
-                      class="form-textarea"
-                      placeholder="Justifique a necessidade deste item..."
-                      rows="2"
-                      required
-                    ></textarea>
-                  </div>
-
-                  <div class="form-group observacoes-item-group">
+                  <div class="form-group">
                     <label class="form-label">
                       Observações
                     </label>
@@ -281,6 +114,7 @@
                       class="form-textarea"
                       placeholder="Observações adicionais sobre este item..."
                       rows="2"
+                      maxlength="255"
                     ></textarea>
                   </div>
                 </div>
@@ -295,10 +129,6 @@
                     <div class="resumo-item">
                       <span class="resumo-label">Quantidade Total:</span>
                       <span class="resumo-value">{{ quantidadeTotal }}</span>
-                    </div>
-                    <div class="resumo-item">
-                      <span class="resumo-label">Valor Total Estimado:</span>
-                      <span class="resumo-value">R$ {{ valorTotalEstimado }}</span>
                     </div>
                   </div>
                 </div>
@@ -351,27 +181,17 @@ export default {
     // Estados reativos
     const isLoading = ref(false)
 
-    // Dados do formulário
+    // Dados do formulário - apenas campos suportados pelo backend
     const formData = ref({
-      requisitante: '',
-      unidadeFuncional: '',
-      centroCusto: '',
-      projeto: '',
-      objetivo: '',
-      status: 'rascunho',
-      descricao: '',
-      observacoes: '',
+      observacao: '',
       itens: []
     })
 
-    // Template para novo item
+    // Template para novo item - apenas campos suportados pelo backend
     const novoItemTemplate = () => ({
-      produto: '',
+      nome: '',
       quantidade: 1,
-      unidadeMedida: 'unidade',
-      valorEstimado: 0,
-      especificacao: '',
-      justificativa: '',
+      descricao: '',
       observacao: ''
     })
 
@@ -382,47 +202,22 @@ export default {
       return formData.value.itens.reduce((total, item) => total + (item.quantidade || 0), 0)
     })
 
-    const valorTotalEstimado = computed(() => {
-      const total = formData.value.itens.reduce((soma, item) => {
-        const valor = (item.valorEstimado || 0) * (item.quantidade || 0)
-        return soma + valor
-      }, 0)
-      return formatarValor(total)
-    })
 
-    // Validações
+
+    // Validações - focadas nos campos que vão para o backend
     const validationErrors = computed(() => {
       const errors = []
-
-      if (!formData.value.requisitante?.trim()) {
-        errors.push('Requisitante é obrigatório')
-      }
-
-      if (!formData.value.unidadeFuncional?.trim()) {
-        errors.push('Unidade Funcional é obrigatória')
-      }
-
-      if (!formData.value.objetivo?.trim()) {
-        errors.push('Objetivo do Pedido é obrigatório')
-      }
-
-      if (!formData.value.descricao?.trim()) {
-        errors.push('Descrição do Pedido é obrigatória')
-      }
 
       if (formData.value.itens.length === 0) {
         errors.push('Pelo menos um item deve ser adicionado')
       }
 
       formData.value.itens.forEach((item, index) => {
-        if (!item.produto?.trim()) {
-          errors.push(`Item ${index + 1}: Nome do produto é obrigatório`)
+        if (!item.nome?.trim()) {
+          errors.push(`Item ${index + 1}: Nome do item é obrigatório`)
         }
         if (!item.quantidade || item.quantidade <= 0) {
           errors.push(`Item ${index + 1}: Quantidade deve ser maior que zero`)
-        }
-        if (!item.justificativa?.trim()) {
-          errors.push(`Item ${index + 1}: Justificativa é obrigatória`)
         }
       })
 
@@ -442,54 +237,27 @@ export default {
       })
     }
 
-    const getStatusLabel = (status) => {
-      const labels = {
-        rascunho: 'Rascunho',
-        pendente: 'Pendente',
-        aprovado: 'Aprovado',
-        rejeitado: 'Rejeitado',
-        cancelado: 'Cancelado'
-      }
-      return labels[status] || status
-    }
 
-    const getStatusClass = (status) => {
-      const classes = {
-        rascunho: 'status-draft',
-        pendente: 'status-pending',
-        aprovado: 'status-approved',
-        rejeitado: 'status-rejected',
-        cancelado: 'status-cancelled'
-      }
-      return classes[status] || 'status-default'
-    }
 
     const resetarFormulario = () => {
       formData.value = {
-        requisitante: '',
-        unidadeFuncional: '',
-        centroCusto: '',
-        projeto: '',
-        objetivo: '',
-        status: 'rascunho',
-        descricao: '',
-        observacoes: '',
-        itens: []
+        observacao: '',
+        itens: [novoItemTemplate()]
       }
     }
+
+
 
     const carregarDadosPedido = () => {
       if (props.pedido) {
         formData.value = {
-          requisitante: props.pedido.requisitante || '',
-          unidadeFuncional: props.pedido.unidadeFuncional || '',
-          centroCusto: props.pedido.centroCusto || '',
-          projeto: props.pedido.projeto || '',
-          objetivo: props.pedido.objetivo || '',
-          status: props.pedido.status || 'rascunho',
-          descricao: props.pedido.descricao || '',
-          observacoes: props.pedido.observacoes || props.pedido.observacao || '',
-          itens: props.pedido.itens ? [...props.pedido.itens] : []
+          observacao: props.pedido.observacao || '',
+          itens: props.pedido.itens && props.pedido.itens.length > 0 ? props.pedido.itens.map(item => ({
+            nome: item.nome || '',
+            quantidade: item.quantidade || 1,
+            descricao: item.descricao || '',
+            observacao: item.observacao || ''
+          })) : [novoItemTemplate()]
         }
       } else {
         resetarFormulario()
@@ -519,8 +287,13 @@ export default {
     }
 
     const salvarPedido = async () => {
+      console.log('FormData atual:', formData.value)
+      console.log('Pode ser salvo:', podeSerSalvo.value)
+      console.log('Erros de validação:', validationErrors.value)
+
       if (!podeSerSalvo.value) {
-        alert('Por favor, corrija os erros antes de salvar.')
+        console.log('Erros de validação:', validationErrors.value)
+        alert('Por favor, corrija os erros antes de salvar: ' + validationErrors.value.join(', '))
         return
       }
 
@@ -528,14 +301,20 @@ export default {
         isLoading.value = true
 
         const dadosParaEnvio = {
-          ...formData.value,
+          id: props.pedido?.id || null, // ID apenas se for edição
           itens: formData.value.itens.map(item => ({
-            ...item,
+            id: null, // Sempre null para novos itens
+            nome: item.nome || '',
             quantidade: parseInt(item.quantidade) || 1,
-            valorEstimado: parseFloat(item.valorEstimado) || 0
-          }))
+            descricao: item.descricao || '',
+            observacao: item.observacao || ''
+          })),
+          status: 'PENDENTE', // Status padrão para novos pedidos
+          observacao: formData.value.observacao || '',
+          dataCriacao: null // Será definido automaticamente pelo backend
         }
 
+        console.log('Dados para envio:', dadosParaEnvio)
         emit('save', dadosParaEnvio)
       } catch (error) {
         console.error('Erro ao salvar pedido:', error)
@@ -548,6 +327,7 @@ export default {
     // Watchers
     watch(() => props.isVisible, (newVal) => {
       if (newVal) {
+        console.log('📂 Modal de pedido aberto, carregando dados...')
         carregarDadosPedido()
       }
     })
@@ -566,14 +346,11 @@ export default {
       // Computed
       totalItens,
       quantidadeTotal,
-      valorTotalEstimado,
       validationErrors,
       podeSerSalvo,
 
       // Métodos
       formatarValor,
-      getStatusLabel,
-      getStatusClass,
       adicionarItem,
       removerItem,
       fecharModal,
@@ -675,9 +452,14 @@ export default {
   gap: 16px;
 }
 
+.item-grid {
+  margin-bottom: 20px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
+  margin-bottom: 16px;
 }
 
 .description-group {
@@ -690,6 +472,13 @@ export default {
 
 .especificacao-group {
   margin-top: 20px;
+}
+
+.loading-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 4px;
 }
 
 .justificativa-group {
@@ -768,9 +557,17 @@ export default {
 .item-card {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
   background: #f9fafb;
+}
+
+.item-card .form-group {
+  margin-bottom: 20px;
+}
+
+.item-card .form-group:last-child {
+  margin-bottom: 0;
 }
 
 .item-header {
@@ -893,6 +690,13 @@ export default {
 .btn-save:disabled {
   background: #9ca3af;
   cursor: not-allowed;
+}
+
+.form-hint {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  font-style: italic;
 }
 
 /* Transitions */

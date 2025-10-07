@@ -569,6 +569,8 @@ const fecharFormulario = () => {
 
 const salvarFornecedor = async (dadosFornecedor) => {
   try {
+    console.log('🔄 Salvando fornecedor:', dadosFornecedor)
+
     if (fornecedorEditando.value) {
       // Atualizar fornecedor existente
       if (dadosFornecedor.tipo === 'produto') {
@@ -576,19 +578,45 @@ const salvarFornecedor = async (dadosFornecedor) => {
       } else {
         await fornecedorService.atualizarFornecedorServico(fornecedorEditando.value.id, dadosFornecedor)
       }
+      console.log('✅ Fornecedor atualizado com sucesso!')
     } else {
       // Criar novo fornecedor
+      let resultado
       if (dadosFornecedor.tipo === 'produto') {
-        await fornecedorService.criarFornecedorProduto(dadosFornecedor)
+        resultado = await fornecedorService.criarFornecedorProduto(dadosFornecedor)
       } else {
-        await fornecedorService.criarFornecedorServico(dadosFornecedor)
+        resultado = await fornecedorService.criarFornecedorServico(dadosFornecedor)
       }
+      console.log('✅ Fornecedor criado com sucesso!', resultado)
     }
 
     await carregarFornecedores()
     fecharFormulario()
+
+    // Mostrar mensagem de sucesso
+    alert(fornecedorEditando.value ? 'Fornecedor atualizado com sucesso!' : 'Fornecedor cadastrado com sucesso!')
+
   } catch (error) {
-    console.error('Erro ao salvar fornecedor:', error)
+    console.error('❌ Erro ao salvar fornecedor:', error)
+
+    // Mostrar erro mais específico para o usuário
+    let mensagemErro = 'Erro ao salvar fornecedor.'
+
+    if (error.message.includes('CORS')) {
+      mensagemErro = 'Erro de configuração: O backend não está configurado para aceitar requisições do frontend.'
+    } else if (error.message.includes('ECONNREFUSED') || error.message.includes('Network Error')) {
+      mensagemErro = 'Erro de conexão: Verifique se o backend está rodando na porta correta (8080).'
+    } else if (error.message.includes('401')) {
+      mensagemErro = 'Erro de autenticação: Faça login novamente.'
+    } else if (error.message.includes('400')) {
+      mensagemErro = 'Dados inválidos: Verifique se todos os campos obrigatórios estão preenchidos.'
+    } else if (error.message.includes('500')) {
+      mensagemErro = 'Erro interno do servidor. Tente novamente em alguns instantes.'
+    } else if (error.message) {
+      mensagemErro = error.message
+    }
+
+    alert(mensagemErro)
   }
 }
 
