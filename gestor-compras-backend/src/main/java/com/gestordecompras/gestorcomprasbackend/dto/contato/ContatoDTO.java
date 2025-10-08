@@ -4,10 +4,11 @@ import com.gestordecompras.gestorcomprasbackend.model.contato.Contato;
 
 public record ContatoDTO(
         Integer id,
-        String numero,
+        String telefoneFixo,
+        String celular,
         String email
 ) {
     public ContatoDTO(Contato contato) {
-        this(contato.getId(), contato.getNumero(), contato.getEmail());
+        this(contato.getId(), contato.getTelefoneFixo(), contato.getCelular(), contato.getEmail());
     }
 }

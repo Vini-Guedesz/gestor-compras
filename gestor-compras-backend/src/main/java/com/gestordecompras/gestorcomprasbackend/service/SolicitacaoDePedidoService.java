@@ -48,7 +48,7 @@ public class SolicitacaoDePedidoService {
                         if (item.getId() != null) {
                             // If item has an ID, fetch it from the database
                             return itemPedidoRepository.findById(item.getId())
-                                    .orElseThrow(() -> new RuntimeException("ItemPedido with ID " + item.getId() + " not found."));
+                                    .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com ID: " + item.getId()));
                         } else {
                             // If item does not have an ID, it's a new item, persist it
                             return itemPedidoRepository.save(item);
@@ -73,6 +73,9 @@ public class SolicitacaoDePedidoService {
     }
 
     public void deleteSolicitacao(Long id) {
+        if (!solicitacaoDePedidoRepository.existsById(id)) {
+            throw new EntityNotFoundException("Solicitação de pedido não encontrada com o id: " + id);
+        }
         solicitacaoDePedidoRepository.deleteById(id);
     }
 }

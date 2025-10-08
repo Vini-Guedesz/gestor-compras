@@ -18,9 +18,11 @@ public class Contato {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotBlank
-    @Column(nullable = false, length = 20)
-    private String numero;
+    @Column(name = "telefone_fixo", length = 20)
+    private String telefoneFixo;
+
+    @Column(name = "celular", length = 20)
+    private String celular;
 
     @Email
     @NotBlank

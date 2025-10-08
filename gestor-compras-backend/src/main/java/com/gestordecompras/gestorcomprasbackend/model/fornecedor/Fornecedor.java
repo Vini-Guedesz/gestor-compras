@@ -20,11 +20,11 @@ public abstract class Fornecedor {
 
     private String cnpj;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "endereco_id")
     private Endereco endereco;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "contato_id")
     private Contato contato;
 }

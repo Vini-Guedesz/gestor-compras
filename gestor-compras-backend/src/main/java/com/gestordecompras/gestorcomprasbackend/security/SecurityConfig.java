@@ -42,6 +42,7 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/api/itens-pedido/**",
             "/api/solicitacoes-pedido/**",
+            "/api/cotacoes/**",
             "/relatorios/**",
             "/error",
             "/api/fornecedores-de-produto/**",
