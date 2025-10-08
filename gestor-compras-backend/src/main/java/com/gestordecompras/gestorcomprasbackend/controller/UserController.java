@@ -34,7 +34,7 @@ public class UserController {
     @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista com todos os usuários cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de usuários retornada com sucesso")
     public ResponseEntity<List<UserDTO>> findAll() {
-        List<UserDTO> users = service.findAll();
+        List<UserDTO> users = service.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
@@ -45,7 +45,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
     public ResponseEntity<UserDTO> findById(@PathVariable Integer id) {
-        UserDTO user = service.findById(id);
+        UserDTO user = service.getUserById(id);
         return ResponseEntity.ok(user);
     }
 
@@ -56,7 +56,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
     })
     public ResponseEntity<UserDTO> create(@RequestBody @Valid UserCreateDTO dto, UriComponentsBuilder uriBuilder) {
-        UserDTO createdUser = service.create(dto);
+        UserDTO createdUser = service.createUser(dto);
         URI uri = uriBuilder.path("/api/users/{id}").buildAndExpand(createdUser.id()).toUri();
         return ResponseEntity.created(uri).body(createdUser);
     }
@@ -69,7 +69,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
     public ResponseEntity<UserDTO> update(@RequestBody @Valid UserUpdateDTO dto) {
-        UserDTO updatedUser = service.update(dto);
+        UserDTO updatedUser = service.updateUser(dto);
         return ResponseEntity.ok(updatedUser);
     }
 
@@ -80,7 +80,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        service.delete(id);
+        service.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 }

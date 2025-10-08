@@ -33,7 +33,7 @@ public class FornecedorDeServicoController {
     @Operation(summary = "Listar todos os fornecedores de serviço", description = "Retorna uma lista com todos os fornecedores de serviço cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de fornecedores de serviço retornada com sucesso")
     public ResponseEntity<List<FornecedorDeServicoDTO>> findAll() {
-        List<FornecedorDeServicoDTO> fornecedores = service.findAll();
+        List<FornecedorDeServicoDTO> fornecedores = service.getAllFornecedoresDeServico();
         return ResponseEntity.ok(fornecedores);
     }
 
@@ -44,7 +44,7 @@ public class FornecedorDeServicoController {
             @ApiResponse(responseCode = "404", description = "Fornecedor de serviço não encontrado")
     })
     public ResponseEntity<FornecedorDeServicoDTO> findById(@PathVariable Integer id) {
-        FornecedorDeServicoDTO fornecedor = service.findById(id);
+        FornecedorDeServicoDTO fornecedor = service.getFornecedorDeServicoById(id);
         return ResponseEntity.ok(fornecedor);
     }
 
@@ -55,7 +55,7 @@ public class FornecedorDeServicoController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
     })
     public ResponseEntity<FornecedorDeServicoDTO> create(@RequestBody @Valid FornecedorDeServicoCreateDTO dto, UriComponentsBuilder uriBuilder) {
-        FornecedorDeServicoDTO createdFornecedor = service.create(dto);
+        FornecedorDeServicoDTO createdFornecedor = service.createFornecedorDeServico(dto);
         URI uri = uriBuilder.path("/api/fornecedores-de-servico/{id}").buildAndExpand(createdFornecedor.id()).toUri();
         return ResponseEntity.created(uri).body(createdFornecedor);
     }
@@ -68,7 +68,7 @@ public class FornecedorDeServicoController {
             @ApiResponse(responseCode = "404", description = "Fornecedor de serviço não encontrado")
     })
     public ResponseEntity<FornecedorDeServicoDTO> update(@RequestBody @Valid FornecedorDeServicoUpdateDTO dto) {
-        FornecedorDeServicoDTO updatedFornecedor = service.update(dto);
+        FornecedorDeServicoDTO updatedFornecedor = service.updateFornecedorDeServico(dto);
         return ResponseEntity.ok(updatedFornecedor);
     }
 
@@ -79,7 +79,7 @@ public class FornecedorDeServicoController {
             @ApiResponse(responseCode = "404", description = "Fornecedor de serviço não encontrado")
     })
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        service.delete(id);
+        service.deleteFornecedorDeServico(id);
         return ResponseEntity.noContent().build();
     }
 }

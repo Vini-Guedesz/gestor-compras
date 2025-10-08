@@ -26,20 +26,20 @@ public class UserService {
         this.encoder = encoder;
     }
 
-    public List<UserDTO> findAll() {
+    public List<UserDTO> getAllUsers() {
         return repository.findAll().stream()
                 .map(UserDTO::new)
                 .collect(Collectors.toList());
     }
 
-    public UserDTO findById(Integer id) {
+    public UserDTO getUserById(Integer id) {
         return repository.findById(id)
                 .map(UserDTO::new)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID:" + id));
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + id));
     }
 
     @Transactional
-    public UserDTO create(UserCreateDTO dto) {
+    public UserDTO createUser(UserCreateDTO dto) {
         if (repository.findByUsername(dto.username()) != null) {
             throw new DataIntegrityConflictException("Nome de usuário já cadastrado");
         }
@@ -50,7 +50,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserDTO update(UserUpdateDTO dto) {
+    public UserDTO updateUser(UserUpdateDTO dto) {
         User user = repository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + dto.id()));
 
@@ -74,7 +74,7 @@ public class UserService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void deleteUser(Integer id) {
         if (!repository.existsById(id)) {
             throw new EntityNotFoundException("Usuário não encontrado com ID: " + id);
         }

@@ -24,27 +24,27 @@ public class ContatoService {
         this.mapper = mapper;
     }
 
-    public List<ContatoDTO> findAll() {
+    public List<ContatoDTO> getAllContatos() {
         return repository.findAll().stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    public ContatoDTO findById(Integer id) {
+    public ContatoDTO getContatoById(Integer id) {
         return repository.findById(id)
                 .map(mapper::toDTO)
                 .orElseThrow(() -> new EntityNotFoundException("Contato não encontrado com ID: " + id));
     }
 
     @Transactional
-    public ContatoDTO create(ContatoCreateDTO dto) {
+    public ContatoDTO createContato(ContatoCreateDTO dto) {
         Contato contato = mapper.toEntity(dto);
         Contato savedContato = repository.save(contato);
         return mapper.toDTO(savedContato);
     }
 
     @Transactional
-    public ContatoDTO update(ContatoUpdateDTO dto) {
+    public ContatoDTO updateContato(ContatoUpdateDTO dto) {
         Contato contato = repository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException("Contato não encontrado com ID: " + dto.id()));
 
@@ -53,7 +53,7 @@ public class ContatoService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void deleteContato(Integer id) {
         if (!repository.existsById(id)) {
             throw new EntityNotFoundException("Contato não encontrado com ID: " + id);
         }

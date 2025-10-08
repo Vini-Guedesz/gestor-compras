@@ -24,27 +24,27 @@ public class FornecedorDeServicoService {
         this.mapper = mapper;
     }
 
-    public List<FornecedorDeServicoDTO> findAll() {
+    public List<FornecedorDeServicoDTO> getAllFornecedoresDeServico() {
         return repository.findAll().stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    public FornecedorDeServicoDTO findById(Integer id) {
+    public FornecedorDeServicoDTO getFornecedorDeServicoById(Integer id) {
         return repository.findById(id)
                 .map(mapper::toDTO)
                 .orElseThrow(() -> new EntityNotFoundException("Fornecedor de serviço não encontrado com ID: " + id));
     }
 
     @Transactional
-    public FornecedorDeServicoDTO create(FornecedorDeServicoCreateDTO dto) {
+    public FornecedorDeServicoDTO createFornecedorDeServico(FornecedorDeServicoCreateDTO dto) {
         FornecedorDeServico fornecedor = mapper.toEntity(dto);
         FornecedorDeServico savedFornecedor = repository.save(fornecedor);
         return mapper.toDTO(savedFornecedor);
     }
 
     @Transactional
-    public FornecedorDeServicoDTO update(FornecedorDeServicoUpdateDTO dto) {
+    public FornecedorDeServicoDTO updateFornecedorDeServico(FornecedorDeServicoUpdateDTO dto) {
         FornecedorDeServico fornecedor = repository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException("Fornecedor de serviço não encontrado com ID: " + dto.id()));
 
@@ -53,7 +53,7 @@ public class FornecedorDeServicoService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void deleteFornecedorDeServico(Integer id) {
         if (!repository.existsById(id)) {
             throw new EntityNotFoundException("Fornecedor de serviço não encontrado com ID: " + id);
         }

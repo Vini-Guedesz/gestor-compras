@@ -33,7 +33,7 @@ public class ContatoController {
     @Operation(summary = "Listar todos os contatos", description = "Retorna uma lista com todos os contatos cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de contatos retornada com sucesso")
     public ResponseEntity<List<ContatoDTO>> findAll() {
-        List<ContatoDTO> contatos = service.findAll();
+        List<ContatoDTO> contatos = service.getAllContatos();
         return ResponseEntity.ok(contatos);
     }
 
@@ -44,7 +44,7 @@ public class ContatoController {
             @ApiResponse(responseCode = "404", description = "Contato não encontrado")
     })
     public ResponseEntity<ContatoDTO> findById(@PathVariable Integer id) {
-        ContatoDTO contato = service.findById(id);
+        ContatoDTO contato = service.getContatoById(id);
         return ResponseEntity.ok(contato);
     }
 
@@ -55,7 +55,7 @@ public class ContatoController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
     })
     public ResponseEntity<ContatoDTO> create(@RequestBody @Valid ContatoCreateDTO dto, UriComponentsBuilder uriBuilder) {
-        ContatoDTO createdContato = service.create(dto);
+        ContatoDTO createdContato = service.createContato(dto);
         URI uri = uriBuilder.path("/api/contatos/{id}").buildAndExpand(createdContato.id()).toUri();
         return ResponseEntity.created(uri).body(createdContato);
     }
@@ -68,7 +68,7 @@ public class ContatoController {
             @ApiResponse(responseCode = "404", description = "Contato não encontrado")
     })
     public ResponseEntity<ContatoDTO> update(@RequestBody @Valid ContatoUpdateDTO dto) {
-        ContatoDTO updatedContato = service.update(dto);
+        ContatoDTO updatedContato = service.updateContato(dto);
         return ResponseEntity.ok(updatedContato);
     }
 
@@ -79,7 +79,7 @@ public class ContatoController {
             @ApiResponse(responseCode = "404", description = "Contato não encontrado")
     })
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        service.delete(id);
+        service.deleteContato(id);
         return ResponseEntity.noContent().build();
     }
 }

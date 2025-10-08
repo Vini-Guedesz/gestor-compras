@@ -35,22 +35,22 @@ public class SolicitacaoDePedidoService {
     public SolicitacaoDePedidoDTO getSolicitacaoById(Long id) {
         return solicitacaoDePedidoRepository.findById(id)
                 .map(solicitacaoDePedidoMapper::toDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com ID: " + id));
     }
 
     public SolicitacaoDePedidoDTO createSolicitacao(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
         SolicitacaoDePedido solicitacaoDePedido = solicitacaoDePedidoMapper.toEntity(solicitacaoDePedidoDTO);
 
-        // Handle existing ItemPedido entities
+        // Trata entidades ItemPedido existentes
         if (solicitacaoDePedido.getItens() != null) {
             List<ItemPedido> managedItens = solicitacaoDePedido.getItens().stream()
                     .map(item -> {
                         if (item.getId() != null) {
-                            // If item has an ID, fetch it from the database
+                            // Se o item tem ID, busca do banco de dados
                             return itemPedidoRepository.findById(item.getId())
                                     .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com ID: " + item.getId()));
                         } else {
-                            // If item does not have an ID, it's a new item, persist it
+                            // Se o item não tem ID, é um novo item, persiste ele
                             return itemPedidoRepository.save(item);
                         }
                     })
@@ -66,15 +66,15 @@ public class SolicitacaoDePedidoService {
                 .map(solicitacao -> {
                     solicitacao.setObservacao(solicitacaoDePedidoDTO.observacao());
                     solicitacao.setStatus(solicitacaoDePedidoDTO.status());
-                    // Itens are handled via their own endpoints, but you could add logic here to update them if needed.
+                    // Itens são tratados através de seus próprios endpoints, mas você pode adicionar lógica aqui para atualizá-los se necessário.
                     return solicitacaoDePedidoMapper.toDTO(solicitacaoDePedidoRepository.save(solicitacao));
                 })
-                .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com ID: " + id));
     }
 
     public void deleteSolicitacao(Long id) {
         if (!solicitacaoDePedidoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Solicitação de pedido não encontrada com o id: " + id);
+            throw new EntityNotFoundException("Solicitação de pedido não encontrada com ID: " + id);
         }
         solicitacaoDePedidoRepository.deleteById(id);
     }

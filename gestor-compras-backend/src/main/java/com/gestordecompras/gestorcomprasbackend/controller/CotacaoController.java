@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cotacoes")
-@Tag(name = "Cotações", description = "Operações relacionadas a cotações")
+@Tag(name = "Cotações", description = "API para gerenciamento de cotações de fornecedores")
 @SecurityRequirement(name = "bearerAuth")
 public class CotacaoController {
 

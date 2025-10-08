@@ -45,7 +45,7 @@ public class CotacaoService {
     public CotacaoDTO getCotacaoById(Long id) {
         return cotacaoRepository.findById(id)
                 .map(cotacaoMapper::toDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
     }
 
     @Transactional
@@ -89,13 +89,13 @@ public class CotacaoService {
                     }
                     return cotacaoMapper.toDTO(cotacaoRepository.save(existingCotacao));
                 })
-                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
     }
 
     @Transactional
     public void deleteCotacao(Long id) {
         if (!cotacaoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Cotação não encontrada com o id: " + id);
+            throw new EntityNotFoundException("Cotação não encontrada com ID: " + id);
         }
         cotacaoRepository.deleteById(id);
     }
