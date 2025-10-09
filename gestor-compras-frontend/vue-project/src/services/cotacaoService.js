@@ -35,6 +35,19 @@ export const cotacaoService = {
     }
   },
 
+  // Buscar cotações por fornecedor
+  async buscarPorFornecedor(fornecedorId) {
+    try {
+      const response = await api.get(`${BASE_URL}`, {
+        params: { fornecedorId }
+      })
+      return response
+    } catch (error) {
+      console.error('Erro ao buscar cotações do fornecedor:', error)
+      throw error
+    }
+  },
+
   // Criar nova cotação
   async criar(dadosCotacao) {
     try {

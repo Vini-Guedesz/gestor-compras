@@ -313,57 +313,92 @@
 
               <!-- Aba Histórico -->
               <div v-if="perfilTabAtiva === 'historico'" class="perfil-section">
-                <h4>Histórico de Compras</h4>
+                <h4>Histórico de Cotações</h4>
                 <div class="historico-stats">
                   <div class="stat-card">
                     <span class="stat-value">{{ historicoCompras.total }}</span>
-                    <span class="stat-label">Total de Pedidos</span>
+                    <span class="stat-label">Total de Cotações</span>
                   </div>
                   <div class="stat-card">
-                    <span class="stat-value">R$ {{ historicoCompras.valor?.toLocaleString('pt-BR') }}</span>
-                    <span class="stat-label">Valor Total</span>
+                    <span class="stat-value">R$ {{ historicoCompras.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
+                    <span class="stat-label">Valor Total Cotado</span>
                   </div>
                   <div class="stat-card">
                     <span class="stat-value">{{ historicoCompras.ultimoPedido }}</span>
-                    <span class="stat-label">Último Pedido</span>
+                    <span class="stat-label">Última Cotação</span>
                   </div>
                 </div>
-                <p class="empty-message">Funcionalidade em desenvolvimento...</p>
-              </div>
 
-              <!-- Aba Avaliações -->
-              <div v-if="perfilTabAtiva === 'avaliacoes'" class="perfil-section">
-                <h4>Avaliações de Desempenho</h4>
-                <div class="avaliacao-resumo">
-                  <div class="rating-display">
-                    <span class="rating-number">{{ avaliacaoFornecedor.nota }}</span>
-                    <div class="stars">
-                      <span v-for="n in 5" :key="n"
-                            :class="['star', { filled: n <= avaliacaoFornecedor.nota }]">⭐</span>
-                    </div>
-                  </div>
-                  <div class="rating-metrics">
-                    <div class="metric">
-                      <span class="metric-label">Qualidade</span>
-                      <div class="metric-bar">
-                        <div class="metric-fill" :style="{ width: `${avaliacaoFornecedor.qualidade}%` }"></div>
+                <div v-if="carregandoHistorico" class="loading-message">
+                  <p>Carregando histórico...</p>
+                </div>
+
+                <div v-else-if="historicoCompras.cotacoes.length === 0" class="empty-message">
+                  <p>Nenhuma cotação encontrada para este fornecedor.</p>
+                </div>
+
+                <div v-else class="historico-lista">
+                  <div v-for="cotacao in historicoCompras.cotacoes" :key="cotacao.id" class="cotacao-card">
+                    <div class="cotacao-header">
+                      <div class="cotacao-info">
+                        <h5>Cotação #{{ cotacao.numero }}</h5>
+                        <span class="cotacao-data">{{ cotacao.data }}</span>
                       </div>
-                    </div>
-                    <div class="metric">
-                      <span class="metric-label">Prazo</span>
-                      <div class="metric-bar">
-                        <div class="metric-fill" :style="{ width: `${avaliacaoFornecedor.prazo}%` }"></div>
+                      <div class="cotacao-valor">
+                        <span class="valor-label">Valor Cotado</span>
+                        <span class="valor-amount">R$ {{ cotacao.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
                       </div>
+                      <span :class="['status-badge', `status-${cotacao.status.toLowerCase()}`]">
+                        {{ cotacao.statusTexto }}
+                      </span>
                     </div>
-                    <div class="metric">
-                      <span class="metric-label">Atendimento</span>
-                      <div class="metric-bar">
-                        <div class="metric-fill" :style="{ width: `${avaliacaoFornecedor.atendimento}%` }"></div>
+
+                    <div class="cotacao-details">
+                      <div class="detail-row">
+                        <div class="detail-item">
+                          <span class="detail-label">📦 Item do Pedido:</span>
+                          <span class="detail-value">{{ cotacao.itemNome }}</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">📊 Quantidade:</span>
+                          <span class="detail-value">{{ cotacao.itemQuantidade }} unidade(s)</span>
+                        </div>
+                      </div>
+
+                      <div class="detail-row" v-if="cotacao.itemDescricao">
+                        <div class="detail-item full-width">
+                          <span class="detail-label">📝 Descrição do Item:</span>
+                          <span class="detail-value">{{ cotacao.itemDescricao }}</span>
+                        </div>
+                      </div>
+
+                      <div class="detail-row">
+                        <div class="detail-item">
+                          <span class="detail-label">📅 Prazo de Entrega:</span>
+                          <span class="detail-value">{{ cotacao.prazoEntrega }}</span>
+                        </div>
+                        <div class="detail-item" v-if="cotacao.pedidoId">
+                          <span class="detail-label">🔖 Pedido Relacionado:</span>
+                          <span class="detail-value">#{{ cotacao.pedidoId }} - {{ cotacao.pedidoStatus }}</span>
+                        </div>
+                      </div>
+
+                      <div class="detail-row" v-if="cotacao.itemObservacao">
+                        <div class="detail-item full-width">
+                          <span class="detail-label">💬 Observações do Item:</span>
+                          <span class="detail-value">{{ cotacao.itemObservacao }}</span>
+                        </div>
+                      </div>
+
+                      <div class="detail-row" v-if="cotacao.pedidoObservacao">
+                        <div class="detail-item full-width">
+                          <span class="detail-label">💬 Observações do Pedido:</span>
+                          <span class="detail-value">{{ cotacao.pedidoObservacao }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-                <p class="empty-message">Funcionalidade em desenvolvimento...</p>
               </div>
             </div>
           </div>
@@ -381,6 +416,9 @@ import FornecedorForm from '@/components/FornecedorForm.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import fornecedorService from '@/services/fornecedorService.js'
 import relatorioService from '@/services/relatorioService.js'
+import cotacaoService from '@/services/cotacaoService.js'
+import itemPedidoService from '@/services/itemPedidoService.js'
+import pedidoService from '@/services/pedidoService.js'
 
 // Estados reativo
 const isLoading = ref(true)
@@ -405,23 +443,18 @@ const filtroStatus = ref('')
 const perfilTabAtiva = ref('info')
 const perfilTabs = ref([
   { id: 'info', label: 'Informações' },
-  { id: 'historico', label: 'Histórico' },
-  { id: 'avaliacoes', label: 'Avaliações' }
+  { id: 'historico', label: 'Histórico' }
 ])
 
-// Dados mock para perfil
+// Dados do histórico (carregados dinamicamente)
 const historicoCompras = ref({
-  total: 12,
-  valor: 85000,
-  ultimoPedido: '15/08/2024'
+  total: 0,
+  valor: 0,
+  ultimoPedido: '-',
+  cotacoes: []
 })
 
-const avaliacaoFornecedor = ref({
-  nota: 4.2,
-  qualidade: 85,
-  prazo: 92,
-  atendimento: 88
-})
+const carregandoHistorico = ref(false)
 
 // Computeds
 const todosFornecedores = computed(() => {
@@ -646,15 +679,126 @@ const excluirFornecedor = async () => {
   }
 }
 
-const visualizarFornecedor = (fornecedor) => {
+const visualizarFornecedor = async (fornecedor) => {
   fornecedorSelecionado.value = fornecedor
   perfilTabAtiva.value = 'info'
   showPerfilModal.value = true
+
+  // Carregar histórico de cotações do fornecedor
+  await carregarHistoricoFornecedor(fornecedor.id)
 }
 
 const fecharPerfil = () => {
   showPerfilModal.value = false
   fornecedorSelecionado.value = null
+  // Limpar histórico ao fechar
+  historicoCompras.value = {
+    total: 0,
+    valor: 0,
+    ultimoPedido: '-',
+    cotacoes: []
+  }
+}
+
+const carregarHistoricoFornecedor = async (fornecedorId) => {
+  try {
+    carregandoHistorico.value = true
+
+    // Buscar todas as cotações e filtrar pelo fornecedor
+    const todasCotacoes = await cotacaoService.listar()
+    const cotacoes = todasCotacoes.filter(cot => cot.fornecedorId === fornecedorId)
+
+    if (cotacoes && cotacoes.length > 0) {
+      // Processar dados das cotações
+      const totalCotacoes = cotacoes.length
+      const valorTotal = cotacoes.reduce((acc, cot) => acc + (parseFloat(cot.preco) || 0), 0)
+
+      // Ordenar por data (mais recente primeiro)
+      const cotacoesOrdenadas = [...cotacoes].sort((a, b) =>
+        new Date(b.dataCotacao) - new Date(a.dataCotacao)
+      )
+
+      const ultimaCotacao = cotacoesOrdenadas[0]
+      const dataUltima = ultimaCotacao?.dataCotacao
+        ? new Date(ultimaCotacao.dataCotacao).toLocaleDateString('pt-BR')
+        : '-'
+
+      // Buscar detalhes dos itens dos pedidos para cada cotação
+      const cotacoesComDetalhes = await Promise.all(
+        cotacoesOrdenadas.map(async (cot) => {
+          let itemPedido = null
+          let pedido = null
+
+          try {
+            // Buscar o item do pedido relacionado
+            if (cot.itemPedidoId) {
+              itemPedido = await itemPedidoService.buscarPorId(cot.itemPedidoId)
+
+              // Se tiver o item, buscar o pedido completo
+              if (itemPedido?.solicitacaoDePedidoId) {
+                pedido = await pedidoService.buscarPorId(itemPedido.solicitacaoDePedidoId)
+              }
+            }
+          } catch (err) {
+            console.warn('Erro ao buscar detalhes do item:', err)
+          }
+
+          return {
+            id: cot.id,
+            numero: cot.id?.toString().padStart(4, '0') || '-',
+            data: cot.dataCotacao
+              ? new Date(cot.dataCotacao).toLocaleDateString('pt-BR')
+              : '-',
+            valor: parseFloat(cot.preco) || 0,
+            status: 'cotacao',
+            statusTexto: 'Cotação Enviada',
+            itemPedidoId: cot.itemPedidoId,
+            prazoEntrega: cot.prazoEntrega
+              ? new Date(cot.prazoEntrega).toLocaleDateString('pt-BR')
+              : '-',
+            // Detalhes do item
+            itemNome: itemPedido?.nome || 'Item não especificado',
+            itemQuantidade: itemPedido?.quantidade || 0,
+            itemDescricao: itemPedido?.descricao || '',
+            itemObservacao: itemPedido?.observacao || '',
+            // Detalhes do pedido
+            pedidoId: pedido?.id || null,
+            pedidoStatus: pedido?.status || null,
+            pedidoObservacao: pedido?.observacao || '',
+            pedidoData: pedido?.dataCriacao
+              ? new Date(pedido.dataCriacao).toLocaleDateString('pt-BR')
+              : '-'
+          }
+        })
+      )
+
+      historicoCompras.value = {
+        total: totalCotacoes,
+        valor: valorTotal,
+        ultimoPedido: dataUltima,
+        cotacoes: cotacoesComDetalhes
+      }
+    } else {
+      // Nenhuma cotação encontrada
+      historicoCompras.value = {
+        total: 0,
+        valor: 0,
+        ultimoPedido: '-',
+        cotacoes: []
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao carregar histórico do fornecedor:', error)
+    // Em caso de erro, mostrar dados vazios
+    historicoCompras.value = {
+      total: 0,
+      valor: 0,
+      ultimoPedido: '-',
+      cotacoes: []
+    }
+  } finally {
+    carregandoHistorico.value = false
+  }
 }
 
 const filtrarFornecedores = () => {
@@ -1308,77 +1452,188 @@ onMounted(() => {
   color: #6b7280;
 }
 
-.avaliacao-resumo {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 32px;
-  margin-bottom: 24px;
-}
-
-.rating-display {
-  text-align: center;
-}
-
-.rating-number {
-  display: block;
-  font-size: 3rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 8px;
-}
-
-.stars {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-}
-
-.star {
-  font-size: 1.5rem;
-  opacity: 0.3;
-}
-
-.star.filled {
-  opacity: 1;
-}
-
-.rating-metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.metric {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.metric-label {
-  min-width: 100px;
-  font-weight: 500;
-  color: #374151;
-}
-
-.metric-bar {
-  flex: 1;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.metric-fill {
-  height: 100%;
-  background: #3b82f6;
-  transition: width 0.3s ease;
-}
-
 .empty-message {
   text-align: center;
   color: #6b7280;
   font-style: italic;
   margin: 32px 0;
+}
+
+/* Tabela de Histórico */
+.historico-tabela {
+  margin-top: 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.historico-tabela table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.historico-tabela thead {
+  background: #f8fafc;
+}
+
+.historico-tabela th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.historico-tabela td {
+  padding: 12px 16px;
+  color: #6b7280;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.historico-tabela tbody tr:hover {
+  background: #f9fafb;
+}
+
+.historico-tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-concluido {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-cancelado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-pendente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-cotacao {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.loading-message p {
+  font-style: italic;
+}
+
+/* Lista de Cotações Detalhada */
+.historico-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.cotacao-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.cotacao-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.cotacao-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  gap: 16px;
+}
+
+.cotacao-info h5 {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.cotacao-data {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.cotacao-valor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.valor-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.valor-amount {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.cotacao-details {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.5;
 }
 
 /* Responsividade */
@@ -1420,13 +1675,35 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .avaliacao-resumo {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
   .historico-stats {
     grid-template-columns: 1fr;
+  }
+
+  .historico-tabela {
+    overflow-x: auto;
+  }
+
+  .historico-tabela table {
+    min-width: 500px;
+  }
+
+  .cotacao-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .cotacao-valor {
+    align-items: flex-start;
+  }
+
+  .detail-row {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-button {
+    padding: 12px 16px;
+    font-size: 0.875rem;
   }
 }
 </style>

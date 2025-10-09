@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="dashboard-layout">
     <!-- Header -->
     <DashboardHeader />
@@ -12,7 +12,7 @@
       <div class="welcome-section">
         <div class="welcome-header">
           <div class="welcome-content">
-            <h1 class="welcome-title">Pedidos de Compra 📋</h1>
+            <h1 class="welcome-title">Pedidos de Compra</h1>
             <p class="welcome-subtitle">
               Gerencie solicitações de pedidos e acompanhe o fluxo de aprovação
             </p>
@@ -286,52 +286,59 @@
               <!-- Aba Itens -->
               <div v-if="detalhesTabAtiva === 'itens'" class="detalhes-section">
                 <h4>Itens do Pedido</h4>
-                <div class="itens-list" v-if="pedidoSelecionado?.itens?.length">
-                  <div v-for="(item, index) in pedidoSelecionado.itens" :key="index" class="item-card">
-                    <div class="item-header">
-                      <span class="item-numero">Item #{{ index + 1 }}</span>
-                      <span class="item-quantidade">{{ item.quantidade }}x</span>
+
+                <div v-if="carregandoItens" class="loading-message">
+                  <p>Carregando itens...</p>
+                </div>
+
+                <div v-else-if="pedidoSelecionado?.itens?.length" class="itens-list-detalhada">
+                  <div v-for="(item, index) in pedidoSelecionado.itens" :key="item.id || index" class="item-card-detalhado">
+                    <div class="item-header-detalhado">
+                      <div class="item-numero-badge">Item #{{ index + 1 }}</div>
+                      <div class="item-quantidade-badge">{{ item.quantidade }}x</div>
                     </div>
-                    <div class="item-details">
-                      <h5>{{ item.produto || item.nome || item.descricao }}</h5>
-                      <p v-if="item.justificativa"><strong>Justificativa:</strong> {{ item.justificativa }}</p>
-                      <p v-if="item.observacao"><strong>Observação:</strong> {{ item.observacao }}</p>
+
+                    <div class="item-content">
+                      <h5 class="item-nome">{{ item.nome || item.produto || 'Item sem nome' }}</h5>
+
+                      <div class="item-info-grid">
+                        <div class="item-info" v-if="item.quantidade">
+                          <span class="info-label">Quantidade:</span>
+                          <span class="info-value">{{ item.quantidade }} unidade(s)</span>
+                        </div>
+
+                        <div class="item-info" v-if="item.id">
+                          <span class="info-label">ID do Item:</span>
+                          <span class="info-value">#{{ item.id }}</span>
+                        </div>
+                      </div>
+
+                      <div class="item-descricao" v-if="item.descricao">
+                        <span class="info-label">Descrição:</span>
+                        <p class="info-value">{{ item.descricao }}</p>
+                      </div>
+
+                      <div class="item-observacao" v-if="item.observacao">
+                        <span class="info-label">Ÿ’¬ Observações:</span>
+                        <p class="info-value">{{ item.observacao }}</p>
+                      </div>
+
+                      <!-- Cotações relacionadas ao item -->
+                      <div class="item-cotacoes" v-if="item.cotacoes && item.cotacoes.length > 0">
+                        <span class="info-label">Ÿ’° Cotações Recebidas:</span>
+                        <div class="cotacoes-mini-list">
+                          <div v-for="cotacao in item.cotacoes" :key="cotacao.id" class="cotacao-mini-card">
+                            <div class="cotacao-fornecedor">{{ cotacao.fornecedorNome || `Fornecedor #${cotacao.fornecedorId}` }}</div>
+                            <div class="cotacao-valor">R$ {{ cotacao.preco?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</div>
+                            <div class="cotacao-prazo">Entrega: {{ formatarData(cotacao.prazoEntrega) }}</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
+
                 <p v-else class="empty-message">Nenhum item cadastrado neste pedido.</p>
-              </div>
-
-              <!-- Aba Histórico -->
-              <div v-if="detalhesTabAtiva === 'historico'" class="detalhes-section">
-                <h4>Histórico de Aprovação</h4>
-                <div class="historico-timeline">
-                  <div class="timeline-item">
-                    <div class="timeline-marker created"></div>
-                    <div class="timeline-content">
-                      <h5>Pedido Criado</h5>
-                      <p>{{ formatarDataCompleta(pedidoSelecionado?.dataCriacao || pedidoSelecionado?.dataPedido) }}</p>
-                      <span class="timeline-user">Sistema</span>
-                    </div>
-                  </div>
-
-                  <div class="timeline-item" v-if="pedidoSelecionado?.status !== 'rascunho'">
-                    <div class="timeline-marker submitted"></div>
-                    <div class="timeline-content">
-                      <h5>Enviado para Aprovação</h5>
-                      <p>{{ formatarDataCompleta(pedidoSelecionado?.dataUltimaAtualizacao) }}</p>
-                    </div>
-                  </div>
-
-                  <div class="timeline-item" v-if="['aprovado', 'rejeitado'].includes(pedidoSelecionado?.status)">
-                    <div class="timeline-marker" :class="pedidoSelecionado?.status"></div>
-                    <div class="timeline-content">
-                      <h5>{{ pedidoSelecionado?.status === 'aprovado' ? 'Aprovado' : 'Rejeitado' }}</h5>
-                      <p>{{ formatarDataCompleta(pedidoSelecionado?.dataUltimaAtualizacao) }}</p>
-                    </div>
-                  </div>
-                </div>
-                <p class="empty-message">Funcionalidade de histórico em desenvolvimento...</p>
               </div>
             </div>
           </div>
@@ -348,6 +355,9 @@ import DashboardSidebar from '@/components/DashboardSidebar.vue'
 import PedidoForm from '@/components/PedidoForm.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import pedidoService from '@/services/pedidoService.js'
+import cotacaoService from '@/services/cotacaoService.js'
+import fornecedorService from '@/services/fornecedorService.js'
+import itemPedidoService from '@/services/itemPedidoService.js'
 
 export default {
   name: 'PedidosView',
@@ -379,11 +389,13 @@ export default {
     const detalhesTabAtiva = ref('info')
     const detalhesTabs = ref([
       { id: 'info', label: 'Informações' },
-      { id: 'itens', label: 'Itens' },
-      { id: 'historico', label: 'Histórico' }
+      { id: 'itens', label: 'Itens' }
     ])
 
-    // Computed properties para métricas
+    // Estados para itens
+    const carregandoItens = ref(false)
+
+    // Computed properties para mÃ©tricas
     const totalPedidos = computed(() => pedidos.value.length)
 
     const novosPedidosMes = computed(() => {
@@ -431,7 +443,7 @@ export default {
         resultado = resultado.filter(pedido => pedido.status === filtroStatus.value)
       }
 
-      // Filtro por período
+      // Filtro por perÃ­odo
       if (filtroPeriodo.value) {
         const agora = new Date()
         let dataLimite
@@ -469,33 +481,59 @@ export default {
       return resultado
     })
 
-    // Métodos de dados
+    // MÃ©todos de dados
     const carregarPedidos = async () => {
       try {
         isLoading.value = true
-        console.log('🔄 Carregando pedidos...')
+        console.log('Ÿ”„ Carregando pedidos...')
 
-        const response = await pedidoService.listarTodos()
+        // Buscar pedidos e itens em paralelo
+        const [response, todosItens] = await Promise.all([
+          pedidoService.listarTodos(),
+          itemPedidoService.listarTodos()
+        ])
+
+        console.log('Itens carregados:', todosItens.length)
+        console.log('Exemplo de item:', todosItens[0])
 
         // Processar dados do backend - estrutura simplificada
         if (response && Array.isArray(response)) {
-          pedidos.value = response.map(pedido => ({
-            ...pedido,
-            // Usar observacao diretamente como descrição
-            descricao: pedido.observacao || 'Sem descrição',
-            // Garantir que dataCriacao seja tratada corretamente
-            dataPedido: pedido.dataCriacao || pedido.dataPedido
-          }))
-          console.log('✅ Pedidos carregados:', pedidos.value.length)
+          pedidos.value = response.map(pedido => {
+            // Filtrar itens que pertencem a este pedido
+            const itensDoPedido = todosItens.filter(item => {
+              // O ItemPedido tem uma referÃªncia solicitacaoDePedido com id
+              return item.solicitacaoDePedido?.id === pedido.id
+            })
+
+            console.log(`Pedido #${pedido.id}: ${itensDoPedido.length} itens`)
+
+            return {
+              ...pedido,
+              // Adicionar os itens ao pedido
+              itens: itensDoPedido,
+              // Usar observacao diretamente como descrição
+              descricao: pedido.observacao || 'Sem descrição',
+              // Garantir que dataCriacao seja tratada corretamente
+              dataPedido: pedido.dataCriacao || pedido.dataPedido
+            }
+          })
+          console.log('DEBUG - Pedidos carregados:', pedidos.value.length)
         } else if (response && response.data && Array.isArray(response.data)) {
-          pedidos.value = response.data.map(pedido => ({
-            ...pedido,
-            descricao: pedido.observacao || 'Sem descrição',
-            dataPedido: pedido.dataCriacao || pedido.dataPedido
-          }))
-          console.log('✅ Pedidos carregados:', pedidos.value.length)
+          pedidos.value = response.data.map(pedido => {
+            const itensDoPedido = todosItens.filter(item => {
+              return item.solicitacaoDePedido?.id === pedido.id
+            })
+
+            return {
+              ...pedido,
+              itens: itensDoPedido,
+              descricao: pedido.observacao || 'Sem descrição',
+              dataPedido: pedido.dataCriacao || pedido.dataPedido
+            }
+          })
+          console.log('DEBUG - Pedidos carregados:', pedidos.value.length)
         } else {
-          // Dados de exemplo se a API não estiver funcionando
+          // Dados de exemplo se a API nÃ£o estiver funcionando
           pedidos.value = [
             {
               id: 1,
@@ -524,13 +562,13 @@ export default {
               id: 2,
               status: 'aprovado',
               dataCriacao: '2024-01-10T14:20:00',
-              observacao: 'Aprovado pela gerência',
+              observacao: 'Aprovado pela gerÃªncia',
               itens: [
                 {
                   id: 1,
                   nome: 'Apostilas de treinamento',
                   quantidade: 50,
-                  descricao: 'Curso de segurança do trabalho'
+                  descricao: 'Curso de seguranÃ§a do trabalho'
                 }
               ]
             },
@@ -614,7 +652,7 @@ export default {
     // Métodos de ação
     const filtrarPedidos = () => {
       // A filtragem é feita automaticamente pelo computed
-      // Este método existe para ser chamado nos eventos de input
+      // Este mÃ©todo existe para ser chamado nos eventos de input
     }
 
     const limparFiltros = () => {
@@ -633,10 +671,30 @@ export default {
       showPedidoForm.value = true
     }
 
-    const visualizarPedido = (pedido) => {
-      pedidoSelecionado.value = pedido
-      detalhesTabAtiva.value = 'info'
-      showDetalhesModal.value = true
+    const visualizarPedido = async (pedido) => {
+      console.log('Visualizando pedido:', pedido)
+
+      try {
+        // Buscar o pedido completo do backend para garantir que os itens sejam carregados
+        console.log('Buscando pedido completo do backend...')
+        const pedidoCompleto = await pedidoService.obterPorId(pedido.id)
+        console.log('Pedido completo carregado:', pedidoCompleto)
+        console.log('Itens do pedido:', pedidoCompleto.itens)
+
+        // Usar o pedido completo do backend
+        pedidoSelecionado.value = pedidoCompleto
+        detalhesTabAtiva.value = 'info'
+        showDetalhesModal.value = true
+
+        // Carregar detalhes das cotacoes para os itens
+        await carregarDetalhesPedido(pedidoSelecionado.value)
+      } catch (error) {
+        console.error('Erro ao carregar pedido completo:', error)
+        // Fallback para o pedido da lista
+        pedidoSelecionado.value = { ...pedido, itens: pedido.itens ? [...pedido.itens] : [] }
+        detalhesTabAtiva.value = 'info'
+        showDetalhesModal.value = true
+      }
     }
 
     const fecharFormulario = () => {
@@ -649,19 +707,82 @@ export default {
       pedidoSelecionado.value = null
     }
 
+    const carregarDetalhesPedido = async (pedido) => {
+      console.log('carregarDetalhesPedido - Pedido recebido:', pedido)
+      console.log('Itens do pedido:', pedido?.itens)
+
+      if (!pedido || !pedido.itens || pedido.itens.length === 0) {
+        console.log('Pedido sem itens ou inválido')
+        return
+      }
+
+      try {
+        carregandoItens.value = true
+        console.log('Carregando cotações...')
+
+        // Buscar todas as cotaÃ§Ãµes
+        const todasCotacoes = await cotacaoService.listar()
+        console.log('œ… Cotações carregadas:', todasCotacoes.length)
+
+        // Buscar todos os fornecedores para mapear nomes
+        const fornecedoresProduto = await fornecedorService.listarProdutos()
+        const fornecedoresServico = await fornecedorService.listarServicos()
+        const todosFornecedores = [...fornecedoresProduto, ...fornecedoresServico]
+        console.log('DEBUG - Fornecedores carregados:', todosFornecedores.length)
+
+        // Criar mapa de fornecedores por ID
+        const fornecedoresMap = {}
+        todosFornecedores.forEach(f => {
+          fornecedoresMap[f.id] = f.razaoSocial || 'Fornecedor desconhecido'
+        })
+
+        // IDs dos itens deste pedido
+        const idsItens = pedido.itens.map(item => item.id).filter(id => id != null)
+        console.log('IDs dos itens:', idsItens)
+
+        // Filtrar cotaÃ§Ãµes relacionadas aos itens do pedido
+        const cotacoesRelacionadas = todasCotacoes.filter(cot =>
+          idsItens.includes(cot.itemPedidoId)
+        )
+        console.log('œ… Cotações relacionadas:', cotacoesRelacionadas.length)
+
+        // Enriquecer cotaÃ§Ãµes com nome do fornecedor
+        const cotacoesComFornecedor = cotacoesRelacionadas.map(cot => ({
+          ...cot,
+          fornecedorNome: fornecedoresMap[cot.fornecedorId] || `Fornecedor #${cot.fornecedorId}`
+        }))
+
+        // Adicionar cotaÃ§Ãµes aos itens
+        pedido.itens.forEach(item => {
+          if (item.id) {
+            const cotacoesDoItem = cotacoesComFornecedor.filter(cot => cot.itemPedidoId === item.id)
+            item.cotacoes = cotacoesDoItem
+            console.log(`Item ${item.id} - ${item.nome}: ${cotacoesDoItem.length} cotaÃ§Ãµes`)
+          }
+        })
+
+        console.log('Detalhes carregados com sucesso!')
+
+      } catch (error) {
+        console.error('Erro ao carregar detalhes do pedido:', error)
+      } finally {
+        carregandoItens.value = false
+      }
+    }
+
     const salvarPedido = async (dadosPedido) => {
       try {
         isLoading.value = true
 
         if (pedidoEditando.value?.id) {
-          // Edição
+          // EdiÃ§Ã£o
           const response = await pedidoService.atualizar(pedidoEditando.value.id, dadosPedido)
           const index = pedidos.value.findIndex(p => p.id === pedidoEditando.value.id)
           if (index !== -1) {
             pedidos.value[index] = response.data || { ...pedidoEditando.value, ...dadosPedido }
           }
         } else {
-          // Criação
+          // CriaÃ§Ã£o
           const response = await pedidoService.criar(dadosPedido)
           const novoPedido = response.data || {
             id: Date.now(),
@@ -729,24 +850,24 @@ export default {
       }
     }
 
-    // Métodos de permissão
+    // MÃ©todos de permissÃ£o
     const podeEditar = (pedido) => {
       // Permite editar pedidos pendentes ou em andamento
       return ['PENDENTE', 'EM_ANDAMENTO'].includes(pedido.status)
     }
 
     const podeAprovar = (pedido) => {
-      // Só pode aprovar pedidos pendentes
+      // SÃ³ pode aprovar pedidos pendentes
       return ['PENDENTE'].includes(pedido.status)
     }
 
     const podeExcluir = (pedido) => {
-      // Pode excluir pedidos que ainda não foram aprovados
+      // Pode excluir pedidos que ainda nÃ£o foram aprovados
       return ['PENDENTE'].includes(pedido.status)
     }
 
     const podeAlterarStatus = (pedido) => {
-      // Pode alterar status de pedidos que não estão finalizados
+      // Pode alterar status de pedidos que nÃ£o estÃ£o finalizados
       return !['APROVADO', 'CANCELADO'].includes(pedido.status)
     }
 
@@ -757,7 +878,7 @@ export default {
         { value: 'CANCELADO', label: 'Cancelado' }
       ]
 
-      // Filtrar status disponíveis baseado no status atual
+      // Filtrar status disponÃ­veis baseado no status atual
       switch (statusAtual) {
         case 'PENDENTE':
           return todosStatus.filter(s => ['APROVADO', 'CANCELADO'].includes(s.value))
@@ -770,7 +891,7 @@ export default {
       try {
         isLoading.value = true
 
-        // Confirmação antes de alterar
+        // ConfirmaÃ§Ã£o antes de alterar
         const confirmacao = confirm(
           `Tem certeza que deseja alterar o status do pedido #${pedido.id} para "${getStatusLabel(novoStatus)}"?`
         )
@@ -831,7 +952,7 @@ export default {
       valorTotalFormatado,
       pedidosFiltrados,
 
-      // Métodos
+      // MÃ©todos
       carregarPedidos,
       formatarData,
       formatarDataCompleta,
@@ -927,7 +1048,7 @@ export default {
   transform: translateY(-1px);
 }
 
-/* Métricas */
+/* MÃ©tricas */
 .metrics-section {
   margin-bottom: 32px;
 }
@@ -995,7 +1116,7 @@ export default {
 .metric-growth.negative { color: #ef4444; }
 .metric-growth.neutral { color: #6b7280; }
 
-/* Seção de Pesquisa */
+/* SeÃ§Ã£o de Pesquisa */
 .search-section {
   background: white;
   border-radius: 12px;
@@ -1156,7 +1277,7 @@ export default {
   background-color: #f9fafb;
 }
 
-/* Células da tabela */
+/* CÃ©lulas da tabela */
 .pedido-cell .pedido-info {
   display: flex;
   flex-direction: column;
@@ -1228,7 +1349,7 @@ export default {
   color: #374151;
 }
 
-/* Botões de ação */
+/* BotÃµes de aÃ§Ã£o */
 .actions-cell {
   width: 120px;
 }
@@ -1724,5 +1845,311 @@ export default {
     width: 28px;
     height: 28px;
   }
+
+  .itens-list-detalhada,
+  .item-card-detalhado {
+    margin-bottom: 0.75rem;
+  }
+
+  .item-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cotacoes-mini-list {
+    flex-direction: column;
+  }
+
+  .atividade-grupo {
+    margin-bottom: 1rem;
+  }
+
+  .historico-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Estilos para Itens Detalhados */
+.itens-list-detalhada {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.item-card-detalhado {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.item-card-detalhado:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.item-header-detalhado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.item-numero-badge {
+  background: #3b82f6;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.item-quantidade-badge {
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.item-content {
+  padding: 16px;
+}
+
+.item-nome {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.item-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.item-info,
+.item-descricao,
+.item-observacao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-value {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Cotações Mini Card */
+.item-cotacoes {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cotacoes-mini-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cotacao-mini-card {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.cotacao-fornecedor {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.cotacao-valor {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.cotacao-prazo {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* HistÃ³rico */
+.loading-message {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.historico-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.stat-card-small {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-icon {
+  font-size: 2rem;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-info .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+}
+
+.stat-info .stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Atividades */
+.historico-atividades {
+  margin-top: 24px;
+}
+
+.historico-atividades h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.atividade-grupo {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.atividade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.atividade-header strong {
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.atividade-count {
+  background: #3b82f6;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.atividades-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.atividade-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.atividade-marker {
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.atividade-content {
+  flex: 1;
+}
+
+.atividade-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.atividade-fornecedor {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.atividade-data {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.atividade-detalhes {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.atividade-valor {
+  color: #059669;
+  font-weight: 600;
+}
+
+.timeline-status {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  background: #e5e7eb;
+  color: #374151;
 }
 </style>

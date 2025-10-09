@@ -62,11 +62,7 @@
                   maxlength="18"
                   @input="formatCNPJ"
                 />
-<<<<<<< HEAD
-                <span v-if="!isCnpjValid" class="error-message">CNPJ inválido</span>
-=======
                 <small class="form-hint">Formato: 00.000.000/0000-00</small>
->>>>>>> teste-telas-2-3
               </div>
 
               <div class="form-group">
@@ -116,11 +112,7 @@
                   maxlength="15"
                   @input="formatTelefone"
                 />
-<<<<<<< HEAD
-                <span v-if="!isTelefoneValid" class="error-message">Telefone inválido</span>
-=======
                 <small class="form-hint">Formato: (00) 00000-0000</small>
->>>>>>> teste-telas-2-3
               </div>
             </div>
           </div>
@@ -340,16 +332,6 @@ const isCnpjValid = computed(() => {
 });
 
 const isFormValid = computed(() => {
-<<<<<<< HEAD
-  const cnpj = formData.value.cnpj.replace(/\D/g, '');
-  const telefone = formData.value.contato.numero.replace(/\D/g, '');
-
-  return formData.value.razaoSocial &&
-         (cnpj.length === 14) &&
-         formData.value.contato.email &&
-         (telefone.length === 10 || telefone.length === 11) &&
-         formData.value.endereco.cep &&
-=======
   const cnpjSemFormatacao = formData.value.cnpj.replace(/\D/g, '')
   const telefoneSemFormatacao = formData.value.contato.numero.replace(/\D/g, '')
   const cepSemFormatacao = formData.value.endereco.cep.replace(/\D/g, '')
@@ -365,7 +347,6 @@ const isFormValid = computed(() => {
          telefoneSemFormatacao.length <= 11 &&
          cepSemFormatacao &&
          cepSemFormatacao.length === 8 &&
->>>>>>> teste-telas-2-3
          formData.value.endereco.estado &&
          formData.value.endereco.cidade &&
          formData.value.endereco.cidade.length <= 50 &&
