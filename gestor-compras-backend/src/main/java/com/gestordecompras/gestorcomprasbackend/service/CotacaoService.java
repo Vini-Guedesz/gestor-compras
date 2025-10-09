@@ -5,7 +5,6 @@ import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoUpdateDTO;
 import com.gestordecompras.gestorcomprasbackend.mapper.CotacaoMapper;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
-import com.gestordecompras.gestorcomprasbackend.model.fornecedor.Fornecedor;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.repository.CotacaoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeProdutoRepository;
@@ -46,23 +45,27 @@ public class CotacaoService {
     public CotacaoDTO getCotacaoById(Long id) {
         return cotacaoRepository.findById(id)
                 .map(cotacaoMapper::toDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
     }
 
     @Transactional
     public CotacaoDTO createCotacao(CotacaoCreateDTO cotacaoCreateDTO) {
         Cotacao cotacao = cotacaoMapper.toEntity(cotacaoCreateDTO);
 
-        Fornecedor fornecedor = fornecedorDeProdutoRepository.findById(cotacaoCreateDTO.fornecedorId())
-                .map(f -> (Fornecedor) f)
-                .orElseGet(() -> fornecedorDeServicoRepository.findById(cotacaoCreateDTO.fornecedorId())
-                        .map(f -> (Fornecedor) f)
-                        .orElseThrow(() -> new EntityNotFoundException("Fornecedor not found")));
+        // Tenta buscar como fornecedor de produto primeiro
+        var fornecedorProduto = fornecedorDeProdutoRepository.findById(cotacaoCreateDTO.fornecedorId());
+        if (fornecedorProduto.isPresent()) {
+            cotacao.setFornecedorProduto(fornecedorProduto.get());
+        } else {
+            // Se não encontrar, busca como fornecedor de serviço
+            var fornecedorServico = fornecedorDeServicoRepository.findById(cotacaoCreateDTO.fornecedorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Fornecedor not found"));
+            cotacao.setFornecedorServico(fornecedorServico);
+        }
 
         ItemPedido itemPedido = itemPedidoRepository.findById(cotacaoCreateDTO.itemPedidoId())
                 .orElseThrow(() -> new EntityNotFoundException("ItemPedido not found"));
 
-        cotacao.setFornecedorId(fornecedor.getId());
         cotacao.setItemPedido(itemPedido);
 
         return cotacaoMapper.toDTO(cotacaoRepository.save(cotacao));
@@ -86,13 +89,13 @@ public class CotacaoService {
                     }
                     return cotacaoMapper.toDTO(cotacaoRepository.save(existingCotacao));
                 })
-                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
     }
 
     @Transactional
     public void deleteCotacao(Long id) {
         if (!cotacaoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Cotação não encontrada com o id: " + id);
+            throw new EntityNotFoundException("Cotação não encontrada com ID: " + id);
         }
         cotacaoRepository.deleteById(id);
     }

@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cotacoes")
-@Tag(name = "Cotações", description = "Operações relacionadas a cotações")
+@Tag(name = "Cotações", description = "API para gerenciamento de cotações de fornecedores")
 @SecurityRequirement(name = "bearerAuth")
 public class CotacaoController {
 
@@ -62,7 +62,7 @@ public class CotacaoController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos"),
             @ApiResponse(responseCode = "404", description = "Cotação não encontrada")
     })
-    public ResponseEntity<CotacaoDTO> updateCotacao(@PathVariable Long id, @RequestBody CotacaoUpdateDTO cotacaoUpdateDTO) {
+    public ResponseEntity<CotacaoDTO> updateCotacao(@PathVariable Long id, @Valid @RequestBody CotacaoUpdateDTO cotacaoUpdateDTO) {
         return ResponseEntity.ok(cotacaoService.updateCotacao(id, cotacaoUpdateDTO));
     }
 

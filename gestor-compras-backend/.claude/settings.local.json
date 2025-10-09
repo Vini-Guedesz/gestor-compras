@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw clean compile)",
+      "Bash(./mvnw:*)",
+      "Bash(timeout 30 bash -c 'until echo > /dev/tcp/localhost/8081 2>/dev/null; do sleep 1; done')",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

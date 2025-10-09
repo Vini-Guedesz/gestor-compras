@@ -33,7 +33,7 @@ public class EnderecoController {
     @Operation(summary = "Listar todos os endereços", description = "Retorna uma lista com todos os endereços cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de endereços retornada com sucesso")
     public ResponseEntity<List<EnderecoDTO>> findAll() {
-        List<EnderecoDTO> enderecos = service.findAll();
+        List<EnderecoDTO> enderecos = service.getAllEnderecos();
         return ResponseEntity.ok(enderecos);
     }
 
@@ -44,7 +44,7 @@ public class EnderecoController {
             @ApiResponse(responseCode = "404", description = "Endereço não encontrado")
     })
     public ResponseEntity<EnderecoDTO> findById(@PathVariable Integer id) {
-        EnderecoDTO endereco = service.findById(id);
+        EnderecoDTO endereco = service.getEnderecoById(id);
         return ResponseEntity.ok(endereco);
     }
 
@@ -55,7 +55,7 @@ public class EnderecoController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
     })
     public ResponseEntity<EnderecoDTO> create(@RequestBody @Valid EnderecoCreateDTO dto, UriComponentsBuilder uriBuilder) {
-        EnderecoDTO createdEndereco = service.create(dto);
+        EnderecoDTO createdEndereco = service.createEndereco(dto);
         URI uri = uriBuilder.path("/api/enderecos/{id}").buildAndExpand(createdEndereco.id()).toUri();
         return ResponseEntity.created(uri).body(createdEndereco);
     }
@@ -68,7 +68,7 @@ public class EnderecoController {
             @ApiResponse(responseCode = "404", description = "Endereço não encontrado")
     })
     public ResponseEntity<EnderecoDTO> update(@RequestBody @Valid EnderecoUpdateDTO dto) {
-        EnderecoDTO updatedEndereco = service.update(dto);
+        EnderecoDTO updatedEndereco = service.updateEndereco(dto);
         return ResponseEntity.ok(updatedEndereco);
     }
 
@@ -79,7 +79,7 @@ public class EnderecoController {
             @ApiResponse(responseCode = "404", description = "Endereço não encontrado")
     })
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        service.delete(id);
+        service.deleteEndereco(id);
         return ResponseEntity.noContent().build();
     }
 }

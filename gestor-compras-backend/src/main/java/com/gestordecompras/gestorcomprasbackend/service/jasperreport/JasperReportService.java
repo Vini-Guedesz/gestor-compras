@@ -25,7 +25,7 @@ public class JasperReportService {
     }
 
     public byte[] gerarRelatorioFornecedores() throws JRException {
-        List<FornecedorDeProduto> fornecedores = fornecedorDeProdutoService.findAllEntities();
+        List<FornecedorDeProduto> fornecedores = fornecedorDeProdutoService.getAllFornecedoresDeProdutoEntities();
 
         InputStream inputStream = getClass().getResourceAsStream("/relatorios/fornecedores.jrxml");
         if (inputStream == null) {
@@ -44,7 +44,7 @@ public class JasperReportService {
     }
 
     public byte[] gerarRelatorioItensPedido() throws JRException {
-        List<ItemPedido> itens = itemPedidoService.findAllEntities();
+        List<ItemPedido> itens = itemPedidoService.getAllItensEntities();
 
         InputStream inputStream = getClass().getResourceAsStream("/relatorios/items_produtos.jrxml");
         if (inputStream == null) {
@@ -63,7 +63,7 @@ public class JasperReportService {
     }
 
     public byte[] gerarRelatorioItemPedidoPorId(Long id) throws JRException {
-        ItemPedido item = itemPedidoService.findEntityById(id);
+        ItemPedido item = itemPedidoService.getItemEntityById(id);
 
         InputStream inputStream = getClass().getResourceAsStream("/relatorios/item_produto_detalhe.jrxml");
         if (inputStream == null) {

@@ -24,27 +24,27 @@ public class EnderecoService {
         this.mapper = mapper;
     }
 
-    public List<EnderecoDTO> findAll() {
+    public List<EnderecoDTO> getAllEnderecos() {
         return repository.findAll().stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    public EnderecoDTO findById(Integer id) {
+    public EnderecoDTO getEnderecoById(Integer id) {
         return repository.findById(id)
                 .map(mapper::toDTO)
                 .orElseThrow(() -> new EntityNotFoundException("Endereço não encontrado com ID: " + id));
     }
 
     @Transactional
-    public EnderecoDTO create(EnderecoCreateDTO dto) {
+    public EnderecoDTO createEndereco(EnderecoCreateDTO dto) {
         Endereco endereco = mapper.toEntity(dto);
         Endereco savedEndereco = repository.save(endereco);
         return mapper.toDTO(savedEndereco);
     }
 
     @Transactional
-    public EnderecoDTO update(EnderecoUpdateDTO dto) {
+    public EnderecoDTO updateEndereco(EnderecoUpdateDTO dto) {
         Endereco endereco = repository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException("Endereço não encontrado com ID: " + dto.id()));
 
@@ -53,7 +53,7 @@ public class EnderecoService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void deleteEndereco(Integer id) {
         if (!repository.existsById(id)) {
             throw new EntityNotFoundException("Endereço não encontrado com ID: " + id);
         }

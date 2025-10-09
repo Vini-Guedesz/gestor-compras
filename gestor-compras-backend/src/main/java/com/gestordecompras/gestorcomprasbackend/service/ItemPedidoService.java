@@ -30,7 +30,7 @@ public class ItemPedidoService {
     public ItemPedidoDTO getItemById(Long id) {
         return itemPedidoRepository.findById(id)
                 .map(itemPedidoMapper::toDTO)
-                .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com ID: " + id));
     }
 
     public ItemPedidoDTO createItem(ItemPedidoDTO itemPedidoDTO) {
@@ -47,21 +47,21 @@ public class ItemPedidoService {
                     itemPedido.setObservacao(itemPedidoDTO.observacao());
                     return itemPedidoMapper.toDTO(itemPedidoRepository.save(itemPedido));
                 })
-                .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com o id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com ID: " + id));
     }
 
     public void deleteItem(Long id) {
         if (!itemPedidoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Item de pedido não encontrado com o id: " + id);
+            throw new EntityNotFoundException("Item de pedido não encontrado com ID: " + id);
         }
         itemPedidoRepository.deleteById(id);
     }
 
-    public List<ItemPedido> findAllEntities() {
+    public List<ItemPedido> getAllItensEntities() {
         return itemPedidoRepository.findAll();
     }
 
-    public ItemPedido findEntityById(Long id) {
-        return itemPedidoRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com o id: " + id));
+    public ItemPedido getItemEntityById(Long id) {
+        return itemPedidoRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com ID: " + id));
     }
 }

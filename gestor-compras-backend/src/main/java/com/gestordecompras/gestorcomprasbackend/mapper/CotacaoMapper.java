@@ -15,7 +15,7 @@ public class CotacaoMapper {
         return new CotacaoDTO(
                 cotacao.getId(),
                 cotacao.getFornecedorId(),
-                cotacao.getItemPedido().getId(),
+                cotacao.getItemPedido() != null ? cotacao.getItemPedido().getId() : null,
                 cotacao.getPreco(),
                 cotacao.getPrazoEntrega(),
                 cotacao.getDataCotacao(),
