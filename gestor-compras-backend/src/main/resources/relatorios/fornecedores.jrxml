@@ -3,38 +3,179 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
     http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
-              name="fornecedores" pageWidth="595" pageHeight="842" columnWidth="555"
-              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+              name="fornecedores" pageWidth="595" pageHeight="842" columnWidth="535"
+              leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20" uuid="f34858c0-9f74-4dac-8bcb-5848b7ba2975">
+
+    <!-- Estilos padronizados -->
+    <style name="Title" forecolor="#1A237E" fontName="Arial" fontSize="24" isBold="true"/>
+    <style name="SubTitle" forecolor="#3F51B5" fontName="Arial" fontSize="14" isBold="true"/>
+    <style name="Header" forecolor="#FFFFFF" fontName="Arial" fontSize="11" isBold="true"/>
+    <style name="Detail" fontName="Arial" fontSize="10"/>
+    <style name="Footer" forecolor="#666666" fontName="Arial" fontSize="9"/>
+    <style name="Row" mode="Opaque">
+        <conditionalStyle>
+            <conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+            <style backcolor="#F5F5F5"/>
+        </conditionalStyle>
+    </style>
 
     <field name="id" class="java.lang.Integer"/>
     <field name="razaoSocial" class="java.lang.String"/>
     <field name="cnpj" class="java.lang.String"/>
 
+    <!-- Cabeçalho do Relatório -->
     <title>
-        <band height="40">
+        <band height="125">
+            <!-- Logo UEMA Centralizada -->
+            <image scaleImage="RetainShape" hAlign="Center" vAlign="Top">
+                <reportElement x="192" y="10" width="150" height="50" uuid="a1b2c3d4-e5f6-4789-a012-3456789abcde"/>
+                <imageExpression><![CDATA["relatorios/logo-uema-site.png"]]></imageExpression>
+            </image>
+
+            <!-- Nome do Relatório Centralizado -->
             <staticText>
-                <reportElement x="0" y="0" width="555" height="40"/>
-                <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="18" isBold="true"/>
-                </textElement>
-                <text><![CDATA[Relatório de Fornecedores]]></text>
+                <reportElement style="Title" x="0" y="70" width="535" height="35" uuid="c3d4e5f6-a7b8-4901-c234-56789abcdef0"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[RELATÓRIO DE FORNECEDORES]]></text>
             </staticText>
+
+            <!-- Versão do Relatório -->
+            <staticText>
+                <reportElement style="Footer" x="420" y="108" width="115" height="12" uuid="a9a0a1a2-b3b4-4c5c-6d7d-8e9e0f1f2f3f"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[Versão 1.0]]></text>
+            </staticText>
+
+            <!-- Linha Separadora -->
+            <line>
+                <reportElement x="0" y="122" width="535" height="1" forecolor="#3F51B5" uuid="d4e5f6a7-b8c9-4012-d345-6789abcdef01"/>
+                <graphicElement>
+                    <pen lineWidth="2.0" lineStyle="Solid"/>
+                </graphicElement>
+            </line>
         </band>
     </title>
 
+    <!-- Cabeçalho de Página -->
+    <pageHeader>
+        <band height="5">
+            <line>
+                <reportElement x="0" y="2" width="535" height="1" forecolor="#CCCCCC" uuid="e5f6a7b8-c9d0-4123-e456-789abcdef012"/>
+                <graphicElement>
+                    <pen lineWidth="0.5"/>
+                </graphicElement>
+            </line>
+        </band>
+    </pageHeader>
+
+    <!-- Cabeçalho das Colunas -->
     <columnHeader>
-        <band height="20">
-            <staticText><reportElement x="0" y="0" width="50" height="20"/><textElement><font isBold="true"/></textElement><text><![CDATA[ID]]></text></staticText>
-            <staticText><reportElement x="50" y="0" width="300" height="20"/><textElement><font isBold="true"/></textElement><text><![CDATA[Razão Social]]></text></staticText>
-            <staticText><reportElement x="350" y="0" width="200" height="20"/><textElement><font isBold="true"/></textElement><text><![CDATA[CNPJ]]></text></staticText>
+        <band height="25">
+            <rectangle>
+                <reportElement mode="Opaque" x="0" y="0" width="535" height="25" backcolor="#3F51B5" uuid="f6a7b8c9-d0e1-4234-f567-89abcdef0123"/>
+                <graphicElement>
+                    <pen lineWidth="0.0"/>
+                </graphicElement>
+            </rectangle>
+
+            <staticText>
+                <reportElement style="Header" x="5" y="2" width="60" height="20" uuid="a7b8c9d0-e1f2-4345-a678-9abcdef01234"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[ID]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement style="Header" x="70" y="2" width="280" height="20" uuid="b8c9d0e1-f2a3-4456-b789-abcdef012345"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <text><![CDATA[Razão Social]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement style="Header" x="355" y="2" width="175" height="20" uuid="c9d0e1f2-a3b4-4567-c89a-bcdef0123456"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <text><![CDATA[CNPJ]]></text>
+            </staticText>
         </band>
     </columnHeader>
 
+    <!-- Detalhes (Linhas de Dados) -->
     <detail>
-        <band height="20">
-            <textField><reportElement x="0" y="0" width="50" height="20"/><textFieldExpression><![CDATA[$F{id}]]></textFieldExpression></textField>
-            <textField><reportElement x="50" y="0" width="300" height="20"/><textFieldExpression><![CDATA[$F{razaoSocial}]]></textFieldExpression></textField>
-            <textField><reportElement x="350" y="0" width="200" height="20"/><textFieldExpression><![CDATA[$F{cnpj}]]></textFieldExpression></textField>
+        <band height="25">
+            <elementGroup>
+                <rectangle>
+                    <reportElement style="Row" x="0" y="0" width="535" height="25" uuid="d0e1f2a3-b4c5-4678-d89a-bcdef0123456"/>
+                    <graphicElement>
+                        <pen lineWidth="0.5" lineColor="#E0E0E0"/>
+                    </graphicElement>
+                </rectangle>
+
+                <textField textAdjust="StretchHeight">
+                    <reportElement style="Detail" x="5" y="2" width="60" height="20" uuid="e1f2a3b4-c5d6-4789-e90a-bcdef0123456"/>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                    <textFieldExpression><![CDATA[$F{id}]]></textFieldExpression>
+                </textField>
+
+                <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                    <reportElement style="Detail" x="70" y="2" width="280" height="20" uuid="f2a3b4c5-d6e7-4890-f01a-bcdef0123456"/>
+                    <textElement textAlignment="Left" verticalAlignment="Middle">
+                        <paragraph leftIndent="5"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$F{razaoSocial}]]></textFieldExpression>
+                </textField>
+
+                <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                    <reportElement style="Detail" x="355" y="2" width="175" height="20" uuid="a3b4c5d6-e7f8-4901-a12b-cdef01234567"/>
+                    <textElement textAlignment="Left" verticalAlignment="Middle">
+                        <paragraph leftIndent="5"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$F{cnpj}]]></textFieldExpression>
+                </textField>
+            </elementGroup>
         </band>
     </detail>
+
+    <!-- Rodapé da Página -->
+    <pageFooter>
+        <band height="30">
+            <line>
+                <reportElement x="0" y="2" width="535" height="1" forecolor="#3F51B5" uuid="b4c5d6e7-f8a9-4012-b23c-def012345678"/>
+                <graphicElement>
+                    <pen lineWidth="1.0"/>
+                </graphicElement>
+            </line>
+
+            <!-- Data e Hora de Geração -->
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement style="Footer" x="5" y="8" width="150" height="20" uuid="c5d6e7f8-a9b0-4123-c34d-ef0123456789"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+
+            <!-- Sistema -->
+            <staticText>
+                <reportElement style="Footer" x="180" y="8" width="180" height="20" uuid="d6e7f8a9-b0c1-4234-d45e-f01234567890"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Sistema de Gestão de Compras - UEMA]]></text>
+            </staticText>
+
+            <!-- Paginação -->
+            <textField>
+                <reportElement style="Footer" x="385" y="8" width="100" height="20" uuid="e7f8a9b0-c1d2-4345-e56f-012345678901"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+
+            <textField evaluationTime="Report">
+                <reportElement style="Footer" x="485" y="8" width="50" height="20" uuid="f8a9b0c1-d2e3-4456-f67a-123456789012"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
 </jasperReport>
