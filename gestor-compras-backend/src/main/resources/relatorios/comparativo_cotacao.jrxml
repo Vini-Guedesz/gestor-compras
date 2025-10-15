@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="comparativo_cotacao" pageWidth="595" pageHeight="842" columnWidth="535"
+              leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
+
+    <style name="Title" forecolor="#1A237E" fontName="Arial" fontSize="24" isBold="true"/>
+    <style name="SubTitle" forecolor="#3F51B5" fontName="Arial" fontSize="12" isBold="true"/>
+    <style name="Header" forecolor="#FFFFFF" fontName="Arial" fontSize="10" isBold="true"/>
+    <style name="Detail" fontName="Arial" fontSize="9"/>
+    <style name="Footer" forecolor="#666666" fontName="Arial" fontSize="9"/>
+    <style name="Row" mode="Opaque">
+        <conditionalStyle>
+            <conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+            <style backcolor="#F5F5F5"/>
+        </conditionalStyle>
+    </style>
+
+    <parameter name="ITEM_PEDIDO_ID" class="java.lang.Long"/>
+
+    <field name="cotacaoId" class="java.lang.String"/>
+    <field name="nomeItem" class="java.lang.String"/>
+    <field name="fornecedor" class="java.lang.String"/>
+    <field name="cnpjFornecedor" class="java.lang.String"/>
+    <field name="preco" class="java.math.BigDecimal"/>
+    <field name="prazoEntrega" class="java.time.LocalDate"/>
+    <field name="dataCotacao" class="java.time.LocalDate"/>
+    <field name="tipoFornecedor" class="java.lang.String"/>
+
+    <variable name="MENOR_PRECO" class="java.math.BigDecimal" calculation="Lowest">
+        <variableExpression><![CDATA[$F{preco}]]></variableExpression>
+    </variable>
+
+    <title>
+        <band height="160">
+            <image scaleImage="RetainShape" hAlign="Center" vAlign="Top">
+                <reportElement x="192" y="10" width="150" height="50"/>
+                <imageExpression><![CDATA["relatorios/logo-uema-site.png"]]></imageExpression>
+            </image>
+            <staticText>
+                <reportElement style="Title" x="0" y="70" width="535" height="35"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[COMPARATIVO DE COTAÇÕES]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="SubTitle" x="0" y="110" width="100" height="20"/>
+                <textElement verticalAlignment="Middle"/>
+                <text><![CDATA[Item Solicitado:]]></text>
+            </staticText>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="SubTitle" x="105" y="110" width="430" height="20"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="false"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{nomeItem}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Footer" x="420" y="143" width="115" height="12"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[Versão 1.0]]></text>
+            </staticText>
+            <line>
+                <reportElement x="0" y="157" width="535" height="1" forecolor="#3F51B5"/>
+                <graphicElement>
+                    <pen lineWidth="2.0"/>
+                </graphicElement>
+            </line>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="25">
+            <rectangle>
+                <reportElement mode="Opaque" x="0" y="0" width="535" height="25" backcolor="#3F51B5"/>
+            </rectangle>
+            <staticText>
+                <reportElement style="Header" x="5" y="2" width="160" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <text><![CDATA[Fornecedor]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="170" y="2" width="100" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <text><![CDATA[CNPJ]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="275" y="2" width="80" height="20"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <paragraph rightIndent="5"/>
+                </textElement>
+                <text><![CDATA[Preço]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="360" y="2" width="70" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Prazo]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="435" y="2" width="95" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Data Cotação]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="25">
+            <rectangle>
+                <reportElement style="Row" x="0" y="0" width="535" height="25">
+                    <printWhenExpression><![CDATA[$F{preco}.equals($V{MENOR_PRECO})]]></printWhenExpression>
+                </reportElement>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#E0E0E0"/>
+                </graphicElement>
+            </rectangle>
+            <rectangle>
+                <reportElement mode="Opaque" x="0" y="0" width="535" height="25" backcolor="#C8E6C9">
+                    <printWhenExpression><![CDATA[$F{preco}.equals($V{MENOR_PRECO})]]></printWhenExpression>
+                </reportElement>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#4CAF50"/>
+                </graphicElement>
+            </rectangle>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Detail" x="5" y="2" width="160" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{fornecedor}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Detail" x="170" y="2" width="100" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{cnpjFornecedor}]]></textFieldExpression>
+            </textField>
+            <textField pattern="R$ #,##0.00">
+                <reportElement style="Detail" x="275" y="2" width="80" height="20"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font isBold="true" size="10"/>
+                    <paragraph rightIndent="5"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{preco}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+                <reportElement style="Detail" x="360" y="2" width="70" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{prazoEntrega}]]></textFieldExpression>
+            </textField>
+            <textField pattern="dd/MM/yyyy">
+                <reportElement style="Detail" x="435" y="2" width="95" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{dataCotacao}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="265" y="5" width="10" height="15" forecolor="#4CAF50">
+                    <printWhenExpression><![CDATA[$F{preco}.equals($V{MENOR_PRECO})]]></printWhenExpression>
+                </reportElement>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="12" isBold="true"/>
+                </textElement>
+                <text><![CDATA[★]]></text>
+            </staticText>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="30">
+            <line>
+                <reportElement x="0" y="2" width="535" height="1" forecolor="#3F51B5"/>
+                <graphicElement>
+                    <pen lineWidth="1.0"/>
+                </graphicElement>
+            </line>
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement style="Footer" x="5" y="8" width="150" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Footer" x="180" y="8" width="180" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Sistema de Gestão de Compras - UEMA]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Footer" x="385" y="8" width="100" height="20"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Footer" x="485" y="8" width="50" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <summary>
+        <band height="60">
+            <staticText>
+                <reportElement x="0" y="10" width="535" height="15" forecolor="#4CAF50"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="9" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[★ Melhor Preço]]></text>
+            </staticText>
+            <line>
+                <reportElement x="0" y="35" width="535" height="1" forecolor="#CCCCCC"/>
+            </line>
+        </band>
+    </summary>
+</jasperReport>

@@ -1,10 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./mvnw clean compile)",
-      "Bash(./mvnw:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell:*)",
+      "Bash(./mvnw spring-boot:run:*)",
       "Bash(timeout 30 bash -c 'until echo > /dev/tcp/localhost/8081 2>/dev/null; do sleep 1; done')",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(/dev/null)",
+      "Bash(for file in pedidos_fechados itens_mais_solicitados dashboard_executivo comparativo_cotacao)",
+      "Bash(do mv \"$file.jrxml.bak\" \"$file.jrxml\")",
+      "Bash(done)",
+      "Bash(python3:*)",
+      "Bash(for endpoint in dashboard-executivo itens-mais-solicitados pedidos-fechados \"comparativo-cotacao/1\")",
+      "Bash(do)",
+      "Bash(echo:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
