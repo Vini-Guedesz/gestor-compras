@@ -121,6 +121,134 @@ const relatorioService = {
       console.error('Erro ao visualizar relatório de fornecedores:', error)
       throw new Error('Erro ao visualizar relatório. Tente novamente.')
     }
+  },
+
+  /**
+   * Gera e faz download do relatório de itens de pedido
+   * @returns {Promise<void>}
+   */
+  async gerarRelatorioItensPedido() {
+    try {
+      const response = await relatorioClient.get('/relatorios/itens-pedido')
+
+      // Cria um blob com os dados do PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+
+      // Cria uma URL temporária para o blob
+      const url = window.URL.createObjectURL(blob)
+
+      // Cria um elemento <a> temporário para fazer o download
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'relatorio-itens-pedido.pdf'
+
+      // Adiciona o elemento ao DOM, clica nele e depois remove
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      // Libera a URL temporária
+      window.URL.revokeObjectURL(url)
+
+      return true
+    } catch (error) {
+      console.error('Erro ao gerar relatório de itens de pedido:', error)
+      throw new Error('Erro ao gerar relatório. Tente novamente.')
+    }
+  },
+
+  /**
+   * Visualiza o relatório de itens de pedido em uma nova aba
+   * @returns {Promise<void>}
+   */
+  async visualizarRelatorioItensPedido() {
+    try {
+      const response = await relatorioClient.get('/relatorios/itens-pedido')
+
+      // Cria um blob com os dados do PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+
+      // Cria uma URL temporária para o blob
+      const url = window.URL.createObjectURL(blob)
+
+      // Abre o PDF em uma nova aba
+      window.open(url, '_blank')
+
+      // Libera a URL após um tempo para permitir que o navegador carregue
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+      }, 1000)
+
+      return true
+    } catch (error) {
+      console.error('Erro ao visualizar relatório de itens de pedido:', error)
+      throw new Error('Erro ao visualizar relatório. Tente novamente.')
+    }
+  },
+
+  /**
+   * Gera e faz download do relatório de um item de pedido específico
+   * @param {number} id - ID do item de pedido
+   * @returns {Promise<void>}
+   */
+  async gerarRelatorioItemPedido(id) {
+    try {
+      const response = await relatorioClient.get(`/relatorios/itens-pedido/${id}`)
+
+      // Cria um blob com os dados do PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+
+      // Cria uma URL temporária para o blob
+      const url = window.URL.createObjectURL(blob)
+
+      // Cria um elemento <a> temporário para fazer o download
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `relatorio-item-pedido-${id}.pdf`
+
+      // Adiciona o elemento ao DOM, clica nele e depois remove
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      // Libera a URL temporária
+      window.URL.revokeObjectURL(url)
+
+      return true
+    } catch (error) {
+      console.error(`Erro ao gerar relatório do item de pedido ${id}:`, error)
+      throw new Error('Erro ao gerar relatório. Tente novamente.')
+    }
+  },
+
+  /**
+   * Visualiza o relatório de um item de pedido específico em uma nova aba
+   * @param {number} id - ID do item de pedido
+   * @returns {Promise<void>}
+   */
+  async visualizarRelatorioItemPedido(id) {
+    try {
+      const response = await relatorioClient.get(`/relatorios/itens-pedido/${id}`)
+
+      // Cria um blob com os dados do PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+
+      // Cria uma URL temporária para o blob
+      const url = window.URL.createObjectURL(blob)
+
+      // Abre o PDF em uma nova aba
+      window.open(url, '_blank')
+
+      // Libera a URL após um tempo para permitir que o navegador carregue
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+      }, 1000)
+
+      return true
+    } catch (error) {
+      console.error(`Erro ao visualizar relatório do item de pedido ${id}:`, error)
+      throw new Error('Erro ao visualizar relatório. Tente novamente.')
+    }
   }
 }
 

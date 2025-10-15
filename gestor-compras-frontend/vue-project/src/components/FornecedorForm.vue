@@ -47,25 +47,22 @@
                   placeholder="Nome da empresa"
                   maxlength="255"
                 />
-                <small class="form-hint">{{ formData.razaoSocial.length }}/255 caracteres</small>
               </div>
 
-              <div class="form-group">
+                            <div class="form-group">
                 <label class="form-label">CNPJ *</label>
                 <input
                   type="text"
                   v-model="formData.cnpj"
+                  @input="formatCNPJ"
                   class="form-input"
-                  :class="{ 'invalid-field': !isCnpjValid }"
                   required
                   placeholder="00.000.000/0000-00"
                   maxlength="18"
-                  @input="formatCNPJ"
                 />
-                <small class="form-hint">Formato: 00.000.000/0000-00</small>
               </div>
 
-              <div class="form-group">
+                            <div class="form-group">
                 <label class="form-label">
                   {{ formData.tipo === 'produto' ? 'Inscrição Estadual' : 'Inscrição Municipal' }}
                 </label>
@@ -73,10 +70,9 @@
                   type="text"
                   v-model="formData.inscricao"
                   class="form-input"
-                  :placeholder="formData.tipo === 'produto' ? 'Inscrição Estadual' : 'Inscrição Municipal'"
+                  :placeholder="formData.tipo === 'produto' ? 'Inscrição estadual (opcional)' : 'Inscrição municipal (opcional)'"
                   maxlength="255"
                 />
-                <small class="form-hint">{{ formData.inscricao.length }}/255 caracteres</small>
               </div>
 
 
@@ -97,22 +93,32 @@
                   placeholder="contato@empresa.com"
                   maxlength="100"
                 />
-                <small class="form-hint">{{ formData.contato.email.length }}/100 caracteres</small>
               </div>
 
               <div class="form-group">
-                <label class="form-label">Telefone *</label>
+                <label class="form-label">Telefone Fixo</label>
                 <input
                   type="text"
-                  v-model="formData.contato.numero"
+                  v-model="formData.contato.telefoneFixo"
                   class="form-input"
-                  :class="{ 'invalid-field': !isTelefoneValid }"
-                  required
+                  :class="{ 'invalid-field': formData.contato.telefoneFixo && !isTelefoneFixoValid }"
+                  placeholder="(00) 0000-0000"
+                  maxlength="14"
+                  @input="formatTelefoneFixo"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Celular</label>
+                <input
+                  type="text"
+                  v-model="formData.contato.celular"
+                  class="form-input"
+                  :class="{ 'invalid-field': formData.contato.celular && !isCelularValid }"
                   placeholder="(00) 00000-0000"
                   maxlength="15"
-                  @input="formatTelefone"
+                  @input="formatCelular"
                 />
-                <small class="form-hint">Formato: (00) 00000-0000</small>
               </div>
             </div>
           </div>
@@ -126,14 +132,13 @@
                 <input
                   type="text"
                   v-model="formData.endereco.cep"
+                  @input="formatCEP"
+                  @blur="buscarCEP"
                   class="form-input"
                   required
                   placeholder="00000-000"
                   maxlength="9"
-                  @input="formatCEP"
-                  @blur="buscarCEP"
                 />
-                <small class="form-hint">Formato: 00000-000</small>
               </div>
 
               <div class="form-group">
@@ -156,7 +161,6 @@
                   placeholder="Nome da cidade"
                   maxlength="50"
                 />
-                <small class="form-hint">{{ formData.endereco.cidade.length }}/50 caracteres</small>
               </div>
 
               <div class="form-group">
@@ -169,7 +173,6 @@
                   placeholder="Nome do bairro"
                   maxlength="60"
                 />
-                <small class="form-hint">{{ formData.endereco.bairro.length }}/60 caracteres</small>
               </div>
 
               <div class="form-group">
@@ -182,7 +185,6 @@
                   placeholder="Nome da rua"
                   maxlength="100"
                 />
-                <small class="form-hint">{{ formData.endereco.rua.length }}/100 caracteres</small>
               </div>
 
               <div class="form-group">
@@ -195,10 +197,7 @@
                   placeholder="123"
                   maxlength="10"
                 />
-                <small class="form-hint">{{ formData.endereco.numero.length }}/10 caracteres</small>
-              </div>
-
-              <div class="form-group full-width">
+              </div>              <div class="form-group full-width">
                 <label class="form-label">Complemento</label>
                 <input
                   type="text"
@@ -207,7 +206,6 @@
                   placeholder="Apto, sala, andar..."
                   maxlength="100"
                 />
-                <small class="form-hint">{{ formData.endereco.complemento.length }}/100 caracteres</small>
               </div>
             </div>
           </div>
@@ -217,7 +215,7 @@
       </div>
       <div class="modal-footer">
         <button @click="$emit('close')" class="btn-secondary" type="button">Cancelar</button>
-        <button @click="handleSubmit" class="btn-primary" :disabled="!isFormValid">
+        <button @click="handleSubmit" class="btn-primary" :disabled="!isFormValid" type="button">
           {{ fornecedor ? 'Atualizar' : 'Cadastrar' }}
         </button>
       </div>
@@ -299,41 +297,54 @@ const estados = ref([
 
 
 
-// Dados do formulário
+// ============================================
+// DADOS DO FORMULÁRIO
+// Estrutura baseada nos DTOs do backend
+// ============================================
 const formData = ref({
-  tipo: 'produto',
+  tipo: 'produto', // 'produto' ou 'servico' - apenas para controle do frontend
+  
+  // Campos principais
   razaoSocial: '',
   cnpj: '',
-  inscricao: '',
+  inscricao: '', // inscricaoEstadual (produto) ou inscricaoMunicipal (serviço)
+  
+  // Objeto CONTATO (ContatoCreateDTO)
   contato: {
-    email: '',
-    numero: ''
+    email: '',           // OBRIGATÓRIO
+    telefoneFixo: '',    // OPCIONAL - 10 ou 11 dígitos
+    celular: ''          // OPCIONAL - 11 dígitos (deve começar com 9 após DDD)
   },
+  
+  // Objeto ENDERECO (EnderecoCreateDTO)
   endereco: {
-    cep: '',
-    estado: '',
-    cidade: '',
-    bairro: '',
-    rua: '',
-    numero: '',
-    complemento: ''
+    cep: '',            // OBRIGATÓRIO - 8 dígitos
+    estado: '',         // OBRIGATÓRIO - sigla UF
+    cidade: '',         // OBRIGATÓRIO
+    bairro: '',         // OBRIGATÓRIO
+    rua: '',            // OBRIGATÓRIO
+    numero: '',         // OBRIGATÓRIO - número do endereço
+    complemento: ''     // OPCIONAL
   }
 })
 
 // Validação do formulário
-const isTelefoneValid = computed(() => {
-  const telefone = formData.value.contato.numero.replace(/\D/g, '');
-  return telefone.length === 10 || telefone.length === 11;
+const isTelefoneFixoValid = computed(() => {
+  if (!formData.value.contato.telefoneFixo) return true;
+  const telefone = formData.value.contato.telefoneFixo.replace(/\D/g, '');
+  return telefone.length === 10; // (00) 0000-0000
 });
 
-const isCnpjValid = computed(() => {
-  const cnpj = formData.value.cnpj.replace(/\D/g, '');
-  return cnpj.length === 14;
+const isCelularValid = computed(() => {
+  if (!formData.value.contato.celular) return true;
+  const celular = formData.value.contato.celular.replace(/\D/g, '');
+  return celular.length === 11; // (00) 00000-0000
 });
 
 const isFormValid = computed(() => {
   const cnpjSemFormatacao = formData.value.cnpj.replace(/\D/g, '')
-  const telefoneSemFormatacao = formData.value.contato.numero.replace(/\D/g, '')
+  const telefoneFixoSemFormatacao = formData.value.contato.telefoneFixo?.replace(/\D/g, '') || ''
+  const celularSemFormatacao = formData.value.contato.celular?.replace(/\D/g, '') || ''
   const cepSemFormatacao = formData.value.endereco.cep.replace(/\D/g, '')
 
   return formData.value.razaoSocial &&
@@ -342,9 +353,9 @@ const isFormValid = computed(() => {
          cnpjSemFormatacao.length === 14 &&
          formData.value.contato.email &&
          formData.value.contato.email.length <= 100 &&
-         telefoneSemFormatacao &&
-         telefoneSemFormatacao.length >= 10 &&
-         telefoneSemFormatacao.length <= 11 &&
+         // Validação removida: telefone não é obrigatório no backend
+         (!telefoneFixoSemFormatacao || telefoneFixoSemFormatacao.length === 10) &&
+         (!celularSemFormatacao || celularSemFormatacao.length === 11) &&
          cepSemFormatacao &&
          cepSemFormatacao.length === 8 &&
          formData.value.endereco.estado &&
@@ -360,27 +371,28 @@ const isFormValid = computed(() => {
          (!formData.value.endereco.complemento || formData.value.endereco.complemento.length <= 100)
 })
 
-// Resetar formulário
+// ============================================
+// RESETAR FORMULÁRIO
+// ============================================
 const resetForm = () => {
-  formData.value = {
-    tipo: 'produto',
-    razaoSocial: '',
-    cnpj: '',
-    inscricao: '',
-    contato: {
-      email: '',
-      numero: ''
-    },
-    endereco: {
-      cep: '',
-      estado: '',
-      cidade: '',
-      bairro: '',
-      rua: '',
-      numero: '',
-      complemento: ''
-    }
-  }
+  formData.value.tipo = 'produto'
+  formData.value.razaoSocial = ''
+  formData.value.cnpj = ''
+  formData.value.inscricao = ''
+  
+  // Resetar contato
+  formData.value.contato.email = ''
+  formData.value.contato.telefoneFixo = ''
+  formData.value.contato.celular = ''
+  
+  // Resetar endereco
+  formData.value.endereco.cep = ''
+  formData.value.endereco.estado = ''
+  formData.value.endereco.cidade = ''
+  formData.value.endereco.bairro = ''
+  formData.value.endereco.rua = ''
+  formData.value.endereco.numero = ''
+  formData.value.endereco.complemento = ''
 }
 
 // Watchers para carregar dados do fornecedor editado
@@ -404,13 +416,22 @@ const formatCNPJ = (event) => {
   formData.value.cnpj = value
 }
 
-const formatTelefone = (event) => {
+const formatTelefoneFixo = (event) => {
   let value = event.target.value.replace(/\D/g, '')
-  // Limita a 11 dígitos (DDD + 9 dígitos)
+  // Limita a 10 dígitos (DDD + 8 dígitos para fixo)
+  value = value.substring(0, 10)
+  value = value.replace(/^(\d{2})(\d)/, '($1) $2')
+  value = value.replace(/(\d{4})(\d{4})$/, '$1-$2')
+  formData.value.contato.telefoneFixo = value
+}
+
+const formatCelular = (event) => {
+  let value = event.target.value.replace(/\D/g, '')
+  // Limita a 11 dígitos (DDD + 9 dígitos para celular)
   value = value.substring(0, 11)
   value = value.replace(/^(\d{2})(\d)/, '($1) $2')
-  value = value.replace(/(\d{4,5})(\d{4})$/, '$1-$2')
-  formData.value.contato.numero = value
+  value = value.replace(/(\d{5})(\d{4})$/, '$1-$2')
+  formData.value.contato.celular = value
 }
 
 const formatCEP = (event) => {
@@ -446,58 +467,138 @@ const clearSecondaryFields = () => {
   formData.value.inscricao = ''
 }
 
-// Carregar dados do fornecedor para edição
+// ============================================
+// CARREGAR DADOS DO FORNECEDOR PARA EDIÇÃO
+// ============================================
 const loadFornecedorData = (fornecedor) => {
+  // Dados principais
   formData.value.tipo = fornecedor.tipo || 'produto'
   formData.value.razaoSocial = fornecedor.razaoSocial || ''
   formData.value.cnpj = fornecedor.cnpj || ''
-  formData.value.inscricao = fornecedor.inscricaoEstadual || fornecedor.inscricaoMunicipal || ''
-
-  if (fornecedor.contato) {
-    formData.value.contato.email = fornecedor.contato.email || ''
-    formData.value.contato.numero = fornecedor.contato.numero || ''
+  
+  // Inscrição (depende do tipo)
+  if (formData.value.tipo === 'produto') {
+    formData.value.inscricao = fornecedor.inscricaoEstadual || ''
+  } else {
+    formData.value.inscricao = fornecedor.inscricaoMunicipal || ''
   }
 
+  // Carregar contato
+  if (fornecedor.contato) {
+    formData.value.contato.email = fornecedor.contato.email || ''
+    formData.value.contato.telefoneFixo = fornecedor.contato.telefoneFixo || ''
+    formData.value.contato.celular = fornecedor.contato.celular || ''
+  }
+
+  // Carregar endereco
   if (fornecedor.endereco) {
-    formData.value.endereco = { ...fornecedor.endereco }
+    formData.value.endereco.cep = fornecedor.endereco.cep || ''
+    formData.value.endereco.estado = fornecedor.endereco.estado || ''
+    formData.value.endereco.cidade = fornecedor.endereco.cidade || ''
+    formData.value.endereco.bairro = fornecedor.endereco.bairro || ''
+    formData.value.endereco.rua = fornecedor.endereco.rua || ''
+    formData.value.endereco.numero = fornecedor.endereco.numero || ''
+    formData.value.endereco.complemento = fornecedor.endereco.complemento || ''
   }
 }
 
-// Submeter formulário
+// ============================================
+// SUBMETER FORMULÁRIO
+// Prepara os dados no formato esperado pelo backend
+// ============================================
 const handleSubmit = () => {
+  console.log('='.repeat(60))
+  console.log('📝 INICIANDO ENVIO DO FORMULÁRIO')
+  console.log('='.repeat(60))
+
+  // Validar formulário
   if (!isFormValid.value) {
+    alert('Por favor, preencha todos os campos obrigatórios corretamente.')
     return
   }
 
-  // Preparar dados para envio conforme DTOs do backend
+  // ===== ETAPA 1: LIMPAR DADOS =====
+  console.log('\n📋 ETAPA 1: Limpando dados...')
+  
+  const cnpj = formData.value.cnpj.replace(/\D/g, '')
+  const telefoneFixo = formData.value.contato.telefoneFixo.replace(/\D/g, '')
+  const celular = formData.value.contato.celular.replace(/\D/g, '')
+  const cep = formData.value.endereco.cep.replace(/\D/g, '')
+
+  // ===== ETAPA 2: MONTAR OBJETO CONTATO =====
+  console.log('\n📞 ETAPA 2: Montando objeto CONTATO...')
+  
+  const contato = {
+    email: formData.value.contato.email.trim(),
+    telefoneFixo: telefoneFixo || null,
+    celular: celular || null
+  }
+  
+  console.log('   Contato criado:', contato)
+  console.log('   ⚠️ contato tem "numero"?', 'numero' in contato, '(deve ser false)')
+
+  // ===== ETAPA 3: MONTAR OBJETO ENDERECO =====
+  console.log('\n🏠 ETAPA 3: Montando objeto ENDERECO...')
+  
+  const endereco = {
+    cep: cep,
+    estado: formData.value.endereco.estado.trim(),
+    cidade: formData.value.endereco.cidade.trim(),
+    bairro: formData.value.endereco.bairro.trim(),
+    rua: formData.value.endereco.rua.trim(),
+    numero: formData.value.endereco.numero.trim(),
+    complemento: formData.value.endereco.complemento.trim() || null
+  }
+  
+  console.log('   Endereco criado:', endereco)
+  console.log('   ✅ endereco tem "numero"?', 'numero' in endereco, '(deve ser true)')
+  console.log('   ✅ endereco.numero =', endereco.numero)
+
+  // ===== ETAPA 4: MONTAR OBJETO FINAL =====
+  console.log('\n📦 ETAPA 4: Montando objeto FINAL para envio...')
+  
   const dadosParaEnvio = {
-    razaoSocial: formData.value.razaoSocial,
-    cnpj: formData.value.cnpj.replace(/\D/g, ''), // Remove formatação
-    contato: {
-      email: formData.value.contato.email,
-      numero: formData.value.contato.numero.replace(/\D/g, '') // Remove formatação
-    },
-    endereco: {
-      cep: formData.value.endereco.cep.replace(/\D/g, ''), // Remove formatação
-      estado: formData.value.endereco.estado,
-      cidade: formData.value.endereco.cidade,
-      bairro: formData.value.endereco.bairro,
-      rua: formData.value.endereco.rua,
-      numero: formData.value.endereco.numero,
-      complemento: formData.value.endereco.complemento || null
-    }
+    razaoSocial: formData.value.razaoSocial.trim(),
+    cnpj: cnpj,
+    endereco: endereco,
+    contato: contato,
+    tipo: formData.value.tipo
   }
-
-  // Adicionar campo específico conforme tipo
+  
+  // Adicionar campo de inscrição conforme o tipo
   if (formData.value.tipo === 'produto') {
-    dadosParaEnvio.inscricaoEstadual = formData.value.inscricao || null
+    dadosParaEnvio.inscricaoEstadual = formData.value.inscricao.trim() || null
   } else {
-    dadosParaEnvio.inscricaoMunicipal = formData.value.inscricao || null
+    dadosParaEnvio.inscricaoMunicipal = formData.value.inscricao.trim() || null
+  }
+  
+  console.log(`   ${formData.value.tipo === 'produto' ? 'inscricaoEstadual' : 'inscricaoMunicipal'}:`, 
+              formData.value.inscricao.trim() || null)
+
+  // ===== ETAPA 5: VALIDAÇÕES FINAIS =====
+  console.log('\n✅ ETAPA 5: Validações finais...')
+  
+  if ('numero' in dadosParaEnvio.contato) {
+    console.error('   ❌ ERRO: contato tem campo "numero"!')
+    return
+  }
+  
+  if (!('numero' in dadosParaEnvio.endereco)) {
+    console.error('   ❌ ERRO: endereco NÃO tem campo "numero"!')
+    return
+  }
+  
+  if (!dadosParaEnvio.endereco.numero) {
+    console.error('   ❌ ERRO: endereco.numero está vazio!')
+    return
   }
 
-  // Adicionar tipo para o frontend saber qual endpoint usar
-  dadosParaEnvio.tipo = formData.value.tipo
-
+  // ===== ETAPA 6: LOG FINAL E ENVIO =====
+  console.log('\n🚀 ETAPA 6: Enviando dados...')
+  console.log('\n📤 PAYLOAD FINAL:')
+  console.log(JSON.stringify(dadosParaEnvio, null, 2))
+  console.log('\n' + '='.repeat(60))
+  
   emit('save', dadosParaEnvio)
 }
 </script>

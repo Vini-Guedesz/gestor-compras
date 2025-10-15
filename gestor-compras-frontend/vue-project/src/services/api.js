@@ -53,6 +53,24 @@ apiClient.interceptors.request.use(
       // Adiciona o token no header de autorização
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // DEBUG: Log do body sendo enviado
+    if (config.data && config.url.includes('fornecedores')) {
+      console.log('🚀 AXIOS INTERCEPTOR - Request being sent:')
+      console.log('  URL:', config.url)
+      console.log('  Method:', config.method)
+      console.log('  Data (stringified):', JSON.stringify(config.data, null, 2))
+      if (config.data.contato) {
+        console.log('  ⚠️ contato tem numero?', 'numero' in config.data.contato)
+        console.log('  ⚠️ Chaves do contato:', Object.keys(config.data.contato))
+      }
+      if (config.data.endereco) {
+        console.log('  ✅ endereco tem numero?', 'numero' in config.data.endereco)
+        console.log('  ✅ Chaves do endereco:', Object.keys(config.data.endereco))
+        console.log('  ✅ endereco.numero =', config.data.endereco.numero)
+      }
+    }
+
     return config
   },
   (error) => {
@@ -73,8 +91,9 @@ apiClient.interceptors.response.use(
     return response
   },
   (error) => {
-    // Tratamento específico para erro 401 (Não Autorizado)
-    if (error.response?.status === 401) {
+    // Tratamento específico para erro 401 (Não Autorizado) ou JWT expirado
+    if (error.response?.status === 401 ||
+        (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('JWT expired'))) {
       // Token provavelmente expirado: limpa dados de autenticação
       localStorage.removeItem('authToken')
       localStorage.removeItem('user')
@@ -86,7 +105,75 @@ apiClient.interceptors.response.use(
     // Tratamento de outros erros HTTP
     if (error.response) {
       // Erro retornado pela API (4xx, 5xx)
-      const message = error.response.data?.message || `Erro HTTP: ${error.response.status}`
+      console.log('📛 Erro da API completo:', error.response)
+      console.log('📛 Status:', error.response.status)
+      console.log('📛 Data:', JSON.stringify(error.response.data, null, 2))
+      console.log('📛 Headers:', error.response.headers)
+
+      // Verifica se é um erro de JWT expirado
+      if (typeof error.response.data === 'string' && error.response.data.includes('JWT expired')) {
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+        return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
+      }
+
+      // Tenta extrair mensagem de erro de diferentes formatos possíveis
+      let message = ''
+      let detailedErrors = []
+
+      // Formato do nosso RestExceptionHandler: campo "messages" com array de strings
+      if (error.response.data?.messages && Array.isArray(error.response.data.messages)) {
+        console.log('📛 Encontrou messages:', error.response.data.messages)
+        detailedErrors = error.response.data.messages
+      }
+
+      // Formato Spring Boot Validation Error (MethodArgumentNotValidException)
+      if (error.response.data?.errors) {
+        console.log('📛 Encontrou errors:', error.response.data.errors)
+        if (Array.isArray(error.response.data.errors)) {
+          // Array de erros
+          detailedErrors = error.response.data.errors.map(err => {
+            if (typeof err === 'string') return err
+            if (err.field && err.defaultMessage) {
+              return `${err.field}: ${err.defaultMessage}`
+            }
+            if (err.message) return err.message
+            return JSON.stringify(err)
+          })
+        } else if (typeof error.response.data.errors === 'object') {
+          // Objeto com erros por campo
+          detailedErrors = Object.entries(error.response.data.errors).map(
+            ([field, msg]) => `${field}: ${msg}`
+          )
+        }
+      }
+
+      // Formato com fieldErrors (Spring Boot)
+      if (error.response.data?.fieldErrors && Array.isArray(error.response.data.fieldErrors)) {
+        console.log('📛 Encontrou fieldErrors:', error.response.data.fieldErrors)
+        detailedErrors = error.response.data.fieldErrors.map(err =>
+          `${err.field}: ${err.message || err.defaultMessage}`
+        )
+      }
+
+      // Mensagem principal
+      message = error.response.data?.message || error.response.data?.error || error.response.data?.title
+
+      // Se for string simples
+      if (!message && typeof error.response.data === 'string') {
+        message = error.response.data
+      }
+
+      // Monta mensagem final
+      if (detailedErrors.length > 0) {
+        console.error('❌ Erros de validação detalhados:', detailedErrors)
+        message = `Erro de validação:\n${detailedErrors.join('\n')}`
+      } else if (!message) {
+        message = `Erro HTTP ${error.response.status}`
+      }
+
+      console.error('📛 Mensagem final do erro:', message)
       return Promise.reject(new Error(message))
     } else if (error.request) {
       // Erro de rede (servidor não respondeu)

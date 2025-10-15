@@ -18,6 +18,16 @@
             </p>
           </div>
           <div class="action-buttons">
+            <button class="action-button secondary" @click="gerarRelatorioPedidos" :disabled="gerandoRelatorio">
+              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="white" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+              <span v-if="gerandoRelatorio" class="loading-content">
+                <span class="loading-spinner"></span>
+                Gerando...
+              </span>
+              <span v-else>Gerar Relatório</span>
+            </button>
             <button class="action-button" @click="abrirFormularioNovo">
               <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
@@ -358,6 +368,7 @@ import pedidoService from '@/services/pedidoService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
+import relatorioService from '@/services/relatorioService.js'
 
 export default {
   name: 'PedidosView',
@@ -374,6 +385,7 @@ export default {
     const searchQuery = ref('')
     const filtroStatus = ref('')
     const filtroPeriodo = ref('')
+    const gerandoRelatorio = ref(false)
 
     // Como simplificamos o formulário, não precisamos mais de extração complexa
 
@@ -918,6 +930,21 @@ export default {
       }
     }
 
+    // Função para gerar relatório de itens de pedido
+    const gerarRelatorioPedidos = async () => {
+      if (gerandoRelatorio.value) return
+
+      try {
+        gerandoRelatorio.value = true
+        await relatorioService.gerarRelatorioItensPedido()
+      } catch (error) {
+        console.error('Erro ao gerar relatório:', error)
+        alert('Erro ao gerar relatório. Tente novamente.')
+      } finally {
+        gerandoRelatorio.value = false
+      }
+    }
+
     // Lifecycle
     onMounted(() => {
       carregarPedidos()
@@ -930,6 +957,7 @@ export default {
       searchQuery,
       filtroStatus,
       filtroPeriodo,
+      gerandoRelatorio,
 
       // Modais
       showPedidoForm,
@@ -975,7 +1003,8 @@ export default {
       podeExcluir,
       podeAlterarStatus,
       getStatusDisponiveis,
-      alterarStatus
+      alterarStatus,
+      gerarRelatorioPedidos
     }
   }
 }
@@ -1039,6 +1068,23 @@ export default {
   transition: all 0.2s;
 }
 
+.action-button.secondary {
+  background: #6b7280;
+}
+
+.action-button.secondary:hover {
+  background: #4b5563;
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-button:disabled:hover {
+  transform: none;
+}
+
 .action-icon {
   flex-shrink: 0;
 }
@@ -1046,6 +1092,21 @@ export default {
 .action-button:hover {
   background: #2563eb;
   transform: translateY(-1px);
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 /* MÃ©tricas */

@@ -180,8 +180,11 @@
                     <span class="contact-email" v-if="fornecedor.contato?.email">
                       {{ fornecedor.contato.email }}
                     </span>
-                    <span class="contact-phone" v-if="fornecedor.contato?.numero">
-                      {{ formatarTelefone(fornecedor.contato.numero) }}
+                    <span class="contact-phone" v-if="fornecedor.contato?.telefoneFixo">
+                      📞 {{ formatarTelefone(fornecedor.contato.telefoneFixo) }}
+                    </span>
+                    <span class="contact-phone" v-if="fornecedor.contato?.celular">
+                      📱 {{ formatarTelefone(fornecedor.contato.celular) }}
                     </span>
                   </div>
                 </td>
@@ -293,7 +296,12 @@
                   <div class="info-group">
                     <h4>Contato</h4>
                     <p><strong>E-mail:</strong> {{ fornecedorSelecionado?.contato?.email }}</p>
-                    <p><strong>Telefone:</strong> {{ formatarTelefone(fornecedorSelecionado?.contato?.numero) }}</p>
+                    <p v-if="fornecedorSelecionado?.contato?.telefoneFixo">
+                      <strong>Telefone Fixo:</strong> {{ formatarTelefone(fornecedorSelecionado.contato.telefoneFixo) }}
+                    </p>
+                    <p v-if="fornecedorSelecionado?.contato?.celular">
+                      <strong>Celular:</strong> {{ formatarTelefone(fornecedorSelecionado.contato.celular) }}
+                    </p>
                   </div>
 
                   <div class="info-group">
@@ -603,6 +611,10 @@ const fecharFormulario = () => {
 const salvarFornecedor = async (dadosFornecedor) => {
   try {
     console.log('🔄 Salvando fornecedor:', dadosFornecedor)
+    console.log('🔍 FornecedoresView - Dados recebidos do formulário:', JSON.stringify(dadosFornecedor, null, 2))
+    console.log('🔍 FornecedoresView - contato tem numero?', 'numero' in (dadosFornecedor.contato || {}))
+    console.log('🔍 FornecedoresView - endereco tem numero?', 'numero' in (dadosFornecedor.endereco || {}))
+    console.log('🔍 FornecedoresView - endereco.numero =', dadosFornecedor.endereco?.numero)
 
     if (fornecedorEditando.value) {
       // Atualizar fornecedor existente
