@@ -16,4 +16,7 @@ public interface SolicitacaoDePedidoRepository extends JpaRepository<Solicitacao
 
     @Query("SELECT sum(size(s.itens)) FROM SolicitacaoDePedido s")
     Long countTotalItens();
+
+    @Query("SELECT s FROM SolicitacaoDePedido s LEFT JOIN FETCH s.itens WHERE s.status IN :statuses ORDER BY s.dataCriacao DESC")
+    List<SolicitacaoDePedido> findByStatusInWithItens(@Param("statuses") List<StatusPedido> statuses);
 }

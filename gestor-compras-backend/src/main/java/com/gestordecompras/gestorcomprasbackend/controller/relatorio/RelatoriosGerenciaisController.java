@@ -4,16 +4,22 @@ import com.gestordecompras.gestorcomprasbackend.service.jasperreport.JasperRepor
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.sf.jasperreports.engine.JRException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/relatorios")
 @Tag(name = "Relatórios Gerenciais", description = "Endpoints para geração de relatórios executivos e gerenciais")
 public class RelatoriosGerenciaisController {
+
+    private static final Logger logger = LoggerFactory.getLogger(RelatoriosGerenciaisController.class);
 
     private final JasperReportService jasperReportService;
 
@@ -33,7 +39,8 @@ public class RelatoriosGerenciaisController {
 
             return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
         } catch (JRException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            logger.error("Erro ao gerar dashboard executivo: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -49,7 +56,8 @@ public class RelatoriosGerenciaisController {
 
             return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
         } catch (JRException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            logger.error("Erro ao gerar relatório de itens mais solicitados: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -65,7 +73,8 @@ public class RelatoriosGerenciaisController {
 
             return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
         } catch (JRException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            logger.error("Erro ao gerar comparativo de cotações para item {}: {}", itemPedidoId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -81,7 +90,8 @@ public class RelatoriosGerenciaisController {
 
             return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
         } catch (JRException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            logger.error("Erro ao gerar relatório de solicitações abertas: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -97,7 +107,8 @@ public class RelatoriosGerenciaisController {
 
             return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
         } catch (JRException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            logger.error("Erro ao gerar relatório de pedidos fechados: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

@@ -15,6 +15,7 @@ import com.gestordecompras.gestorcomprasbackend.service.ItemPedidoService;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -109,6 +110,7 @@ public class JasperReportService {
 
     // Novos métodos de relatório
 
+    @Transactional(readOnly = true)
     public byte[] gerarDashboardExecutivo() throws JRException {
         DashboardExecutivoDTO dashboard = calcularDashboardExecutivo();
 
@@ -128,6 +130,7 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    @Transactional(readOnly = true)
     public byte[] gerarRelatorioItensMaisSolicitados() throws JRException {
         List<ItemMaisSolicitadoDTO> itens = calcularItensMaisSolicitados();
 
@@ -147,6 +150,7 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    @Transactional(readOnly = true)
     public byte[] gerarComparativoCotacaoPorItem(Long itemPedidoId) throws JRException {
         List<ComparativoCotacaoDTO> cotacoes = buscarCotacoesPorItem(itemPedidoId);
 
@@ -169,6 +173,7 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    @Transactional(readOnly = true)
     public byte[] gerarRelatorioSolicitacoesAbertas() throws JRException {
         List<SolicitacaoAbertaDTO> solicitacoes = buscarSolicitacoesAbertas();
 
@@ -188,6 +193,7 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    @Transactional(readOnly = true)
     public byte[] gerarRelatorioPedidosFechados() throws JRException {
         List<PedidoFechadoDTO> pedidos = buscarPedidosFechados();
 
@@ -230,6 +236,9 @@ public class JasperReportService {
             valorTotalEstimado = BigDecimal.ZERO;
         }
 
+        // NOTA: Este cálculo divide o valor total de TODAS as cotações pelo número de solicitações.
+        // Se uma solicitação tiver múltiplas cotações para o mesmo item, isso pode gerar valores incorretos.
+        // Considere revisar a lógica de negócio: ticket médio deve ser por solicitação ou por cotação aprovada?
         BigDecimal ticketMedio = totalSolicitacoes > 0
                 ? valorTotalEstimado.divide(BigDecimal.valueOf(totalSolicitacoes), 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
@@ -270,9 +279,7 @@ public class JasperReportService {
     }
 
     private List<ComparativoCotacaoDTO> buscarCotacoesPorItem(Long itemPedidoId) {
-        List<Cotacao> cotacoes = cotacaoRepository.findAll().stream()
-                .filter(c -> c.getItemPedido().getId().equals(itemPedidoId))
-                .collect(Collectors.toList());
+        List<Cotacao> cotacoes = cotacaoRepository.findByItemPedidoIdWithFornecedores(itemPedidoId);
 
         return cotacoes.stream().map(cotacao -> {
             String fornecedor = "";
@@ -305,12 +312,8 @@ public class JasperReportService {
     }
 
     private List<SolicitacaoAbertaDTO> buscarSolicitacoesAbertas() {
-        List<SolicitacaoDePedido> solicitacoes = solicitacaoRepository.findAll().stream()
-                .filter(s -> s.getStatus() == StatusPedido.PENDENTE ||
-                             s.getStatus() == StatusPedido.EM_ANALISE ||
-                             s.getStatus() == StatusPedido.EM_ANDAMENTO)
-                .sorted(Comparator.comparing(SolicitacaoDePedido::getDataCriacao).reversed())
-                .collect(Collectors.toList());
+        List<StatusPedido> statusesAbertos = List.of(StatusPedido.PENDENTE, StatusPedido.EM_ANALISE, StatusPedido.EM_ANDAMENTO);
+        List<SolicitacaoDePedido> solicitacoes = solicitacaoRepository.findByStatusInWithItens(statusesAbertos);
 
         return solicitacoes.stream().map(s -> {
             String itensResumidos = s.getItens() != null
@@ -330,10 +333,8 @@ public class JasperReportService {
     }
 
     private List<PedidoFechadoDTO> buscarPedidosFechados() {
-        List<SolicitacaoDePedido> pedidos = solicitacaoRepository.findAll().stream()
-                .filter(s -> s.getStatus() == StatusPedido.APROVADO || s.getStatus() == StatusPedido.CANCELADO)
-                .sorted(Comparator.comparing(SolicitacaoDePedido::getDataCriacao).reversed())
-                .collect(Collectors.toList());
+        List<StatusPedido> statusesFechados = List.of(StatusPedido.APROVADO, StatusPedido.CANCELADO);
+        List<SolicitacaoDePedido> pedidos = solicitacaoRepository.findByStatusInWithItens(statusesFechados);
 
         return pedidos.stream().map(p -> {
             String itensResumidos = p.getItens() != null

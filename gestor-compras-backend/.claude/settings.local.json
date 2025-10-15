@@ -16,7 +16,9 @@
       "Bash(for endpoint in dashboard-executivo itens-mais-solicitados pedidos-fechados \"comparativo-cotacao/1\")",
       "Bash(do)",
       "Bash(echo:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(for endpoint in dashboard-executivo itens-mais-solicitados pedidos-fechados solicitacoes-abertas)"
     ],
     "deny": [],
     "ask": []

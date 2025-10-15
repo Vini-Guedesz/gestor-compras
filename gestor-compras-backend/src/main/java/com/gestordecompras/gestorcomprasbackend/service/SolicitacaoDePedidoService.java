@@ -41,23 +41,14 @@ public class SolicitacaoDePedidoService {
     public SolicitacaoDePedidoDTO createSolicitacao(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
         SolicitacaoDePedido solicitacaoDePedido = solicitacaoDePedidoMapper.toEntity(solicitacaoDePedidoDTO);
 
-        // Trata entidades ItemPedido existentes
+        // Estabelece relacionamento bidirecional entre solicitacao e itens
         if (solicitacaoDePedido.getItens() != null) {
-            List<ItemPedido> managedItens = solicitacaoDePedido.getItens().stream()
-                    .map(item -> {
-                        if (item.getId() != null) {
-                            // Se o item tem ID, busca do banco de dados
-                            return itemPedidoRepository.findById(item.getId())
-                                    .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado com ID: " + item.getId()));
-                        } else {
-                            // Se o item não tem ID, é um novo item, persiste ele
-                            return itemPedidoRepository.save(item);
-                        }
-                    })
-                    .collect(Collectors.toList());
-            solicitacaoDePedido.setItens(managedItens);
+            solicitacaoDePedido.getItens().forEach(item -> {
+                item.setSolicitacaoDePedido(solicitacaoDePedido);
+            });
         }
 
+        // O cascade ALL vai persistir os itens automaticamente
         return solicitacaoDePedidoMapper.toDTO(solicitacaoDePedidoRepository.save(solicitacaoDePedido));
     }
 
