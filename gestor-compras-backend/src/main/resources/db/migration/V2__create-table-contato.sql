@@ -1,5 +1,0 @@
-CREATE TABLE contato (
-    id BIGSERIAL PRIMARY KEY,
-    numero VARCHAR(20) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE
-);
