@@ -144,6 +144,14 @@ const viewProfile = () => {
 }
 
 /**
+ * Abre a página de configurações
+ */
+const openSettings = () => {
+  isUserMenuOpen.value = false
+  router.push('/configuracoes')
+}
+
+/**
  * Realiza o logout do usuário
  *
  * Abre o modal de confirmação em vez de usar alert()

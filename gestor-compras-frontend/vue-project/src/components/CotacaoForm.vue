@@ -13,20 +13,6 @@
               <h3 class="section-title">Dados da Cotação</h3>
               <div class="form-grid">
                 <div class="form-group">
-                  <label class="form-label">Fornecedor *</label>
-                  <select v-model="formData.fornecedorId" class="form-select" required>
-                    <option value="">Selecione um fornecedor...</option>
-                    <option
-                      v-for="fornecedor in fornecedoresDisponiveis"
-                      :key="fornecedor.id"
-                      :value="fornecedor.id"
-                    >
-                      {{ fornecedor.razaoSocial }} - {{ fornecedor.cnpj }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="form-group">
                   <label class="form-label">Item do Pedido *</label>
                   <select v-model="formData.itemPedidoId" class="form-select" required>
                     <option value="">Selecione um item...</option>
@@ -39,6 +25,20 @@
                     </option>
                   </select>
                   <small class="form-hint">TODO: Carregar itens do pedido do backend</small>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Fornecedor *</label>
+                  <select v-model="formData.fornecedorId" class="form-select" required>
+                    <option value="">Selecione um fornecedor...</option>
+                    <option
+                      v-for="fornecedor in fornecedoresDisponiveis"
+                      :key="fornecedor.id"
+                      :value="fornecedor.id"
+                    >
+                      {{ fornecedor.razaoSocial }} - {{ fornecedor.cnpj }}
+                    </option>
+                  </select>
                 </div>
 
                 <div class="form-group">

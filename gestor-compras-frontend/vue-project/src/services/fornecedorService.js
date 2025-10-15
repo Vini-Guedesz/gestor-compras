@@ -29,11 +29,26 @@ const fornecedorService = {
   async criarFornecedorProduto(fornecedor) {
     try {
       console.log('🔄 Criando fornecedor de produto no backend...')
+      console.log('📦 Dados enviados:', JSON.stringify(fornecedor, null, 2))
+      console.log('📦 Tipo de cada campo:')
+      console.log('  - razaoSocial:', typeof fornecedor.razaoSocial, '=', fornecedor.razaoSocial)
+      console.log('  - cnpj:', typeof fornecedor.cnpj, '=', fornecedor.cnpj)
+      console.log('  - inscricaoEstadual:', typeof fornecedor.inscricaoEstadual, '=', fornecedor.inscricaoEstadual)
+      console.log('  - contato.email:', typeof fornecedor.contato?.email, '=', fornecedor.contato?.email)
+      console.log('  - contato.telefoneFixo:', typeof fornecedor.contato?.telefoneFixo, '=', fornecedor.contato?.telefoneFixo)
+      console.log('  - contato.celular:', typeof fornecedor.contato?.celular, '=', fornecedor.contato?.celular)
+      console.log('  - endereco.cep:', typeof fornecedor.endereco?.cep, '=', fornecedor.endereco?.cep)
+      console.log('📦 Objeto CONTATO completo:', JSON.stringify(fornecedor.contato, null, 2))
+      console.log('📦 Objeto ENDERECO completo:', JSON.stringify(fornecedor.endereco, null, 2))
+      console.log('📦 Chaves do contato:', Object.keys(fornecedor.contato || {}))
+      console.log('📦 Chaves do endereco:', Object.keys(fornecedor.endereco || {}))
+
       const data = await api.post('/api/fornecedores-de-produto', fornecedor)
       console.log('✅ Fornecedor de produto criado no backend:', data.id)
       return data
     } catch (error) {
       console.error('❌ Erro ao criar fornecedor de produto no backend:', error.message)
+      console.error('📛 Detalhes do erro:', error)
       throw error
     }
   },
