@@ -36,8 +36,8 @@
             title="Pedidos de Compra"
             description="Criar, editar e acompanhar pedidos"
             :metrics="[
-              { value: '23', label: 'pendentes', color: '#f59e0b' },
-              { value: '156', label: 'este mês', color: '#1F285F' }
+              { value: pedidosStats.total.toString(), label: 'total', color: '#1F285F' },
+              { value: pedidosStats.pendentes.toString(), label: 'pendentes', color: '#f59e0b' }
             ]"
             icon-color="#1F285F"
             variant="primary"
@@ -47,10 +47,10 @@
           <!-- Cotações -->
           <MetricCard
             title="Cotações"
-            description="Gerenciar cotações e fornecedores"
+            description="Gerenciar cotações de fornecedores"
             :metrics="[
-              { value: '12', label: 'abertas', color: '#10b981' },
-              { value: '5', label: 'em análise', color: '#f59e0b' }
+              { value: cotacoesStats.total.toString(), label: 'total', color: '#10b981' },
+              { value: cotacoesStats.ativas.toString(), label: 'ativas', color: '#f59e0b' }
             ]"
             icon-color="#10b981"
             variant="success"
@@ -60,53 +60,14 @@
           <!-- Fornecedores -->
           <MetricCard
             title="Fornecedores"
-            description="Cadastro e avaliação"
+            description="Cadastro e gestão de fornecedores"
             :metrics="[
-              { value: '87', label: 'ativos', color: '#1F285F' },
-              { value: '3', label: 'novos', color: '#10b981' }
+              { value: fornecedoresStats.total.toString(), label: 'cadastrados', color: '#6366f1' },
+              { value: fornecedoresStats.ativos.toString(), label: 'ativos', color: '#10b981' }
             ]"
             icon-color="#6366f1"
             variant="default"
             @action="navigateTo('/fornecedores')"
-          />
-
-          <!-- Aprovações -->
-          <MetricCard
-            title="Aprovações"
-            description="Central de aprovações e assinaturas"
-            :metrics="[
-              { value: '8', label: 'pendentes', color: '#f59e0b' },
-              { value: '2', label: 'urgentes', color: '#ef4444' }
-            ]"
-            icon-color="#f59e0b"
-            variant="warning"
-            @action="navigateTo('/aprovacoes')"
-          />
-
-          <!-- Financeiro -->
-          <MetricCard
-            title="Financeiro"
-            description="Controle de fluxo de caixa e notas fiscais"
-            :metrics="[
-              { value: 'R$ 2.1M', label: 'saldo', color: '#10b981' },
-              { value: 'R$ 340K', label: 'pendente', color: '#f59e0b' }
-            ]"
-            icon-color="#10b981"
-            variant="success"
-            @action="navigateTo('/financeiro')"
-          />
-
-          <!-- Relatórios -->
-          <MetricCard
-            title="Relatórios"
-            description="Análises e dashboards gerenciais"
-            :metrics="[
-              { value: '15', label: 'últimos', color: '#1F285F' },
-              { value: '4', label: 'agendados', color: '#6366f1' }
-            ]"
-            icon-color="#6366f1"
-            variant="default"
-            @action="navigateTo('/relatorios')"
           />
         </div>
       </div>
@@ -115,7 +76,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import DashboardHeader from '../components/DashboardHeader.vue'
@@ -123,12 +84,73 @@ import DashboardSidebar from '../components/DashboardSidebar.vue'
 import MetricCard from '../components/MetricCard.vue'
 import QuickActions from '../components/QuickActions.vue'
 
+// Importar services para dados reais
+import pedidoService from '../services/pedidoService.js'
+import fornecedorService from '../services/fornecedorService.js'
+import { cotacaoService } from '../services/cotacaoService.js'
+
 const router = useRouter()
 const authStore = useAuthStore()
 
-const userName = computed(() => {
-  return authStore.user?.name || 'Ana'
+// Estados para estatísticas reais
+const pedidosStats = ref({
+  total: 0,
+  pendentes: 0
 })
+
+const cotacoesStats = ref({
+  total: 0,
+  ativas: 0
+})
+
+const fornecedoresStats = ref({
+  total: 0,
+  ativos: 0
+})
+
+const userName = computed(() => {
+  return authStore.user?.name || 'Usuário'
+})
+
+// Função para carregar estatísticas reais
+const carregarEstatisticas = async () => {
+  try {
+    console.log('📊 Carregando estatísticas do dashboard...')
+    
+    // Carregar pedidos
+    try {
+      const pedidos = await pedidoService.listar()
+      pedidosStats.value.total = pedidos?.length || 0
+      pedidosStats.value.pendentes = pedidos?.filter(p => p.status === 'PENDENTE' || p.status === 'EM_ANALISE')?.length || 0
+      console.log('✅ Estatísticas de pedidos carregadas:', pedidosStats.value)
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar pedidos:', error.message)
+    }
+
+    // Carregar cotações  
+    try {
+      const cotacoes = await cotacaoService.listar()
+      cotacoesStats.value.total = cotacoes?.length || 0
+      cotacoesStats.value.ativas = cotacoes?.filter(c => c.status === 'ATIVA' || c.status === 'EM_ANDAMENTO')?.length || 0
+      console.log('✅ Estatísticas de cotações carregadas:', cotacoesStats.value)
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar cotações:', error.message)
+    }
+
+    // Carregar fornecedores
+    try {
+      const fornecedores = await fornecedorService.listarFornecedoresProduto()
+      fornecedoresStats.value.total = fornecedores?.length || 0
+      fornecedoresStats.value.ativos = fornecedores?.filter(f => f.ativo !== false)?.length || 0
+      console.log('✅ Estatísticas de fornecedores carregadas:', fornecedoresStats.value)
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar fornecedores:', error.message)
+    }
+
+  } catch (error) {
+    console.error('❌ Erro geral ao carregar estatísticas:', error)
+  }
+}
 
 const handleQuickAction = (action) => {
   console.log('Ação rápida:', action)
@@ -140,13 +162,23 @@ const handleQuickAction = (action) => {
 
 const navigateTo = (path) => {
   console.log('Navegando para:', path)
-  if (path === '/fornecedores') {
+  
+  // Definir rotas disponíveis
+  const rotasDisponiveis = ['/pedidos', '/cotacoes', '/fornecedores']
+  
+  if (rotasDisponiveis.includes(path)) {
     router.push(path)
   } else {
-    // Para outras rotas ainda não implementadas
     console.log('Rota ainda não implementada:', path)
+    // Mostrar mensagem amigável para o usuário
+    alert('Esta funcionalidade estará disponível em breve!')
   }
 }
+
+// Carregar dados ao montar o componente
+onMounted(() => {
+  carregarEstatisticas()
+})
 </script>
 
 <style scoped>

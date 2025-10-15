@@ -56,6 +56,7 @@
                   v-model="formData.cnpj"
                   @input="formatCNPJ"
                   class="form-input"
+                  :class="{ 'invalid-field': formData.cnpj && !isCNPJValid }"
                   required
                   placeholder="00.000.000/0000-00"
                   maxlength="18"
@@ -89,6 +90,7 @@
                   type="email"
                   v-model="formData.contato.email"
                   class="form-input"
+                  :class="{ 'invalid-field': formData.contato.email && !isEmailValid }"
                   required
                   placeholder="contato@empresa.com"
                   maxlength="100"
@@ -135,6 +137,7 @@
                   @input="formatCEP"
                   @blur="buscarCEP"
                   class="form-input"
+                  :class="{ 'invalid-field': formData.endereco.cep && !isCEPValid }"
                   required
                   placeholder="00000-000"
                   maxlength="9"
@@ -338,26 +341,66 @@ const isTelefoneFixoValid = computed(() => {
 const isCelularValid = computed(() => {
   if (!formData.value.contato.celular) return true;
   const celular = formData.value.contato.celular.replace(/\D/g, '');
-  return celular.length === 11; // (00) 00000-0000
+  return celular.length === 11 && celular.charAt(2) === '9'; // (00) 9XXXX-XXXX
+});
+
+const isCNPJValid = computed(() => {
+  const cnpj = formData.value.cnpj.replace(/\D/g, '');
+  
+  // Verifica se tem 14 dígitos
+  if (cnpj.length !== 14) return false;
+  
+  // Verifica se todos os dígitos são iguais (CNPJ inválido)
+  if (/^(\d)\1{13}$/.test(cnpj)) return false;
+  
+  // Validação do dígito verificador
+  let tamanho = cnpj.length - 2;
+  let numeros = cnpj.substring(0, tamanho);
+  let digitos = cnpj.substring(tamanho);
+  let soma = 0;
+  let pos = tamanho - 7;
+  
+  for (let i = tamanho; i >= 1; i--) {
+    soma += numeros.charAt(tamanho - i) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  
+  let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+  if (resultado != digitos.charAt(0)) return false;
+  
+  tamanho = tamanho + 1;
+  numeros = cnpj.substring(0, tamanho);
+  soma = 0;
+  pos = tamanho - 7;
+  
+  for (let i = tamanho; i >= 1; i--) {
+    soma += numeros.charAt(tamanho - i) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  
+  resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+  return resultado == digitos.charAt(1);
+});
+
+const isCEPValid = computed(() => {
+  const cep = formData.value.endereco.cep.replace(/\D/g, '');
+  return cep.length === 8;
+});
+
+const isEmailValid = computed(() => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(formData.value.contato.email);
 });
 
 const isFormValid = computed(() => {
-  const cnpjSemFormatacao = formData.value.cnpj.replace(/\D/g, '')
-  const telefoneFixoSemFormatacao = formData.value.contato.telefoneFixo?.replace(/\D/g, '') || ''
-  const celularSemFormatacao = formData.value.contato.celular?.replace(/\D/g, '') || ''
-  const cepSemFormatacao = formData.value.endereco.cep.replace(/\D/g, '')
-
   return formData.value.razaoSocial &&
          formData.value.razaoSocial.length <= 255 &&
-         cnpjSemFormatacao &&
-         cnpjSemFormatacao.length === 14 &&
-         formData.value.contato.email &&
+         isCNPJValid.value &&
+         isEmailValid.value &&
          formData.value.contato.email.length <= 100 &&
-         // Validação removida: telefone não é obrigatório no backend
-         (!telefoneFixoSemFormatacao || telefoneFixoSemFormatacao.length === 10) &&
-         (!celularSemFormatacao || celularSemFormatacao.length === 11) &&
-         cepSemFormatacao &&
-         cepSemFormatacao.length === 8 &&
+         isTelefoneFixoValid.value &&
+         isCelularValid.value &&
+         isCEPValid.value &&
          formData.value.endereco.estado &&
          formData.value.endereco.cidade &&
          formData.value.endereco.cidade.length <= 50 &&
@@ -511,9 +554,23 @@ const handleSubmit = () => {
   console.log('📝 INICIANDO ENVIO DO FORMULÁRIO')
   console.log('='.repeat(60))
 
-  // Validar formulário
+  // Validar formulário com mensagens específicas
   if (!isFormValid.value) {
-    alert('Por favor, preencha todos os campos obrigatórios corretamente.')
+    let mensagemErro = 'Corrija os seguintes erros:\n\n';
+    
+    if (!formData.value.razaoSocial) mensagemErro += '• Razão Social é obrigatória\n';
+    if (!isCNPJValid.value) mensagemErro += '• CNPJ inválido (verifique o formato e dígitos)\n';
+    if (!isEmailValid.value) mensagemErro += '• E-mail deve ter formato válido\n';
+    if (!isTelefoneFixoValid.value) mensagemErro += '• Telefone fixo deve ter 10 dígitos\n';
+    if (!isCelularValid.value) mensagemErro += '• Celular deve ter 11 dígitos e começar com 9\n';
+    if (!isCEPValid.value) mensagemErro += '• CEP deve ter 8 dígitos\n';
+    if (!formData.value.endereco.estado) mensagemErro += '• Estado é obrigatório\n';
+    if (!formData.value.endereco.cidade) mensagemErro += '• Cidade é obrigatória\n';
+    if (!formData.value.endereco.bairro) mensagemErro += '• Bairro é obrigatório\n';
+    if (!formData.value.endereco.rua) mensagemErro += '• Rua é obrigatória\n';
+    if (!formData.value.endereco.numero) mensagemErro += '• Número é obrigatório\n';
+    
+    alert(mensagemErro);
     return
   }
 

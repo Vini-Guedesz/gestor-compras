@@ -37,25 +37,25 @@ const actions = ref([
     icon: 'plus',
     color: '#1F285F',
     variant: 'primary',
-    route: '/pedidos/novo'
+    route: '/pedidos'
   },
   {
     id: 'nova-cotacao',
     title: 'Nova Cotação',
-    description: 'Solicitar cotação de fornecedores',
+    description: 'Gerenciar cotações de fornecedores',
     icon: 'document',
     color: '#10b981',
     variant: 'success',
-    route: '/cotacoes/nova'
+    route: '/cotacoes'
   },
   {
     id: 'cadastrar-fornecedor',
     title: 'Cadastrar Fornecedor',
-    description: 'Adicionar novo fornecedor',
+    description: 'Gerenciar fornecedores do sistema',
     icon: 'user-plus',
-    color: '#f59e0b',
+    color: '#6366f1',
     variant: 'warning',
-    route: '/fornecedores/novo'
+    route: '/fornecedores'
   }
 ])
 

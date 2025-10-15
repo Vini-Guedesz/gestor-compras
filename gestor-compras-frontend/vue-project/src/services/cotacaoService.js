@@ -4,22 +4,14 @@ const BASE_URL = '/api/cotacoes'
 
 export const cotacaoService = {
   // Listar todas as cotações
-  async listar(filtros = {}) {
+  async listar() {
     try {
-      const params = new URLSearchParams()
-
-      if (filtros.status) params.append('status', filtros.status)
-      if (filtros.fornecedor) params.append('fornecedor', filtros.fornecedor)
-      if (filtros.periodo) params.append('periodo', filtros.periodo)
-      if (filtros.busca) params.append('busca', filtros.busca)
-      if (filtros.pagina) params.append('pagina', filtros.pagina)
-      if (filtros.tamanho) params.append('tamanho', filtros.tamanho)
-
-      const url = params.toString() ? `${BASE_URL}?${params}` : BASE_URL
-      const response = await api.get(url)
+      console.log('📋 Buscando todas as cotações do backend...')
+      const response = await api.get(BASE_URL)
+      console.log('✅ Cotações carregadas do backend:', response?.length || 0, 'itens')
       return response
     } catch (error) {
-      console.error('Erro ao listar cotações:', error)
+      console.error('❌ Erro ao listar cotações:', error)
       throw error
     }
   },
@@ -27,28 +19,17 @@ export const cotacaoService = {
   // Buscar cotação por ID
   async buscarPorId(id) {
     try {
+      console.log('🔍 Buscando cotação por ID:', id)
       const response = await api.get(`${BASE_URL}/${id}`)
+      console.log('✅ Cotação encontrada:', response)
       return response
     } catch (error) {
-      console.error('Erro ao buscar cotação:', error)
+      console.error('❌ Erro ao buscar cotação:', error)
       throw error
     }
   },
 
-  // Buscar cotações por fornecedor
-  async buscarPorFornecedor(fornecedorId) {
-    try {
-      const response = await api.get(`${BASE_URL}`, {
-        params: { fornecedorId }
-      })
-      return response
-    } catch (error) {
-      console.error('Erro ao buscar cotações do fornecedor:', error)
-      throw error
-    }
-  },
-
-  // Criar nova cotação
+  // Criar nova cotação - Alinhado com CotacaoCreateDTO do backend
   async criar(dadosCotacao) {
     try {
       // Validação básica alinhada com CotacaoCreateDTO
@@ -64,9 +45,16 @@ export const cotacaoService = {
         throw new Error('Preço deve ser maior que zero')
       }
 
-      console.log('📤 Enviando dados para backend:', dadosCotacao)
+      // Preparar payload conforme CotacaoCreateDTO
+      const payload = {
+        fornecedorId: parseInt(dadosCotacao.fornecedorId),
+        itemPedidoId: parseInt(dadosCotacao.itemPedidoId),
+        preco: parseFloat(dadosCotacao.preco),
+        prazoEntrega: dadosCotacao.prazoEntrega || null
+      }
 
-      const response = await api.post(BASE_URL, dadosCotacao)
+      console.log('📤 Criando cotação no backend:', payload)
+      const response = await api.post(BASE_URL, payload)
       console.log('✅ Cotação criada no backend:', response)
       return response
 
@@ -76,35 +64,21 @@ export const cotacaoService = {
     }
   },
 
-  // Atualizar cotação
+  // Atualizar cotação - Alinhado com CotacaoUpdateDTO do backend
   async atualizar(id, dadosCotacao) {
     try {
-      // Preparar dados para envio (CotacaoUpdateDTO)
+      // Preparar dados para envio conforme CotacaoUpdateDTO
       const payload = {
-        preco: parseFloat(dadosCotacao.preco) || null,
+        preco: dadosCotacao.preco ? parseFloat(dadosCotacao.preco) : null,
         prazoEntrega: dadosCotacao.prazoEntrega || null,
-        anexoPdf: null, // TODO: Implementar upload de PDF
+        anexoPdf: dadosCotacao.anexoPdf || null,
         caminhoAnexo: dadosCotacao.caminhoAnexo || null
       }
 
-      // MOCK: Simular resposta do backend
-      console.log('📤 Atualizando cotação:', payload)
-      await new Promise(resolve => setTimeout(resolve, 800))
-
-      const mockResponse = {
-        id: parseInt(id),
-        ...payload,
-        fornecedorId: dadosCotacao.fornecedorId,
-        itemPedidoId: dadosCotacao.itemPedidoId,
-        dataCotacao: new Date().toISOString().split('T')[0]
-      }
-
-      console.log('✅ Cotação atualizada (MOCK):', mockResponse)
-      return mockResponse
-
-      // TODO: Descomente quando o backend estiver funcionando
-      // const response = await api.put(`${BASE_URL}/${id}`, payload)
-      // return response
+      console.log('📤 Atualizando cotação no backend:', payload)
+      const response = await api.put(`${BASE_URL}/${id}`, payload)
+      console.log('✅ Cotação atualizada no backend:', response)
+      return response
 
     } catch (error) {
       console.error('❌ Erro ao atualizar cotação:', error)
@@ -115,321 +89,86 @@ export const cotacaoService = {
   // Deletar cotação
   async deletar(id) {
     try {
+      console.log('🗑️ Deletando cotação:', id)
       const response = await api.delete(`${BASE_URL}/${id}`)
+      console.log('✅ Cotação deletada com sucesso')
       return response
     } catch (error) {
-      console.error('Erro ao deletar cotação:', error)
+      console.error('❌ Erro ao deletar cotação:', error)
       throw error
     }
   },
 
-  // Enviar cotação para fornecedores
-  async enviar(id, fornecedoresIds) {
-    try {
-      const response = await api.post(`${BASE_URL}/${id}/enviar`, {
-        fornecedores: fornecedoresIds
-      })
-      return response.data
-    } catch (error) {
-      console.error('Erro ao enviar cotação:', error)
-      throw error
-    }
+  // ===== FUNCIONALIDADES BÁSICAS ALINHADAS COM O BACKEND =====
+
+  // Aliases para compatibilidade com código existente
+  async obterPorId(id) {
+    return this.buscarPorId(id)
   },
 
-  // Obter propostas de uma cotação
-  async obterPropostas(id) {
-    try {
-      const response = await api.get(`${BASE_URL}/${id}/propostas`)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao obter propostas:', error)
-      throw error
-    }
+  async remover(id) {
+    return this.deletar(id)
   },
 
-  // Selecionar proposta vencedora
-  async selecionarProposta(cotacaoId, propostaId, justificativa = '') {
-    try {
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/selecionar-proposta`, {
-        propostaId,
-        justificativa
-      })
-      return response.data
-    } catch (error) {
-      console.error('Erro ao selecionar proposta:', error)
-      throw error
-    }
-  },
+  // ===== FUNCIONALIDADES FUTURAS (COMENTADAS) =====
+  // As funcionalidades abaixo não existem no backend atual.
+  // Descomente quando forem implementadas no backend.
 
-  // Aprovar cotação
+  /*
+  // Funcionalidades de workflow (não implementadas no backend)
   async aprovar(id, observacoes = '') {
-    try {
-      const response = await api.post(`${BASE_URL}/${id}/aprovar`, {
-        observacoes
-      })
-      return response.data
-    } catch (error) {
-      console.error('Erro ao aprovar cotação:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "aprovar" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Cancelar cotação
   async cancelar(id, motivo = '') {
-    try {
-      const response = await api.post(`${BASE_URL}/${id}/cancelar`, {
-        motivo
-      })
-      return response.data
-    } catch (error) {
-      console.error('Erro ao cancelar cotação:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "cancelar" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Reabrir cotação
   async reabrir(id) {
-    try {
-      const response = await api.post(`${BASE_URL}/${id}/reabrir`)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao reabrir cotação:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "reabrir" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Duplicar cotação
-  async duplicar(id) {
-    try {
-      const response = await api.post(`${BASE_URL}/${id}/duplicar`)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao duplicar cotação:', error)
-      throw error
-    }
-  },
-
-  // Adicionar item à cotação
-  async adicionarItem(cotacaoId, item) {
-    try {
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/itens`, item)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao adicionar item:', error)
-      throw error
-    }
-  },
-
-  // Atualizar item da cotação
-  async atualizarItem(cotacaoId, itemId, item) {
-    try {
-      const response = await api.put(`${BASE_URL}/${cotacaoId}/itens/${itemId}`, item)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao atualizar item:', error)
-      throw error
-    }
-  },
-
-  // Remover item da cotação
-  async removerItem(cotacaoId, itemId) {
-    try {
-      const response = await api.delete(`${BASE_URL}/${cotacaoId}/itens/${itemId}`)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao remover item:', error)
-      throw error
-    }
-  },
-
-  // Adicionar anexo
+  // Funcionalidades de anexos (não implementadas no backend)
   async adicionarAnexo(cotacaoId, arquivo) {
-    try {
-      const formData = new FormData()
-      formData.append('arquivo', arquivo)
-
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/anexos`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      return response.data
-    } catch (error) {
-      console.error('Erro ao adicionar anexo:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "adicionarAnexo" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Remover anexo
   async removerAnexo(cotacaoId, anexoId) {
-    try {
-      const response = await api.delete(`${BASE_URL}/${cotacaoId}/anexos/${anexoId}`)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao remover anexo:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "removerAnexo" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Exportar relatório PDF
+  // Funcionalidades de relatórios (não implementadas no backend)
   async exportarPDF(filtros = {}) {
-    try {
-      const params = new URLSearchParams()
-
-      if (filtros.status) params.append('status', filtros.status)
-      if (filtros.fornecedor) params.append('fornecedor', filtros.fornecedor)
-      if (filtros.periodo) params.append('periodo', filtros.periodo)
-      if (filtros.dataInicio) params.append('dataInicio', filtros.dataInicio)
-      if (filtros.dataFim) params.append('dataFim', filtros.dataFim)
-
-      const url = params.toString() ? `${BASE_URL}/relatorio/pdf?${params}` : `${BASE_URL}/relatorio/pdf`
-
-      const response = await api.get(url, {
-        responseType: 'blob'
-      })
-
-      // Criar link para download
-      const blob = new Blob([response.data], { type: 'application/pdf' })
-      const downloadUrl = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = downloadUrl
-      link.download = `cotacoes_${new Date().toISOString().split('T')[0]}.pdf`
-      link.click()
-      window.URL.revokeObjectURL(downloadUrl)
-
-      return true
-    } catch (error) {
-      console.error('Erro ao exportar PDF:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "exportarPDF" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Exportar relatório Excel
   async exportarExcel(filtros = {}) {
-    try {
-      const params = new URLSearchParams()
-
-      if (filtros.status) params.append('status', filtros.status)
-      if (filtros.fornecedor) params.append('fornecedor', filtros.fornecedor)
-      if (filtros.periodo) params.append('periodo', filtros.periodo)
-      if (filtros.dataInicio) params.append('dataInicio', filtros.dataInicio)
-      if (filtros.dataFim) params.append('dataFim', filtros.dataFim)
-
-      const url = params.toString() ? `${BASE_URL}/relatorio/excel?${params}` : `${BASE_URL}/relatorio/excel`
-
-      const response = await api.get(url, {
-        responseType: 'blob'
-      })
-
-      // Criar link para download
-      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-      const downloadUrl = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = downloadUrl
-      link.download = `cotacoes_${new Date().toISOString().split('T')[0]}.xlsx`
-      link.click()
-      window.URL.revokeObjectURL(downloadUrl)
-
-      return true
-    } catch (error) {
-      console.error('Erro ao exportar Excel:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "exportarExcel" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Obter estatísticas do dashboard
-  async obterEstatisticas(periodo = 'mes') {
-    try {
-      const response = await api.get(`${BASE_URL}/estatisticas?periodo=${periodo}`)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao obter estatísticas:', error)
-      throw error
-    }
-  },
-
-  // Obter histórico de uma cotação
-  async obterHistorico(id) {
-    try {
-      const response = await api.get(`${BASE_URL}/${id}/historico`)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao obter histórico:', error)
-      throw error
-    }
-  },
-
-  // Adicionar comentário à cotação
-  async adicionarComentario(cotacaoId, comentario) {
-    try {
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/comentarios`, {
-        comentario
-      })
-      return response.data
-    } catch (error) {
-      console.error('Erro ao adicionar comentário:', error)
-      throw error
-    }
-  },
-
-  // Notificar fornecedores sobre prazo
-  async notificarPrazo(cotacaoId, tipo = 'lembrete') {
-    try {
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/notificar`, {
-        tipo
-      })
-      return response.data
-    } catch (error) {
-      console.error('Erro ao notificar fornecedores:', error)
-      throw error
-    }
-  },
-
-  // Validar cotação antes do envio
-  async validar(cotacao) {
-    try {
-      const response = await api.post(`${BASE_URL}/validar`, cotacao)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao validar cotação:', error)
-      throw error
-    }
-  },
-
-  // Obter modelos de cotação
+  // Funcionalidades de modelos (não implementadas no backend)
   async obterModelos() {
-    try {
-      const response = await api.get(`${BASE_URL}/modelos`)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao obter modelos:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "obterModelos" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Criar cotação a partir de modelo
   async criarDeModelo(modeloId, dados = {}) {
-    try {
-      const response = await api.post(`${BASE_URL}/modelos/${modeloId}/criar`, dados)
-      return response.data
-    } catch (error) {
-      console.error('Erro ao criar cotação de modelo:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "criarDeModelo" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   },
 
-  // Salvar como modelo
   async salvarComoModelo(cotacaoId, nomeModelo) {
-    try {
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/salvar-modelo`, {
-        nome: nomeModelo
-      })
-      return response.data
-    } catch (error) {
-      console.error('Erro ao salvar como modelo:', error)
-      throw error
-    }
+    console.warn('⚠️ Funcionalidade "salvarComoModelo" não implementada no backend')
+    throw new Error('Funcionalidade não disponível')
   }
+  */
 }
 
 export default cotacaoService
