@@ -225,7 +225,7 @@
                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 16H9V7h9v14z" />
             </svg>
             <h3>Nenhum pedido encontrado</h3>
-            <p>Não há pedidos que correspondam aos filtros aplicados.</p>
+            <p>Não há pedidos cadastrados ou que correspondam aos filtros aplicados.</p>
             <button class="btn-primary" @click="abrirFormularioNovo">
               Criar Primeiro Pedido
             </button>
@@ -506,7 +506,9 @@ export default {
         ])
 
         console.log('Itens carregados:', todosItens.length)
-        console.log('Exemplo de item:', todosItens[0])
+        if (todosItens.length > 0) {
+          console.log('🔍 Primeiro item carregado:', todosItens[0])
+        }
 
         // Processar dados do backend - estrutura simplificada
         if (response && Array.isArray(response)) {
@@ -545,64 +547,13 @@ export default {
           })
           console.log('DEBUG - Pedidos carregados:', pedidos.value.length)
         } else {
-          // Dados de exemplo se a API nÃ£o estiver funcionando
-          pedidos.value = [
-            {
-              id: 1,
-              status: 'pendente',
-              descricao: 'Compra de equipamentos de informática',
-              objetivo: 'Renovação do parque tecnológico',
-              dataCriacao: '2024-01-15T10:30:00',
-              observacao: 'Urgente para o fechamento do projeto',
-              itens: [
-                {
-                  id: 1,
-                  nome: 'Notebook Dell Latitude 5520',
-                  quantidade: 5,
-                  descricao: 'Para equipe de desenvolvimento',
-                  observacao: 'Configuração mínima: i5, 16GB RAM, SSD 512GB'
-                },
-                {
-                  id: 2,
-                  nome: 'Monitor LG 24" Full HD',
-                  quantidade: 5,
-                  descricao: 'Complemento para os notebooks'
-                }
-              ]
-            },
-            {
-              id: 2,
-              status: 'aprovado',
-              dataCriacao: '2024-01-10T14:20:00',
-              observacao: 'Aprovado pela gerÃªncia',
-              itens: [
-                {
-                  id: 1,
-                  nome: 'Apostilas de treinamento',
-                  quantidade: 50,
-                  descricao: 'Curso de seguranÃ§a do trabalho'
-                }
-              ]
-            },
-            {
-              id: 3,
-              status: 'pendente',
-              observacao: 'Ferramentas para manutenção - Reposição de ferramentas',
-              dataCriacao: '2024-01-20T09:15:00',
-              itens: [
-                {
-                  id: 1,
-                  nome: 'Chaves de fenda variadas',
-                  quantidade: 10,
-                  descricao: 'Reposição do estoque'
-                }
-              ]
-            }
-          ]
+          // Se não há dados válidos do backend, exibir lista vazia
+          console.log('⚠️ Nenhum dado válido recebido do backend')
+          pedidos.value = []
         }
       } catch (error) {
-        console.error('Erro ao carregar pedidos:', error)
-        // Usar dados de exemplo em caso de erro
+        console.error('❌ Erro ao carregar pedidos do backend:', error)
+        // Exibir lista vazia em caso de erro - apenas dados reais
         pedidos.value = []
       } finally {
         isLoading.value = false

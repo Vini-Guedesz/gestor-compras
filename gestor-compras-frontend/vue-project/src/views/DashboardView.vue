@@ -36,8 +36,8 @@
             title="Pedidos de Compra"
             description="Criar, editar e acompanhar pedidos"
             :metrics="[
-              { value: pedidosStats.total.toString(), label: 'total', color: '#1F285F' },
-              { value: pedidosStats.pendentes.toString(), label: 'pendentes', color: '#f59e0b' }
+              { value: metricas.pedidos.pendentes.toString(), label: 'pendentes', color: '#f59e0b' },
+              { value: metricas.pedidos.total.toString(), label: 'total', color: '#1F285F' }
             ]"
             icon-color="#1F285F"
             variant="primary"
@@ -47,10 +47,10 @@
           <!-- Cotações -->
           <MetricCard
             title="Cotações"
-            description="Gerenciar cotações de fornecedores"
+            description="Gerenciar cotações e fornecedores"
             :metrics="[
-              { value: cotacoesStats.total.toString(), label: 'total', color: '#10b981' },
-              { value: cotacoesStats.ativas.toString(), label: 'ativas', color: '#f59e0b' }
+              { value: metricas.cotacoes.abertas.toString(), label: 'abertas', color: '#10b981' },
+              { value: metricas.cotacoes.emAnalise.toString(), label: 'em análise', color: '#f59e0b' }
             ]"
             icon-color="#10b981"
             variant="success"
@@ -60,15 +60,17 @@
           <!-- Fornecedores -->
           <MetricCard
             title="Fornecedores"
-            description="Cadastro e gestão de fornecedores"
+            description="Cadastro e avaliação"
             :metrics="[
-              { value: fornecedoresStats.total.toString(), label: 'cadastrados', color: '#6366f1' },
-              { value: fornecedoresStats.ativos.toString(), label: 'ativos', color: '#10b981' }
+              { value: metricas.fornecedores.ativos.toString(), label: 'ativos', color: '#1F285F' },
+              { value: metricas.fornecedores.novos.toString(), label: 'novos', color: '#10b981' }
             ]"
             icon-color="#6366f1"
             variant="default"
             @action="navigateTo('/fornecedores')"
           />
+
+
         </div>
       </div>
     </main>
@@ -83,102 +85,90 @@ import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
 import MetricCard from '../components/MetricCard.vue'
 import QuickActions from '../components/QuickActions.vue'
-
-// Importar services para dados reais
 import pedidoService from '../services/pedidoService.js'
 import fornecedorService from '../services/fornecedorService.js'
-import { cotacaoService } from '../services/cotacaoService.js'
+import cotacaoService from '../services/cotacaoService.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-// Estados para estatísticas reais
-const pedidosStats = ref({
-  total: 0,
-  pendentes: 0
-})
-
-const cotacoesStats = ref({
-  total: 0,
-  ativas: 0
-})
-
-const fornecedoresStats = ref({
-  total: 0,
-  ativos: 0
+// Estados reativos para métricas reais
+const metricas = ref({
+  pedidos: { pendentes: 0, total: 0 },
+  cotacoes: { abertas: 0, emAnalise: 0 },
+  fornecedores: { ativos: 0, novos: 0 }
 })
 
 const userName = computed(() => {
   return authStore.user?.name || 'Usuário'
 })
 
-// Função para carregar estatísticas reais
-const carregarEstatisticas = async () => {
+// Carregar métricas reais do backend
+const carregarMetricas = async () => {
   try {
-    console.log('📊 Carregando estatísticas do dashboard...')
-    
     // Carregar pedidos
-    try {
-      const pedidos = await pedidoService.listar()
-      pedidosStats.value.total = pedidos?.length || 0
-      pedidosStats.value.pendentes = pedidos?.filter(p => p.status === 'PENDENTE' || p.status === 'EM_ANALISE')?.length || 0
-      console.log('✅ Estatísticas de pedidos carregadas:', pedidosStats.value)
-    } catch (error) {
-      console.warn('⚠️ Erro ao carregar pedidos:', error.message)
-    }
-
-    // Carregar cotações  
-    try {
-      const cotacoes = await cotacaoService.listar()
-      cotacoesStats.value.total = cotacoes?.length || 0
-      cotacoesStats.value.ativas = cotacoes?.filter(c => c.status === 'ATIVA' || c.status === 'EM_ANDAMENTO')?.length || 0
-      console.log('✅ Estatísticas de cotações carregadas:', cotacoesStats.value)
-    } catch (error) {
-      console.warn('⚠️ Erro ao carregar cotações:', error.message)
+    const pedidos = await pedidoService.listar()
+    if (pedidos && Array.isArray(pedidos)) {
+      metricas.value.pedidos.total = pedidos.length
+      metricas.value.pedidos.pendentes = pedidos.filter(p =>
+        p.status === 'PENDENTE' || p.status === 'EM_ANALISE'
+      ).length
     }
 
     // Carregar fornecedores
-    try {
-      const fornecedores = await fornecedorService.listarFornecedoresProduto()
-      fornecedoresStats.value.total = fornecedores?.length || 0
-      fornecedoresStats.value.ativos = fornecedores?.filter(f => f.ativo !== false)?.length || 0
-      console.log('✅ Estatísticas de fornecedores carregadas:', fornecedoresStats.value)
-    } catch (error) {
-      console.warn('⚠️ Erro ao carregar fornecedores:', error.message)
+    const fornecedores = await fornecedorService.listarProdutos()
+    if (fornecedores && Array.isArray(fornecedores)) {
+      metricas.value.fornecedores.ativos = fornecedores.length
+      metricas.value.fornecedores.novos = 0 // TODO: implementar lógica de novos fornecedores
     }
 
+    // Carregar cotações
+    const cotacoes = await cotacaoService.listar()
+    if (cotacoes && Array.isArray(cotacoes)) {
+      metricas.value.cotacoes.abertas = cotacoes.filter(c => c.status === 'PENDENTE').length
+      metricas.value.cotacoes.emAnalise = cotacoes.filter(c => c.status === 'EM_ANALISE').length
+    }
   } catch (error) {
-    console.error('❌ Erro geral ao carregar estatísticas:', error)
+    console.error('Erro ao carregar métricas do dashboard:', error)
   }
 }
 
+onMounted(() => {
+  carregarMetricas()
+})
+
 const handleQuickAction = (action) => {
   console.log('Ação rápida:', action)
+
   // Navegar para a rota correspondente
   if (action.route) {
-    navigateTo(action.route)
+    router.push(action.route)
+
+    // Executar ação específica após navegar
+    setTimeout(() => {
+      if (action.action === 'novo-pedido') {
+        // Simular clique no botão "Novo Pedido" da página de pedidos
+        console.log('Ação: Abrir formulário de novo pedido')
+      } else if (action.action === 'nova-cotacao') {
+        console.log('Ação: Acessar cotações')
+      } else if (action.action === 'novo-fornecedor') {
+        console.log('Ação: Acessar fornecedores')
+      }
+    }, 100)
   }
 }
 
 const navigateTo = (path) => {
   console.log('Navegando para:', path)
-  
-  // Definir rotas disponíveis
-  const rotasDisponiveis = ['/pedidos', '/cotacoes', '/fornecedores']
-  
-  if (rotasDisponiveis.includes(path)) {
+  // Navegar para as rotas implementadas
+  const rotasImplementadas = ['/pedidos', '/cotacoes', '/fornecedores']
+
+  if (rotasImplementadas.includes(path)) {
     router.push(path)
   } else {
     console.log('Rota ainda não implementada:', path)
-    // Mostrar mensagem amigável para o usuário
-    alert('Esta funcionalidade estará disponível em breve!')
   }
 }
-
-// Carregar dados ao montar o componente
-onMounted(() => {
-  carregarEstatisticas()
-})
 </script>
 
 <style scoped>

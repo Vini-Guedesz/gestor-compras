@@ -135,13 +135,13 @@ const showNotification = ref(false)
 const notificationType = ref('success')
 const notificationMessage = ref('')
 
-// Dados do formulário
+// Dados do formulário - usar dados reais do usuário logado
 const formData = ref({
-    nome: 'João Silva',
-    email: 'joao.silva@empresa.com',
-    telefone: '(11) 99999-9999',
-    unidadeFuncional: 'TI',
-    funcao: 'Administrador'
+    nome: authStore.user?.name || '',
+    email: authStore.user?.email || '',
+    telefone: authStore.user?.telefone || '',
+    unidadeFuncional: authStore.user?.unidadeFuncional || '',
+    funcao: authStore.user?.funcao || authStore.user?.role || ''
 })
 
 // Dados originais para cancelamento

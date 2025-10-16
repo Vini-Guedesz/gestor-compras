@@ -71,7 +71,7 @@
                         type="text"
                         v-model="item.nome"
                         class="form-input"
-                        placeholder="Ex: Notebook Dell Latitude 5520"
+                        placeholder="Nome do item"
                         maxlength="255"
                         required
                       />

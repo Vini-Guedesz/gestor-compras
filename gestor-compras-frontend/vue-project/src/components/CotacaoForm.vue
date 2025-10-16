@@ -136,8 +136,7 @@ const formData = ref({
   fornecedorId: null,
   itemPedidoId: null,
   preco: null,
-  prazoEntrega: null,
-  caminhoAnexo: null // Campo adicional conforme backend
+  prazoEntrega: null
 })
 
 // Lista de fornecedores e itens (será carregada do backend)
@@ -223,8 +222,7 @@ const handleSubmit = async () => {
       fornecedorId: fornecedorIdInt,           // Integer no backend
       itemPedidoId: itemPedidoIdInt,           // Long no backend
       preco: precoFloat,                       // BigDecimal no backend
-      prazoEntrega: formData.value.prazoEntrega || null,  // LocalDate no backend (nullable)
-      caminhoAnexo: formData.value.caminhoAnexo || null   // String no backend (nullable)
+      prazoEntrega: formData.value.prazoEntrega || null  // LocalDate no backend (nullable)
     }
 
     console.log('📤 Enviando dados para a view pai:', dadosParaSalvar)
@@ -298,7 +296,6 @@ onMounted(async () => {
       formData.value.itemPedidoId = props.cotacao.itemPedidoId
       formData.value.preco = props.cotacao.preco
       formData.value.prazoEntrega = props.cotacao.prazoEntrega
-      formData.value.caminhoAnexo = props.cotacao.caminhoAnexo
     }
   } catch (error) {
     console.error('❌ Erro geral ao carregar dados:', error)
@@ -313,8 +310,7 @@ watch(() => props.isVisible, (newVal) => {
       fornecedorId: null,
       itemPedidoId: null,
       preco: null,
-      prazoEntrega: null,
-      caminhoAnexo: null
+      prazoEntrega: null
     }
   }
 })
