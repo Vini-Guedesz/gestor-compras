@@ -39,6 +39,41 @@ const itemPedidoService = {
       console.error(`❌ Erro ao obter item de pedido ID ${id} no backend:`, error.message)
       throw error
     }
+  },
+
+  async criar(item) {
+    try {
+      console.log('🔄 Criando item de pedido no backend...')
+      const data = await api.post('/api/itens-pedido', item)
+      console.log('✅ Item de pedido criado no backend:', data.id)
+      return data
+    } catch (error) {
+      console.error('❌ Erro ao criar item de pedido:', error.message)
+      throw error
+    }
+  },
+
+  async atualizar(id, item) {
+    try {
+      console.log(`🔄 Atualizando item de pedido ID ${id} no backend...`)
+      const data = await api.put(`/api/itens-pedido/${id}`, item)
+      console.log('✅ Item de pedido atualizado no backend')
+      return data
+    } catch (error) {
+      console.error(`❌ Erro ao atualizar item de pedido ID ${id} no backend:`, error.message)
+      throw error
+    }
+  },
+
+  async excluir(id) {
+    try {
+      console.log(`🔄 Excluindo item de pedido ID ${id} no backend...`)
+      await api.delete(`/api/itens-pedido/${id}`)
+      console.log('✅ Item de pedido excluído do backend')
+    } catch (error) {
+      console.error(`❌ Erro ao excluir item de pedido ID ${id} no backend:`, error.message)
+      throw error
+    }
   }
 }
 

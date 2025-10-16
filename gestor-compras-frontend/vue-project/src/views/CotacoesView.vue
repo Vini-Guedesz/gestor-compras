@@ -115,21 +115,18 @@
         </div>
 
         <div class="filter-controls">
-          <select v-model="filtros.status" class="filter-select" @change="aplicarFiltros">
-            <option value="">Todos os Status</option>
-            <option value="enviada">Enviada</option>
-            <option value="em-analise">Em Análise</option>
-            <option value="selecionada">Selecionada</option>
-            <option value="aprovada">Aprovada</option>
-            <option value="cancelada">Cancelada</option>
-            <option value="vencida">Vencida</option>
-          </select>
-
           <select v-model="filtros.periodo" class="filter-select" @change="aplicarFiltros">
             <option value="">Todos os Períodos</option>
             <option value="semana">Última semana</option>
             <option value="mes">Último mês</option>
             <option value="trimestre">Último trimestre</option>
+          </select>
+
+          <select v-model="filtros.fornecedor" class="filter-select" @change="aplicarFiltros">
+            <option value="">Todos os Fornecedores</option>
+            <option value="1">Fornecedor #1</option>
+            <option value="2">Fornecedor #2</option>
+            <option value="3">Fornecedor #3</option>
           </select>
 
           <button @click="limparFiltros" class="clear-filters-btn">
@@ -178,22 +175,22 @@
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
-                <th @click="ordenar('descricao')" class="sortable">
-                  Descrição
-                  <svg v-if="ordenacao.campo === 'descricao'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
-                    <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
-                  </svg>
-                </th>
-                <th>Fornecedores</th>
-                <th @click="ordenar('status')" class="sortable">
-                  Status
-                  <svg v-if="ordenacao.campo === 'status'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
+                <th>Fornecedor ID</th>
+                <th @click="ordenar('preco')" class="sortable">
+                  Preço
+                  <svg v-if="ordenacao.campo === 'preco'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
                 <th @click="ordenar('prazoEntrega')" class="sortable">
-                  Prazo
+                  Prazo Entrega
                   <svg v-if="ordenacao.campo === 'prazoEntrega'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
+                    <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
+                  </svg>
+                </th>
+                <th @click="ordenar('dataCotacao')" class="sortable">
+                  Data Cotação
+                  <svg v-if="ordenacao.campo === 'dataCotacao'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
@@ -228,38 +225,24 @@
                   <span class="id-badge">{{ String(cotacao.id).padStart(3, '0') }}</span>
                 </td>
                 <td>
-                  <div class="description-cell">
-                    <div class="description-title">{{ cotacao.descricao }}</div>
-                    <div class="description-subtitle">{{ cotacao.centroCusto?.nome }}</div>
+                  <div class="fornecedor-cell">
+                    <span class="fornecedor-id">#{{ cotacao.fornecedorId || 'N/A' }}</span>
                   </div>
                 </td>
                 <td>
-                  <div class="suppliers-cell">
-                    <span class="suppliers-count">{{ cotacao.numeroFornecedores }}</span>
-                    <div class="suppliers-avatars">
-                      <div
-                        v-for="fornecedor in cotacao.fornecedores?.slice(0, 3)"
-                        :key="fornecedor.id"
-                        class="supplier-avatar"
-                        :title="fornecedor.nomeFantasia"
-                      >
-                        {{ fornecedor.nomeFantasia.charAt(0) }}
-                      </div>
-                      <div v-if="cotacao.numeroFornecedores > 3" class="suppliers-more">
-                        +{{ cotacao.numeroFornecedores - 3 }}
-                      </div>
-                    </div>
+                  <div class="price-cell">
+                    <span class="price-value">R$ {{ formatarPreco(cotacao.preco) }}</span>
                   </div>
-                </td>
-                <td>
-                  <span :class="['status-badge', `status-${cotacao.status}`]">
-                    {{ getStatusTexto(cotacao.status) }}
-                  </span>
                 </td>
                 <td>
                   <div class="deadline-cell" :class="{ 'deadline-expired': isPrazoVencido(cotacao.prazoEntrega) }">
                     <div class="deadline-date">{{ formatarData(cotacao.prazoEntrega) }}</div>
                     <div class="deadline-remaining">{{ getDiasRestantes(cotacao.prazoEntrega) }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="date-cell">
+                    <span class="date-value">{{ formatarData(cotacao.dataCotacao) }}</span>
                   </div>
                 </td>
                 <td>
@@ -270,7 +253,7 @@
                       </svg>
                     </button>
                     <button
-                      v-if="podeEditar(cotacao.status)"
+                      v-if="podeEditar()"
                       @click="editarCotacao(cotacao)"
                       class="action-btn edit"
                       title="Editar"
@@ -280,7 +263,7 @@
                       </svg>
                     </button>
                     <button
-                      v-if="podeComparar(cotacao.status)"
+                      v-if="podeComparar(cotacao)"
                       @click="compararCotacao(cotacao.id)"
                       class="action-btn compare"
                       title="Comparar Propostas"
@@ -290,7 +273,7 @@
                       </svg>
                     </button>
                     <button
-                      v-if="podeDeletar(cotacao.status)"
+                      v-if="podeDeletar()"
                       @click="deletarCotacao(cotacao.id)"
                       class="action-btn delete"
                       title="Excluir"
@@ -617,24 +600,21 @@ const irParaPagina = (pagina) => {
   }
 }
 
-const getStatusTexto = (status) => {
-  const textos = {
-    'enviada': 'Enviada',
-    'em-analise': 'Em Análise',
-    'selecionada': 'Selecionada',
-    'aprovada': 'Aprovada',
-    'cancelada': 'Cancelada',
-    'vencida': 'Vencida',
-    'finalizada': 'Finalizada'
-  }
-  return textos[status] || status
-}
+
 
 const formatarData = (data) => {
   if (!data) return 'Não informado'
   const date = new Date(data)
   if (isNaN(date.getTime())) return 'Data inválida'
   return date.toLocaleDateString('pt-BR')
+}
+
+const formatarPreco = (preco) => {
+  if (!preco && preco !== 0) return '0,00'
+  return Number(preco).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 }
 
 const getDiasRestantes = (dataLimite) => {
@@ -659,19 +639,20 @@ const isPrazoVencido = (dataLimite) => {
   return limite < new Date()
 }
 
-const podeEditar = (status) => {
-  // Permite editar cotações em rascunho, pendentes, enviadas ou rejeitadas
-  return ['rascunho', 'pendente', 'enviada', 'rejeitada'].includes(status)
+const podeEditar = () => {
+  // Como não há campo status no backend, permite editar sempre
+  // Pode adicionar lógica baseada em data ou outros critérios se necessário
+  return true
 }
 
-const podeComparar = (status) => {
-  // Permite comparar cotações em análise ou respondidas
-  return ['em-analise', 'respondida', 'finalizada'].includes(status)
+const podeComparar = (cotacao) => {
+  // Permite comparar cotações que tenham preço definido
+  return cotacao.preco && cotacao.preco > 0
 }
 
-const podeDeletar = (status) => {
-  // Não permite deletar cotações já finalizadas ou aprovadas
-  return !['finalizada', 'aprovada', 'contratada'].includes(status)
+const podeDeletar = () => {
+  // Permite deletar sempre (pode ser refinado conforme regras de negócio)
+  return true
 }
 
 // Ações
@@ -1281,6 +1262,42 @@ onMounted(() => {
 .deadline-expired .deadline-remaining {
   color: #dc2626;
   font-weight: 600;
+}
+
+/* Novas células */
+.fornecedor-cell {
+  display: flex;
+  align-items: center;
+}
+
+.fornecedor-id {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.price-cell {
+  display: flex;
+  align-items: center;
+}
+
+.price-value {
+  font-weight: 600;
+  color: #059669;
+  font-size: 0.875rem;
+}
+
+.date-cell {
+  display: flex;
+  align-items: center;
+}
+
+.date-value {
+  color: #374151;
+  font-size: 0.875rem;
 }
 
 .actions-cell {

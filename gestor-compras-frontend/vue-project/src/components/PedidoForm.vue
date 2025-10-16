@@ -71,7 +71,7 @@
                         type="text"
                         v-model="item.nome"
                         class="form-input"
-                        placeholder="Nome do item"
+                        placeholder="Nome do item (obrigatório)"
                         maxlength="255"
                         required
                       />
@@ -212,12 +212,28 @@ export default {
         errors.push('Pelo menos um item deve ser adicionado')
       }
 
+      // Validar observação do pedido
+      if (formData.value.observacao && formData.value.observacao.length > 1000) {
+        errors.push('Observações do pedido devem ter no máximo 1000 caracteres')
+      }
+
       formData.value.itens.forEach((item, index) => {
         if (!item.nome?.trim()) {
           errors.push(`Item ${index + 1}: Nome do item é obrigatório`)
         }
         if (!item.quantidade || item.quantidade <= 0) {
           errors.push(`Item ${index + 1}: Quantidade deve ser maior que zero`)
+        }
+
+        // Validações de tamanho conforme backend
+        if (item.nome && item.nome.length > 255) {
+          errors.push(`Item ${index + 1}: Nome deve ter no máximo 255 caracteres`)
+        }
+        if (item.descricao && item.descricao.length > 500) {
+          errors.push(`Item ${index + 1}: Descrição deve ter no máximo 500 caracteres`)
+        }
+        if (item.observacao && item.observacao.length > 255) {
+          errors.push(`Item ${index + 1}: Observação deve ter no máximo 255 caracteres`)
         }
       })
 
@@ -301,17 +317,19 @@ export default {
         isLoading.value = true
 
         const dadosParaEnvio = {
-          id: props.pedido?.id || null, // ID apenas se for edição
+          // ID apenas se for edição, removido se for criação
+          ...(props.pedido?.id && { id: props.pedido.id }),
           itens: formData.value.itens.map(item => ({
-            id: null, // Sempre null para novos itens
-            nome: item.nome || '',
+            // ID do item removido para criação, mantido apenas se existir para edição
+            ...(item.id && { id: item.id }),
+            nome: (item.nome || '').trim(),
             quantidade: parseInt(item.quantidade) || 1,
-            descricao: item.descricao || '',
-            observacao: item.observacao || ''
+            descricao: (item.descricao || '').trim(),
+            observacao: (item.observacao || '').trim()
           })),
-          status: 'PENDENTE', // Status padrão para novos pedidos
-          observacao: formData.value.observacao || '',
-          dataCriacao: null // Será definido automaticamente pelo backend
+          status: props.pedido?.status || 'PENDENTE', // Mantém status existente ou usa PENDENTE
+          observacao: (formData.value.observacao || '').trim()
+          // dataCriacao removido - será definido automaticamente pelo backend
         }
 
         console.log('Dados para envio:', dadosParaEnvio)

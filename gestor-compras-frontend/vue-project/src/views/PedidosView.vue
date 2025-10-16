@@ -114,6 +114,8 @@
             <select v-model="filtroStatus" @change="filtrarPedidos" class="form-select">
               <option value="">Todos os status</option>
               <option value="PENDENTE">Pendente</option>
+              <option value="EM_ANALISE">Em Análise</option>
+              <option value="EM_ANDAMENTO">Em Andamento</option>
               <option value="APROVADO">Aprovado</option>
               <option value="CANCELADO">Cancelado</option>
             </select>
@@ -149,7 +151,6 @@
               <tr>
                 <th>Pedido</th>
                 <th>Status</th>
-                <th>Itens</th>
                 <th>Data</th>
                 <th>Ações</th>
               </tr>
@@ -165,9 +166,6 @@
                   <span class="status-badge" :class="getStatusClass(pedido.status)">
                     {{ getStatusLabel(pedido.status) }}
                   </span>
-                </td>
-                <td class="itens-cell">
-                  <span class="itens-count">{{ getQuantidadeItens(pedido) }} item(s)</span>
                 </td>
                 <td class="data-cell">
                   <span class="data-criacao">{{ formatarData(pedido.dataCriacao || pedido.dataPedido) }}</span>
@@ -420,7 +418,7 @@ export default {
     })
 
     const pedidosPendentes = computed(() =>
-      pedidos.value.filter(p => p.status === 'PENDENTE' || p.status === 'pendente').length
+      pedidos.value.filter(p => ['PENDENTE', 'EM_ANALISE', 'pendente'].includes(p.status)).length
     )
 
     const pedidosAprovados = computed(() =>
@@ -581,10 +579,12 @@ export default {
 
     const getStatusLabel = (status) => {
       const labels = {
-        // Status do backend (uppercase)
+        // Status do backend conforme enum StatusPedido
         'PENDENTE': 'Pendente',
-        'APROVADO': 'Aprovado',
+        'EM_ANALISE': 'Em Análise',
+        'EM_ANDAMENTO': 'Em Andamento',
         'CANCELADO': 'Cancelado',
+        'APROVADO': 'Aprovado',
         // Status antigos (lowercase) - compatibilidade
         'pendente': 'Pendente',
         'aprovado': 'Aprovado',
@@ -595,10 +595,12 @@ export default {
 
     const getStatusClass = (status) => {
       const classes = {
-        // Status do backend (uppercase)
+        // Status do backend conforme enum StatusPedido
         'PENDENTE': 'status-pending',
-        'APROVADO': 'status-approved',
+        'EM_ANALISE': 'status-analyzing',
+        'EM_ANDAMENTO': 'status-progress',
         'CANCELADO': 'status-canceled',
+        'APROVADO': 'status-approved',
         // Status antigos (lowercase) - compatibilidade
         'pendente': 'status-pending',
         'aprovado': 'status-approved',
@@ -815,18 +817,18 @@ export default {
 
     // MÃ©todos de permissÃ£o
     const podeEditar = (pedido) => {
-      // Permite editar pedidos pendentes ou em andamento
-      return ['PENDENTE', 'EM_ANDAMENTO'].includes(pedido.status)
+      // Permite editar pedidos pendentes, em análise ou em andamento
+      return ['PENDENTE', 'EM_ANALISE', 'EM_ANDAMENTO'].includes(pedido.status)
     }
 
     const podeAprovar = (pedido) => {
-      // SÃ³ pode aprovar pedidos pendentes
-      return ['PENDENTE'].includes(pedido.status)
+      // SÃ³ pode aprovar pedidos pendentes ou em análise
+      return ['PENDENTE', 'EM_ANALISE'].includes(pedido.status)
     }
 
     const podeExcluir = (pedido) => {
       // Pode excluir pedidos que ainda nÃ£o foram aprovados
-      return ['PENDENTE'].includes(pedido.status)
+      return ['PENDENTE', 'EM_ANALISE'].includes(pedido.status)
     }
 
     const podeAlterarStatus = (pedido) => {
@@ -837,6 +839,8 @@ export default {
     const getStatusDisponiveis = (statusAtual) => {
       const todosStatus = [
         { value: 'PENDENTE', label: 'Pendente' },
+        { value: 'EM_ANALISE', label: 'Em Análise' },
+        { value: 'EM_ANDAMENTO', label: 'Em Andamento' },
         { value: 'APROVADO', label: 'Aprovado' },
         { value: 'CANCELADO', label: 'Cancelado' }
       ]
@@ -844,6 +848,10 @@ export default {
       // Filtrar status disponÃ­veis baseado no status atual
       switch (statusAtual) {
         case 'PENDENTE':
+          return todosStatus.filter(s => ['EM_ANALISE', 'APROVADO', 'CANCELADO'].includes(s.value))
+        case 'EM_ANALISE':
+          return todosStatus.filter(s => ['EM_ANDAMENTO', 'APROVADO', 'CANCELADO'].includes(s.value))
+        case 'EM_ANDAMENTO':
           return todosStatus.filter(s => ['APROVADO', 'CANCELADO'].includes(s.value))
         default:
           return []
@@ -1299,17 +1307,6 @@ export default {
 .pedido-numero {
   font-weight: 600;
   color: #111827;
-  font-size: 0.875rem;
-}
-
-
-
-
-
-
-
-.itens-count {
-  color: #6b7280;
   font-size: 0.875rem;
 }
 

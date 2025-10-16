@@ -154,6 +154,46 @@ const fornecedorService = {
     }
   },
 
+  // Métodos específicos para cotações - com marcação de tipo
+  async listarProdutos() {
+    try {
+      const produtos = await this.listarFornecedoresProduto()
+      return produtos.map(fornecedor => ({
+        ...fornecedor,
+        tipo: 'PRODUTO'
+      }))
+    } catch (error) {
+      console.error('❌ Erro ao listar fornecedores de produto:', error.message)
+      throw error
+    }
+  },
+
+  async listarServicos() {
+    try {
+      const servicos = await this.listarFornecedoresServico()
+      return servicos.map(fornecedor => ({
+        ...fornecedor,
+        tipo: 'SERVICO'
+      }))
+    } catch (error) {
+      console.error('❌ Erro ao listar fornecedores de serviço:', error.message)
+      throw error
+    }
+  },
+
+  async listarParaCotacao() {
+    try {
+      const [produtos, servicos] = await Promise.all([
+        this.listarProdutos(),
+        this.listarServicos()
+      ])
+      return [...produtos, ...servicos]
+    } catch (error) {
+      console.error('❌ Erro ao listar fornecedores para cotação:', error.message)
+      throw error
+    }
+  },
+
   // Aliases para compatibilidade
   async listar() {
     return this.listarTodos()

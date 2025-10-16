@@ -79,18 +79,36 @@ export const cotacaoService = {
   // Atualizar cotação
   async atualizar(id, dadosCotacao) {
     try {
-      // Preparar dados para envio (CotacaoUpdateDTO)
-      const payload = {
-        preco: parseFloat(dadosCotacao.preco) || null,
-        prazoEntrega: dadosCotacao.prazoEntrega || null,
-        anexoPdf: null, // TODO: Implementar upload de PDF
-        caminhoAnexo: dadosCotacao.caminhoAnexo || null
+      // Validação básica
+      if (!id) {
+        throw new Error('ID da cotação é obrigatório')
       }
 
-      // Usar endpoint real do backend
-      console.log('📤 Atualizando cotação no backend:', payload)
+      // Preparar dados para envio (CotacaoUpdateDTO)
+      const payload = {}
+
+      // Incluir apenas campos válidos do CotacaoUpdateDTO
+      if (dadosCotacao.preco !== undefined && dadosCotacao.preco !== null) {
+        payload.preco = parseFloat(dadosCotacao.preco)
+        if (payload.preco <= 0) {
+          throw new Error('Preço deve ser maior que zero')
+        }
+      }
+
+      if (dadosCotacao.prazoEntrega !== undefined && dadosCotacao.prazoEntrega !== null) {
+        payload.prazoEntrega = parseInt(dadosCotacao.prazoEntrega)
+        if (payload.prazoEntrega < 0) {
+          throw new Error('Prazo de entrega deve ser positivo')
+        }
+      }
+
+      if (dadosCotacao.anexoPdf !== undefined) {
+        payload.anexoPdf = dadosCotacao.anexoPdf
+      }
+
+      console.log('📤 Atualizando cotação no backend:', { id, payload })
       const response = await api.put(`${BASE_URL}/${id}`, payload)
-      console.log('✅ Cotação atualizada no backend')
+      console.log('✅ Cotação atualizada no backend:', response)
       return response
 
     } catch (error) {
@@ -401,6 +419,71 @@ export const cotacaoService = {
       return response.data
     } catch (error) {
       console.error('Erro ao criar cotação de modelo:', error)
+      throw error
+    }
+  },
+
+  // ==================== UPLOAD DE ARQUIVOS ====================
+
+  // Upload de arquivo PDF para cotação
+  async uploadArquivo(cotacaoId, arquivo) {
+    try {
+      if (!arquivo) {
+        throw new Error('Arquivo é obrigatório')
+      }
+
+      // Validar tipo de arquivo
+      if (arquivo.type !== 'application/pdf') {
+        throw new Error('Apenas arquivos PDF são permitidos')
+      }
+
+      // Validar tamanho (máximo 10MB)
+      const maxSize = 10 * 1024 * 1024 // 10MB
+      if (arquivo.size > maxSize) {
+        throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
+      }
+
+      const formData = new FormData()
+      formData.append('anexoPdf', arquivo)
+
+      console.log('📤 Fazendo upload de arquivo para cotação:', cotacaoId)
+
+      const response = await api.post(`${BASE_URL}/${cotacaoId}/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      console.log('✅ Upload realizado com sucesso:', response)
+      return response
+
+    } catch (error) {
+      console.error('❌ Erro no upload do arquivo:', error)
+      throw error
+    }
+  },
+
+  // Baixar arquivo de cotação
+  async baixarArquivo(cotacaoId) {
+    try {
+      const response = await api.get(`${BASE_URL}/${cotacaoId}/download`, {
+        responseType: 'blob'
+      })
+
+      // Criar URL para download
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `cotacao_${cotacaoId}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      return response
+
+    } catch (error) {
+      console.error('❌ Erro ao baixar arquivo:', error)
       throw error
     }
   },
