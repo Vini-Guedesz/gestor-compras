@@ -48,6 +48,24 @@ public class Cotacao {
     @PrePersist
     public void prePersist() {
         this.dataCotacao = LocalDate.now();
+        validarFornecedor();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        validarFornecedor();
+    }
+
+    private void validarFornecedor() {
+        boolean temProduto = fornecedorProduto != null;
+        boolean temServico = fornecedorServico != null;
+
+        if (!temProduto && !temServico) {
+            throw new IllegalStateException("Cotação deve ter um fornecedor (produto ou serviço)");
+        }
+        if (temProduto && temServico) {
+            throw new IllegalStateException("Cotação não pode ter ambos os tipos de fornecedor simultaneamente");
+        }
     }
 
     public Integer getFornecedorId() {

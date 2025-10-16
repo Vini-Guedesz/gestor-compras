@@ -4,7 +4,7 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
               name="item_produto_detalhe" pageWidth="595" pageHeight="842" columnWidth="535"
-              leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20" uuid="d1d2d3d4-e5e6-4f7f-8a9a-0b1b2c3c4c5c">
+              leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
 
     <!-- Estilos padronizados -->
     <style name="Title" forecolor="#1A237E" fontName="Arial" fontSize="24" isBold="true"/>
@@ -43,20 +43,20 @@
         <band height="125">
             <!-- Logo UEMA Centralizada -->
             <image scaleImage="RetainShape" hAlign="Center" vAlign="Top">
-                <reportElement x="192" y="10" width="150" height="50" uuid="e2e3e4e5-f6f7-4a8a-9b0b-1c2c3d4d5d6d"/>
+                <reportElement x="192" y="10" width="150" height="50"/>
                 <imageExpression><![CDATA["relatorios/logo-uema-site.png"]]></imageExpression>
             </image>
 
             <!-- Nome do Relatório Centralizado -->
             <staticText>
-                <reportElement style="Title" x="0" y="70" width="535" height="35" uuid="a4a5a6a7-b8b9-4c0c-1d2d-3e4e5f6f7f8f"/>
+                <reportElement style="Title" x="0" y="70" width="535" height="35"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <text><![CDATA[DETALHAMENTO DE ITEM DE PEDIDO]]></text>
             </staticText>
 
             <!-- Versão do Relatório -->
             <staticText>
-                <reportElement style="Footer" x="420" y="108" width="115" height="12" uuid="c1c2c3c4-d5d6-4e7e-8f9f-0a1a2b3b4b5b"/>
+                <reportElement style="Footer" x="420" y="108" width="115" height="12"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
                     <font size="8" isItalic="true"/>
                 </textElement>
@@ -65,7 +65,7 @@
 
             <!-- Linha Separadora -->
             <line>
-                <reportElement x="0" y="122" width="535" height="1" forecolor="#3F51B5" uuid="b5b6b7b8-c9c0-4d1d-2e3e-4f5f6a7a8a9a"/>
+                <reportElement x="0" y="122" width="535" height="1" forecolor="#3F51B5"/>
                 <graphicElement>
                     <pen lineWidth="2.0" lineStyle="Solid"/>
                 </graphicElement>
@@ -77,7 +77,7 @@
     <pageHeader>
         <band height="10">
             <line>
-                <reportElement x="0" y="5" width="535" height="1" forecolor="#CCCCCC" uuid="c6c7c8c9-d0d1-4e2e-3f4f-5a6a7b8b9b0b"/>
+                <reportElement x="0" y="5" width="535" height="1" forecolor="#CCCCCC"/>
                 <graphicElement>
                     <pen lineWidth="0.5"/>
                 </graphicElement>
@@ -90,7 +90,7 @@
         <band height="350">
             <!-- Container Principal -->
             <rectangle>
-                <reportElement mode="Opaque" x="0" y="10" width="535" height="330" backcolor="#FFFFFF" uuid="d7d8d9d0-e1e2-4f3f-4a5a-6b7b8c9c0c1c"/>
+                <reportElement mode="Opaque" x="0" y="10" width="535" height="330" backcolor="#FFFFFF"/>
                 <graphicElement>
                     <pen lineWidth="1.0" lineColor="#3F51B5"/>
                 </graphicElement>
@@ -98,7 +98,7 @@
 
             <!-- Seção de Identificação -->
             <staticText>
-                <reportElement style="SubTitle" x="10" y="20" width="515" height="25" uuid="e8e9e0e1-f2f3-4a4a-5b6b-7c8c9d0d1d2d"/>
+                <reportElement style="SubTitle" x="10" y="20" width="515" height="25"/>
                 <box>
                     <bottomPen lineWidth="1.0" lineColor="#E0E0E0"/>
                 </box>
@@ -110,14 +110,14 @@
 
             <!-- ID do Item -->
             <staticText>
-                <reportElement style="Header" x="20" y="55" width="150" height="25" uuid="f9f0f1f2-a3a4-4b5b-6c7c-8d9d0e1e2e3e"/>
+                <reportElement style="Header" x="20" y="55" width="150" height="25"/>
                 <textElement verticalAlignment="Middle">
                     <paragraph leftIndent="5"/>
                 </textElement>
                 <text><![CDATA[ID do Item:]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
-                <reportElement style="Detail" x="170" y="55" width="355" height="25" uuid="a0a1a2a3-b4b5-4c6c-7d8d-9e0e1f2f3f4f"/>
+                <reportElement style="Detail" x="170" y="55" width="355" height="25"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#E0E0E0"/>
                 </box>
@@ -129,14 +129,14 @@
 
             <!-- Nome do Item -->
             <staticText>
-                <reportElement style="Header" x="20" y="85" width="150" height="25" uuid="b1b2b3b4-c5c6-4d7d-8e9e-0f1f2a3a4a5a"/>
+                <reportElement style="Header" x="20" y="85" width="150" height="25"/>
                 <textElement verticalAlignment="Middle">
                     <paragraph leftIndent="5"/>
                 </textElement>
                 <text><![CDATA[Nome do Item:]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
-                <reportElement style="Detail" x="170" y="85" width="355" height="25" uuid="c2c3c4c5-d6d7-4e8e-9f0f-1a2a3b4b5b6b"/>
+                <reportElement style="Detail" x="170" y="85" width="355" height="25"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#E0E0E0"/>
                 </box>
@@ -148,7 +148,7 @@
 
             <!-- Seção de Quantidades -->
             <staticText>
-                <reportElement style="SubTitle" x="10" y="125" width="515" height="25" uuid="d3d4d5d6-e7e8-4f9f-0a1a-2b3b4c5c6c7c"/>
+                <reportElement style="SubTitle" x="10" y="125" width="515" height="25"/>
                 <box>
                     <topPen lineWidth="1.0" lineColor="#E0E0E0"/>
                     <bottomPen lineWidth="1.0" lineColor="#E0E0E0"/>
@@ -161,14 +161,14 @@
 
             <!-- Quantidade -->
             <staticText>
-                <reportElement style="Header" x="20" y="160" width="150" height="25" uuid="e4e5e6e7-f8f9-4a0a-1b2b-3c4c5d6d7d8d"/>
+                <reportElement style="Header" x="20" y="160" width="150" height="25"/>
                 <textElement verticalAlignment="Middle">
                     <paragraph leftIndent="5"/>
                 </textElement>
                 <text><![CDATA[Quantidade:]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
-                <reportElement style="Detail" x="170" y="160" width="150" height="25" uuid="f5f6f7f8-a9a0-4b1b-2c3c-4d5d6e7e8e9e"/>
+                <reportElement style="Detail" x="170" y="160" width="150" height="25"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#E0E0E0"/>
                 </box>
@@ -180,14 +180,14 @@
 
             <!-- ID da Solicitação -->
             <staticText>
-                <reportElement style="Header" x="20" y="190" width="150" height="25" uuid="a6a7a8a9-b0b1-4c2c-3d4d-5e6e7f8f9f0f"/>
+                <reportElement style="Header" x="20" y="190" width="150" height="25"/>
                 <textElement verticalAlignment="Middle">
                     <paragraph leftIndent="5"/>
                 </textElement>
                 <text><![CDATA[ID Solicitação:]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
-                <reportElement style="Detail" x="170" y="190" width="150" height="25" uuid="b7b8b9b0-c1c2-4d3d-4e5e-6f7f8a9a0a1a"/>
+                <reportElement style="Detail" x="170" y="190" width="150" height="25"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#E0E0E0"/>
                 </box>
@@ -199,7 +199,7 @@
 
             <!-- Seção de Informações Adicionais -->
             <staticText>
-                <reportElement style="SubTitle" x="10" y="230" width="515" height="25" uuid="c8c9c0c1-d2d3-4e4e-5f6f-7a8a9b0b1b2b"/>
+                <reportElement style="SubTitle" x="10" y="230" width="515" height="25"/>
                 <box>
                     <topPen lineWidth="1.0" lineColor="#E0E0E0"/>
                     <bottomPen lineWidth="1.0" lineColor="#E0E0E0"/>
@@ -212,14 +212,14 @@
 
             <!-- Descrição -->
             <staticText>
-                <reportElement style="Header" x="20" y="265" width="150" height="25" uuid="d9d0d1d2-e3e4-4f5f-6a7a-8b9b0c1c2c3c"/>
+                <reportElement style="Header" x="20" y="265" width="150" height="25"/>
                 <textElement verticalAlignment="Top">
                     <paragraph leftIndent="5" spacingBefore="5"/>
                 </textElement>
                 <text><![CDATA[Descrição:]]></text>
             </staticText>
             <textField textAdjust="StretchHeight" isBlankWhenNull="true">
-                <reportElement style="Detail" x="170" y="265" width="355" height="25" uuid="e0e1e2e3-f4f5-4a6a-7b8b-9c0c1d2d3d4d"/>
+                <reportElement style="Detail" x="170" y="265" width="355" height="25"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#E0E0E0"/>
                 </box>
@@ -231,14 +231,14 @@
 
             <!-- Observação -->
             <staticText>
-                <reportElement style="Header" x="20" y="295" width="150" height="35" uuid="f1f2f3f4-a5a6-4b7b-8c9c-0d1d2e3e4e5e"/>
+                <reportElement style="Header" x="20" y="295" width="150" height="35"/>
                 <textElement verticalAlignment="Top">
                     <paragraph leftIndent="5" spacingBefore="5"/>
                 </textElement>
                 <text><![CDATA[Observação:]]></text>
             </staticText>
             <textField textAdjust="StretchHeight" isBlankWhenNull="true">
-                <reportElement style="Detail" x="170" y="295" width="355" height="35" uuid="a2a3a4a5-b6b7-4c8c-9d0d-1e2e3f4f5f6f"/>
+                <reportElement style="Detail" x="170" y="295" width="355" height="35"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#E0E0E0"/>
                 </box>
@@ -254,7 +254,7 @@
     <pageFooter>
         <band height="30">
             <line>
-                <reportElement x="0" y="2" width="535" height="1" forecolor="#3F51B5" uuid="b3b4b5b6-c7c8-4d9d-0e1e-2f3f4a5a6a7a"/>
+                <reportElement x="0" y="2" width="535" height="1" forecolor="#3F51B5"/>
                 <graphicElement>
                     <pen lineWidth="1.0"/>
                 </graphicElement>
@@ -262,27 +262,27 @@
 
             <!-- Data e Hora de Geração -->
             <textField pattern="dd/MM/yyyy HH:mm">
-                <reportElement style="Footer" x="5" y="8" width="150" height="20" uuid="c4c5c6c7-d8d9-4e0e-1f2f-3a4a5b6b7b8b"/>
+                <reportElement style="Footer" x="5" y="8" width="150" height="20"/>
                 <textElement textAlignment="Left" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
             </textField>
 
             <!-- Sistema -->
             <staticText>
-                <reportElement style="Footer" x="180" y="8" width="180" height="20" uuid="d5d6d7d8-e9e0-4f1f-2a3a-4b5b6c7c8c9c"/>
+                <reportElement style="Footer" x="180" y="8" width="180" height="20"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <text><![CDATA[Sistema de Gestão de Compras - UEMA]]></text>
             </staticText>
 
             <!-- Paginação -->
             <textField>
-                <reportElement style="Footer" x="385" y="8" width="100" height="20" uuid="e6e7e8e9-f0f1-4a2a-3b4b-5c6c7d8d9d0d"/>
+                <reportElement style="Footer" x="385" y="8" width="100" height="20"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
             </textField>
 
             <textField evaluationTime="Report">
-                <reportElement style="Footer" x="485" y="8" width="50" height="20" uuid="f7f8f9f0-a1a2-4b3b-4c5c-6d7d8e9e0e1e"/>
+                <reportElement style="Footer" x="485" y="8" width="50" height="20"/>
                 <textElement textAlignment="Left" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
             </textField>
