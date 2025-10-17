@@ -22,7 +22,6 @@ import PedidosView from '../views/PedidosView.vue'
 import PerfilView from '../views/PerfilView.vue'
 import ConfiguracoesView from '../views/ConfiguracoesView.vue'
 import CotacoesView from '../views/CotacoesView.vue'
-import ComparacaoCotacoesView from '../views/ComparacaoCotacoesView.vue'
 
 // Criação do router com histórico de navegação do navegador
 const router = createRouter({
@@ -62,12 +61,7 @@ const router = createRouter({
       component: CotacoesView,
       meta: { requiresAuth: true } // Requer autenticação
     },
-    {
-      path: '/cotacoes/:id/comparacao',
-      name: 'comparacao-cotacoes',
-      component: ComparacaoCotacoesView,
-      meta: { requiresAuth: true } // Requer autenticação
-    },
+
     {
       path: '/cotacoes/:id',
       name: 'detalhes-cotacao',

@@ -1,6 +1,55 @@
 import api from './api.js'
+import axios from 'axios'
 
 const BASE_URL = '/api/cotacoes'
+
+// Configuração da URL base da API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+
+/**
+ * Cria uma instância específica do Axios para relatórios
+ * com configuração para receber dados binários (PDF)
+ */
+const relatorioClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000, // 30 segundos para relatórios que podem demorar mais
+  responseType: 'blob' // Importante para receber dados binários (PDF)
+})
+
+/**
+ * Interceptador para adicionar token de autenticação nos relatórios
+ */
+relatorioClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken')
+    console.log('🔑 Token para relatório:', token ? 'presente' : 'ausente')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    console.log('📡 Fazendo requisição para relatório:', config.url)
+    return config
+  },
+  (error) => {
+    console.error('❌ Erro no interceptor de request:', error)
+    return Promise.reject(error)
+  }
+)
+
+/**
+ * Interceptador de resposta para tratar erros nos relatórios
+ */
+relatorioClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+      return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
+    }
+    return Promise.reject(error)
+  }
+)
 
 export const cotacaoService = {
   // Listar todas as cotações
@@ -276,68 +325,148 @@ export const cotacaoService = {
     }
   },
 
-  // Exportar relatório PDF
-  async exportarPDF(filtros = {}) {
+  // Gerar relatório comparativo de cotações por item
+  async gerarRelatorioComparativo(itemPedidoId) {
     try {
-      const params = new URLSearchParams()
+      if (!itemPedidoId) {
+        throw new Error('ID do item do pedido é obrigatório para gerar o relatório')
+      }
 
-      if (filtros.status) params.append('status', filtros.status)
-      if (filtros.fornecedor) params.append('fornecedor', filtros.fornecedor)
-      if (filtros.periodo) params.append('periodo', filtros.periodo)
-      if (filtros.dataInicio) params.append('dataInicio', filtros.dataInicio)
-      if (filtros.dataFim) params.append('dataFim', filtros.dataFim)
+      console.log('📊 Gerando relatório comparativo para item:', itemPedidoId)
 
-      const url = params.toString() ? `${BASE_URL}/relatorio/pdf?${params}` : `${BASE_URL}/relatorio/pdf`
+      const response = await relatorioClient.get(`/relatorios/comparativo-cotacao/${itemPedidoId}`)
 
-      const response = await api.get(url, {
-        responseType: 'blob'
+      console.log('🔍 Debug - Resposta completa do relatório comparativo:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        dataSize: response.data?.size || 'unknown',
+        dataType: response.data?.type || 'unknown',
+        dataExists: !!response.data,
+        fullResponse: response
       })
+
+      // Verificar se a resposta existe e tem conteúdo
+      if (!response.data || response.data.size === 0) {
+        console.error('❌ Resposta vazia ou sem dados do servidor')
+        throw new Error('Não foi possível gerar o relatório - resposta vazia do servidor')
+      }
+
+      // Verificar se o status da resposta é ok
+      if (response.status !== 200) {
+        console.error('❌ Status HTTP não ok:', response.status, response.statusText)
+        throw new Error(`Erro no servidor: ${response.status} - ${response.statusText}`)
+      }
 
       // Criar link para download
       const blob = new Blob([response.data], { type: 'application/pdf' })
       const downloadUrl = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = downloadUrl
-      link.download = `cotacoes_${new Date().toISOString().split('T')[0]}.pdf`
+      link.download = `comparativo_cotacao_item_${itemPedidoId}_${new Date().toISOString().split('T')[0]}.pdf`
       link.click()
       window.URL.revokeObjectURL(downloadUrl)
 
+      console.log('✅ Relatório comparativo gerado com sucesso')
       return true
     } catch (error) {
-      console.error('Erro ao exportar PDF:', error)
+      console.error('❌ Erro ao gerar relatório comparativo:', error)
+
+      // Log mais detalhado do erro
+      if (error.response) {
+        console.error('❌ Detalhes do erro de resposta:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers
+        })
+      }
+
       throw error
     }
   },
 
-  // Exportar relatório Excel
-  async exportarExcel(filtros = {}) {
+  // Gerar relatório geral de cotações (usando dashboard executivo como base)
+  async gerarRelatorioCotacoes() {
     try {
-      const params = new URLSearchParams()
+      console.log('📊 Gerando relatório geral de cotações...')
 
-      if (filtros.status) params.append('status', filtros.status)
-      if (filtros.fornecedor) params.append('fornecedor', filtros.fornecedor)
-      if (filtros.periodo) params.append('periodo', filtros.periodo)
-      if (filtros.dataInicio) params.append('dataInicio', filtros.dataInicio)
-      if (filtros.dataFim) params.append('dataFim', filtros.dataFim)
+      const response = await relatorioClient.get('/relatorios/dashboard-executivo')
 
-      const url = params.toString() ? `${BASE_URL}/relatorio/excel?${params}` : `${BASE_URL}/relatorio/excel`
-
-      const response = await api.get(url, {
-        responseType: 'blob'
+      console.log('🔍 Debug - Resposta completa do relatório:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        dataSize: response.data?.size || 'unknown',
+        dataType: response.data?.type || 'unknown',
+        dataExists: !!response.data,
+        isBlob: response.data instanceof Blob,
+        constructor: response.data?.constructor?.name
       })
 
+      // Verificar se a resposta existe
+      if (!response.data) {
+        console.error('❌ response.data é null ou undefined')
+        throw new Error('Não foi possível gerar o relatório - dados ausentes')
+      }
+
+      // Para blob, verificar o tamanho
+      if (response.data instanceof Blob) {
+        if (response.data.size === 0) {
+          console.error('❌ Blob está vazio (size = 0)')
+          throw new Error('Não foi possível gerar o relatório - arquivo vazio')
+        }
+        console.log('✅ Blob válido com size:', response.data.size)
+      }
+
+      // Verificar se o status da resposta é ok
+      if (response.status !== 200) {
+        console.error('❌ Status HTTP não ok:', response.status, response.statusText)
+        throw new Error(`Erro no servidor: ${response.status} - ${response.statusText}`)
+      }
+
       // Criar link para download
-      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const blob = new Blob([response.data], { type: 'application/pdf' })
       const downloadUrl = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = downloadUrl
-      link.download = `cotacoes_${new Date().toISOString().split('T')[0]}.xlsx`
-      link.click()
-      window.URL.revokeObjectURL(downloadUrl)
+      link.download = `relatorio_cotacoes_${new Date().toISOString().split('T')[0]}.pdf`
 
+      // Adicionar ao DOM, clicar e remover
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      // Limpar URL após um delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(downloadUrl)
+      }, 100)
+
+      console.log('✅ Relatório de cotações gerado com sucesso')
       return true
     } catch (error) {
-      console.error('Erro ao exportar Excel:', error)
+      console.error('❌ Erro ao gerar relatório de cotações:', error)
+
+      // Log mais detalhado do erro
+      if (error.response) {
+        console.error('❌ Detalhes do erro de resposta:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers
+        })
+
+        // Se a resposta for um blob de erro, tentar ler como texto
+        if (error.response.data instanceof Blob) {
+          try {
+            const text = await error.response.data.text()
+            console.error('❌ Conteúdo do erro (blob como texto):', text)
+          } catch (e) {
+            console.error('❌ Não foi possível ler o blob de erro:', e)
+          }
+        }
+      }
+
       throw error
     }
   },
@@ -423,67 +552,97 @@ export const cotacaoService = {
     }
   },
 
-  // ==================== UPLOAD DE ARQUIVOS ====================
+  // ==================== ARQUIVOS PDF ====================
 
-  // Upload de arquivo PDF para cotação
-  async uploadArquivo(cotacaoId, arquivo) {
+  // Converter arquivo para array de bytes
+  async arquivoParaBytes(arquivo) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const arrayBuffer = reader.result
+        const uint8Array = new Uint8Array(arrayBuffer)
+        resolve(Array.from(uint8Array))
+      }
+      reader.onerror = () => reject(reader.error)
+      reader.readAsArrayBuffer(arquivo)
+    })
+  },
+
+  // Upload de arquivo PDF para cotação existente
+  async uploadArquivoPdf(cotacaoId, arquivo) {
     try {
       if (!arquivo) {
         throw new Error('Arquivo é obrigatório')
       }
 
-      // Validar tipo de arquivo
       if (arquivo.type !== 'application/pdf') {
         throw new Error('Apenas arquivos PDF são permitidos')
       }
 
-      // Validar tamanho (máximo 10MB)
       const maxSize = 10 * 1024 * 1024 // 10MB
       if (arquivo.size > maxSize) {
         throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
       }
 
-      const formData = new FormData()
-      formData.append('anexoPdf', arquivo)
+      console.log('📤 Convertendo arquivo para bytes...')
+      const bytesArray = await this.arquivoParaBytes(arquivo)
 
-      console.log('📤 Fazendo upload de arquivo para cotação:', cotacaoId)
-
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      console.log('📤 Fazendo upload do PDF para cotação:', cotacaoId)
+      const response = await api.put(`${BASE_URL}/${cotacaoId}`, {
+        anexoPdf: bytesArray
       })
 
-      console.log('✅ Upload realizado com sucesso:', response)
+      console.log('✅ Upload do PDF realizado com sucesso')
       return response
 
     } catch (error) {
-      console.error('❌ Erro no upload do arquivo:', error)
+      console.error('❌ Erro no upload do PDF:', error)
       throw error
     }
   },
 
-  // Baixar arquivo de cotação
-  async baixarArquivo(cotacaoId) {
+  // Verificar se cotação tem anexo PDF
+  async verificarAnexo(cotacaoId) {
     try {
-      const response = await api.get(`${BASE_URL}/${cotacaoId}/download`, {
-        responseType: 'blob'
-      })
+      // Buscar os dados da cotação para verificar campos de anexo
+      const cotacao = await this.buscarPorId(cotacaoId)
 
-      // Criar URL para download
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `cotacao_${cotacaoId}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
-
-      return response
+      return {
+        temAnexo: !!(cotacao.caminhoAnexo || cotacao.anexoPdf),
+        caminhoAnexo: cotacao.caminhoAnexo,
+        temAnexoPdf: !!cotacao.anexoPdf
+      }
 
     } catch (error) {
-      console.error('❌ Erro ao baixar arquivo:', error)
+      console.error('❌ Erro ao verificar anexo:', error)
+      return {
+        temAnexo: false,
+        caminhoAnexo: null,
+        temAnexoPdf: false
+      }
+    }
+  },
+
+  // Obter informações do anexo PDF
+  async obterInfoAnexo(cotacaoId) {
+    try {
+      const info = await this.verificarAnexo(cotacaoId)
+
+      if (!info.temAnexo) {
+        throw new Error('Nenhum arquivo anexado a esta cotação')
+      }
+
+      return {
+        disponivel: info.temAnexo,
+        caminho: info.caminhoAnexo,
+        tipo: info.caminhoAnexo ? 'arquivo' : 'blob',
+        mensagem: info.caminhoAnexo
+          ? 'Arquivo PDF disponível'
+          : 'Arquivo PDF armazenado no banco de dados'
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao obter informações do anexo:', error)
       throw error
     }
   },

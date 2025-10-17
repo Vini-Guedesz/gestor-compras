@@ -12,7 +12,7 @@
       <div class="welcome-section">
         <div class="welcome-header">
           <div class="welcome-content">
-            <h1 class="welcome-title">Bem-vinda de volta, {{ userName }}! 👋</h1>
+            <h1 class="welcome-title">{{ getWelcomeMessage() }}, {{ userName }}! 👋</h1>
             <p class="welcome-subtitle">
               Aqui está um resumo das suas atividades de compras hoje.
             </p>
@@ -81,6 +81,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { getWelcomeMessage as getWelcomeMessageUtil } from '../utils/genderUtils'
 import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
 import MetricCard from '../components/MetricCard.vue'
@@ -102,6 +103,11 @@ const metricas = ref({
 const userName = computed(() => {
   return authStore.user?.name || 'Usuário'
 })
+
+// Função para gerar mensagem de boas-vindas com gênero correto
+const getWelcomeMessage = () => {
+  return getWelcomeMessageUtil(authStore.user, 'volta')
+}
 
 // Carregar métricas reais do backend
 const carregarMetricas = async () => {

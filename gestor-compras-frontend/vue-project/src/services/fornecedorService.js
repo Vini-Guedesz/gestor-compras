@@ -30,25 +30,34 @@ const fornecedorService = {
     try {
       console.log('🔄 Criando fornecedor de produto no backend...')
       console.log('📦 Dados enviados:', JSON.stringify(fornecedor, null, 2))
-      console.log('📦 Tipo de cada campo:')
-      console.log('  - razaoSocial:', typeof fornecedor.razaoSocial, '=', fornecedor.razaoSocial)
-      console.log('  - cnpj:', typeof fornecedor.cnpj, '=', fornecedor.cnpj)
-      console.log('  - inscricaoEstadual:', typeof fornecedor.inscricaoEstadual, '=', fornecedor.inscricaoEstadual)
-      console.log('  - contato.email:', typeof fornecedor.contato?.email, '=', fornecedor.contato?.email)
-      console.log('  - contato.telefoneFixo:', typeof fornecedor.contato?.telefoneFixo, '=', fornecedor.contato?.telefoneFixo)
-      console.log('  - contato.celular:', typeof fornecedor.contato?.celular, '=', fornecedor.contato?.celular)
-      console.log('  - endereco.cep:', typeof fornecedor.endereco?.cep, '=', fornecedor.endereco?.cep)
-      console.log('📦 Objeto CONTATO completo:', JSON.stringify(fornecedor.contato, null, 2))
-      console.log('📦 Objeto ENDERECO completo:', JSON.stringify(fornecedor.endereco, null, 2))
-      console.log('📦 Chaves do contato:', Object.keys(fornecedor.contato || {}))
-      console.log('📦 Chaves do endereco:', Object.keys(fornecedor.endereco || {}))
 
       const data = await api.post('/api/fornecedores-de-produto', fornecedor)
       console.log('✅ Fornecedor de produto criado no backend:', data.id)
       return data
     } catch (error) {
       console.error('❌ Erro ao criar fornecedor de produto no backend:', error.message)
-      console.error('📛 Detalhes do erro:', error)
+
+      // Tratamento específico para erros de validação
+      if (error.response && error.response.status === 400) {
+        const validationErrors = error.response.data
+        console.error('📛 Erros de validação:', validationErrors)
+
+        // Criar mensagem mais amigável baseada nos erros de validação
+        let friendlyMessage = 'Erro de validação:\n'
+        if (typeof validationErrors === 'object') {
+          Object.keys(validationErrors).forEach(field => {
+            friendlyMessage += `• ${field}: ${validationErrors[field]}\n`
+          })
+        } else if (typeof validationErrors === 'string') {
+          friendlyMessage = validationErrors
+        }
+
+        const enhancedError = new Error(friendlyMessage)
+        enhancedError.type = 'VALIDATION_ERROR'
+        enhancedError.details = validationErrors
+        throw enhancedError
+      }
+
       throw error
     }
   },
@@ -112,6 +121,28 @@ const fornecedorService = {
       return data
     } catch (error) {
       console.error('❌ Erro ao criar fornecedor de serviço no backend:', error.message)
+
+      // Tratamento específico para erros de validação
+      if (error.response && error.response.status === 400) {
+        const validationErrors = error.response.data
+        console.error('📛 Erros de validação:', validationErrors)
+
+        // Criar mensagem mais amigável baseada nos erros de validação
+        let friendlyMessage = 'Erro de validação:\n'
+        if (typeof validationErrors === 'object') {
+          Object.keys(validationErrors).forEach(field => {
+            friendlyMessage += `• ${field}: ${validationErrors[field]}\n`
+          })
+        } else if (typeof validationErrors === 'string') {
+          friendlyMessage = validationErrors
+        }
+
+        const enhancedError = new Error(friendlyMessage)
+        enhancedError.type = 'VALIDATION_ERROR'
+        enhancedError.details = validationErrors
+        throw enhancedError
+      }
+
       throw error
     }
   },
@@ -237,6 +268,37 @@ export const fornecedorUtils = {
     if (!email) return false
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
+  },
+
+  // ==================== MÉTODOS COMBINADOS ====================
+
+  // Listar todos os fornecedores (produto + serviço) para uso em cotações
+  async listarParaCotacao() {
+    try {
+      console.log('🔄 Carregando todos os fornecedores para cotação...')
+
+      const [fornecedoresProduto, fornecedoresServico] = await Promise.all([
+        this.listarFornecedoresProduto(),
+        this.listarFornecedoresServico()
+      ])
+
+      // Adicionar tipo aos fornecedores
+      const fornecedoresComTipo = [
+        ...(fornecedoresProduto || []).map(f => ({ ...f, tipo: 'PRODUTO' })),
+        ...(fornecedoresServico || []).map(f => ({ ...f, tipo: 'SERVICO' }))
+      ]
+
+      console.log('✅ Fornecedores carregados para cotação:', {
+        total: fornecedoresComTipo.length,
+        produtos: fornecedoresProduto?.length || 0,
+        servicos: fornecedoresServico?.length || 0
+      })
+
+      return fornecedoresComTipo
+    } catch (error) {
+      console.error('❌ Erro ao carregar fornecedores para cotação:', error)
+      throw error
+    }
   }
 }
 

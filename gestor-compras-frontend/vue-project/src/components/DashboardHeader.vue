@@ -4,7 +4,7 @@
       <!-- Logo -->
       <div class="logo-section">
         <div class="logo">
-          <span class="logo-text">Gestor Compras</span>
+          <span class="logo-text">Gestor de Compras</span>
         </div>
       </div>
 
@@ -92,6 +92,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { getUserRole } from '../utils/genderUtils'
 import LogoutModal from './LogoutModal.vue'
 
 const router = useRouter()
@@ -100,8 +101,11 @@ const searchQuery = ref('')
 const isUserMenuOpen = ref(false)
 const showLogoutModal = ref(false)
 
-const userName = computed(() => authStore.user?.name || 'Ana Silva')
-const userRole = computed(() => authStore.user?.role || 'Gestora de Compras')
+const userName = computed(() => authStore.user?.name || 'Usuário')
+
+const userRole = computed(() => {
+  return getUserRole(authStore.user)
+})
 const userAvatar = computed(() => {
   // Placeholder para avatar - pode ser substituído por uma URL real
   return `data:image/svg+xml;base64,${btoa(`

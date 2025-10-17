@@ -148,7 +148,7 @@ const formData = ref({
 const originalData = ref({})
 
 // Avatar padrão
-const userAvatar = ref('https://ui-avatars.com/api/?name=João+Silva&background=3b82f6&color=fff&size=100')
+const userAvatar = ref('https://ui-avatars.com/api/?name=Usuario&background=3b82f6&color=fff&size=100')
 
 // Métodos
 const toggleEditMode = async () => {
@@ -202,7 +202,7 @@ const hideNotification = () => {
 onMounted(() => {
     // Carregar dados do usuário da store ou API
     if (authStore.user) {
-        formData.value.nome = authStore.user.name || 'João Silva'
+        formData.value.nome = authStore.user.name || 'Usuário'
         formData.value.email = authStore.user.email || 'joao.silva@empresa.com'
     }
 })

@@ -84,42 +84,17 @@
                     min="1"
                     placeholder="Ex: 30"
                   />
-                  <small class="form-hint">Prazo em dias úteis</small>
+                  <small class="form-hint">
+                    Prazo em dias corridos
+                    <span v-if="formData.prazoEntrega && formData.prazoEntrega > 0" class="data-calculada">
+                      (Entrega: {{ calcularDataEntrega(formData.prazoEntrega) }})
+                    </span>
+                  </small>
                 </div>
               </div>
             </div>
 
-            <!-- Upload de Arquivo -->
-            <div class="form-section">
-              <h3 class="section-title">Anexo PDF</h3>
-              <div class="form-group">
-                <label class="form-label">Anexar Documento PDF</label>
-                <div class="file-upload-area" :class="{ 'dragover': isDragOver }"
-                     @dragover.prevent="isDragOver = true"
-                     @dragleave.prevent="isDragOver = false"
-                     @drop.prevent="handleFileDrop">
-                  <input
-                    ref="fileInput"
-                    type="file"
-                    accept=".pdf"
-                    @change="handleFileSelect"
-                    class="file-input"
-                    hidden
-                  />
-                  <div v-if="arquivoSelecionado" class="file-selected">
-                    <i class="icon-file-pdf"></i>
-                    <span>{{ arquivoSelecionado.name }}</span>
-                    <span class="file-size">({{ formatarTamanhoArquivo(arquivoSelecionado.size) }})</span>
-                    <button type="button" @click="removerArquivo" class="btn-remove-file">×</button>
-                  </div>
-                  <div v-else class="file-placeholder" @click="$refs.fileInput?.click()">
-                    <i class="icon-upload"></i>
-                    <p>Clique para selecionar ou arraste um arquivo PDF</p>
-                    <small>Máximo 10MB</small>
-                  </div>
-                </div>
-              </div>
-            </div>
+
           </form>
         </div>
 
@@ -170,8 +145,6 @@ const carregando = ref(false)
 const mensagemAlerta = ref('')
 const tipoAlerta = ref('error') // 'error', 'success', 'warning'
 const tipoFornecedor = ref('')
-const arquivoSelecionado = ref(null)
-const isDragOver = ref(false)
 
 // Dados do formulário - alinhado com CotacaoCreateDTO/CotacaoUpdateDTO
 const formData = ref({
@@ -207,12 +180,34 @@ const mostrarAlerta = (mensagem, tipo = 'error') => {
   }, 5000)
 }
 
-const formatarTamanhoArquivo = (bytes) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+
+
+// Converter data para número de dias a partir de hoje
+const calcularDiasParaEntrega = (dataEntrega) => {
+  if (!dataEntrega) return null
+
+  const hoje = new Date()
+  const entrega = new Date(dataEntrega)
+
+  // Zerrar as horas para comparação correta
+  hoje.setHours(0, 0, 0, 0)
+  entrega.setHours(0, 0, 0, 0)
+
+  const diffTime = entrega.getTime() - hoje.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  return diffDays > 0 ? diffDays : null
+}
+
+// Calcular data de entrega a partir de dias
+const calcularDataEntrega = (dias) => {
+  if (!dias || dias <= 0) return ''
+
+  const hoje = new Date()
+  const dataEntrega = new Date(hoje)
+  dataEntrega.setDate(hoje.getDate() + parseInt(dias))
+
+  return dataEntrega.toLocaleDateString('pt-BR')
 }
 
 // Métodos de fornecedor
@@ -220,43 +215,7 @@ const handleTipoFornecedorChange = () => {
   formData.value.fornecedorId = null // Reset fornecedor quando tipo muda
 }
 
-// Métodos de arquivo
-const handleFileSelect = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    validarESetarArquivo(file)
-  }
-}
 
-const handleFileDrop = (event) => {
-  isDragOver.value = false
-  const file = event.dataTransfer.files[0]
-  if (file) {
-    validarESetarArquivo(file)
-  }
-}
-
-const validarESetarArquivo = (file) => {
-  if (file.type !== 'application/pdf') {
-    mostrarAlerta('Apenas arquivos PDF são aceitos', 'error')
-    return
-  }
-
-  if (file.size > 10 * 1024 * 1024) { // 10MB
-    mostrarAlerta('Arquivo muito grande. Máximo permitido: 10MB', 'error')
-    return
-  }
-
-  arquivoSelecionado.value = file
-  mostrarAlerta('Arquivo selecionado com sucesso', 'success')
-}
-
-const removerArquivo = () => {
-  arquivoSelecionado.value = null
-  if (this.$refs.fileInput) {
-    this.$refs.fileInput.value = ''
-  }
-}
 
 const handleSubmit = async () => {
   if (carregando.value) {
@@ -283,11 +242,26 @@ const handleSubmit = async () => {
     console.log('📋 Dados do formulário:', formData.value)
 
     // Preparar dados com tipos corretos para o backend
+    // Converter prazo de entrega de dias para data
+    let prazoEntregaData = null
+    if (formData.value.prazoEntrega && formData.value.prazoEntrega > 0) {
+      const hoje = new Date()
+      const dataEntrega = new Date(hoje)
+      dataEntrega.setDate(hoje.getDate() + parseInt(formData.value.prazoEntrega))
+      prazoEntregaData = dataEntrega.toISOString().split('T')[0] // Formato YYYY-MM-DD
+
+      console.log('📅 Conversão prazo:', {
+        diasInformados: formData.value.prazoEntrega,
+        hoje: hoje.toISOString().split('T')[0],
+        dataEntrega: prazoEntregaData
+      })
+    }
+
     const dadosParaSalvar = {
       fornecedorId: parseInt(formData.value.fornecedorId),
       itemPedidoId: parseInt(formData.value.itemPedidoId),
       preco: parseFloat(formData.value.preco),
-      prazoEntrega: formData.value.prazoEntrega ? parseInt(formData.value.prazoEntrega) : null
+      prazoEntrega: prazoEntregaData
     }
 
     // Validar conversões
@@ -306,17 +280,11 @@ const handleSubmit = async () => {
       return
     }
 
-    // Se há arquivo, processar upload
-    if (arquivoSelecionado.value) {
-      // Para simplificar, vamos incluir o arquivo no objeto
-      // Em um cenário real, você faria o upload separadamente
-      dadosParaSalvar.arquivo = arquivoSelecionado.value
-    }
-
-    console.log('📤 Enviando dados para a view pai:', dadosParaSalvar)
+    console.log(' Enviando dados para a view pai:', dadosParaSalvar)
 
     // Emitir os dados para a view pai processar
     emit('save', dadosParaSalvar)
+
     mostrarAlerta('Cotação enviada com sucesso!', 'success')
 
     // Aguardar um pouco para mostrar a mensagem antes de fechar
@@ -369,13 +337,17 @@ const carregarItens = async () => {
 
 const inicializarFormulario = () => {
   if (props.cotacao) {
-    // Editando cotação existente
+    // Editando cotação existente - converter data de volta para dias
+    const diasParaEntrega = calcularDiasParaEntrega(props.cotacao.prazoEntrega)
+
     formData.value = {
       fornecedorId: props.cotacao.fornecedorId,
       itemPedidoId: props.cotacao.itemPedidoId,
       preco: props.cotacao.preco,
-      prazoEntrega: props.cotacao.prazoEntrega
+      prazoEntrega: diasParaEntrega
     }
+
+    console.log('📝 Editando cotação - Prazo original:', props.cotacao.prazoEntrega, 'Convertido para dias:', diasParaEntrega)
     // TODO: Determinar tipo de fornecedor baseado no fornecedorId
   } else {
     // Nova cotação
@@ -386,7 +358,6 @@ const inicializarFormulario = () => {
       prazoEntrega: null
     }
     tipoFornecedor.value = ''
-    arquivoSelecionado.value = null
   }
 }
 
@@ -601,31 +572,7 @@ watch(() => props.cotacao, () => {
   cursor: pointer;
 }
 
-/* File Upload */
-.file-upload-area {
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  padding: 40px 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
 
-.file-upload-area:hover {
-  border-color: #3b82f6;
-  background: #f9fafb;
-}
-
-.upload-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.upload-icon {
-  margin-bottom: 8px;
-}
 
 .upload-help {
   font-size: 0.75rem;
@@ -1007,86 +954,18 @@ watch(() => props.cotacao, () => {
   margin-left: 8px;
 }
 
-/* Upload de arquivo */
-.file-upload-area {
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  padding: 24px;
-  text-align: center;
-  transition: all 0.2s;
-  cursor: pointer;
-}
 
-.file-upload-area:hover {
-  border-color: #3b82f6;
-  background-color: #f8fafc;
-}
-
-.file-upload-area.dragover {
-  border-color: #3b82f6;
-  background-color: #dbeafe;
-}
-
-.file-input {
-  display: none;
-}
-
-.file-placeholder {
-  color: #6b7280;
-}
-
-.file-placeholder i {
-  font-size: 2rem;
-  margin-bottom: 8px;
-  display: block;
-}
-
-.file-placeholder p {
-  margin: 8px 0 4px;
-  font-weight: 500;
-}
-
-.file-selected {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #f3f4f6;
-  padding: 12px;
-  border-radius: 6px;
-}
-
-.file-selected i {
-  color: #dc2626;
-  font-size: 1.25rem;
-}
-
-.file-size {
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.btn-remove-file {
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  margin-left: 8px;
-}
-
-.btn-remove-file:hover {
-  background: #dc2626;
-}
 
 .form-hint {
   color: #6b7280;
   font-size: 0.75rem;
   margin-top: 4px;
   font-style: italic;
+}
+
+.data-calculada {
+  color: #059669;
+  font-weight: 500;
+  font-style: normal;
 }
 </style>

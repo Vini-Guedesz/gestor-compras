@@ -647,6 +647,14 @@ const salvarFornecedor = async (dadosFornecedor) => {
     // Mostrar erro mais específico para o usuário
     let mensagemErro = 'Erro ao salvar fornecedor.'
 
+    // Tratamento especial para erros de validação
+    if (error.type === 'VALIDATION_ERROR') {
+      mensagemErro = `Erro de validação:\n\n${error.message}`
+      alert(mensagemErro)
+      return // Não fechar o formulário para permitir correções
+    }
+
+    // Outros tipos de erro
     if (error.message.includes('CORS')) {
       mensagemErro = 'Erro de configuração: O backend não está configurado para aceitar requisições do frontend.'
     } else if (error.message.includes('ECONNREFUSED') || error.message.includes('Network Error')) {
@@ -654,7 +662,9 @@ const salvarFornecedor = async (dadosFornecedor) => {
     } else if (error.message.includes('401')) {
       mensagemErro = 'Erro de autenticação: Faça login novamente.'
     } else if (error.message.includes('400')) {
-      mensagemErro = 'Dados inválidos: Verifique se todos os campos obrigatórios estão preenchidos.'
+      mensagemErro = 'Dados inválidos: Verifique se todos os campos obrigatórios estão preenchidos corretamente.'
+    } else if (error.message.includes('409')) {
+      mensagemErro = 'Conflito: Já existe um fornecedor com este CNPJ.'
     } else if (error.message.includes('500')) {
       mensagemErro = 'Erro interno do servidor. Tente novamente em alguns instantes.'
     } else if (error.message) {
