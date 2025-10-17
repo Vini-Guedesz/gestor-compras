@@ -51,15 +51,49 @@
                   class="item-card"
                 >
                   <div class="item-header">
-                    <span class="item-title">Item #{{ index + 1 }}</span>
-                    <button
-                      type="button"
-                      @click="removerItem(index)"
-                      class="remove-item-button"
-                      :disabled="formData.itens.length === 1"
-                    >
-                      Remover
-                    </button>
+                    <div class="item-title-container">
+                      <span class="item-title">Item #{{ index + 1 }}</span>
+                      <span v-if="item.modificado" class="item-badge modified">⚠ Atualização Pendente</span>
+                      <span v-else-if="item.salvo" class="item-badge saved">✓ Salvo</span>
+                      <span v-else class="item-badge unsaved">● Não salvo</span>
+                    </div>
+                    <div class="item-actions">
+                      <button
+                        type="button"
+                        @click="salvarItem(index)"
+                        class="save-item-button"
+                        :disabled="!podeSerSalvoItem(item)"
+                        title="Salvar Item"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        type="button"
+                        @click="moverItemParaCima(index)"
+                        class="move-item-button"
+                        :disabled="index === 0"
+                        title="Mover para cima"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        @click="moverItemParaBaixo(index)"
+                        class="move-item-button"
+                        :disabled="index === formData.itens.length - 1"
+                        title="Mover para baixo"
+                      >
+                        ▼
+                      </button>
+                      <button
+                        type="button"
+                        @click="removerItem(index)"
+                        class="remove-item-button"
+                        :disabled="formData.itens.length === 1"
+                      >
+                        Remover
+                      </button>
+                    </div>
                   </div>
 
                   <div class="form-grid item-grid">
@@ -70,6 +104,7 @@
                       <input
                         type="text"
                         v-model="item.nome"
+                        @input="marcarItemComoModificado(item)"
                         class="form-input"
                         placeholder="Ex: Notebook Dell Latitude 5520"
                         maxlength="255"
@@ -84,6 +119,7 @@
                       <input
                         type="number"
                         v-model.number="item.quantidade"
+                        @input="marcarItemComoModificado(item)"
                         class="form-input"
                         placeholder="1"
                         min="1"
@@ -98,6 +134,7 @@
                     </label>
                     <textarea
                       v-model="item.descricao"
+                      @input="marcarItemComoModificado(item)"
                       class="form-textarea"
                       placeholder="Descrição detalhada do item, especificações técnicas..."
                       rows="2"
@@ -111,6 +148,7 @@
                     </label>
                     <textarea
                       v-model="item.observacao"
+                      @input="marcarItemComoModificado(item)"
                       class="form-textarea"
                       placeholder="Observações adicionais sobre este item..."
                       rows="2"
@@ -141,6 +179,9 @@
 
         <!-- Footer do Modal -->
         <div class="modal-footer">
+          <div class="footer-info" v-if="totalItensSalvos > 0">
+            <span class="info-badge">{{ totalItensSalvos }} item(ns) salvo(s)</span>
+          </div>
           <div class="footer-actions">
             <button type="button" @click="fecharModal" class="btn-cancel">
               Cancelar
@@ -148,11 +189,20 @@
 
             <button
               type="button"
+              @click="salvarComoRascunho"
+              class="btn-draft"
+              :disabled="totalItensSalvos === 0 || isLoading"
+            >
+              {{ isLoading ? 'Salvando...' : '📄 Salvar como Rascunho' }}
+            </button>
+
+            <button
+              type="button"
               @click="salvarPedido"
               class="btn-save"
-              :disabled="!podeSerSalvo || isLoading"
+              :disabled="!todosItensSalvos || isLoading"
             >
-              {{ isLoading ? 'Salvando...' : (pedido?.id ? 'Atualizar' : 'Criar Pedido') }}
+              {{ isLoading ? 'Salvando...' : 'Criar Pedido' }}
             </button>
           </div>
         </div>
@@ -176,7 +226,7 @@ export default {
       default: null
     }
   },
-  emits: ['close', 'save'],
+  emits: ['close', 'save', 'save-draft'],
   setup(props, { emit }) {
     // Estados reativos
     const isLoading = ref(false)
@@ -192,7 +242,10 @@ export default {
       nome: '',
       quantidade: 1,
       descricao: '',
-      observacao: ''
+      observacao: '',
+      salvo: false, // Indica se o item foi salvo individualmente
+      modificado: false, // Indica se um item salvo foi modificado
+      _original: null // Armazena os dados originais para detectar mudanças
     })
 
     // Computed properties
@@ -202,7 +255,17 @@ export default {
       return formData.value.itens.reduce((total, item) => total + (item.quantidade || 0), 0)
     })
 
+    const totalItensSalvos = computed(() => {
+      return formData.value.itens.filter(item => item.salvo).length
+    })
 
+    const todosItensSalvos = computed(() => {
+      return formData.value.itens.length > 0 && formData.value.itens.every(item => item.salvo)
+    })
+
+    const itensSalvos = computed(() => {
+      return formData.value.itens.filter(item => item.salvo)
+    })
 
     // Validações - focadas nos campos que vão para o backend
     const validationErrors = computed(() => {
@@ -228,6 +291,10 @@ export default {
       return validationErrors.value.length === 0
     })
 
+    const podeSerSalvoItem = (item) => {
+      return item.nome?.trim() && item.quantidade > 0
+    }
+
     // Métodos
     const formatarValor = (valor) => {
       if (!valor || valor === 0) return '0,00'
@@ -252,12 +319,26 @@ export default {
       if (props.pedido) {
         formData.value = {
           observacao: props.pedido.observacao || '',
-          itens: props.pedido.itens && props.pedido.itens.length > 0 ? props.pedido.itens.map(item => ({
-            nome: item.nome || '',
-            quantidade: item.quantidade || 1,
-            descricao: item.descricao || '',
-            observacao: item.observacao || ''
-          })) : [novoItemTemplate()]
+          itens: props.pedido.itens && props.pedido.itens.length > 0 ? props.pedido.itens.map(item => {
+            const itemData = {
+              id: item.id || null,
+              nome: item.nome || '',
+              quantidade: item.quantidade || 1,
+              descricao: item.descricao || '',
+              observacao: item.observacao || '',
+              salvo: true, // Itens já existentes no banco são marcados como salvos
+              modificado: false,
+              _original: null
+            }
+            // Salvar uma cópia dos dados originais
+            itemData._original = {
+              nome: itemData.nome,
+              quantidade: itemData.quantidade,
+              descricao: itemData.descricao,
+              observacao: itemData.observacao
+            }
+            return itemData
+          }) : [novoItemTemplate()]
         }
       } else {
         resetarFormulario()
@@ -281,19 +362,145 @@ export default {
       }
     }
 
+    const moverItemParaCima = (index) => {
+      if (index > 0) {
+        const item = formData.value.itens[index]
+        formData.value.itens.splice(index, 1)
+        formData.value.itens.splice(index - 1, 0, item)
+      }
+    }
+
+    const moverItemParaBaixo = (index) => {
+      if (index < formData.value.itens.length - 1) {
+        const item = formData.value.itens[index]
+        formData.value.itens.splice(index, 1)
+        formData.value.itens.splice(index + 1, 0, item)
+      }
+    }
+
+    const marcarItemComoModificado = (item) => {
+      // Só marca como modificado se o item já foi salvo e tem dados originais
+      if (item.salvo && item._original) {
+        // Verificar se houve mudança em relação aos dados originais
+        const houveModificacao =
+          item.nome !== item._original.nome ||
+          item.quantidade !== item._original.quantidade ||
+          item.descricao !== item._original.descricao ||
+          item.observacao !== item._original.observacao
+
+        item.modificado = houveModificacao
+      }
+    }
+
+    const salvarItem = async (index) => {
+      const item = formData.value.itens[index]
+      if (podeSerSalvoItem(item)) {
+        item.salvo = true
+        item.modificado = false // Resetar flag de modificado
+        console.log(`Item #${index + 1} salvo:`, item)
+
+        // Salva automaticamente como rascunho sem fechar o modal
+        await salvarRascunhoSemFechar()
+
+        // Atualizar dados originais após salvar
+        if (item._original) {
+          item._original = {
+            nome: item.nome,
+            quantidade: item.quantidade,
+            descricao: item.descricao,
+            observacao: item.observacao
+          }
+        }
+      }
+    }
+
     const fecharModal = () => {
+      // Verifica se há itens salvos antes de fechar
+      if (totalItensSalvos.value > 0 && !todosItensSalvos.value) {
+        const confirmacao = confirm(
+          `Você tem ${totalItensSalvos.value} item(ns) salvo(s). Deseja salvar o pedido como rascunho antes de sair?`
+        )
+        if (confirmacao) {
+          salvarComoRascunho()
+          return
+        }
+      }
       resetarFormulario()
       emit('close')
     }
 
+    const salvarRascunhoSemFechar = async () => {
+      if (totalItensSalvos.value === 0) {
+        return
+      }
+
+      try {
+        isLoading.value = true
+
+        const dadosParaEnvio = {
+          id: props.pedido?.id || null,
+          itens: itensSalvos.value.map(item => ({
+            id: item.id || null,
+            nome: item.nome || '',
+            quantidade: parseInt(item.quantidade) || 1,
+            descricao: item.descricao || '',
+            observacao: item.observacao || ''
+          })),
+          status: 'RASCUNHO',
+          observacao: formData.value.observacao || '',
+          dataCriacao: null
+        }
+
+        console.log('Salvando rascunho automaticamente (sem fechar):', dadosParaEnvio)
+
+        // Emitir evento especial que não fecha o modal
+        emit('save-draft', dadosParaEnvio)
+      } catch (error) {
+        console.error('Erro ao salvar rascunho:', error)
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    const salvarComoRascunho = async () => {
+      if (totalItensSalvos.value === 0) {
+        alert('Salve pelo menos um item antes de criar um rascunho.')
+        return
+      }
+
+      try {
+        isLoading.value = true
+
+        const dadosParaEnvio = {
+          id: props.pedido?.id || null,
+          itens: itensSalvos.value.map(item => ({
+            id: item.id || null,
+            nome: item.nome || '',
+            quantidade: parseInt(item.quantidade) || 1,
+            descricao: item.descricao || '',
+            observacao: item.observacao || ''
+          })),
+          status: 'RASCUNHO', // Status de rascunho
+          observacao: formData.value.observacao || '',
+          dataCriacao: null
+        }
+
+        console.log('Salvando como rascunho:', dadosParaEnvio)
+        emit('save', dadosParaEnvio)
+      } catch (error) {
+        console.error('Erro ao salvar rascunho:', error)
+        alert('Erro ao salvar rascunho. Tente novamente.')
+      } finally {
+        isLoading.value = false
+      }
+    }
+
     const salvarPedido = async () => {
       console.log('FormData atual:', formData.value)
-      console.log('Pode ser salvo:', podeSerSalvo.value)
-      console.log('Erros de validação:', validationErrors.value)
+      console.log('Todos itens salvos:', todosItensSalvos.value)
 
-      if (!podeSerSalvo.value) {
-        console.log('Erros de validação:', validationErrors.value)
-        alert('Por favor, corrija os erros antes de salvar: ' + validationErrors.value.join(', '))
+      if (!todosItensSalvos.value) {
+        alert('Por favor, salve todos os itens antes de criar o pedido.')
         return
       }
 
@@ -303,13 +510,13 @@ export default {
         const dadosParaEnvio = {
           id: props.pedido?.id || null, // ID apenas se for edição
           itens: formData.value.itens.map(item => ({
-            id: null, // Sempre null para novos itens
+            id: item.id || null,
             nome: item.nome || '',
             quantidade: parseInt(item.quantidade) || 1,
             descricao: item.descricao || '',
             observacao: item.observacao || ''
           })),
-          status: 'PENDENTE', // Status padrão para novos pedidos
+          status: props.pedido?.status === 'RASCUNHO' ? 'PENDENTE' : (props.pedido?.status || 'PENDENTE'),
           observacao: formData.value.observacao || '',
           dataCriacao: null // Será definido automaticamente pelo backend
         }
@@ -346,6 +553,9 @@ export default {
       // Computed
       totalItens,
       quantidadeTotal,
+      totalItensSalvos,
+      todosItensSalvos,
+      itensSalvos,
       validationErrors,
       podeSerSalvo,
 
@@ -353,7 +563,14 @@ export default {
       formatarValor,
       adicionarItem,
       removerItem,
+      moverItemParaCima,
+      moverItemParaBaixo,
+      marcarItemComoModificado,
+      salvarItem,
+      podeSerSalvoItem,
       fecharModal,
+      salvarRascunhoSemFechar,
+      salvarComoRascunho,
       salvarPedido,
       resetarFormulario,
       carregarDadosPedido
@@ -577,9 +794,90 @@ export default {
   margin-bottom: 16px;
 }
 
+.item-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .item-title {
   font-weight: 600;
   color: #374151;
+}
+
+.item-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.item-badge.saved {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.item-badge.modified {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.item-badge.unsaved {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.save-item-button {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.save-item-button:hover:not(:disabled) {
+  background: #059669;
+}
+
+.save-item-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.move-item-button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.move-item-button:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.move-item-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .remove-item-button {
@@ -649,12 +947,33 @@ export default {
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
   border-radius: 0 0 12px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-badge {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .footer-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  flex: 1;
 }
 
 .btn-cancel {
@@ -672,6 +991,27 @@ export default {
   background: #e5e7eb;
 }
 
+.btn-draft {
+  padding: 8px 16px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-draft:hover:not(:disabled) {
+  background: #d97706;
+}
+
+.btn-draft:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .btn-save {
   padding: 8px 16px;
   background: #10b981;
@@ -683,13 +1023,14 @@ export default {
   transition: all 0.2s;
 }
 
-.btn-save:hover {
+.btn-save:hover:not(:disabled) {
   background: #059669;
 }
 
 .btn-save:disabled {
   background: #9ca3af;
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .form-hint {
