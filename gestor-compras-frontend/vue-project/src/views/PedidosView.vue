@@ -18,6 +18,16 @@
             </p>
           </div>
           <div class="action-buttons">
+            <button class="action-button secondary" @click="gerarRelatorioPedidos" :disabled="gerandoRelatorio">
+              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="white" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+              <span v-if="gerandoRelatorio" class="loading-content">
+                <span class="loading-spinner"></span>
+                Gerando...
+              </span>
+              <span v-else>Gerar Relatório</span>
+            </button>
             <button class="action-button" @click="abrirFormularioNovo">
               <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
@@ -142,7 +152,6 @@
               <tr>
                 <th>Pedido</th>
                 <th>Status</th>
-                <th>Itens</th>
                 <th>Data</th>
                 <th>Ações</th>
               </tr>
@@ -158,9 +167,6 @@
                   <span class="status-badge" :class="getStatusClass(pedido.status)">
                     {{ getStatusLabel(pedido.status) }}
                   </span>
-                </td>
-                <td class="itens-cell">
-                  <span class="itens-count">{{ getQuantidadeItens(pedido) }} item(s)</span>
                 </td>
                 <td class="data-cell">
                   <span class="data-criacao">{{ formatarData(pedido.dataCriacao || pedido.dataPedido) }}</span>
@@ -218,7 +224,7 @@
                 d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 16H9V7h9v14z" />
             </svg>
             <h3>Nenhum pedido encontrado</h3>
-            <p>Não há pedidos que correspondam aos filtros aplicados.</p>
+            <p>Não há pedidos cadastrados ou que correspondam aos filtros aplicados.</p>
             <button class="btn-primary" @click="abrirFormularioNovo">
               Criar Primeiro Pedido
             </button>
@@ -362,6 +368,7 @@ import pedidoService from '@/services/pedidoService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
+import relatorioService from '@/services/relatorioService.js'
 
 export default {
   name: 'PedidosView',
@@ -378,6 +385,7 @@ export default {
     const searchQuery = ref('')
     const filtroStatus = ref('')
     const filtroPeriodo = ref('')
+    const gerandoRelatorio = ref(false)
 
     // Como simplificamos o formulário, não precisamos mais de extração complexa
 
@@ -412,7 +420,7 @@ export default {
     })
 
     const pedidosPendentes = computed(() =>
-      pedidos.value.filter(p => p.status === 'PENDENTE' || p.status === 'pendente').length
+      pedidos.value.filter(p => ['PENDENTE', 'EM_ANALISE', 'pendente'].includes(p.status)).length
     )
 
     const pedidosAprovados = computed(() =>
@@ -498,7 +506,9 @@ export default {
         ])
 
         console.log('Itens carregados:', todosItens.length)
-        console.log('Exemplo de item:', todosItens[0])
+        if (todosItens.length > 0) {
+          console.log('🔍 Primeiro item carregado:', todosItens[0])
+        }
 
         // Processar dados do backend - estrutura simplificada
         if (response && Array.isArray(response)) {
@@ -537,64 +547,13 @@ export default {
           })
           console.log('DEBUG - Pedidos carregados:', pedidos.value.length)
         } else {
-          // Dados de exemplo se a API nÃ£o estiver funcionando
-          pedidos.value = [
-            {
-              id: 1,
-              status: 'pendente',
-              descricao: 'Compra de equipamentos de informática',
-              objetivo: 'Renovação do parque tecnológico',
-              dataCriacao: '2024-01-15T10:30:00',
-              observacao: 'Urgente para o fechamento do projeto',
-              itens: [
-                {
-                  id: 1,
-                  nome: 'Notebook Dell Latitude 5520',
-                  quantidade: 5,
-                  descricao: 'Para equipe de desenvolvimento',
-                  observacao: 'Configuração mínima: i5, 16GB RAM, SSD 512GB'
-                },
-                {
-                  id: 2,
-                  nome: 'Monitor LG 24" Full HD',
-                  quantidade: 5,
-                  descricao: 'Complemento para os notebooks'
-                }
-              ]
-            },
-            {
-              id: 2,
-              status: 'aprovado',
-              dataCriacao: '2024-01-10T14:20:00',
-              observacao: 'Aprovado pela gerÃªncia',
-              itens: [
-                {
-                  id: 1,
-                  nome: 'Apostilas de treinamento',
-                  quantidade: 50,
-                  descricao: 'Curso de seguranÃ§a do trabalho'
-                }
-              ]
-            },
-            {
-              id: 3,
-              status: 'pendente',
-              observacao: 'Ferramentas para manutenção - Reposição de ferramentas',
-              dataCriacao: '2024-01-20T09:15:00',
-              itens: [
-                {
-                  id: 1,
-                  nome: 'Chaves de fenda variadas',
-                  quantidade: 10,
-                  descricao: 'Reposição do estoque'
-                }
-              ]
-            }
-          ]
+          // Se não há dados válidos do backend, exibir lista vazia
+          console.log('⚠️ Nenhum dado válido recebido do backend')
+          pedidos.value = []
         }
       } catch (error) {
-        console.error('Erro ao carregar pedidos:', error)
-        // Usar dados de exemplo em caso de erro
+        console.error('❌ Erro ao carregar pedidos do backend:', error)
+        // Exibir lista vazia em caso de erro - apenas dados reais
         pedidos.value = []
       } finally {
         isLoading.value = false
@@ -629,6 +588,7 @@ export default {
         'EM_ANDAMENTO': 'Em Andamento',
         'APROVADO': 'Aprovado',
         'CANCELADO': 'Cancelado',
+        'APROVADO': 'Aprovado',
         // Status antigos (lowercase) - compatibilidade
         'rascunho': 'Rascunho',
         'pendente': 'Pendente',
@@ -649,6 +609,7 @@ export default {
         'EM_ANDAMENTO': 'status-progress',
         'APROVADO': 'status-approved',
         'CANCELADO': 'status-canceled',
+        'APROVADO': 'status-approved',
         // Status antigos (lowercase) - compatibilidade
         'rascunho': 'status-draft',
         'pendente': 'status-pending',
@@ -935,8 +896,8 @@ export default {
     }
 
     const podeAprovar = (pedido) => {
-      // SÃ³ pode aprovar pedidos pendentes
-      return ['PENDENTE'].includes(pedido.status)
+      // SÃ³ pode aprovar pedidos pendentes ou em análise
+      return ['PENDENTE', 'EM_ANALISE'].includes(pedido.status)
     }
 
     const podeExcluir = (pedido) => {
@@ -1004,6 +965,21 @@ export default {
       }
     }
 
+    // Função para gerar relatório de itens de pedido
+    const gerarRelatorioPedidos = async () => {
+      if (gerandoRelatorio.value) return
+
+      try {
+        gerandoRelatorio.value = true
+        await relatorioService.gerarRelatorioItensPedido()
+      } catch (error) {
+        console.error('Erro ao gerar relatório:', error)
+        alert('Erro ao gerar relatório. Tente novamente.')
+      } finally {
+        gerandoRelatorio.value = false
+      }
+    }
+
     // Lifecycle
     onMounted(() => {
       carregarPedidos()
@@ -1016,6 +992,7 @@ export default {
       searchQuery,
       filtroStatus,
       filtroPeriodo,
+      gerandoRelatorio,
 
       // Modais
       showPedidoForm,
@@ -1062,7 +1039,8 @@ export default {
       podeExcluir,
       podeAlterarStatus,
       getStatusDisponiveis,
-      alterarStatus
+      alterarStatus,
+      gerarRelatorioPedidos
     }
   }
 }
@@ -1126,6 +1104,23 @@ export default {
   transition: all 0.2s;
 }
 
+.action-button.secondary {
+  background: #6b7280;
+}
+
+.action-button.secondary:hover {
+  background: #4b5563;
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-button:disabled:hover {
+  transform: none;
+}
+
 .action-icon {
   flex-shrink: 0;
 }
@@ -1133,6 +1128,21 @@ export default {
 .action-button:hover {
   background: #2563eb;
   transform: translateY(-1px);
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 /* MÃ©tricas */
@@ -1374,17 +1384,6 @@ export default {
 .pedido-numero {
   font-weight: 600;
   color: #111827;
-  font-size: 0.875rem;
-}
-
-
-
-
-
-
-
-.itens-count {
-  color: #6b7280;
   font-size: 0.875rem;
 }
 

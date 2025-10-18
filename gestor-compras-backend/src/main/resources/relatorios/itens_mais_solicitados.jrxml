@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
-    http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
-              name="fornecedores" pageWidth="595" pageHeight="842" columnWidth="535"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="itens_mais_solicitados" pageWidth="595" pageHeight="842" columnWidth="535"
               leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
 
-    <!-- Estilos padronizados -->
     <style name="Title" forecolor="#1A237E" fontName="Arial" fontSize="24" isBold="true"/>
-    <style name="SubTitle" forecolor="#3F51B5" fontName="Arial" fontSize="14" isBold="true"/>
     <style name="Header" forecolor="#FFFFFF" fontName="Arial" fontSize="11" isBold="true"/>
     <style name="Detail" fontName="Arial" fontSize="10"/>
     <style name="Footer" forecolor="#666666" fontName="Arial" fontSize="9"/>
@@ -19,27 +16,26 @@
         </conditionalStyle>
     </style>
 
-    <field name="id" class="java.lang.Integer"/>
-    <field name="razaoSocial" class="java.lang.String"/>
-    <field name="cnpj" class="java.lang.String"/>
+    <field name="nomeItem" class="java.lang.String"/>
+    <field name="quantidadeTotal" class="java.lang.Long"/>
+    <field name="numeroSolicitacoes" class="java.lang.Long"/>
+    <field name="descricao" class="java.lang.String"/>
 
-    <!-- Cabeçalho do Relatório -->
+    <variable name="RANKING" class="java.lang.Integer" calculation="Count">
+        <variableExpression><![CDATA[$F{nomeItem}]]></variableExpression>
+    </variable>
+
     <title>
         <band height="125">
-            <!-- Logo UEMA Centralizada -->
             <image scaleImage="RetainShape" hAlign="Center" vAlign="Top">
                 <reportElement x="192" y="10" width="150" height="50"/>
                 <imageExpression><![CDATA["relatorios/logo-uema-site.png"]]></imageExpression>
             </image>
-
-            <!-- Nome do Relatório Centralizado -->
             <staticText>
                 <reportElement style="Title" x="0" y="70" width="535" height="35"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <text><![CDATA[RELATÓRIO DE FORNECEDORES]]></text>
+                <text><![CDATA[ITENS MAIS SOLICITADOS]]></text>
             </staticText>
-
-            <!-- Versão do Relatório -->
             <staticText>
                 <reportElement style="Footer" x="420" y="108" width="115" height="12"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
@@ -47,100 +43,92 @@
                 </textElement>
                 <text><![CDATA[Versão 1.0]]></text>
             </staticText>
-
-            <!-- Linha Separadora -->
             <line>
                 <reportElement x="0" y="122" width="535" height="1" forecolor="#3F51B5"/>
                 <graphicElement>
-                    <pen lineWidth="2.0" lineStyle="Solid"/>
+                    <pen lineWidth="2.0"/>
                 </graphicElement>
             </line>
         </band>
     </title>
 
-    <!-- Cabeçalho de Página -->
-    <pageHeader>
-        <band height="5">
-            <line>
-                <reportElement x="0" y="2" width="535" height="1" forecolor="#CCCCCC"/>
-                <graphicElement>
-                    <pen lineWidth="0.5"/>
-                </graphicElement>
-            </line>
-        </band>
-    </pageHeader>
-
-    <!-- Cabeçalho das Colunas -->
     <columnHeader>
         <band height="25">
             <rectangle>
                 <reportElement mode="Opaque" x="0" y="0" width="535" height="25" backcolor="#3F51B5"/>
-                <graphicElement>
-                    <pen lineWidth="0.0"/>
-                </graphicElement>
             </rectangle>
-
             <staticText>
-                <reportElement style="Header" x="5" y="2" width="60" height="20"/>
+                <reportElement style="Header" x="5" y="2" width="40" height="20"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <text><![CDATA[ID]]></text>
+                <text><![CDATA[#]]></text>
             </staticText>
-
             <staticText>
-                <reportElement style="Header" x="70" y="2" width="280" height="20"/>
+                <reportElement style="Header" x="50" y="2" width="200" height="20"/>
                 <textElement textAlignment="Left" verticalAlignment="Middle">
                     <paragraph leftIndent="5"/>
                 </textElement>
-                <text><![CDATA[Razão Social]]></text>
+                <text><![CDATA[Nome do Item]]></text>
             </staticText>
-
             <staticText>
-                <reportElement style="Header" x="355" y="2" width="175" height="20"/>
-                <textElement textAlignment="Left" verticalAlignment="Middle">
-                    <paragraph leftIndent="5"/>
-                </textElement>
-                <text><![CDATA[CNPJ]]></text>
+                <reportElement style="Header" x="255" y="2" width="90" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Qtd. Total]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="350" y="2" width="90" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Nº Pedidos]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Header" x="445" y="2" width="85" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Média/Pedido]]></text>
             </staticText>
         </band>
     </columnHeader>
 
-    <!-- Detalhes (Linhas de Dados) -->
     <detail>
-        <band height="25">
-            <elementGroup>
-                <rectangle>
-                    <reportElement style="Row" x="0" y="0" width="535" height="25"/>
-                    <graphicElement>
-                        <pen lineWidth="0.5" lineColor="#E0E0E0"/>
-                    </graphicElement>
-                </rectangle>
-
-                <textField textAdjust="StretchHeight">
-                    <reportElement style="Detail" x="5" y="2" width="60" height="20"/>
-                    <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                    <textFieldExpression><![CDATA[$F{id}]]></textFieldExpression>
-                </textField>
-
-                <textField textAdjust="StretchHeight" isBlankWhenNull="true">
-                    <reportElement style="Detail" x="70" y="2" width="280" height="20"/>
-                    <textElement textAlignment="Left" verticalAlignment="Middle">
-                        <paragraph leftIndent="5"/>
-                    </textElement>
-                    <textFieldExpression><![CDATA[$F{razaoSocial}]]></textFieldExpression>
-                </textField>
-
-                <textField textAdjust="StretchHeight" isBlankWhenNull="true">
-                    <reportElement style="Detail" x="355" y="2" width="175" height="20"/>
-                    <textElement textAlignment="Left" verticalAlignment="Middle">
-                        <paragraph leftIndent="5"/>
-                    </textElement>
-                    <textFieldExpression><![CDATA[$F{cnpj}]]></textFieldExpression>
-                </textField>
-            </elementGroup>
+        <band height="30">
+            <rectangle>
+                <reportElement style="Row" x="0" y="0" width="535" height="30"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#E0E0E0"/>
+                </graphicElement>
+            </rectangle>
+            <textField>
+                <reportElement style="Detail" x="5" y="5" width="40" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$V{RANKING}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight">
+                <reportElement style="Detail" x="50" y="5" width="200" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{nomeItem}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Detail" x="255" y="5" width="90" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{quantidadeTotal}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement style="Detail" x="350" y="5" width="90" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{numeroSolicitacoes}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.0">
+                <reportElement style="Detail" x="445" y="5" width="85" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{quantidadeTotal}.doubleValue() / $F{numeroSolicitacoes}.doubleValue()]]></textFieldExpression>
+            </textField>
         </band>
     </detail>
 
-    <!-- Rodapé da Página -->
     <pageFooter>
         <band height="30">
             <line>
@@ -149,28 +137,21 @@
                     <pen lineWidth="1.0"/>
                 </graphicElement>
             </line>
-
-            <!-- Data e Hora de Geração -->
             <textField pattern="dd/MM/yyyy HH:mm">
                 <reportElement style="Footer" x="5" y="8" width="150" height="20"/>
                 <textElement textAlignment="Left" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
             </textField>
-
-            <!-- Sistema -->
             <staticText>
                 <reportElement style="Footer" x="180" y="8" width="180" height="20"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <text><![CDATA[Sistema de Gestão de Compras - UEMA]]></text>
             </staticText>
-
-            <!-- Paginação -->
             <textField>
                 <reportElement style="Footer" x="385" y="8" width="100" height="20"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
             </textField>
-
             <textField evaluationTime="Report">
                 <reportElement style="Footer" x="485" y="8" width="50" height="20"/>
                 <textElement textAlignment="Left" verticalAlignment="Middle"/>

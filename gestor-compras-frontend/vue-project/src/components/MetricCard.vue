@@ -218,6 +218,10 @@ const iconComponent = computed(() => {
   border-left: 4px solid #ef4444;
 }
 
+.variant-default {
+  border-left: 4px solid #6366f1;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .metric-card {

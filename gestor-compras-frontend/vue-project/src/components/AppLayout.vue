@@ -24,7 +24,7 @@
           <!-- Adicione mais links de navegação aqui conforme necessário -->
         </nav>
         <div class="user-actions">
-          <span class="welcome-text">Bem-vindo, {{ username }}!</span>
+          <span class="welcome-text">{{ getWelcomeMessage() }}, {{ username }}!</span>
           <button @click="logout" class="logout-button">Sair</button>
         </div>
       </div>
@@ -42,6 +42,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { getWelcomeMessage as getWelcomeMessageUtil } from '../utils/genderUtils'
 import relatorioService from '../services/relatorioService'
 
 const router = useRouter()
@@ -54,6 +55,11 @@ const gerandoRelatorio = ref(false)
 const username = computed(() => {
   return authStore.user?.name || authStore.user?.username || 'Usuário'
 })
+
+// Função para gerar mensagem de boas-vindas com gênero correto
+const getWelcomeMessage = () => {
+  return getWelcomeMessageUtil(authStore.user, 'simples')
+}
 
 const logout = () => {
   authStore.logout()

@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="dashboard_executivo" pageWidth="595" pageHeight="842" columnWidth="535"
+              leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
+
+    <style name="Title" forecolor="#1A237E" fontName="Arial" fontSize="24" isBold="true"/>
+    <style name="SubTitle" forecolor="#3F51B5" fontName="Arial" fontSize="14" isBold="true"/>
+    <style name="SectionHeader" forecolor="#1A237E" fontName="Arial" fontSize="12" isBold="true"/>
+    <style name="KPILabel" forecolor="#666666" fontName="Arial" fontSize="9"/>
+    <style name="KPIValue" forecolor="#1A237E" fontName="Arial" fontSize="14" isBold="true"/>
+    <style name="Footer" forecolor="#666666" fontName="Arial" fontSize="9"/>
+
+    <field name="totalSolicitacoes" class="java.lang.Long"/>
+    <field name="solicitacoesAbertas" class="java.lang.Long"/>
+    <field name="solicitacoesFechadas" class="java.lang.Long"/>
+    <field name="solicitacoesPendentes" class="java.lang.Long"/>
+    <field name="solicitacoesEmAnalise" class="java.lang.Long"/>
+    <field name="solicitacoesEmAndamento" class="java.lang.Long"/>
+    <field name="solicitacoesAprovadas" class="java.lang.Long"/>
+    <field name="solicitacoesCanceladas" class="java.lang.Long"/>
+    <field name="totalItens" class="java.lang.Long"/>
+    <field name="totalCotacoes" class="java.lang.Long"/>
+    <field name="valorTotalEstimado" class="java.math.BigDecimal"/>
+    <field name="ticketMedio" class="java.math.BigDecimal"/>
+
+    <title>
+        <band height="125">
+            <image scaleImage="RetainShape" hAlign="Center" vAlign="Top">
+                <reportElement x="192" y="10" width="150" height="50"/>
+                <imageExpression><![CDATA["relatorios/logo-uema-site.png"]]></imageExpression>
+            </image>
+            <staticText>
+                <reportElement style="Title" x="0" y="70" width="535" height="35"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[DASHBOARD EXECUTIVO]]></text>
+            </staticText>
+            <staticText>
+                <reportElement style="Footer" x="420" y="108" width="115" height="12"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[Versão 1.0]]></text>
+            </staticText>
+            <line>
+                <reportElement x="0" y="122" width="535" height="1" forecolor="#3F51B5"/>
+                <graphicElement>
+                    <pen lineWidth="2.0"/>
+                </graphicElement>
+            </line>
+        </band>
+    </title>
+
+    <detail>
+        <band height="570">
+            <staticText>
+                <reportElement style="SectionHeader" x="0" y="10" width="535" height="25"/>
+                <box>
+                    <bottomPen lineWidth="1.0" lineColor="#E0E0E0"/>
+                </box>
+                <textElement verticalAlignment="Bottom">
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <text><![CDATA[INDICADORES GERAIS]]></text>
+            </staticText>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="0" y="45" width="130" height="80" backcolor="#E3F2FD"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#90CAF9"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="10" y="50" width="110" height="15"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Total de Solicitações]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="10" y="70" width="110" height="30"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="20"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{totalSolicitacoes}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="135" y="45" width="130" height="80" backcolor="#E8F5E9"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#A5D6A7"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="145" y="50" width="110" height="15"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Solicitações Abertas]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="145" y="70" width="110" height="30" forecolor="#4CAF50"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="20"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{solicitacoesAbertas}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="270" y="45" width="130" height="80" backcolor="#FFF3E0"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#FFCC80"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="280" y="50" width="110" height="15"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Solicitações Fechadas]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="280" y="70" width="110" height="30" forecolor="#FF9800"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="20"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{solicitacoesFechadas}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="405" y="45" width="130" height="80" backcolor="#FCE4EC"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#F48FB1"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="415" y="50" width="110" height="15"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Total de Itens]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="415" y="70" width="110" height="30" forecolor="#E91E63"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="20"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{totalItens}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement style="SectionHeader" x="0" y="145" width="535" height="25"/>
+                <box>
+                    <bottomPen lineWidth="1.0" lineColor="#E0E0E0"/>
+                </box>
+                <textElement verticalAlignment="Bottom">
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <text><![CDATA[DISTRIBUIÇÃO POR STATUS]]></text>
+            </staticText>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="0" y="180" width="175" height="65" backcolor="#FFF9C4"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#FFF176"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="10" y="188" width="155" height="12"/>
+                <text><![CDATA[Pendentes]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="10" y="205" width="155" height="30" forecolor="#F9A825"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="16"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{solicitacoesPendentes}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="180" y="180" width="175" height="65" backcolor="#BBDEFB"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#64B5F6"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="190" y="188" width="155" height="12"/>
+                <text><![CDATA[Em Análise]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="190" y="205" width="155" height="30" forecolor="#1976D2"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="16"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{solicitacoesEmAnalise}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="360" y="180" width="175" height="65" backcolor="#C5CAE9"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#9FA8DA"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="370" y="188" width="155" height="12"/>
+                <text><![CDATA[Em Andamento]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="370" y="205" width="155" height="30" forecolor="#5C6BC0"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="16"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{solicitacoesEmAndamento}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="0" y="255" width="260" height="65" backcolor="#C8E6C9"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#81C784"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="10" y="263" width="240" height="12"/>
+                <text><![CDATA[Aprovadas]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="10" y="280" width="240" height="30" forecolor="#388E3C"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="16"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{solicitacoesAprovadas}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="275" y="255" width="260" height="65" backcolor="#FFCDD2"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#E57373"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="285" y="263" width="240" height="12"/>
+                <text><![CDATA[Canceladas]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="285" y="280" width="240" height="30" forecolor="#D32F2F"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="16"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{solicitacoesCanceladas}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement style="SectionHeader" x="0" y="340" width="535" height="25"/>
+                <box>
+                    <bottomPen lineWidth="1.0" lineColor="#E0E0E0"/>
+                </box>
+                <textElement verticalAlignment="Bottom">
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <text><![CDATA[INDICADORES FINANCEIROS E OPERACIONAIS]]></text>
+            </staticText>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="0" y="375" width="260" height="65" backcolor="#E1F5FE"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#4FC3F7"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="10" y="383" width="240" height="12"/>
+                <text><![CDATA[Total de Cotações]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="KPIValue" x="10" y="400" width="240" height="30" forecolor="#0277BD"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="16"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{totalCotacoes}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="275" y="375" width="260" height="65" backcolor="#F3E5F5"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#CE93D8"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="285" y="383" width="240" height="12"/>
+                <text><![CDATA[Valor Total Estimado]]></text>
+            </staticText>
+            <textField pattern="R$ #,##0.00">
+                <reportElement style="KPIValue" x="285" y="400" width="240" height="30" forecolor="#7B1FA2"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="16"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{valorTotalEstimado}]]></textFieldExpression>
+            </textField>
+
+            <rectangle radius="5">
+                <reportElement mode="Opaque" x="0" y="450" width="535" height="65" backcolor="#FFF8E1"/>
+                <graphicElement>
+                    <pen lineWidth="1.0" lineColor="#FFD54F"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement style="KPILabel" x="10" y="458" width="515" height="12"/>
+                <textElement textAlignment="Center"/>
+                <text><![CDATA[Ticket Médio por Solicitação]]></text>
+            </staticText>
+            <textField pattern="R$ #,##0.00">
+                <reportElement style="KPIValue" x="10" y="475" width="515" height="30" forecolor="#F57F17"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="18"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{ticketMedio}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="535" width="535" height="30" forecolor="#999999"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="8" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[Este relatório apresenta uma visão consolidada dos principais indicadores do sistema de gestão de compras]]></text>
+            </staticText>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="30">
+            <line>
+                <reportElement x="0" y="2" width="535" height="1" forecolor="#3F51B5"/>
+                <graphicElement>
+                    <pen lineWidth="1.0"/>
+                </graphicElement>
+            </line>
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement style="Footer" x="5" y="8" width="150" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement style="Footer" x="180" y="8" width="180" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <text><![CDATA[Sistema de Gestão de Compras - UEMA]]></text>
+            </staticText>
+            <textField>
+                <reportElement style="Footer" x="385" y="8" width="100" height="20"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+            <textField evaluationTime="Report">
+                <reportElement style="Footer" x="485" y="8" width="50" height="20"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

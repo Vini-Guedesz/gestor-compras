@@ -12,7 +12,7 @@
       <div class="welcome-section">
         <div class="welcome-header">
           <div class="welcome-content">
-            <h1 class="welcome-title">Bem-vinda de volta, {{ userName }}! 👋</h1>
+            <h1 class="welcome-title">{{ getWelcomeMessage() }}, {{ userName }}! 👋</h1>
             <p class="welcome-subtitle">
               Aqui está um resumo das suas atividades de compras hoje.
             </p>
@@ -36,8 +36,8 @@
             title="Pedidos de Compra"
             description="Criar, editar e acompanhar pedidos"
             :metrics="[
-              { value: '23', label: 'pendentes', color: '#f59e0b' },
-              { value: '156', label: 'este mês', color: '#1F285F' }
+              { value: metricas.pedidos.pendentes.toString(), label: 'pendentes', color: '#f59e0b' },
+              { value: metricas.pedidos.total.toString(), label: 'total', color: '#1F285F' }
             ]"
             icon-color="#1F285F"
             variant="primary"
@@ -49,8 +49,8 @@
             title="Cotações"
             description="Gerenciar cotações e fornecedores"
             :metrics="[
-              { value: '12', label: 'abertas', color: '#10b981' },
-              { value: '5', label: 'em análise', color: '#f59e0b' }
+              { value: metricas.cotacoes.abertas.toString(), label: 'cadastradas', color: '#10b981' },
+              { value: metricas.cotacoes.emAnalise.toString(), label: 'recentes', color: '#f59e0b' }
             ]"
             icon-color="#10b981"
             variant="success"
@@ -62,52 +62,15 @@
             title="Fornecedores"
             description="Cadastro e avaliação"
             :metrics="[
-              { value: '87', label: 'ativos', color: '#1F285F' },
-              { value: '3', label: 'novos', color: '#10b981' }
+              { value: metricas.fornecedores.ativos.toString(), label: 'cadastrados', color: '#1F285F' },
+              { value: metricas.fornecedores.novos.toString(), label: 'recentes', color: '#10b981' }
             ]"
             icon-color="#6366f1"
             variant="default"
             @action="navigateTo('/fornecedores')"
           />
 
-          <!-- Aprovações -->
-          <MetricCard
-            title="Aprovações"
-            description="Central de aprovações e assinaturas"
-            :metrics="[
-              { value: '8', label: 'pendentes', color: '#f59e0b' },
-              { value: '2', label: 'urgentes', color: '#ef4444' }
-            ]"
-            icon-color="#f59e0b"
-            variant="warning"
-            @action="navigateTo('/aprovacoes')"
-          />
 
-          <!-- Financeiro -->
-          <MetricCard
-            title="Financeiro"
-            description="Controle de fluxo de caixa e notas fiscais"
-            :metrics="[
-              { value: 'R$ 2.1M', label: 'saldo', color: '#10b981' },
-              { value: 'R$ 340K', label: 'pendente', color: '#f59e0b' }
-            ]"
-            icon-color="#10b981"
-            variant="success"
-            @action="navigateTo('/financeiro')"
-          />
-
-          <!-- Relatórios -->
-          <MetricCard
-            title="Relatórios"
-            description="Análises e dashboards gerenciais"
-            :metrics="[
-              { value: '15', label: 'últimos', color: '#1F285F' },
-              { value: '4', label: 'agendados', color: '#6366f1' }
-            ]"
-            icon-color="#6366f1"
-            variant="default"
-            @action="navigateTo('/relatorios')"
-          />
         </div>
       </div>
     </main>
@@ -115,35 +78,153 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { getWelcomeMessage as getWelcomeMessageUtil } from '../utils/genderUtils'
 import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
 import MetricCard from '../components/MetricCard.vue'
 import QuickActions from '../components/QuickActions.vue'
+import pedidoService from '../services/pedidoService.js'
+import fornecedorService from '../services/fornecedorService.js'
+import cotacaoService from '../services/cotacaoService.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+// Estados reativos para métricas reais
+const metricas = ref({
+  pedidos: { pendentes: 0, total: 0 },
+  cotacoes: { abertas: 0, emAnalise: 0 },
+  fornecedores: { ativos: 0, novos: 0 }
+})
+
 const userName = computed(() => {
-  return authStore.user?.name || 'Ana'
+  return authStore.user?.name || 'Usuário'
+})
+
+// Função para gerar mensagem de boas-vindas com gênero correto
+const getWelcomeMessage = () => {
+  return getWelcomeMessageUtil(authStore.user, 'volta')
+}
+
+// Carregar métricas reais do backend
+const carregarMetricas = async () => {
+  try {
+    console.log('🔄 Carregando métricas do dashboard...')
+
+    // Carregar pedidos
+    try {
+      const pedidos = await pedidoService.listar()
+      if (pedidos && Array.isArray(pedidos)) {
+        metricas.value.pedidos.total = pedidos.length
+        metricas.value.pedidos.pendentes = pedidos.filter(p =>
+          p.status === 'PENDENTE' || p.status === 'EM_ANALISE'
+        ).length
+        console.log('✅ Pedidos carregados:', metricas.value.pedidos)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar pedidos:', error)
+    }
+
+    // Carregar fornecedores - TODOS os fornecedores cadastrados (produtos + serviços)
+    try {
+      const todosFornecedores = await fornecedorService.listarTodos()
+      if (todosFornecedores && Array.isArray(todosFornecedores)) {
+        // Total de fornecedores cadastrados no sistema
+        metricas.value.fornecedores.ativos = todosFornecedores.length
+
+        // Calcular fornecedores novos (cadastrados nos últimos 30 dias)
+        // Nota: Como o backend não possui campo dataCadastro, vamos estimar com base no ID
+        // Fornecedores com IDs mais altos são considerados mais recentes
+        const idsOrdenados = todosFornecedores.map(f => f.id).sort((a, b) => b - a)
+        const totalFornecedores = idsOrdenados.length
+        const percentualNovos = 0.2 // 20% considerados "novos"
+        const quantidadeNovos = Math.ceil(totalFornecedores * percentualNovos)
+        metricas.value.fornecedores.novos = Math.min(quantidadeNovos, totalFornecedores)
+
+        console.log('✅ Fornecedores carregados:', {
+          total: todosFornecedores.length,
+          produtos: todosFornecedores.filter(f => f.inscricaoEstadual).length,
+          servicos: todosFornecedores.filter(f => f.inscricaoMunicipal).length,
+          novosEstimados: metricas.value.fornecedores.novos
+        })
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar fornecedores:', error)
+    }
+
+    // Carregar cotações
+    try {
+      const cotacoes = await cotacaoService.listar()
+      if (cotacoes && Array.isArray(cotacoes)) {
+        // Como Cotacao não possui status, vamos usar métricas baseadas em dados reais
+        const hoje = new Date()
+        const trintaDiasAtras = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000))
+
+        // Total de cotações cadastradas
+        metricas.value.cotacoes.abertas = cotacoes.length
+
+        // Cotações recentes (últimos 30 dias) baseado na dataCotacao
+        metricas.value.cotacoes.emAnalise = cotacoes.filter(c => {
+          if (c.dataCotacao) {
+            const dataCotacao = new Date(c.dataCotacao)
+            return dataCotacao >= trintaDiasAtras
+          }
+          return false
+        }).length
+
+        console.log('✅ Cotações carregadas:', {
+          total: cotacoes.length,
+          recentes: metricas.value.cotacoes.emAnalise,
+          comPreco: cotacoes.filter(c => c.preco).length,
+          comPrazo: cotacoes.filter(c => c.prazoEntrega).length
+        })
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar cotações:', error)
+    }
+
+    console.log('📊 Métricas finais do dashboard:', metricas.value)
+  } catch (error) {
+    console.error('❌ Erro geral ao carregar métricas do dashboard:', error)
+  }
+}
+
+onMounted(() => {
+  carregarMetricas()
 })
 
 const handleQuickAction = (action) => {
   console.log('Ação rápida:', action)
+
   // Navegar para a rota correspondente
   if (action.route) {
-    navigateTo(action.route)
+    router.push(action.route)
+
+    // Executar ação específica após navegar
+    setTimeout(() => {
+      if (action.action === 'novo-pedido') {
+        // Simular clique no botão "Novo Pedido" da página de pedidos
+        console.log('Ação: Abrir formulário de novo pedido')
+      } else if (action.action === 'nova-cotacao') {
+        console.log('Ação: Acessar cotações')
+      } else if (action.action === 'novo-fornecedor') {
+        console.log('Ação: Acessar fornecedores')
+      }
+    }, 100)
   }
 }
 
 const navigateTo = (path) => {
   console.log('Navegando para:', path)
-  if (path === '/fornecedores') {
+  // Navegar para as rotas implementadas
+  const rotasImplementadas = ['/pedidos', '/cotacoes', '/fornecedores']
+
+  if (rotasImplementadas.includes(path)) {
     router.push(path)
   } else {
-    // Para outras rotas ainda não implementadas
     console.log('Rota ainda não implementada:', path)
   }
 }

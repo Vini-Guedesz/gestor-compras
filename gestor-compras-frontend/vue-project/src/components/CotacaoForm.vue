@@ -7,25 +7,43 @@
           <button @click="$emit('close')" class="close-button">&times;</button>
         </div>
         <div class="modal-body">
-          <form>
+          <!-- Alertas -->
+          <div v-if="mensagemAlerta" :class="['alert', tipoAlerta]">
+            {{ mensagemAlerta }}
+          </div>
+
+          <form @submit.prevent="handleSubmit">
             <!-- Dados da Cotação -->
             <div class="form-section">
               <h3 class="section-title">Dados da Cotação</h3>
               <div class="form-grid">
+                <!-- Tipo de Fornecedor -->
+                <div class="form-group">
+                  <label class="form-label">Tipo de Fornecedor *</label>
+                  <select v-model="tipoFornecedor" class="form-select" required @change="handleTipoFornecedorChange">
+                    <option value="">Selecione o tipo...</option>
+                    <option value="PRODUTO">Fornecedor de Produto</option>
+                    <option value="SERVICO">Fornecedor de Serviço</option>
+                  </select>
+                </div>
+
+                <!-- Fornecedor (filtrado por tipo) -->
                 <div class="form-group">
                   <label class="form-label">Fornecedor *</label>
-                  <select v-model="formData.fornecedorId" class="form-select" required>
-                    <option value="">Selecione um fornecedor...</option>
+                  <select v-model="formData.fornecedorId" class="form-select" required :disabled="!tipoFornecedor">
+                    <option value="">{{ tipoFornecedor ? 'Selecione um fornecedor...' : 'Primeiro selecione o tipo' }}</option>
                     <option
-                      v-for="fornecedor in fornecedoresDisponiveis"
+                      v-for="fornecedor in fornecedoresFiltrados"
                       :key="fornecedor.id"
                       :value="fornecedor.id"
                     >
                       {{ fornecedor.razaoSocial }} - {{ fornecedor.cnpj }}
+                      <span class="badge">{{ fornecedor.tipo }}</span>
                     </option>
                   </select>
                 </div>
 
+                <!-- Item do Pedido -->
                 <div class="form-group">
                   <label class="form-label">Item do Pedido *</label>
                   <select v-model="formData.itemPedidoId" class="form-select" required>
@@ -35,17 +53,19 @@
                       :key="item.id"
                       :value="item.id"
                     >
-                      {{ item.nome }} (Qtd: {{ item.quantidade }}) - {{ item.descricao }}
+                      {{ item.nome || 'Item sem nome' }} (Qtd: {{ item.quantidade || 0 }})
+                      {{ item.descricao ? ` - ${item.descricao}` : '' }}
                     </option>
                   </select>
-                  <small class="form-hint">TODO: Carregar itens do pedido do backend</small>
+                  <small class="form-hint">{{ itensDisponiveis.length }} itens disponíveis</small>
                 </div>
 
+                <!-- Preço -->
                 <div class="form-group">
                   <label class="form-label">Preço (R$) *</label>
                   <input
                     type="number"
-                    v-model="formData.preco"
+                    v-model.number="formData.preco"
                     class="form-input"
                     required
                     min="0.01"
@@ -54,35 +74,27 @@
                   />
                 </div>
 
+                <!-- Prazo de Entrega -->
                 <div class="form-group">
-                  <label class="form-label">Prazo de Entrega</label>
+                  <label class="form-label">Prazo de Entrega (dias)</label>
                   <input
-                    type="date"
-                    v-model="formData.prazoEntrega"
+                    type="number"
+                    v-model.number="formData.prazoEntrega"
                     class="form-input"
-                    :min="dataMinima"
+                    min="1"
+                    placeholder="Ex: 30"
                   />
+                  <small class="form-hint">
+                    Prazo em dias corridos
+                    <span v-if="formData.prazoEntrega && formData.prazoEntrega > 0" class="data-calculada">
+                      (Entrega: {{ calcularDataEntrega(formData.prazoEntrega) }})
+                    </span>
+                  </small>
                 </div>
               </div>
             </div>
 
-            <!-- Anexos e Documentos -->
-            <div class="form-section">
-              <h3 class="section-title">Anexo PDF</h3>
-              <div class="form-group">
-                <label class="form-label">Anexar Documento PDF</label>
-                <input
-                  ref="fileInput"
-                  type="file"
-                  accept=".pdf"
-                  @change="handleFileSelect"
-                  class="form-input"
-                />
-                <small class="form-hint">Máximo 5MB</small>
-              </div>
 
-
-            </div>
           </form>
         </div>
 
@@ -96,7 +108,7 @@
               type="button"
               @click.stop="handleSubmit"
               class="btn-primary"
-              :disabled="carregando"
+              :disabled="carregando || !formularioValido"
             >
               <span v-if="carregando" class="loading-spinner"></span>
               {{ cotacao ? 'Atualizar Cotação' : 'Criar Cotação' }}
@@ -130,6 +142,9 @@ const emit = defineEmits(['close', 'save'])
 
 // Estado reativo
 const carregando = ref(false)
+const mensagemAlerta = ref('')
+const tipoAlerta = ref('error') // 'error', 'success', 'warning'
+const tipoFornecedor = ref('')
 
 // Dados do formulário - alinhado com CotacaoCreateDTO/CotacaoUpdateDTO
 const formData = ref({
@@ -139,179 +154,231 @@ const formData = ref({
   prazoEntrega: null
 })
 
-// Lista de fornecedores e itens (será carregada do backend)
+// Lista de fornecedores e itens
 const fornecedoresDisponiveis = ref([])
 const itensDisponiveis = ref([])
 
 // Computadas
-const dataMinima = computed(() => {
-  const hoje = new Date()
-  return hoje.toISOString().split('T')[0]
+const fornecedoresFiltrados = computed(() => {
+  if (!tipoFornecedor.value) return []
+  return fornecedoresDisponiveis.value.filter(f => f.tipo === tipoFornecedor.value)
 })
 
-// Métodos
-const handleFileSelect = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    if (file.type !== 'application/pdf') {
-      alert('Apenas arquivos PDF são aceitos')
-      return
-    }
+const formularioValido = computed(() => {
+  return formData.value.fornecedorId &&
+         formData.value.itemPedidoId &&
+         formData.value.preco &&
+         formData.value.preco > 0
+})
 
-    if (file.size > 5 * 1024 * 1024) { // 5MB
-      alert('Arquivo muito grande. Máximo 5MB')
-      return
-    }
-
-    // Aqui você pode processar o arquivo PDF
-    // TODO: Implementar upload do arquivo para o servidor
-  }
+// Métodos de UI
+const mostrarAlerta = (mensagem, tipo = 'error') => {
+  mensagemAlerta.value = mensagem
+  tipoAlerta.value = tipo
+  setTimeout(() => {
+    mensagemAlerta.value = ''
+  }, 5000)
 }
 
+
+
+// Converter data para número de dias a partir de hoje
+const calcularDiasParaEntrega = (dataEntrega) => {
+  if (!dataEntrega) return null
+
+  const hoje = new Date()
+  const entrega = new Date(dataEntrega)
+
+  // Zerrar as horas para comparação correta
+  hoje.setHours(0, 0, 0, 0)
+  entrega.setHours(0, 0, 0, 0)
+
+  const diffTime = entrega.getTime() - hoje.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  return diffDays > 0 ? diffDays : null
+}
+
+// Calcular data de entrega a partir de dias
+const calcularDataEntrega = (dias) => {
+  if (!dias || dias <= 0) return ''
+
+  const hoje = new Date()
+  const dataEntrega = new Date(hoje)
+  dataEntrega.setDate(hoje.getDate() + parseInt(dias))
+
+  return dataEntrega.toLocaleDateString('pt-BR')
+}
+
+// Métodos de fornecedor
+const handleTipoFornecedorChange = () => {
+  formData.value.fornecedorId = null // Reset fornecedor quando tipo muda
+}
+
+
+
 const handleSubmit = async () => {
-  // Proteção contra execução múltipla
   if (carregando.value) {
     console.log('⚠️ Já está processando uma cotação, aguarde...')
     return
   }
 
-  console.log('🚀 Iniciando criação de cotação...')
-  console.log('📋 Dados do formulário:', formData.value)
-
   try {
     carregando.value = true
+    mensagemAlerta.value = ''
 
-    // Validações dos dados obrigatórios
-    if (!formData.value.fornecedorId) {
-      alert('Por favor, selecione um fornecedor')
+    // Validações do formulário
+    if (!formularioValido.value) {
+      mostrarAlerta('Por favor, preencha todos os campos obrigatórios', 'error')
       return
     }
 
-    if (!formData.value.itemPedidoId) {
-      alert('Por favor, selecione um item do pedido')
+    if (!tipoFornecedor.value) {
+      mostrarAlerta('Por favor, selecione um tipo de fornecedor', 'error')
       return
     }
 
-    if (!formData.value.preco || formData.value.preco <= 0) {
-      alert('Preço é obrigatório e deve ser maior que zero')
-      return
-    }
+    console.log('🚀 Iniciando envio de cotação...')
+    console.log('📋 Dados do formulário:', formData.value)
 
     // Preparar dados com tipos corretos para o backend
-    const fornecedorIdInt = parseInt(formData.value.fornecedorId)
-    const itemPedidoIdInt = parseInt(formData.value.itemPedidoId)
-    const precoFloat = parseFloat(formData.value.preco)
+    // Converter prazo de entrega de dias para data
+    let prazoEntregaData = null
+    if (formData.value.prazoEntrega && formData.value.prazoEntrega > 0) {
+      const hoje = new Date()
+      const dataEntrega = new Date(hoje)
+      dataEntrega.setDate(hoje.getDate() + parseInt(formData.value.prazoEntrega))
+      prazoEntregaData = dataEntrega.toISOString().split('T')[0] // Formato YYYY-MM-DD
 
-    // Validar conversões
-    if (isNaN(fornecedorIdInt) || fornecedorIdInt <= 0) {
-      alert('Fornecedor inválido')
-      return
-    }
-
-    if (isNaN(itemPedidoIdInt) || itemPedidoIdInt <= 0) {
-      alert('Item do pedido inválido')
-      return
-    }
-
-    if (isNaN(precoFloat) || precoFloat <= 0) {
-      alert('Preço inválido')
-      return
+      console.log('📅 Conversão prazo:', {
+        diasInformados: formData.value.prazoEntrega,
+        hoje: hoje.toISOString().split('T')[0],
+        dataEntrega: prazoEntregaData
+      })
     }
 
     const dadosParaSalvar = {
-      fornecedorId: fornecedorIdInt,           // Integer no backend
-      itemPedidoId: itemPedidoIdInt,           // Long no backend
-      preco: precoFloat,                       // BigDecimal no backend
-      prazoEntrega: formData.value.prazoEntrega || null  // LocalDate no backend (nullable)
+      fornecedorId: parseInt(formData.value.fornecedorId),
+      itemPedidoId: parseInt(formData.value.itemPedidoId),
+      preco: parseFloat(formData.value.preco),
+      prazoEntrega: prazoEntregaData
     }
 
-    console.log('📤 Enviando dados para a view pai:', dadosParaSalvar)
+    // Validar conversões
+    if (isNaN(dadosParaSalvar.fornecedorId) || dadosParaSalvar.fornecedorId <= 0) {
+      mostrarAlerta('Fornecedor inválido', 'error')
+      return
+    }
+
+    if (isNaN(dadosParaSalvar.itemPedidoId) || dadosParaSalvar.itemPedidoId <= 0) {
+      mostrarAlerta('Item do pedido inválido', 'error')
+      return
+    }
+
+    if (isNaN(dadosParaSalvar.preco) || dadosParaSalvar.preco <= 0) {
+      mostrarAlerta('Preço inválido', 'error')
+      return
+    }
+
+    console.log(' Enviando dados para a view pai:', dadosParaSalvar)
 
     // Emitir os dados para a view pai processar
     emit('save', dadosParaSalvar)
-    emit('close')
+
+    mostrarAlerta('Cotação enviada com sucesso!', 'success')
+
+    // Aguardar um pouco para mostrar a mensagem antes de fechar
+    setTimeout(() => {
+      emit('close')
+    }, 1000)
 
   } catch (error) {
-    console.error('❌ Erro detalhado ao salvar cotação:', error)
-    console.error('❌ Erro response:', error.response)
-    console.error('❌ Erro message:', error.message)
-
-    let mensagemErro = 'Erro ao salvar cotação. Tente novamente.'
-
-    if (error.response) {
-      // Erro da resposta HTTP
-      mensagemErro = `Erro ${error.response.status}: ${error.response.data?.message || error.response.statusText}`
-    } else if (error.request) {
-      // Erro de rede/conexão
-      mensagemErro = 'Erro de conexão. Verifique se o backend está rodando.'
-    } else {
-      // Erro interno
-      mensagemErro = `Erro interno: ${error.message}`
-    }
-
-    alert(mensagemErro)
+    console.error('❌ Erro ao processar cotação:', error)
+    mostrarAlerta('Erro interno ao processar cotação', 'error')
   } finally {
     carregando.value = false
   }
 }
 
-// Carregar dados ao montar o componente
-onMounted(async () => {
+// Carregar dados
+const carregarFornecedores = async () => {
   try {
-    console.log('🔄 Carregando dados para o formulário de cotação...')
+    console.log('🔄 Carregando fornecedores para cotação...')
+    const fornecedores = await fornecedorService.listarParaCotacao()
+    fornecedoresDisponiveis.value = fornecedores || []
+    console.log('✅ Fornecedores carregados:', fornecedores?.length || 0)
 
-    // Carregar fornecedores - função correta é listarTodos()
-    try {
-      const fornecedores = await fornecedorService.listarTodos()
-      fornecedoresDisponiveis.value = fornecedores || []
-      console.log('✅ Fornecedores carregados:', fornecedores?.length || 0)
-
-      if (!fornecedores || fornecedores.length === 0) {
-        console.warn('⚠️ Nenhum fornecedor encontrado no sistema')
-      }
-    } catch (error) {
-      console.error('❌ Erro ao carregar fornecedores:', error)
-      fornecedoresDisponiveis.value = []
-      alert('Erro ao carregar fornecedores. Verifique se o backend está funcionando.')
-    }
-
-    // Carregar itens de pedido disponíveis
-    try {
-      const itens = await itemPedidoService.listarTodos()
-      itensDisponiveis.value = itens || []
-      console.log('✅ Itens de pedido carregados:', itens?.length || 0)
-
-      if (!itens || itens.length === 0) {
-        console.warn('⚠️ Nenhum item de pedido encontrado no sistema')
-      }
-    } catch (error) {
-      console.error('❌ Erro ao carregar itens de pedido:', error)
-      itensDisponiveis.value = []
-      alert('Erro ao carregar itens de pedido. Verifique se o backend está funcionando.')
-    }
-
-    // Se editando, preencher formulário
-    if (props.cotacao) {
-      formData.value.fornecedorId = props.cotacao.fornecedorId
-      formData.value.itemPedidoId = props.cotacao.itemPedidoId
-      formData.value.preco = props.cotacao.preco
-      formData.value.prazoEntrega = props.cotacao.prazoEntrega
+    if (!fornecedores || fornecedores.length === 0) {
+      mostrarAlerta('Nenhum fornecedor encontrado no sistema', 'warning')
     }
   } catch (error) {
-    console.error('❌ Erro geral ao carregar dados:', error)
+    console.error('❌ Erro ao carregar fornecedores:', error)
+    fornecedoresDisponiveis.value = []
+    mostrarAlerta('Erro ao carregar fornecedores. Verifique a conexão.', 'error')
   }
-})
+}
 
-// Watchers para resetar form quando modal abre/fecha
-watch(() => props.isVisible, (newVal) => {
-  if (newVal && !props.cotacao) {
-    // Resetar formulário quando abrindo modal para nova cotação
+const carregarItens = async () => {
+  try {
+    console.log('🔄 Carregando itens de pedido...')
+    const itens = await itemPedidoService.listarTodos()
+    itensDisponiveis.value = itens || []
+    console.log('✅ Itens carregados:', itens?.length || 0)
+
+    if (!itens || itens.length === 0) {
+      mostrarAlerta('Nenhum item de pedido encontrado', 'warning')
+    }
+  } catch (error) {
+    console.error('❌ Erro ao carregar itens:', error)
+    itensDisponiveis.value = []
+    mostrarAlerta('Erro ao carregar itens. Verifique a conexão.', 'error')
+  }
+}
+
+const inicializarFormulario = () => {
+  if (props.cotacao) {
+    // Editando cotação existente - converter data de volta para dias
+    const diasParaEntrega = calcularDiasParaEntrega(props.cotacao.prazoEntrega)
+
+    formData.value = {
+      fornecedorId: props.cotacao.fornecedorId,
+      itemPedidoId: props.cotacao.itemPedidoId,
+      preco: props.cotacao.preco,
+      prazoEntrega: diasParaEntrega
+    }
+
+    console.log('📝 Editando cotação - Prazo original:', props.cotacao.prazoEntrega, 'Convertido para dias:', diasParaEntrega)
+    // TODO: Determinar tipo de fornecedor baseado no fornecedorId
+  } else {
+    // Nova cotação
     formData.value = {
       fornecedorId: null,
       itemPedidoId: null,
       preco: null,
       prazoEntrega: null
     }
+    tipoFornecedor.value = ''
+  }
+}
+
+// Lifecycle
+onMounted(async () => {
+  console.log('🔄 Inicializando formulário de cotação...')
+  await Promise.all([carregarFornecedores(), carregarItens()])
+  inicializarFormulario()
+})
+
+// Watchers
+watch(() => props.isVisible, (newVal) => {
+  if (newVal) {
+    inicializarFormulario()
+    mensagemAlerta.value = ''
+  }
+})
+
+watch(() => props.cotacao, () => {
+  if (props.isVisible) {
+    inicializarFormulario()
   }
 })
 </script>
@@ -505,31 +572,7 @@ watch(() => props.isVisible, (newVal) => {
   cursor: pointer;
 }
 
-/* File Upload */
-.file-upload-area {
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  padding: 40px 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
 
-.file-upload-area:hover {
-  border-color: #3b82f6;
-  background: #f9fafb;
-}
-
-.upload-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.upload-icon {
-  margin-bottom: 8px;
-}
 
 .upload-help {
   font-size: 0.75rem;
@@ -873,10 +916,56 @@ watch(() => props.isVisible, (newVal) => {
   }
 }
 
+/* Alertas */
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.alert.error {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.alert.success {
+  background-color: #f0f9ff;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.alert.warning {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+/* Badge para tipo de fornecedor */
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+
+
 .form-hint {
   color: #6b7280;
   font-size: 0.75rem;
   margin-top: 4px;
   font-style: italic;
+}
+
+.data-calculada {
+  color: #059669;
+  font-weight: 500;
+  font-style: normal;
 }
 </style>

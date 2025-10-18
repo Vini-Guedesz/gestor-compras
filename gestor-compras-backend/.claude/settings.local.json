@@ -1,8 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./mvnw clean compile)",
-      "Bash(./mvnw:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell:*)",
+      "Bash(./mvnw spring-boot:run:*)",
       "Bash(timeout 30 bash -c 'until echo > /dev/tcp/localhost/8081 2>/dev/null; do sleep 1; done')",
       "Bash(curl:*)",
       "Bash(netstat:*)",

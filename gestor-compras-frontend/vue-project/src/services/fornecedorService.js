@@ -29,11 +29,35 @@ const fornecedorService = {
   async criarFornecedorProduto(fornecedor) {
     try {
       console.log('🔄 Criando fornecedor de produto no backend...')
+      console.log('📦 Dados enviados:', JSON.stringify(fornecedor, null, 2))
+
       const data = await api.post('/api/fornecedores-de-produto', fornecedor)
       console.log('✅ Fornecedor de produto criado no backend:', data.id)
       return data
     } catch (error) {
       console.error('❌ Erro ao criar fornecedor de produto no backend:', error.message)
+
+      // Tratamento específico para erros de validação
+      if (error.response && error.response.status === 400) {
+        const validationErrors = error.response.data
+        console.error('📛 Erros de validação:', validationErrors)
+
+        // Criar mensagem mais amigável baseada nos erros de validação
+        let friendlyMessage = 'Erro de validação:\n'
+        if (typeof validationErrors === 'object') {
+          Object.keys(validationErrors).forEach(field => {
+            friendlyMessage += `• ${field}: ${validationErrors[field]}\n`
+          })
+        } else if (typeof validationErrors === 'string') {
+          friendlyMessage = validationErrors
+        }
+
+        const enhancedError = new Error(friendlyMessage)
+        enhancedError.type = 'VALIDATION_ERROR'
+        enhancedError.details = validationErrors
+        throw enhancedError
+      }
+
       throw error
     }
   },
@@ -97,6 +121,28 @@ const fornecedorService = {
       return data
     } catch (error) {
       console.error('❌ Erro ao criar fornecedor de serviço no backend:', error.message)
+
+      // Tratamento específico para erros de validação
+      if (error.response && error.response.status === 400) {
+        const validationErrors = error.response.data
+        console.error('📛 Erros de validação:', validationErrors)
+
+        // Criar mensagem mais amigável baseada nos erros de validação
+        let friendlyMessage = 'Erro de validação:\n'
+        if (typeof validationErrors === 'object') {
+          Object.keys(validationErrors).forEach(field => {
+            friendlyMessage += `• ${field}: ${validationErrors[field]}\n`
+          })
+        } else if (typeof validationErrors === 'string') {
+          friendlyMessage = validationErrors
+        }
+
+        const enhancedError = new Error(friendlyMessage)
+        enhancedError.type = 'VALIDATION_ERROR'
+        enhancedError.details = validationErrors
+        throw enhancedError
+      }
+
       throw error
     }
   },
@@ -135,6 +181,46 @@ const fornecedorService = {
       return [...produtos, ...servicos]
     } catch (error) {
       console.error('❌ Erro ao listar todos os fornecedores:', error.message)
+      throw error
+    }
+  },
+
+  // Métodos específicos para cotações - com marcação de tipo
+  async listarProdutos() {
+    try {
+      const produtos = await this.listarFornecedoresProduto()
+      return produtos.map(fornecedor => ({
+        ...fornecedor,
+        tipo: 'PRODUTO'
+      }))
+    } catch (error) {
+      console.error('❌ Erro ao listar fornecedores de produto:', error.message)
+      throw error
+    }
+  },
+
+  async listarServicos() {
+    try {
+      const servicos = await this.listarFornecedoresServico()
+      return servicos.map(fornecedor => ({
+        ...fornecedor,
+        tipo: 'SERVICO'
+      }))
+    } catch (error) {
+      console.error('❌ Erro ao listar fornecedores de serviço:', error.message)
+      throw error
+    }
+  },
+
+  async listarParaCotacao() {
+    try {
+      const [produtos, servicos] = await Promise.all([
+        this.listarProdutos(),
+        this.listarServicos()
+      ])
+      return [...produtos, ...servicos]
+    } catch (error) {
+      console.error('❌ Erro ao listar fornecedores para cotação:', error.message)
       throw error
     }
   },
@@ -182,6 +268,37 @@ export const fornecedorUtils = {
     if (!email) return false
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
+  },
+
+  // ==================== MÉTODOS COMBINADOS ====================
+
+  // Listar todos os fornecedores (produto + serviço) para uso em cotações
+  async listarParaCotacao() {
+    try {
+      console.log('🔄 Carregando todos os fornecedores para cotação...')
+
+      const [fornecedoresProduto, fornecedoresServico] = await Promise.all([
+        this.listarFornecedoresProduto(),
+        this.listarFornecedoresServico()
+      ])
+
+      // Adicionar tipo aos fornecedores
+      const fornecedoresComTipo = [
+        ...(fornecedoresProduto || []).map(f => ({ ...f, tipo: 'PRODUTO' })),
+        ...(fornecedoresServico || []).map(f => ({ ...f, tipo: 'SERVICO' }))
+      ]
+
+      console.log('✅ Fornecedores carregados para cotação:', {
+        total: fornecedoresComTipo.length,
+        produtos: fornecedoresProduto?.length || 0,
+        servicos: fornecedoresServico?.length || 0
+      })
+
+      return fornecedoresComTipo
+    } catch (error) {
+      console.error('❌ Erro ao carregar fornecedores para cotação:', error)
+      throw error
+    }
   }
 }
 

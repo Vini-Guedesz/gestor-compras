@@ -105,7 +105,7 @@
           <input
             type="text"
             v-model="termoBusca"
-            placeholder="Buscar cotações por descrição, ID ou observações..."
+            placeholder="Buscar cotações por ID, fornecedor, item ou preço..."
             class="search-input"
             @input="buscarCotacoes"
           >
@@ -115,21 +115,18 @@
         </div>
 
         <div class="filter-controls">
-          <select v-model="filtros.status" class="filter-select" @change="aplicarFiltros">
-            <option value="">Todos os Status</option>
-            <option value="enviada">Enviada</option>
-            <option value="em-analise">Em Análise</option>
-            <option value="selecionada">Selecionada</option>
-            <option value="aprovada">Aprovada</option>
-            <option value="cancelada">Cancelada</option>
-            <option value="vencida">Vencida</option>
-          </select>
-
           <select v-model="filtros.periodo" class="filter-select" @change="aplicarFiltros">
             <option value="">Todos os Períodos</option>
             <option value="semana">Última semana</option>
             <option value="mes">Último mês</option>
             <option value="trimestre">Último trimestre</option>
+          </select>
+
+          <select v-model="filtros.fornecedor" class="filter-select" @change="aplicarFiltros">
+            <option value="">Todos os Fornecedores</option>
+            <option v-for="fornecedorId in fornecedoresUnicos" :key="fornecedorId" :value="fornecedorId">
+              Fornecedor #{{ fornecedorId }}
+            </option>
           </select>
 
           <button @click="limparFiltros" class="clear-filters-btn">
@@ -178,22 +175,23 @@
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
-                <th @click="ordenar('descricao')" class="sortable">
-                  Descrição
-                  <svg v-if="ordenacao.campo === 'descricao'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
-                    <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
-                  </svg>
-                </th>
-                <th>Fornecedores</th>
-                <th @click="ordenar('status')" class="sortable">
-                  Status
-                  <svg v-if="ordenacao.campo === 'status'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
+                <th>Fornecedor</th>
+                <th>Item do Pedido</th>
+                <th @click="ordenar('preco')" class="sortable">
+                  Preço
+                  <svg v-if="ordenacao.campo === 'preco'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
                 <th @click="ordenar('prazoEntrega')" class="sortable">
-                  Prazo
+                  Prazo Entrega
                   <svg v-if="ordenacao.campo === 'prazoEntrega'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
+                    <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
+                  </svg>
+                </th>
+                <th @click="ordenar('dataCotacao')" class="sortable">
+                  Data Cotação
+                  <svg v-if="ordenacao.campo === 'dataCotacao'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
@@ -228,38 +226,29 @@
                   <span class="id-badge">{{ String(cotacao.id).padStart(3, '0') }}</span>
                 </td>
                 <td>
-                  <div class="description-cell">
-                    <div class="description-title">{{ cotacao.descricao }}</div>
-                    <div class="description-subtitle">{{ cotacao.centroCusto?.nome }}</div>
+                  <div class="fornecedor-cell">
+                    <span class="fornecedor-id">Fornecedor #{{ cotacao.fornecedorId || 'N/A' }}</span>
                   </div>
                 </td>
                 <td>
-                  <div class="suppliers-cell">
-                    <span class="suppliers-count">{{ cotacao.numeroFornecedores }}</span>
-                    <div class="suppliers-avatars">
-                      <div
-                        v-for="fornecedor in cotacao.fornecedores?.slice(0, 3)"
-                        :key="fornecedor.id"
-                        class="supplier-avatar"
-                        :title="fornecedor.nomeFantasia"
-                      >
-                        {{ fornecedor.nomeFantasia.charAt(0) }}
-                      </div>
-                      <div v-if="cotacao.numeroFornecedores > 3" class="suppliers-more">
-                        +{{ cotacao.numeroFornecedores - 3 }}
-                      </div>
-                    </div>
+                  <div class="item-cell">
+                    <span class="item-id">Item #{{ cotacao.itemPedidoId || 'N/A' }}</span>
                   </div>
                 </td>
                 <td>
-                  <span :class="['status-badge', `status-${cotacao.status}`]">
-                    {{ getStatusTexto(cotacao.status) }}
-                  </span>
+                  <div class="price-cell">
+                    <span class="price-value">R$ {{ formatarPreco(cotacao.preco) }}</span>
+                  </div>
                 </td>
                 <td>
                   <div class="deadline-cell" :class="{ 'deadline-expired': isPrazoVencido(cotacao.prazoEntrega) }">
                     <div class="deadline-date">{{ formatarData(cotacao.prazoEntrega) }}</div>
                     <div class="deadline-remaining">{{ getDiasRestantes(cotacao.prazoEntrega) }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="date-cell">
+                    <span class="date-value">{{ formatarData(cotacao.dataCotacao) }}</span>
                   </div>
                 </td>
                 <td>
@@ -270,7 +259,7 @@
                       </svg>
                     </button>
                     <button
-                      v-if="podeEditar(cotacao.status)"
+                      v-if="podeEditar()"
                       @click="editarCotacao(cotacao)"
                       class="action-btn edit"
                       title="Editar"
@@ -279,18 +268,9 @@
                         <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
                       </svg>
                     </button>
+
                     <button
-                      v-if="podeComparar(cotacao.status)"
-                      @click="compararCotacao(cotacao.id)"
-                      class="action-btn compare"
-                      title="Comparar Propostas"
-                    >
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M7,10H9V17H7V10M11,7H13V17H11V7M15,13H17V17H15V13Z"/>
-                      </svg>
-                    </button>
-                    <button
-                      v-if="podeDeletar(cotacao.status)"
+                      v-if="podeDeletar()"
                       @click="deletarCotacao(cotacao.id)"
                       class="action-btn delete"
                       title="Excluir"
@@ -313,23 +293,25 @@
           <div v-for="cotacao in cotacoesPaginadas" :key="cotacao.id" class="cotacao-card">
             <div class="card-header">
               <span class="card-id">{{ String(cotacao.id).padStart(3, '0') }}</span>
-              <span :class="['card-status', `status-${cotacao.status}`]">
-                {{ getStatusTexto(cotacao.status) }}
-              </span>
+              <span class="card-price">R$ {{ formatarPreco(cotacao.preco) }}</span>
             </div>
             <div class="card-body">
-              <h3 class="card-title">{{ cotacao.descricao }}</h3>
-              <p class="card-subtitle">{{ cotacao.centroCusto?.nome }}</p>
+              <h3 class="card-title">Cotação #{{ cotacao.id }}</h3>
+              <p class="card-subtitle">Fornecedor #{{ cotacao.fornecedorId }}</p>
               <div class="card-meta">
                 <div class="meta-item">
-                  <span class="meta-label">Fornecedores:</span>
-                  <span class="meta-value">{{ cotacao.numeroFornecedores }}</span>
+                  <span class="meta-label">Item do Pedido:</span>
+                  <span class="meta-value">#{{ cotacao.itemPedidoId }}</span>
                 </div>
                 <div class="meta-item">
                   <span class="meta-label">Prazo:</span>
                   <span class="meta-value" :class="{ expired: isPrazoVencido(cotacao.prazoEntrega) }">
                     {{ formatarData(cotacao.prazoEntrega) }}
                   </span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Data Cotação:</span>
+                  <span class="meta-value">{{ formatarData(cotacao.dataCotacao) }}</span>
                 </div>
               </div>
             </div>
@@ -338,21 +320,15 @@
                 Visualizar
               </button>
               <button
-                v-if="podeEditar(cotacao.status)"
+                v-if="podeEditar()"
                 @click="editarCotacao(cotacao)"
                 class="card-action-btn secondary"
               >
                 Editar
               </button>
+
               <button
-                v-if="podeComparar(cotacao.status)"
-                @click="compararCotacao(cotacao.id)"
-                class="card-action-btn warning"
-              >
-                Comparar
-              </button>
-              <button
-                v-if="podeDeletar(cotacao.status)"
+                v-if="podeDeletar()"
                 @click="deletarCotacao(cotacao.id)"
                 class="card-action-btn danger"
                 title="Excluir Cotação"
@@ -404,6 +380,141 @@
         </div>
       </div>
 
+      <!-- Modal de Detalhes da Cotação -->
+      <div v-if="showDetalhesModal" class="modal-overlay" @click="fecharDetalhes">
+        <div class="detalhes-modal" @click.stop>
+          <div class="detalhes-header">
+            <h2>Detalhes da Cotação #{{ cotacaoSelecionada?.id }}</h2>
+            <button @click="fecharDetalhes" class="close-button">&times;</button>
+          </div>
+          <div class="detalhes-body" v-if="cotacaoSelecionada">
+            <div class="detalhes-grid">
+              <div class="detalhe-group">
+                <h4>Informações do Item</h4>
+                <div v-if="itemSelecionado" class="item-detalhes">
+                  <div class="detalhe-item">
+                    <span class="detalhe-label">Nome do Item:</span>
+                    <span class="detalhe-value item-name">{{ itemSelecionado.nome }}</span>
+                  </div>
+                  <div class="detalhe-item">
+                    <span class="detalhe-label">Quantidade:</span>
+                    <span class="detalhe-value">{{ itemSelecionado.quantidade }}</span>
+                  </div>
+                  <div v-if="itemSelecionado.descricao" class="detalhe-item">
+                    <span class="detalhe-label">Descrição:</span>
+                    <span class="detalhe-value">{{ itemSelecionado.descricao }}</span>
+                  </div>
+                  <div v-if="itemSelecionado.observacao" class="detalhe-item">
+                    <span class="detalhe-label">Observações:</span>
+                    <span class="detalhe-value">{{ itemSelecionado.observacao }}</span>
+                  </div>
+                </div>
+                <div v-else class="item-loading">
+                  <span class="detalhe-label">Item do Pedido:</span>
+                  <span class="detalhe-value">Item #{{ cotacaoSelecionada.itemPedidoId }}</span>
+                </div>
+              </div>
+
+              <div class="detalhe-group">
+                <h4>Informações da Cotação</h4>
+                <div class="detalhe-item">
+                  <span class="detalhe-label">Fornecedor:</span>
+                  <span class="detalhe-value">{{ getNomeFornecedor(cotacaoSelecionada.fornecedorId) }}</span>
+                </div>
+                <div class="detalhe-item">
+                  <span class="detalhe-label">ID da Cotação:</span>
+                  <span class="detalhe-value">#{{ cotacaoSelecionada.id }}</span>
+                </div>
+              </div>
+
+              <div class="detalhe-group">
+                <h4>Valores e Prazos</h4>
+                <div class="detalhe-item">
+                  <span class="detalhe-label">Preço:</span>
+                  <span class="detalhe-value price-highlight">R$ {{ formatarPreco(cotacaoSelecionada.preco) }}</span>
+                </div>
+                <div class="detalhe-item">
+                  <span class="detalhe-label">Prazo de Entrega:</span>
+                  <span class="detalhe-value" :class="{ 'expired': isPrazoVencido(cotacaoSelecionada.prazoEntrega) }">
+                    {{ formatarData(cotacaoSelecionada.prazoEntrega) }}
+                    <span class="prazo-status">({{ getDiasRestantes(cotacaoSelecionada.prazoEntrega) }})</span>
+                  </span>
+                </div>
+                <div class="detalhe-item">
+                  <span class="detalhe-label">Data da Cotação:</span>
+                  <span class="detalhe-value">{{ formatarData(cotacaoSelecionada.dataCotacao) }}</span>
+                </div>
+              </div>
+
+              <div class="detalhe-group">
+                <h4>Relatórios</h4>
+                <div class="detalhe-item">
+                  <span class="detalhe-label">Comparativo de Cotações:</span>
+                  <div class="detalhe-value">
+                    <button
+                      @click="gerarRelatorioComparativo(cotacaoSelecionada.itemPedidoId)"
+                      class="relatorio-btn"
+                      :disabled="gerandoRelatorio"
+                    >
+                      <span v-if="gerandoRelatorio" class="loading-content">
+                        <span class="loading-spinner-small"></span>
+                        Gerando...
+                      </span>
+                      <span v-else>
+                        📊 Gerar Comparativo do Item
+                      </span>
+                    </button>
+                    <small class="form-hint">
+                      Compara todas as cotações para o item #{{ cotacaoSelecionada?.itemPedidoId }}
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detalhe-group">
+                <h4>Outras Cotações do Item</h4>
+                <div class="detalhe-item">
+                  <div class="detalhe-value">
+                    <div v-if="cotacoesDoItem.length > 1" class="comparacao-visual">
+                      <div
+                        v-for="cotacao in cotacoesDoItem"
+                        :key="cotacao.id"
+                        :class="['cotacao-comparativa', { 'atual': cotacao.id === cotacaoSelecionada?.id }]"
+                      >
+                        <div class="cotacao-header">
+                          <span class="cotacao-id">Cotação #{{ cotacao.id }}</span>
+                          <span v-if="cotacao.id === cotacaoSelecionada?.id" class="badge-atual">Atual</span>
+                        </div>
+                        <div class="cotacao-info">
+                          <div class="info-item">
+                            <span class="info-label">Fornecedor:</span>
+                            <span class="info-value">{{ getNomeFornecedor(cotacao.fornecedorId) }}</span>
+                          </div>
+                          <div class="info-item">
+                            <span class="info-label">Preço:</span>
+                            <span class="info-value price-highlight">R$ {{ formatarPreco(cotacao.preco) }}</span>
+                          </div>
+                          <div class="info-item">
+                            <span class="info-label">Prazo:</span>
+                            <span class="info-value">{{ formatarData(cotacao.prazoEntrega) }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="sem-outras-cotacoes">
+                      <p>Esta é a única cotação para este item.</p>
+                      <small class="form-hint">
+                        Adicione mais cotações para comparar preços e prazos.
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Loading Spinner - REMOVIDO -->
       <!--
       <div v-if="carregando" class="loading-overlay">
@@ -427,19 +538,21 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
 import CotacaoForm from '../components/CotacaoForm.vue'
 import { cotacaoService } from '../services/cotacaoService.js'
-
-const router = useRouter()
+import fornecedorService from '../services/fornecedorService.js'
+import itemPedidoService from '../services/itemPedidoService.js'
 
 // Estado reativo
 const gerandoRelatorio = ref(false)
 const showCotacaoForm = ref(false)
+const showDetalhesModal = ref(false)
 const cotacaoSelecionada = ref(null)
+const itemSelecionado = ref(null)
 const cotacoes = ref([])
+const fornecedores = ref([])
 const termoBusca = ref('')
 const visualizacao = ref('tabela')
 const paginaAtual = ref(1)
@@ -460,17 +573,59 @@ const ordenacao = ref({
 })
 
 // Dados calculados
-const novasCotacoesMes = ref(8)
-const percentualFinalizadas = ref(75)
+const novasCotacoesMes = computed(() => {
+  const umMesAtras = new Date()
+  umMesAtras.setMonth(umMesAtras.getMonth() - 1)
+
+  return cotacoes.value.filter(c => {
+    if (!c.dataCotacao) return false
+    return new Date(c.dataCotacao) >= umMesAtras
+  }).length
+})
+
+const percentualFinalizadas = computed(() => {
+  const total = cotacoes.value.length
+  if (total === 0) return 0
+
+  const finalizadas = resumo.value.finalizadas
+
+  return Math.round((finalizadas / total) * 100)
+})
+
+const fornecedoresUnicos = computed(() => {
+  const fornecedores = new Set()
+  cotacoes.value.forEach(c => {
+    if (c.fornecedorId) {
+      fornecedores.add(c.fornecedorId)
+    }
+  })
+  return Array.from(fornecedores).sort((a, b) => a - b)
+})
 
 // Computadas
 const resumo = computed(() => {
-  const abertas = cotacoes.value.filter(c => ['enviada', 'em-analise'].includes(c.status)).length
-  const aguardando = cotacoes.value.filter(c => c.status === 'em-analise').length
-  const finalizadas = cotacoes.value.filter(c => ['selecionada', 'aprovada', 'finalizada'].includes(c.status)).length
-  const vencidas = cotacoes.value.filter(c => c.status === 'vencida').length
+  const total = cotacoes.value.length
+  const comPrazo = cotacoes.value.filter(c => c.prazoEntrega).length
+  const hoje = new Date()
+  const vencidas = cotacoes.value.filter(c => {
+    if (!c.prazoEntrega) return false
+    return new Date(c.prazoEntrega) < hoje
+  }).length
 
-  return { abertas, aguardando, finalizadas, vencidas }
+  return {
+    abertas: total,
+    aguardando: comPrazo,
+    finalizadas: total - vencidas,
+    vencidas
+  }
+})
+
+const cotacoesDoItem = computed(() => {
+  if (!cotacaoSelecionada.value) return []
+
+  return cotacoes.value
+    .filter(c => c.itemPedidoId === cotacaoSelecionada.value.itemPedidoId)
+    .sort((a, b) => parseFloat(a.preco) - parseFloat(b.preco)) // Ordenar por preço
 })
 
 const cotacoesFiltradas = computed(() => {
@@ -480,15 +635,16 @@ const cotacoesFiltradas = computed(() => {
   if (termoBusca.value) {
     const termo = termoBusca.value.toLowerCase()
     resultado = resultado.filter(c =>
-      c.descricao.toLowerCase().includes(termo) ||
       c.id.toString().includes(termo) ||
-      c.centroCusto?.nome.toLowerCase().includes(termo)
+      c.fornecedorId?.toString().includes(termo) ||
+      c.itemPedidoId?.toString().includes(termo) ||
+      c.preco?.toString().includes(termo)
     )
   }
 
   // Aplicar filtros
-  if (filtros.value.status) {
-    resultado = resultado.filter(c => c.status === filtros.value.status)
+  if (filtros.value.fornecedor) {
+    resultado = resultado.filter(c => c.fornecedorId?.toString() === filtros.value.fornecedor)
   }
 
   if (filtros.value.periodo) {
@@ -507,7 +663,7 @@ const cotacoesFiltradas = computed(() => {
         break
     }
 
-    resultado = resultado.filter(c => new Date(c.dataCriacao) >= filtroData)
+    resultado = resultado.filter(c => new Date(c.dataCotacao) >= filtroData)
   }
 
   // Aplicar ordenação
@@ -515,7 +671,7 @@ const cotacoesFiltradas = computed(() => {
     let valorA = a[ordenacao.value.campo]
     let valorB = b[ordenacao.value.campo]
 
-    if (ordenacao.value.campo === 'dataLimite' || ordenacao.value.campo === 'dataCriacao') {
+    if (ordenacao.value.campo === 'prazoEntrega' || ordenacao.value.campo === 'dataCotacao') {
       valorA = new Date(valorA)
       valorB = new Date(valorB)
     }
@@ -558,6 +714,25 @@ const paginasVisiveis = computed(() => {
 })
 
 // Métodos
+const carregarFornecedores = async () => {
+  try {
+    console.log('🔄 Carregando fornecedores...')
+    const [produtoResponse, servicoResponse] = await Promise.all([
+      fornecedorService.listarFornecedoresProduto(),
+      fornecedorService.listarFornecedoresServico()
+    ])
+
+    const fornecedoresProduto = (produtoResponse || []).map(f => ({ ...f, tipo: 'produto' }))
+    const fornecedoresServico = (servicoResponse || []).map(f => ({ ...f, tipo: 'servico' }))
+
+    fornecedores.value = [...fornecedoresProduto, ...fornecedoresServico]
+    console.log('✅ Fornecedores carregados:', fornecedores.value.length)
+  } catch (error) {
+    console.error('❌ Erro ao carregar fornecedores:', error)
+    fornecedores.value = []
+  }
+}
+
 const carregarCotacoes = async () => {
   try {
     carregandoCotacoes.value = true
@@ -617,24 +792,21 @@ const irParaPagina = (pagina) => {
   }
 }
 
-const getStatusTexto = (status) => {
-  const textos = {
-    'enviada': 'Enviada',
-    'em-analise': 'Em Análise',
-    'selecionada': 'Selecionada',
-    'aprovada': 'Aprovada',
-    'cancelada': 'Cancelada',
-    'vencida': 'Vencida',
-    'finalizada': 'Finalizada'
-  }
-  return textos[status] || status
-}
+
 
 const formatarData = (data) => {
   if (!data) return 'Não informado'
   const date = new Date(data)
   if (isNaN(date.getTime())) return 'Data inválida'
   return date.toLocaleDateString('pt-BR')
+}
+
+const formatarPreco = (preco) => {
+  if (!preco && preco !== 0) return '0,00'
+  return Number(preco).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 }
 
 const getDiasRestantes = (dataLimite) => {
@@ -659,19 +831,15 @@ const isPrazoVencido = (dataLimite) => {
   return limite < new Date()
 }
 
-const podeEditar = (status) => {
-  // Permite editar cotações em rascunho, pendentes, enviadas ou rejeitadas
-  return ['rascunho', 'pendente', 'enviada', 'rejeitada'].includes(status)
+const podeEditar = () => {
+  // Como não há campo status no backend, permite editar sempre
+  // Pode adicionar lógica baseada em data ou outros critérios se necessário
+  return true
 }
 
-const podeComparar = (status) => {
-  // Permite comparar cotações em análise ou respondidas
-  return ['em-analise', 'respondida', 'finalizada'].includes(status)
-}
-
-const podeDeletar = (status) => {
-  // Não permite deletar cotações já finalizadas ou aprovadas
-  return !['finalizada', 'aprovada', 'contratada'].includes(status)
+const podeDeletar = () => {
+  // Permite deletar sempre (pode ser refinado conforme regras de negócio)
+  return true
 }
 
 // Ações
@@ -688,6 +856,23 @@ const editarCotacao = (cotacao) => {
 const fecharFormulario = () => {
   showCotacaoForm.value = false
   cotacaoSelecionada.value = null
+}
+
+const fecharDetalhes = () => {
+  showDetalhesModal.value = false
+  cotacaoSelecionada.value = null
+  itemSelecionado.value = null
+}
+
+const getNomeFornecedor = (fornecedorId) => {
+  if (!fornecedorId) return 'Não informado'
+
+  const fornecedor = fornecedores.value.find(f => f.id === fornecedorId)
+  if (fornecedor) {
+    return fornecedor.razaoSocial || `Fornecedor #${fornecedorId}`
+  }
+
+  return `Fornecedor #${fornecedorId}`
 }
 
 const salvarCotacao = async (dadosCotacao) => {
@@ -719,12 +904,44 @@ const salvarCotacao = async (dadosCotacao) => {
   }
 }
 
-const visualizarCotacao = (id) => {
-  router.push(`/cotacoes/${id}`)
-}
+const visualizarCotacao = async (id) => {
+  try {
+    console.log('🔍 Visualizando cotação ID:', id)
 
-const compararCotacao = (id) => {
-  router.push(`/cotacoes/${id}/comparacao`)
+    // Buscar a cotação na lista local primeiro
+    const cotacao = cotacoes.value.find(c => c.id === id)
+
+    if (cotacao) {
+      cotacaoSelecionada.value = cotacao
+
+      // Buscar detalhes do item do pedido
+      try {
+        itemSelecionado.value = await itemPedidoService.buscarPorId(cotacao.itemPedidoId)
+      } catch (error) {
+        console.warn('⚠️ Não foi possível carregar detalhes do item:', error)
+        itemSelecionado.value = null
+      }
+
+      showDetalhesModal.value = true
+    } else {
+      // Se não encontrar na lista, buscar no backend
+      const response = await cotacaoService.buscarPorId(id)
+      cotacaoSelecionada.value = response
+
+      // Buscar detalhes do item do pedido
+      try {
+        itemSelecionado.value = await itemPedidoService.buscarPorId(response.itemPedidoId)
+      } catch (error) {
+        console.warn('⚠️ Não foi possível carregar detalhes do item:', error)
+        itemSelecionado.value = null
+      }
+
+      showDetalhesModal.value = true
+    }
+  } catch (error) {
+    console.error('❌ Erro ao buscar detalhes da cotação:', error)
+    alert('Erro ao carregar detalhes da cotação.')
+  }
 }
 
 const deletarCotacao = async (id) => {
@@ -792,20 +1009,76 @@ const deletarCotacao = async (id) => {
 const exportarRelatorio = async () => {
   try {
     gerandoRelatorio.value = true
-    // Simulação de geração de relatório
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    // Aqui chamaria o serviço de relatório
-    console.log('Relatório gerado com sucesso!')
+    console.log('🔄 Iniciando geração de relatório de cotações...')
+
+    // Verificar se há cotações para gerar relatório
+    if (cotacoes.value.length === 0) {
+      alert('Não há cotações para gerar relatório.')
+      return
+    }
+
+    // Gerar relatório geral (dashboard executivo)
+    await cotacaoService.gerarRelatorioCotacoes()
+
+    console.log('✅ Relatório de cotações gerado com sucesso!')
+
   } catch (error) {
-    console.error('Erro ao gerar relatório:', error)
+    console.error('❌ Erro ao gerar relatório:', error)
+
+    let mensagemErro = 'Erro ao gerar relatório de cotações.'
+    if (error.response?.status === 404) {
+      mensagemErro = 'Serviço de relatórios não encontrado. Verifique se o backend está funcionando.'
+    } else if (error.response?.status === 500) {
+      mensagemErro = 'Erro interno do servidor ao gerar relatório.'
+    } else if (error.message) {
+      mensagemErro = `Erro: ${error.message}`
+    }
+
+    alert(mensagemErro)
+  } finally {
+    gerandoRelatorio.value = false
+  }
+}
+
+const gerarRelatorioComparativo = async (itemPedidoId) => {
+  try {
+    gerandoRelatorio.value = true
+    console.log('🔄 Gerando relatório comparativo para item:', itemPedidoId)
+
+    if (!itemPedidoId) {
+      alert('ID do item não encontrado para gerar relatório comparativo.')
+      return
+    }
+
+    // Gerar relatório comparativo de cotações por item
+    await cotacaoService.gerarRelatorioComparativo(itemPedidoId)
+
+    console.log('✅ Relatório comparativo gerado com sucesso!')
+
+  } catch (error) {
+    console.error('❌ Erro ao gerar relatório comparativo:', error)
+
+    let mensagemErro = 'Erro ao gerar relatório comparativo.'
+    if (error.response?.status === 404) {
+      mensagemErro = 'Não foram encontradas cotações para este item ou o serviço não está disponível.'
+    } else if (error.response?.status === 500) {
+      mensagemErro = 'Erro interno do servidor ao gerar relatório.'
+    } else if (error.message) {
+      mensagemErro = `Erro: ${error.message}`
+    }
+
+    alert(mensagemErro)
   } finally {
     gerandoRelatorio.value = false
   }
 }
 
 // Lifecycle
-onMounted(() => {
-  carregarCotacoes()
+onMounted(async () => {
+  await Promise.all([
+    carregarCotacoes(),
+    carregarFornecedores()
+  ])
 })
 </script>
 
@@ -1283,6 +1556,56 @@ onMounted(() => {
   font-weight: 600;
 }
 
+/* Novas células */
+.fornecedor-cell {
+  display: flex;
+  align-items: center;
+}
+
+.fornecedor-id {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.item-cell {
+  display: flex;
+  align-items: center;
+}
+
+.item-id {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.price-cell {
+  display: flex;
+  align-items: center;
+}
+
+.price-value {
+  font-weight: 600;
+  color: #059669;
+  font-size: 0.875rem;
+}
+
+.date-cell {
+  display: flex;
+  align-items: center;
+}
+
+.date-value {
+  color: #374151;
+  font-size: 0.875rem;
+}
+
 .actions-cell {
   display: flex;
   gap: 8px;
@@ -1307,12 +1630,6 @@ onMounted(() => {
   background: #dbeafe;
   color: #1d4ed8;
   border-color: #3b82f6;
-}
-
-.action-btn.compare:hover {
-  background: #fef3c7;
-  color: #d97706;
-  border-color: #f59e0b;
 }
 
 .action-btn.delete:hover {
@@ -1352,6 +1669,15 @@ onMounted(() => {
 .card-id {
   background: #f3f4f6;
   color: #374151;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.card-price {
+  background: #dcfce7;
+  color: #166534;
   padding: 4px 12px;
   border-radius: 6px;
   font-weight: 600;
@@ -1686,5 +2012,454 @@ onMounted(() => {
   .main-content {
     padding: 16px;
   }
+}
+
+/* Modal de Detalhes */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.detalhes-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.detalhes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detalhes-header h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.detalhes-body {
+  padding: 24px;
+}
+
+.detalhes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.detalhe-group {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.detalhe-group h4 {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 8px;
+}
+
+.detalhe-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detalhe-item:last-child {
+  border-bottom: none;
+}
+
+.detalhe-label {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.detalhe-value {
+  font-weight: 600;
+  color: #1f2937;
+  text-align: right;
+}
+
+.detalhe-value.price-highlight {
+  color: #059669;
+  font-size: 1.125rem;
+}
+
+.detalhe-value.expired {
+  color: #dc2626;
+}
+
+.prazo-status {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #6b7280;
+  display: block;
+  margin-top: 2px;
+}
+
+.anexo-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.anexo-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Estilos para PDF */
+.pdf-info {
+  margin-bottom: 12px;
+}
+
+.pdf-type {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.pdf-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pdf-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pdf-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.pdf-btn.view-pdf {
+  background: #059669;
+}
+
+.pdf-btn.view-pdf:hover {
+  background: #047857;
+}
+
+.pdf-btn.open-new-tab {
+  background: #7c3aed;
+}
+
+.pdf-btn.open-new-tab:hover {
+  background: #6d28d9;
+}
+
+.pdf-btn.download-pdf {
+  background: #dc2626;
+}
+
+.pdf-btn.download-pdf:hover {
+  background: #b91c1c;
+}
+
+/* Estilos para botão de relatório */
+.relatorio-btn {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 160px;
+  justify-content: center;
+}
+
+.relatorio-btn:hover:not(:disabled) {
+  background: #0284c7;
+  transform: translateY(-1px);
+}
+
+.relatorio-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pdf-preview {
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pdf-header h5 {
+  margin: 0;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.close-pdf-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-pdf-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.pdf-container {
+  position: relative;
+  height: 500px;
+  background: #f3f4f6;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: white;
+}
+
+.pdf-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: #6b7280;
+}
+
+.pdf-error p {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.no-attachment-container {
+  text-align: center;
+  padding: 16px;
+  background: #f9fafb;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+}
+
+.no-attachment {
+  color: #6b7280;
+  font-size: 0.875rem;
+  display: block;
+  margin-bottom: 4px;
+}
+
+
+
+@media (max-width: 768px) {
+  .detalhes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .detalhes-header,
+  .detalhes-body {
+    padding: 16px;
+  }
+
+  .pdf-controls {
+    flex-direction: column;
+  }
+
+  .pdf-btn {
+    justify-content: center;
+  }
+
+  .pdf-container {
+    height: 300px;
+  }
+
+  .detalhes-modal {
+    max-height: 95vh;
+  }
+}
+
+/* Estilos para comparação visual de cotações */
+.comparacao-visual {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.cotacao-comparativa {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.cotacao-comparativa:hover {
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cotacao-comparativa.atual {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.cotacao-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cotacao-id {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.badge-atual {
+  background: #10b981;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.cotacao-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-label {
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sem-outras-cotacoes {
+  text-align: center;
+  padding: 24px;
+  color: #6b7280;
+}
+
+.sem-outras-cotacoes p {
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+/* Estilos para detalhes do item */
+.item-detalhes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.item-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0.7;
 }
 </style>

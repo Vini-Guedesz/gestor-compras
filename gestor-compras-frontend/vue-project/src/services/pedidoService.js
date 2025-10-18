@@ -54,13 +54,28 @@ const pedidoService = {
       }
 
       pedido.itens.forEach((item, index) => {
-        if (!item.nome) {
+        if (!item.nome || item.nome.trim() === '') {
           throw new Error(`Item ${index + 1}: Nome é obrigatório`)
         }
         if (!item.quantidade || item.quantidade <= 0) {
           throw new Error(`Item ${index + 1}: Quantidade deve ser maior que zero`)
         }
+        // Validar limites de caracteres conforme backend
+        if (item.nome && item.nome.length > 255) {
+          throw new Error(`Item ${index + 1}: Nome deve ter no máximo 255 caracteres`)
+        }
+        if (item.descricao && item.descricao.length > 500) {
+          throw new Error(`Item ${index + 1}: Descrição deve ter no máximo 500 caracteres`)
+        }
+        if (item.observacao && item.observacao.length > 255) {
+          throw new Error(`Item ${index + 1}: Observação deve ter no máximo 255 caracteres`)
+        }
       })
+
+      // Validar observação do pedido
+      if (pedido.observacao && pedido.observacao.length > 1000) {
+        throw new Error('Observação do pedido deve ter no máximo 1000 caracteres')
+      }
 
       // Usar API real do backend
       const data = await api.post('/api/solicitacoes-pedido', pedido)
