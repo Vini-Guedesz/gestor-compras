@@ -113,6 +113,7 @@
           <div class="search-actions">
             <select v-model="filtroStatus" @change="filtrarPedidos" class="form-select">
               <option value="">Todos os status</option>
+              <option value="RASCUNHO">Rascunho</option>
               <option value="PENDENTE">Pendente</option>
               <option value="EM_ANALISE">Em Análise</option>
               <option value="EM_ANDAMENTO">Em Andamento</option>
@@ -237,6 +238,7 @@
         :pedido="pedidoEditando"
         @close="fecharFormulario"
         @save="salvarPedido"
+        @save-draft="salvarRascunhoSemFechar"
       />
 
       <!-- Modal de Confirmação de Exclusão -->
@@ -579,14 +581,19 @@ export default {
 
     const getStatusLabel = (status) => {
       const labels = {
-        // Status do backend conforme enum StatusPedido
+        // Status do backend (uppercase)
+        'RASCUNHO': 'Rascunho',
         'PENDENTE': 'Pendente',
         'EM_ANALISE': 'Em Análise',
         'EM_ANDAMENTO': 'Em Andamento',
+        'APROVADO': 'Aprovado',
         'CANCELADO': 'Cancelado',
         'APROVADO': 'Aprovado',
         // Status antigos (lowercase) - compatibilidade
+        'rascunho': 'Rascunho',
         'pendente': 'Pendente',
+        'em_analise': 'Em Análise',
+        'em_andamento': 'Em Andamento',
         'aprovado': 'Aprovado',
         'cancelado': 'Cancelado'
       }
@@ -595,14 +602,19 @@ export default {
 
     const getStatusClass = (status) => {
       const classes = {
-        // Status do backend conforme enum StatusPedido
+        // Status do backend (uppercase)
+        'RASCUNHO': 'status-draft',
         'PENDENTE': 'status-pending',
-        'EM_ANALISE': 'status-analyzing',
+        'EM_ANALISE': 'status-progress',
         'EM_ANDAMENTO': 'status-progress',
+        'APROVADO': 'status-approved',
         'CANCELADO': 'status-canceled',
         'APROVADO': 'status-approved',
         // Status antigos (lowercase) - compatibilidade
+        'rascunho': 'status-draft',
         'pendente': 'status-pending',
+        'em_analise': 'status-progress',
+        'em_andamento': 'status-progress',
         'aprovado': 'status-approved',
         'cancelado': 'status-canceled'
       }
@@ -631,9 +643,25 @@ export default {
       showPedidoForm.value = true
     }
 
-    const editarPedido = (pedido) => {
-      pedidoEditando.value = { ...pedido }
-      showPedidoForm.value = true
+    const editarPedido = async (pedido) => {
+      try {
+        console.log('Editando pedido:', pedido)
+
+        // Buscar o pedido completo do backend para garantir que os itens estejam atualizados
+        console.log('Buscando pedido completo do backend...')
+        const pedidoCompleto = await pedidoService.obterPorId(pedido.id)
+        console.log('Pedido completo carregado para edição:', pedidoCompleto)
+        console.log('Itens do pedido:', pedidoCompleto.itens)
+
+        // Usar o pedido completo do backend
+        pedidoEditando.value = pedidoCompleto
+        showPedidoForm.value = true
+      } catch (error) {
+        console.error('Erro ao carregar pedido completo:', error)
+        // Fallback para o pedido da lista
+        pedidoEditando.value = { ...pedido }
+        showPedidoForm.value = true
+      }
     }
 
     const visualizarPedido = async (pedido) => {
@@ -735,6 +763,52 @@ export default {
       }
     }
 
+    const salvarRascunhoSemFechar = async (dadosPedido) => {
+      try {
+        isLoading.value = true
+
+        if (pedidoEditando.value?.id) {
+          // Edição - atualizar rascunho existente
+          const response = await pedidoService.atualizar(pedidoEditando.value.id, dadosPedido)
+          const index = pedidos.value.findIndex(p => p.id === pedidoEditando.value.id)
+          if (index !== -1) {
+            const pedidoAtualizado = response.data || { ...pedidoEditando.value, ...dadosPedido }
+            pedidos.value[index] = pedidoAtualizado
+
+            // IMPORTANTE: Não atualizar pedidoEditando.value aqui para não perder itens não salvos no formulário
+            // O formulário mantém seu próprio estado e só será recarregado quando o modal for fechado e reaberto
+            console.log('Pedido atualizado na lista, formulário mantém estado local')
+          }
+        } else {
+          // Criação - criar novo rascunho
+          const response = await pedidoService.criar(dadosPedido)
+          const novoPedido = response.data || {
+            id: Date.now(),
+            dataCriacao: new Date().toISOString(),
+            ...dadosPedido
+          }
+          pedidos.value.unshift(novoPedido)
+
+          // Para criação, atualizar pedidoEditando com o ID retornado, mas preservando os itens do formulário
+          // Apenas atualizar o ID para futuras operações serem update em vez de create
+          if (pedidoEditando.value) {
+            pedidoEditando.value.id = novoPedido.id
+          } else {
+            pedidoEditando.value = novoPedido
+          }
+        }
+
+        // NÃO fechar o formulário - mantém modal aberto
+        console.log('Rascunho salvo com sucesso, modal permanece aberto')
+
+      } catch (error) {
+        console.error('Erro ao salvar rascunho:', error)
+        alert('Erro ao salvar rascunho. Tente novamente.')
+      } finally {
+        isLoading.value = false
+      }
+    }
+
     const salvarPedido = async (dadosPedido) => {
       try {
         isLoading.value = true
@@ -817,8 +891,8 @@ export default {
 
     // MÃ©todos de permissÃ£o
     const podeEditar = (pedido) => {
-      // Permite editar pedidos pendentes, em análise ou em andamento
-      return ['PENDENTE', 'EM_ANALISE', 'EM_ANDAMENTO'].includes(pedido.status)
+      // Permite editar APENAS pedidos com status RASCUNHO
+      return pedido.status === 'RASCUNHO'
     }
 
     const podeAprovar = (pedido) => {
@@ -827,8 +901,8 @@ export default {
     }
 
     const podeExcluir = (pedido) => {
-      // Pode excluir pedidos que ainda nÃ£o foram aprovados
-      return ['PENDENTE', 'EM_ANALISE'].includes(pedido.status)
+      // Pode excluir pedidos rascunho ou pendentes
+      return ['RASCUNHO', 'PENDENTE'].includes(pedido.status)
     }
 
     const podeAlterarStatus = (pedido) => {
@@ -845,8 +919,10 @@ export default {
         { value: 'CANCELADO', label: 'Cancelado' }
       ]
 
-      // Filtrar status disponÃ­veis baseado no status atual
+      // Filtrar status disponíveis baseado no status atual
       switch (statusAtual) {
+        case 'RASCUNHO':
+          return todosStatus.filter(s => ['PENDENTE', 'CANCELADO'].includes(s.value))
         case 'PENDENTE':
           return todosStatus.filter(s => ['EM_ANALISE', 'APROVADO', 'CANCELADO'].includes(s.value))
         case 'EM_ANALISE':
@@ -953,6 +1029,7 @@ export default {
       visualizarPedido,
       fecharFormulario,
       fecharDetalhes,
+      salvarRascunhoSemFechar,
       salvarPedido,
       confirmarExclusao,
       excluirPedido,

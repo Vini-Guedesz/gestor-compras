@@ -41,15 +41,38 @@ public class SolicitacaoDePedidoService {
     public SolicitacaoDePedidoDTO createSolicitacao(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
         SolicitacaoDePedido solicitacaoDePedido = solicitacaoDePedidoMapper.toEntity(solicitacaoDePedidoDTO);
 
-        // Estabelece relacionamento bidirecional entre solicitacao e itens
-        if (solicitacaoDePedido.getItens() != null) {
-            solicitacaoDePedido.getItens().forEach(item -> {
-                item.setSolicitacaoDePedido(solicitacaoDePedido);
-            });
+        // Primeiro, salvar a solicitação para obter o ID
+        SolicitacaoDePedido solicitacaoSalva = solicitacaoDePedidoRepository.save(solicitacaoDePedido);
+
+        // Trata entidades ItemPedido
+        if (solicitacaoDePedidoDTO.itens() != null && !solicitacaoDePedidoDTO.itens().isEmpty()) {
+            List<ItemPedido> managedItens = solicitacaoDePedidoDTO.itens().stream()
+                    .map(itemDTO -> {
+                        ItemPedido item;
+                        if (itemDTO.id() != null) {
+                            // Se o item tem ID, busca do banco de dados
+                            item = itemPedidoRepository.findById(itemDTO.id())
+                                    .orElse(new ItemPedido());
+                        } else {
+                            // Se o item não tem ID, é um novo item
+                            item = new ItemPedido();
+                        }
+
+                        // Atualizar campos do item
+                        item.setNome(itemDTO.nome());
+                        item.setQuantidade(itemDTO.quantidade());
+                        item.setDescricao(itemDTO.descricao());
+                        item.setObservacao(itemDTO.observacao());
+                        item.setSolicitacaoDePedido(solicitacaoSalva);
+
+                        // Salvar o item
+                        return itemPedidoRepository.save(item);
+                    })
+                    .collect(Collectors.toList());
+            solicitacaoSalva.setItens(managedItens);
         }
 
-        // O cascade ALL vai persistir os itens automaticamente
-        return solicitacaoDePedidoMapper.toDTO(solicitacaoDePedidoRepository.save(solicitacaoDePedido));
+        return solicitacaoDePedidoMapper.toDTO(solicitacaoSalva);
     }
 
     public SolicitacaoDePedidoDTO updateSolicitacao(Long id, SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
@@ -57,7 +80,65 @@ public class SolicitacaoDePedidoService {
                 .map(solicitacao -> {
                     solicitacao.setObservacao(solicitacaoDePedidoDTO.observacao());
                     solicitacao.setStatus(solicitacaoDePedidoDTO.status());
-                    // Itens são tratados através de seus próprios endpoints, mas você pode adicionar lógica aqui para atualizá-los se necessário.
+
+                    // Atualizar itens se fornecidos no DTO
+                    if (solicitacaoDePedidoDTO.itens() != null) {
+                        // Coletar IDs dos itens que vêm do DTO
+                        List<Long> idsItensDTO = solicitacaoDePedidoDTO.itens().stream()
+                                .map(itemDTO -> itemDTO.id())
+                                .filter(itemId -> itemId != null)
+                                .collect(Collectors.toList());
+
+                        // Identificar itens que existem no banco mas não estão no DTO (foram removidos)
+                        List<ItemPedido> itensParaRemover = solicitacao.getItens().stream()
+                                .filter(item -> item.getId() != null && !idsItensDTO.contains(item.getId()))
+                                .collect(Collectors.toList());
+
+                        // Remover itens deletados
+                        for (ItemPedido itemRemover : itensParaRemover) {
+                            solicitacao.getItens().remove(itemRemover);
+                            itemPedidoRepository.delete(itemRemover);
+                        }
+
+                        // Processar cada item do DTO (atualizar existentes e adicionar novos)
+                        for (var itemDTO : solicitacaoDePedidoDTO.itens()) {
+                            ItemPedido item;
+
+                            if (itemDTO.id() != null) {
+                                // Item existente - buscar na lista atual ou no banco
+                                item = solicitacao.getItens().stream()
+                                        .filter(i -> i.getId() != null && i.getId().equals(itemDTO.id()))
+                                        .findFirst()
+                                        .orElseGet(() -> {
+                                            // Se não está na lista, buscar do banco
+                                            return itemPedidoRepository.findById(itemDTO.id())
+                                                    .orElse(new ItemPedido());
+                                        });
+
+                                // Atualizar campos do item existente
+                                item.setNome(itemDTO.nome());
+                                item.setQuantidade(itemDTO.quantidade());
+                                item.setDescricao(itemDTO.descricao());
+                                item.setObservacao(itemDTO.observacao());
+                                item.setSolicitacaoDePedido(solicitacao);
+                            } else {
+                                // Novo item - criar e adicionar à lista
+                                item = new ItemPedido();
+                                item.setNome(itemDTO.nome());
+                                item.setQuantidade(itemDTO.quantidade());
+                                item.setDescricao(itemDTO.descricao());
+                                item.setObservacao(itemDTO.observacao());
+                                item.setSolicitacaoDePedido(solicitacao);
+
+                                // Adicionar à lista se ainda não existir
+                                if (solicitacao.getItens() == null) {
+                                    solicitacao.setItens(new java.util.ArrayList<>());
+                                }
+                                solicitacao.getItens().add(item);
+                            }
+                        }
+                    }
+
                     return solicitacaoDePedidoMapper.toDTO(solicitacaoDePedidoRepository.save(solicitacao));
                 })
                 .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com ID: " + id));
