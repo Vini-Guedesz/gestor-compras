@@ -31,7 +31,7 @@
                     <div class="profile-card">
                         <div class="avatar-section">
                             <div class="avatar-container">
-                                <img :src="userAvatar" :alt="formData.nome" class="user-avatar" />
+                                <img :src="userAvatar" :alt="formData.nome" class="user-avatar" loading="eager" width="120" height="120" />
                                 <button v-if="isEditMode" class="avatar-edit-btn" @click="changeAvatar">
                                     <svg viewBox="0 0 24 24" width="16" height="16">
                                         <path fill="currentColor"

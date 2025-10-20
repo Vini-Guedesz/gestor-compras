@@ -29,7 +29,7 @@
         <!-- Avatar e Info do Usuário -->
         <div class="user-info" @click="toggleUserMenu" v-click-outside="closeUserMenu">
           <div class="user-avatar">
-            <img :src="userAvatar" :alt="userName" />
+            <img :src="userAvatar" :alt="userName" loading="lazy" width="40" height="40" />
           </div>
           <div class="user-details">
             <span class="user-name">{{ userName }}</span>

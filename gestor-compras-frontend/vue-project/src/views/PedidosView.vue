@@ -329,13 +329,13 @@
                       </div>
 
                       <div class="item-observacao" v-if="item.observacao">
-                        <span class="info-label">Ÿ’¬ Observações:</span>
+                        <span class="info-label">Observações:</span>
                         <p class="info-value">{{ item.observacao }}</p>
                       </div>
 
                       <!-- Cotações relacionadas ao item -->
                       <div class="item-cotacoes" v-if="item.cotacoes && item.cotacoes.length > 0">
-                        <span class="info-label">Ÿ’° Cotações Recebidas:</span>
+                        <span class="info-label">Cotações Recebidas:</span>
                         <div class="cotacoes-mini-list">
                           <div v-for="cotacao in item.cotacoes" :key="cotacao.id" class="cotacao-mini-card">
                             <div class="cotacao-fornecedor">{{ cotacao.fornecedorNome || `Fornecedor #${cotacao.fornecedorId}` }}</div>
@@ -2024,7 +2024,9 @@ export default {
 .item-observacao {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
 }
 
 .info-label {

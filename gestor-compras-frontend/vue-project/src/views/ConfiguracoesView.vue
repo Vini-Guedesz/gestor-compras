@@ -27,173 +27,182 @@
                 </div>
 
                 <div class="configuracoes-content">
-                    <!-- Seção de Segurança -->
+                    <!-- Card Único com todas as configurações -->
                     <div class="section-card">
-                        <div class="section-header">
-                            <h3 class="section-title">Segurança</h3>
-                            <p class="section-subtitle">Mantenha sua conta segura</p>
-                        </div>
-
-                        <div class="password-section">
-                            <button class="btn-outline" @click="togglePasswordForm" :disabled="!isEditMode">
-                                {{ showPasswordForm ? 'Cancelar Alteração' : 'Alterar Senha' }}
-                            </button>
-
-                            <form v-if="showPasswordForm" @submit.prevent="alterarSenha" class="password-form">
-                                <div class="form-group">
-                                    <label class="form-label">Senha Atual</label>
-                                    <input type="password" v-model="passwordData.senhaAtual" class="form-input"
-                                        required />
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label">Nova Senha</label>
-                                    <input type="password" v-model="passwordData.novaSenha" class="form-input" required
-                                        minlength="6" />
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label">Confirmar Nova Senha</label>
-                                    <input type="password" v-model="passwordData.confirmarSenha" class="form-input"
-                                        required minlength="6" />
-                                </div>
-
-                                <div class="password-actions">
-                                    <button type="submit" class="btn-primary" :disabled="!senhaValida">
-                                        Alterar Senha
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Preferências do Sistema -->
-                    <div class="section-card">
-                        <div class="section-header">
-                            <h3 class="section-title">Preferências do Sistema</h3>
-                            <p class="section-subtitle">Personalize sua experiência</p>
-                        </div>
-
-                        <div class="preferences-form">
-                            <div class="preference-item">
-                                <div class="preference-info">
-                                    <label class="preference-label">Notificações por E-mail</label>
-                                    <p class="preference-description">Receba atualizações importantes por e-mail</p>
-                                </div>
-                                <div class="preference-control">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" v-model="preferences.emailNotifications"
-                                            :disabled="!isEditMode" />
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
+                        <!-- Seção de Segurança -->
+                        <div class="section-group">
+                            <div class="section-header">
+                                <h3 class="section-title">Segurança</h3>
+                                <p class="section-subtitle">Mantenha sua conta segura</p>
                             </div>
 
-                            <div class="preference-item">
-                                <div class="preference-info">
-                                    <label class="preference-label">Notificações Push</label>
-                                    <p class="preference-description">Receba notificações em tempo real</p>
-                                </div>
-                                <div class="preference-control">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" v-model="preferences.pushNotifications"
-                                            :disabled="!isEditMode" />
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                            </div>
+                            <div class="password-section">
+                                <button class="btn-outline" @click="togglePasswordForm" :disabled="!isEditMode">
+                                    {{ showPasswordForm ? 'Cancelar Alteração' : 'Alterar Senha' }}
+                                </button>
 
-                            <div class="preference-item">
-                                <div class="preference-info">
-                                    <label class="preference-label">Tema da Interface</label>
-                                    <p class="preference-description">Escolha entre tema claro ou escuro</p>
-                                </div>
-                                <div class="preference-control">
-                                    <select v-model="preferences.theme" class="form-select" :disabled="!isEditMode">
-                                        <option value="light">Claro</option>
-                                        <option value="dark">Escuro</option>
-                                        <option value="auto">Automático</option>
-                                    </select>
-                                </div>
-                            </div>
+                                <form v-if="showPasswordForm" @submit.prevent="alterarSenha" class="password-form">
+                                    <div class="form-group">
+                                        <label class="form-label">Senha Atual</label>
+                                        <input type="password" v-model="passwordData.senhaAtual" class="form-input"
+                                            required />
+                                    </div>
 
-                            <div class="preference-item">
-                                <div class="preference-info">
-                                    <label class="preference-label">Idioma</label>
-                                    <p class="preference-description">Idioma da interface</p>
-                                </div>
-                                <div class="preference-control">
-                                    <select v-model="preferences.language" class="form-select" :disabled="!isEditMode">
-                                        <option value="pt-BR">Português (Brasil)</option>
-                                        <option value="en-US">English (US)</option>
-                                        <option value="es-ES">Español</option>
-                                    </select>
-                                </div>
-                            </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Nova Senha</label>
+                                        <input type="password" v-model="passwordData.novaSenha" class="form-input" required
+                                            minlength="6" />
+                                    </div>
 
-                            <div class="preference-item">
-                                <div class="preference-info">
-                                    <label class="preference-label">Formato de Data</label>
-                                    <p class="preference-description">Como as datas são exibidas no sistema</p>
-                                </div>
-                                <div class="preference-control">
-                                    <select v-model="preferences.dateFormat" class="form-select" :disabled="!isEditMode">
-                                        <option value="DD/MM/YYYY">DD/MM/AAAA</option>
-                                        <option value="MM/DD/YYYY">MM/DD/AAAA</option>
-                                        <option value="YYYY-MM-DD">AAAA-MM-DD</option>
-                                    </select>
-                                </div>
-                            </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Confirmar Nova Senha</label>
+                                        <input type="password" v-model="passwordData.confirmarSenha" class="form-input"
+                                            required minlength="6" />
+                                    </div>
 
-                            <div class="preference-item">
-                                <div class="preference-info">
-                                    <label class="preference-label">Formato de Moeda</label>
-                                    <p class="preference-description">Como os valores monetários são exibidos</p>
-                                </div>
-                                <div class="preference-control">
-                                    <select v-model="preferences.currencyFormat" class="form-select" :disabled="!isEditMode">
-                                        <option value="BRL">Real (R$ 1.234,56)</option>
-                                        <option value="USD">Dólar ($ 1,234.56)</option>
-                                        <option value="EUR">Euro (€ 1.234,56)</option>
-                                    </select>
-                                </div>
+                                    <div class="password-actions">
+                                        <button type="submit" class="btn-primary" :disabled="!senhaValida">
+                                            Alterar Senha
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Configurações de Privacidade -->
-                    <div class="section-card">
-                        <div class="section-header">
-                            <h3 class="section-title">Privacidade</h3>
-                            <p class="section-subtitle">Controle suas informações pessoais</p>
-                        </div>
+                        <!-- Divisor -->
+                        <div class="section-divider"></div>
 
-                        <div class="preferences-form">
-                            <div class="preference-item">
-                                <div class="preference-info">
-                                    <label class="preference-label">Perfil Público</label>
-                                    <p class="preference-description">Permitir que outros usuários vejam seu perfil</p>
-                                </div>
-                                <div class="preference-control">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" v-model="preferences.publicProfile"
-                                            :disabled="!isEditMode" />
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
+                        <!-- Preferências do Sistema -->
+                        <div class="section-group">
+                            <div class="section-header">
+                                <h3 class="section-title">Preferências do Sistema</h3>
+                                <p class="section-subtitle">Personalize sua experiência</p>
                             </div>
 
-                            <div class="preference-item">
-                                <div class="preference-info">
-                                    <label class="preference-label">Histórico de Atividades</label>
-                                    <p class="preference-description">Salvar histórico das suas ações no sistema</p>
+                            <div class="preferences-form">
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <label class="preference-label">Notificações por E-mail</label>
+                                        <p class="preference-description">Receba atualizações importantes por e-mail</p>
+                                    </div>
+                                    <div class="preference-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" v-model="preferences.emailNotifications"
+                                                :disabled="!isEditMode" />
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="preference-control">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" v-model="preferences.activityHistory"
-                                            :disabled="!isEditMode" />
-                                        <span class="toggle-slider"></span>
-                                    </label>
+
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <label class="preference-label">Notificações Push</label>
+                                        <p class="preference-description">Receba notificações em tempo real</p>
+                                    </div>
+                                    <div class="preference-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" v-model="preferences.pushNotifications"
+                                                :disabled="!isEditMode" />
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <label class="preference-label">Tema da Interface</label>
+                                        <p class="preference-description">Escolha entre tema claro ou escuro</p>
+                                    </div>
+                                    <div class="preference-control">
+                                        <select v-model="preferences.theme" class="form-select" :disabled="!isEditMode">
+                                            <option value="light">Claro</option>
+                                            <option value="dark">Escuro</option>
+                                            <option value="auto">Automático</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <label class="preference-label">Idioma</label>
+                                        <p class="preference-description">Idioma da interface</p>
+                                    </div>
+                                    <div class="preference-control">
+                                        <select v-model="preferences.language" class="form-select" :disabled="!isEditMode">
+                                            <option value="pt-BR">Português (Brasil)</option>
+                                            <option value="en-US">English (US)</option>
+                                            <option value="es-ES">Español</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <label class="preference-label">Formato de Data</label>
+                                        <p class="preference-description">Como as datas são exibidas no sistema</p>
+                                    </div>
+                                    <div class="preference-control">
+                                        <select v-model="preferences.dateFormat" class="form-select" :disabled="!isEditMode">
+                                            <option value="DD/MM/YYYY">DD/MM/AAAA</option>
+                                            <option value="MM/DD/YYYY">MM/DD/AAAA</option>
+                                            <option value="YYYY-MM-DD">AAAA-MM-DD</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <label class="preference-label">Formato de Moeda</label>
+                                        <p class="preference-description">Como os valores monetários são exibidos</p>
+                                    </div>
+                                    <div class="preference-control">
+                                        <select v-model="preferences.currencyFormat" class="form-select" :disabled="!isEditMode">
+                                            <option value="BRL">Real (R$ 1.234,56)</option>
+                                            <option value="USD">Dólar ($ 1,234.56)</option>
+                                            <option value="EUR">Euro (€ 1.234,56)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Divisor -->
+                        <div class="section-divider"></div>
+
+                        <!-- Configurações de Privacidade -->
+                        <div class="section-group">
+                            <div class="section-header">
+                                <h3 class="section-title">Privacidade</h3>
+                                <p class="section-subtitle">Controle suas informações pessoais</p>
+                            </div>
+
+                            <div class="preferences-form">
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <label class="preference-label">Perfil Público</label>
+                                        <p class="preference-description">Permitir que outros usuários vejam seu perfil</p>
+                                    </div>
+                                    <div class="preference-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" v-model="preferences.publicProfile"
+                                                :disabled="!isEditMode" />
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="preference-item">
+                                    <div class="preference-info">
+                                        <label class="preference-label">Histórico de Atividades</label>
+                                        <p class="preference-description">Salvar histórico das suas ações no sistema</p>
+                                    </div>
+                                    <div class="preference-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" v-model="preferences.activityHistory"
+                                                :disabled="!isEditMode" />
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -404,15 +413,28 @@ onMounted(() => {
 .configuracoes-content {
     display: flex;
     flex-direction: column;
-    gap: 24px;
 }
 
 .section-card {
     background: white;
     border-radius: 12px;
     border: 1px solid #e5e7eb;
-    padding: 24px;
+    padding: 32px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.section-group {
+    margin-bottom: 0;
+}
+
+.section-group:last-child {
+    margin-bottom: 0;
+}
+
+.section-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #e5e7eb 20%, #e5e7eb 80%, transparent);
+    margin: 32px 0;
 }
 
 .section-header {
