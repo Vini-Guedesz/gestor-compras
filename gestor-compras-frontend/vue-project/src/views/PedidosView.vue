@@ -1384,6 +1384,7 @@ export default {
 
 .pedidos-table .col-acoes {
   width: 280px;
+  text-align: right;
 }
 
 .pedidos-table th {
@@ -1487,13 +1488,14 @@ export default {
   width: 280px;
   padding-left: 8px !important;
   padding-right: 16px !important;
+  text-align: right;
 }
 
 .actions-cell .action-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 
 .action-btn {
