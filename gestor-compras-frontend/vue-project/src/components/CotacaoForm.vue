@@ -37,8 +37,7 @@
                       :key="fornecedor.id"
                       :value="fornecedor.id"
                     >
-                      {{ fornecedor.razaoSocial }} - {{ fornecedor.cnpj }}
-                      <span class="badge">{{ fornecedor.tipo }}</span>
+                      {{ fornecedor.razaoSocial }} - {{ fornecedor.cnpj }} ({{ fornecedor.tipo }})
                     </option>
                   </select>
                 </div>

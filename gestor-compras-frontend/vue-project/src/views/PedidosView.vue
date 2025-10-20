@@ -588,7 +588,6 @@ export default {
         'EM_ANDAMENTO': 'Em Andamento',
         'APROVADO': 'Aprovado',
         'CANCELADO': 'Cancelado',
-        'APROVADO': 'Aprovado',
         // Status antigos (lowercase) - compatibilidade
         'rascunho': 'Rascunho',
         'pendente': 'Pendente',
@@ -609,7 +608,6 @@ export default {
         'EM_ANDAMENTO': 'status-progress',
         'APROVADO': 'status-approved',
         'CANCELADO': 'status-canceled',
-        'APROVADO': 'status-approved',
         // Status antigos (lowercase) - compatibilidade
         'rascunho': 'status-draft',
         'pendente': 'status-pending',

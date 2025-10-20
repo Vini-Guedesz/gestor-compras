@@ -104,10 +104,10 @@ export const authService = {
 
   /**
    * Solicita recuperação de senha (placeholder para implementação futura)
-   * @param {string} email - Email para recuperação
+   * @param {string} _email - Email para recuperação
    * @returns {Promise<Object>} Resultado da operação
    */
-  async forgotPassword(email) {
+  async forgotPassword(_email) {
     try {
       // Por enquanto, apenas simula o envio
       // Quando o endpoint estiver disponível no backend, substitua por:
@@ -119,7 +119,7 @@ export const authService = {
         success: true,
         message: 'Se o email estiver cadastrado, você receberá as instruções para recuperação da senha.'
       }
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: 'Erro ao solicitar recuperação de senha'
@@ -161,7 +161,7 @@ export const authService = {
       }
 
       return true
-    } catch (error) {
+    } catch {
       this.logout() // Remove token inválido
       return false
     }
