@@ -41,36 +41,15 @@ public class SolicitacaoDePedidoService {
     public SolicitacaoDePedidoDTO createSolicitacao(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
         SolicitacaoDePedido solicitacaoDePedido = solicitacaoDePedidoMapper.toEntity(solicitacaoDePedidoDTO);
 
-        // Primeiro, salvar a solicitação para obter o ID
-        SolicitacaoDePedido solicitacaoSalva = solicitacaoDePedidoRepository.save(solicitacaoDePedido);
-
-        // Trata entidades ItemPedido
-        if (solicitacaoDePedidoDTO.itens() != null && !solicitacaoDePedidoDTO.itens().isEmpty()) {
-            List<ItemPedido> managedItens = solicitacaoDePedidoDTO.itens().stream()
-                    .map(itemDTO -> {
-                        ItemPedido item;
-                        if (itemDTO.id() != null) {
-                            // Se o item tem ID, busca do banco de dados
-                            item = itemPedidoRepository.findById(itemDTO.id())
-                                    .orElse(new ItemPedido());
-                        } else {
-                            // Se o item não tem ID, é um novo item
-                            item = new ItemPedido();
-                        }
-
-                        // Atualizar campos do item
-                        item.setNome(itemDTO.nome());
-                        item.setQuantidade(itemDTO.quantidade());
-                        item.setDescricao(itemDTO.descricao());
-                        item.setObservacao(itemDTO.observacao());
-                        item.setSolicitacaoDePedido(solicitacaoSalva);
-
-                        // Salvar o item
-                        return itemPedidoRepository.save(item);
-                    })
-                    .collect(Collectors.toList());
-            solicitacaoSalva.setItens(managedItens);
+        // Associar os itens ao pedido antes de salvar
+        if (solicitacaoDePedido.getItens() != null && !solicitacaoDePedido.getItens().isEmpty()) {
+            solicitacaoDePedido.getItens().forEach(item -> {
+                item.setSolicitacaoDePedido(solicitacaoDePedido);
+            });
         }
+
+        // Salvar a solicitação (o cascade ALL irá salvar os itens automaticamente)
+        SolicitacaoDePedido solicitacaoSalva = solicitacaoDePedidoRepository.save(solicitacaoDePedido);
 
         return solicitacaoDePedidoMapper.toDTO(solicitacaoSalva);
     }
