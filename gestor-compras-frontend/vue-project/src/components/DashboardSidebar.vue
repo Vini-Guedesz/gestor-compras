@@ -1,12 +1,22 @@
 <template>
-  <aside class="sidebar">
+  <!-- Overlay para mobile -->
+  <div v-if="isMobileSidebarOpen" class="sidebar-overlay" @click="closeSidebar"></div>
+
+  <aside class="sidebar" :class="{ 'mobile-open': isMobileSidebarOpen }">
+    <!-- Botão Fechar (Mobile) -->
+    <button class="close-sidebar-btn" @click="closeSidebar" aria-label="Fechar menu">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+      </svg>
+    </button>
+
     <!-- Menu Principal -->
     <nav class="main-nav">
       <div class="nav-section">
         <h3 class="nav-title">Menu Principal</h3>
         <ul class="nav-list">
           <li class="nav-item">
-            <router-link to="/dashboard" class="nav-link" :class="{ active: isActive('/dashboard') }">
+            <router-link to="/dashboard" class="nav-link" :class="{ active: isActive('/dashboard') }" @click="handleNavClick">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="currentColor" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
               </svg>
@@ -15,7 +25,7 @@
           </li>
 
           <li class="nav-item">
-            <router-link to="/pedidos" class="nav-link" :class="{ active: isActive('/pedidos') }">
+            <router-link to="/pedidos" class="nav-link" :class="{ active: isActive('/pedidos') }" @click="handleNavClick">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="currentColor" d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7Z"/>
               </svg>
@@ -24,7 +34,7 @@
           </li>
 
           <li class="nav-item">
-            <router-link to="/cotacoes" class="nav-link" :class="{ active: isActive('/cotacoes') }">
+            <router-link to="/cotacoes" class="nav-link" :class="{ active: isActive('/cotacoes') }" @click="handleNavClick">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="currentColor" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -33,7 +43,7 @@
           </li>
 
           <li class="nav-item">
-            <router-link to="/fornecedores" class="nav-link" :class="{ active: isActive('/fornecedores') }">
+            <router-link to="/fornecedores" class="nav-link" :class="{ active: isActive('/fornecedores') }" @click="handleNavClick">
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="currentColor" d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A2 2 0 0 0 18.04 7H16c-.8 0-1.54.37-2.01.99L12 10l2.01-2.01C14.54 7.37 15.2 7 16 7h2.04c1.23 0 2.18 1.24 1.92 2.63l2.54 7.63H20v6h-4z"/>
               </svg>
@@ -58,8 +68,10 @@
  */
 
 import { useRoute } from 'vue-router'
+import { useMobileSidebar } from '../composables/useMobileSidebar'
 
 const route = useRoute()
+const { isMobileSidebarOpen, closeSidebar } = useMobileSidebar()
 
 /**
  * Verifica se uma rota está ativa
@@ -67,9 +79,48 @@ const route = useRoute()
 const isActive = (path) => {
   return route.path === path || route.path.startsWith(path + '/')
 }
+
+const handleNavClick = () => {
+  if (isMobileSidebarOpen.value) {
+    closeSidebar()
+  }
+}
 </script>
 
 <style scoped>
+/* Overlay para mobile */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Botão fechar sidebar (mobile) */
+.close-sidebar-btn {
+  display: none;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  z-index: 1;
+}
+
+.close-sidebar-btn:hover {
+  background: #f3f4f6;
+  color: #1F285F;
+}
+
 .sidebar {
   width: 280px;
   background: white;
@@ -81,6 +132,7 @@ const isActive = (path) => {
   top: 70px;
   z-index: 100;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease-in-out;
 }
 
 /* Menu Principal */
@@ -174,14 +226,30 @@ const isActive = (path) => {
 }
 
 /* Responsividade */
-@media (max-width: 1024px) {
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
   }
 
-  .sidebar.open {
+  .close-sidebar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 1000;
+    top: 0;
+    height: 100vh;
+  }
+
+  .sidebar.mobile-open {
     transform: translateX(0);
+  }
+
+  .main-nav {
+    padding-top: 60px;
   }
 }
 </style>

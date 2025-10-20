@@ -1,6 +1,13 @@
 <template>
   <header class="dashboard-header">
     <div class="header-content">
+      <!-- Botão Menu Mobile -->
+      <button class="menu-toggle" @click="toggleMobileSidebar" aria-label="Abrir menu">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+        </svg>
+      </button>
+
       <!-- Logo -->
       <div class="logo-section">
         <div class="logo">
@@ -93,6 +100,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { getUserRole } from '../utils/genderUtils'
+import { useMobileSidebar } from '../composables/useMobileSidebar'
 import LogoutModal from './LogoutModal.vue'
 
 const router = useRouter()
@@ -100,6 +108,9 @@ const authStore = useAuthStore()
 const searchQuery = ref('')
 const isUserMenuOpen = ref(false)
 const showLogoutModal = ref(false)
+
+// Controle do sidebar mobile
+const { toggleSidebar } = useMobileSidebar()
 
 const userName = computed(() => authStore.user?.name || 'Usuário')
 
@@ -193,6 +204,13 @@ const cancelLogout = () => {
   showLogoutModal.value = false
 }
 
+/**
+ * Toggle do sidebar mobile
+ */
+const toggleMobileSidebar = () => {
+  toggleSidebar()
+}
+
 // Diretiva customizada para fechar menu ao clicar fora
 const vClickOutside = {
   beforeMount(el, binding) {
@@ -228,6 +246,27 @@ const vClickOutside = {
   padding: 0 24px;
   max-width: 100%;
   min-width: 0; /* Permite que o container encolha */
+}
+
+/* Menu Toggle (Hamburguer) */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #1F285F;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.menu-toggle:hover {
+  background: #f3f4f6;
+}
+
+.menu-toggle:active {
+  background: #e5e7eb;
 }
 
 /* Logo Section */
@@ -446,6 +485,12 @@ const vClickOutside = {
 }
 
 @media (max-width: 768px) {
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .search-section {
     display: none;
   }
@@ -456,14 +501,22 @@ const vClickOutside = {
 
   .header-content {
     padding: 0 16px;
+    gap: 12px;
   }
 
   .logo-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
     min-width: auto;
   }
 
+  .logo-text {
+    font-size: 18px;
+  }
+
   .user-section {
-    gap: 16px;
+    gap: 12px;
   }
 }
 
