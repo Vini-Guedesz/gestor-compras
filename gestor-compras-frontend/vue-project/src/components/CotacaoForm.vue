@@ -27,36 +27,111 @@
                   </select>
                 </div>
 
-                <!-- Fornecedor (filtrado por tipo) -->
+                <!-- Fornecedor com pesquisa integrada -->
                 <div class="form-group">
                   <label class="form-label">Fornecedor *</label>
-                  <select v-model="formData.fornecedorId" class="form-select" required :disabled="!tipoFornecedor">
-                    <option value="">{{ tipoFornecedor ? 'Selecione um fornecedor...' : 'Primeiro selecione o tipo' }}</option>
-                    <option
-                      v-for="fornecedor in fornecedoresFiltrados"
-                      :key="fornecedor.id"
-                      :value="fornecedor.id"
-                    >
-                      {{ fornecedor.razaoSocial }} - {{ fornecedor.cnpj }} ({{ fornecedor.tipo }})
-                    </option>
-                  </select>
+                  <div class="custom-select-wrapper" :class="{ disabled: !tipoFornecedor }">
+                    <div class="custom-select" @click="!tipoFornecedor ? null : toggleDropdown('fornecedor')">
+                      <input
+                        v-model="pesquisaFornecedor"
+                        type="text"
+                        class="custom-select-input"
+                        :placeholder="tipoFornecedor ? 'Pesquisar fornecedor...' : 'Primeiro selecione o tipo'"
+                        @focus="openDropdown('fornecedor')"
+                        @input="openDropdown('fornecedor')"
+                        :disabled="!tipoFornecedor"
+                      />
+                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+                      </svg>
+                    </div>
+                    <div v-if="dropdownAberto === 'fornecedor'" class="dropdown-list">
+                      <div
+                        v-for="fornecedor in fornecedoresFiltradosComPesquisa"
+                        :key="fornecedor.id"
+                        class="dropdown-item"
+                        @click="selecionarFornecedor(fornecedor)"
+                      >
+                        <div class="item-main">{{ fornecedor.razaoSocial }}</div>
+                        <div class="item-secondary">{{ fornecedor.cnpj }} - {{ fornecedor.tipo }}</div>
+                      </div>
+                      <div v-if="fornecedoresFiltradosComPesquisa.length === 0" class="dropdown-empty">
+                        Nenhum fornecedor encontrado
+                      </div>
+                    </div>
+                  </div>
+                  <small class="form-hint">{{ fornecedorSelecionadoNome || (fornecedoresFiltradosComPesquisa.length + ' fornecedores disponíveis') }}</small>
                 </div>
 
-                <!-- Item do Pedido -->
+                <!-- Pedido com pesquisa integrada -->
+                <div class="form-group">
+                  <label class="form-label">Pedido *</label>
+                  <div class="custom-select-wrapper">
+                    <div class="custom-select" @click="toggleDropdown('pedido')">
+                      <input
+                        v-model="pesquisaPedido"
+                        type="text"
+                        class="custom-select-input"
+                        placeholder="Pesquisar pedido..."
+                        @focus="openDropdown('pedido')"
+                        @input="openDropdown('pedido')"
+                      />
+                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+                      </svg>
+                    </div>
+                    <div v-if="dropdownAberto === 'pedido'" class="dropdown-list">
+                      <div
+                        v-for="pedido in pedidosFiltrados"
+                        :key="pedido.id"
+                        class="dropdown-item"
+                        @click="selecionarPedido(pedido)"
+                      >
+                        <div class="item-main">Pedido #{{ pedido.id }}</div>
+                        <div class="item-secondary">{{ getStatusLabel(pedido.status) }} - {{ pedido.itens?.length || 0 }} itens</div>
+                      </div>
+                      <div v-if="pedidosFiltrados.length === 0" class="dropdown-empty">
+                        Nenhum pedido encontrado
+                      </div>
+                    </div>
+                  </div>
+                  <small class="form-hint">{{ pedidoSelecionadoLabel || (pedidosFiltrados.length + ' pedidos disponíveis') }}</small>
+                </div>
+
+                <!-- Item com pesquisa integrada -->
                 <div class="form-group">
                   <label class="form-label">Item do Pedido *</label>
-                  <select v-model="formData.itemPedidoId" class="form-select" required>
-                    <option value="">Selecione um item...</option>
-                    <option
-                      v-for="item in itensDisponiveis"
-                      :key="item.id"
-                      :value="item.id"
-                    >
-                      {{ item.nome || 'Item sem nome' }} (Qtd: {{ item.quantidade || 0 }})
-                      {{ item.descricao ? ` - ${item.descricao}` : '' }}
-                    </option>
-                  </select>
-                  <small class="form-hint">{{ itensDisponiveis.length }} itens disponíveis</small>
+                  <div class="custom-select-wrapper" :class="{ disabled: !pedidoSelecionado }">
+                    <div class="custom-select" @click="!pedidoSelecionado ? null : toggleDropdown('item')">
+                      <input
+                        v-model="pesquisaItem"
+                        type="text"
+                        class="custom-select-input"
+                        :placeholder="pedidoSelecionado ? 'Pesquisar item...' : 'Primeiro selecione um pedido'"
+                        @focus="openDropdown('item')"
+                        @input="openDropdown('item')"
+                        :disabled="!pedidoSelecionado"
+                      />
+                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+                      </svg>
+                    </div>
+                    <div v-if="dropdownAberto === 'item'" class="dropdown-list">
+                      <div
+                        v-for="item in itensFiltradosComPesquisa"
+                        :key="item.id"
+                        class="dropdown-item"
+                        @click="selecionarItem(item)"
+                      >
+                        <div class="item-main">#{{ item.id }} - {{ item.nome || 'Item sem nome' }}</div>
+                        <div class="item-secondary">Qtd: {{ item.quantidade || 0 }}{{ item.descricao ? ' - ' + item.descricao : '' }}</div>
+                      </div>
+                      <div v-if="itensFiltradosComPesquisa.length === 0" class="dropdown-empty">
+                        {{ pedidoSelecionado ? 'Nenhum item encontrado neste pedido' : 'Selecione um pedido primeiro' }}
+                      </div>
+                    </div>
+                  </div>
+                  <small class="form-hint">{{ itemSelecionadoNome || (itensFiltradosComPesquisa.length + ' itens disponíveis') }}</small>
                 </div>
 
                 <!-- Preço -->
@@ -123,6 +198,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import fornecedorService from '../services/fornecedorService.js'
 import itemPedidoService from '../services/itemPedidoService.js'
+import pedidoService from '../services/pedidoService.js'
 
 // Props
 const props = defineProps({
@@ -144,6 +220,18 @@ const carregando = ref(false)
 const mensagemAlerta = ref('')
 const tipoAlerta = ref('error') // 'error', 'success', 'warning'
 const tipoFornecedor = ref('')
+const pedidoSelecionado = ref('')
+const dropdownAberto = ref(null) // Controla qual dropdown está aberto
+
+// Campos de pesquisa
+const pesquisaFornecedor = ref('')
+const pesquisaPedido = ref('')
+const pesquisaItem = ref('')
+
+// Labels dos itens selecionados
+const fornecedorSelecionadoNome = ref('')
+const pedidoSelecionadoLabel = ref('')
+const itemSelecionadoNome = ref('')
 
 // Dados do formulário - alinhado com CotacaoCreateDTO/CotacaoUpdateDTO
 const formData = ref({
@@ -153,9 +241,10 @@ const formData = ref({
   prazoEntrega: null
 })
 
-// Lista de fornecedores e itens
+// Lista de fornecedores, itens e pedidos
 const fornecedoresDisponiveis = ref([])
 const itensDisponiveis = ref([])
+const pedidosDisponiveis = ref([])
 
 // Computadas
 const fornecedoresFiltrados = computed(() => {
@@ -163,11 +252,79 @@ const fornecedoresFiltrados = computed(() => {
   return fornecedoresDisponiveis.value.filter(f => f.tipo === tipoFornecedor.value)
 })
 
+// Fornecedores filtrados por tipo E pesquisa
+const fornecedoresFiltradosComPesquisa = computed(() => {
+  let resultado = fornecedoresFiltrados.value
+
+  if (pesquisaFornecedor.value.trim()) {
+    const query = pesquisaFornecedor.value.toLowerCase().trim()
+    resultado = resultado.filter(f =>
+      f.razaoSocial?.toLowerCase().includes(query) ||
+      f.cnpj?.toLowerCase().includes(query)
+    )
+  }
+
+  return resultado
+})
+
+// Pedidos filtrados por pesquisa
+const pedidosFiltrados = computed(() => {
+  let resultado = pedidosDisponiveis.value
+
+  if (pesquisaPedido.value.trim()) {
+    const query = pesquisaPedido.value.toLowerCase().trim()
+    resultado = resultado.filter(p =>
+      p.id?.toString().includes(query) ||
+      p.observacao?.toLowerCase().includes(query)
+    )
+  }
+
+  return resultado
+})
+
+// Itens filtrados pelo pedido selecionado
+const itensFiltradosPorPedido = computed(() => {
+  if (!pedidoSelecionado.value) {
+    return []
+  }
+
+  // Buscar o pedido selecionado
+  const pedido = pedidosDisponiveis.value.find(p => p.id === parseInt(pedidoSelecionado.value))
+
+  if (!pedido) {
+    console.warn('Pedido não encontrado:', pedidoSelecionado.value)
+    return []
+  }
+
+  // Retornar os itens do pedido
+  const itens = pedido.itens || []
+  console.log(`📦 Itens do pedido #${pedido.id}:`, itens.length, itens)
+
+  return itens
+})
+
+// Itens filtrados por pedido E pesquisa
+const itensFiltradosComPesquisa = computed(() => {
+  let resultado = itensFiltradosPorPedido.value
+
+  if (pesquisaItem.value.trim()) {
+    const query = pesquisaItem.value.toLowerCase().trim()
+    resultado = resultado.filter(i =>
+      i.id?.toString().includes(query) ||
+      i.nome?.toLowerCase().includes(query) ||
+      i.descricao?.toLowerCase().includes(query)
+    )
+  }
+
+  return resultado
+})
+
 const formularioValido = computed(() => {
   return formData.value.fornecedorId &&
          formData.value.itemPedidoId &&
          formData.value.preco &&
-         formData.value.preco > 0
+         formData.value.preco > 0 &&
+         pedidoSelecionado.value
 })
 
 // Métodos de UI
@@ -212,6 +369,74 @@ const calcularDataEntrega = (dias) => {
 // Métodos de fornecedor
 const handleTipoFornecedorChange = () => {
   formData.value.fornecedorId = null // Reset fornecedor quando tipo muda
+  fornecedorSelecionadoNome.value = ''
+  pesquisaFornecedor.value = ''
+}
+
+// Métodos para controlar dropdowns
+const toggleDropdown = (tipo) => {
+  if (dropdownAberto.value === tipo) {
+    dropdownAberto.value = null
+  } else {
+    dropdownAberto.value = tipo
+  }
+}
+
+const openDropdown = (tipo) => {
+  dropdownAberto.value = tipo
+}
+
+const closeDropdown = () => {
+  dropdownAberto.value = null
+}
+
+// Métodos de seleção
+const selecionarFornecedor = (fornecedor) => {
+  formData.value.fornecedorId = fornecedor.id
+  fornecedorSelecionadoNome.value = fornecedor.razaoSocial
+  pesquisaFornecedor.value = fornecedor.razaoSocial
+  closeDropdown()
+}
+
+const selecionarPedido = (pedido) => {
+  console.log('🔍 Pedido selecionado:', pedido)
+  console.log('📦 Itens do pedido:', pedido.itens?.length || 0, pedido.itens)
+
+  pedidoSelecionado.value = pedido.id
+  pedidoSelecionadoLabel.value = `Pedido #${pedido.id} - ${getStatusLabel(pedido.status)}`
+  pesquisaPedido.value = `#${pedido.id}`
+
+  // Limpar item selecionado quando pedido muda
+  formData.value.itemPedidoId = null
+  itemSelecionadoNome.value = ''
+  pesquisaItem.value = ''
+
+  closeDropdown()
+
+  // Log para verificar os itens filtrados
+  setTimeout(() => {
+    console.log('📋 Itens disponíveis após seleção:', itensFiltradosPorPedido.value)
+  }, 100)
+}
+
+const selecionarItem = (item) => {
+  formData.value.itemPedidoId = item.id
+  itemSelecionadoNome.value = item.nome || 'Item sem nome'
+  pesquisaItem.value = item.nome || 'Item sem nome'
+  closeDropdown()
+}
+
+// Método para obter label do status
+const getStatusLabel = (status) => {
+  const labels = {
+    'RASCUNHO': 'Rascunho',
+    'PENDENTE': 'Pendente',
+    'EM_ANALISE': 'Em Análise',
+    'EM_ANDAMENTO': 'Em Andamento',
+    'APROVADO': 'Aprovado',
+    'CANCELADO': 'Cancelado'
+  }
+  return labels[status] || status || 'Indefinido'
 }
 
 
@@ -334,6 +559,65 @@ const carregarItens = async () => {
   }
 }
 
+const carregarPedidos = async () => {
+  try {
+    console.log('🔄 Carregando pedidos...')
+    const response = await pedidoService.listarTodos()
+
+    // Processar pedidos - pode vir como array direto ou dentro de response.data
+    const pedidos = Array.isArray(response) ? response : (response?.data || [])
+    console.log('📋 Pedidos recebidos:', pedidos.length)
+
+    // Verificar se os pedidos já vêm com itens
+    if (pedidos.length > 0 && pedidos[0].itens) {
+      console.log('✅ Pedidos já contêm itens')
+      pedidosDisponiveis.value = pedidos
+    } else {
+      // Caso contrário, carregar itens separadamente e associar
+      console.log('🔄 Carregando itens para associar aos pedidos...')
+      const todosItens = itensDisponiveis.value.length > 0
+        ? itensDisponiveis.value
+        : await itemPedidoService.listarTodos()
+
+      console.log('📦 Total de itens carregados:', todosItens.length)
+
+      // Associar itens aos pedidos
+      pedidosDisponiveis.value = pedidos.map(pedido => {
+        const itensDoPedido = todosItens.filter(item => {
+          // Tentar diferentes propriedades que podem indicar o pedido
+          const pedidoId = item.solicitacaoDePedido?.id || item.solicitacaoDePedidoId || item.pedidoId
+          const match = pedidoId === pedido.id
+          if (match) {
+            console.log(`  ✓ Item #${item.id} pertence ao pedido #${pedido.id}`)
+          }
+          return match
+        })
+
+        console.log(`📦 Pedido #${pedido.id}: ${itensDoPedido.length} itens associados`)
+
+        return {
+          ...pedido,
+          itens: itensDoPedido
+        }
+      })
+    }
+
+    console.log('✅ Pedidos processados:', pedidosDisponiveis.value.length)
+    console.log('📊 Estrutura dos pedidos:', pedidosDisponiveis.value.map(p => ({
+      id: p.id,
+      itens: p.itens?.length || 0
+    })))
+
+    if (pedidosDisponiveis.value.length === 0) {
+      mostrarAlerta('Nenhum pedido encontrado', 'warning')
+    }
+  } catch (error) {
+    console.error('❌ Erro ao carregar pedidos:', error)
+    pedidosDisponiveis.value = []
+    mostrarAlerta('Erro ao carregar pedidos. Verifique a conexão.', 'error')
+  }
+}
+
 const inicializarFormulario = () => {
   if (props.cotacao) {
     // Editando cotação existente - converter data de volta para dias
@@ -363,9 +647,21 @@ const inicializarFormulario = () => {
 // Lifecycle
 onMounted(async () => {
   console.log('🔄 Inicializando formulário de cotação...')
-  await Promise.all([carregarFornecedores(), carregarItens()])
+  await Promise.all([carregarFornecedores(), carregarItens(), carregarPedidos()])
   inicializarFormulario()
+
+  // Adicionar listener para fechar dropdown ao clicar fora
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-select-wrapper')) {
+      closeDropdown()
+    }
+  })
 })
+
+// Cleanup do listener ao desmontar
+const cleanup = () => {
+  document.removeEventListener('click', closeDropdown)
+}
 
 // Watchers
 watch(() => props.isVisible, (newVal) => {
@@ -504,10 +800,113 @@ watch(() => props.cotacao, () => {
   gap: 16px;
 }
 
+.search-grid {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* Custom Select com Pesquisa Integrada */
+.custom-select-wrapper {
+  position: relative;
+}
+
+.custom-select-wrapper.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.custom-select {
+  position: relative;
+  cursor: pointer;
+}
+
+.custom-select-input {
+  width: 100%;
+  padding: 12px 40px 12px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background: white;
+  cursor: pointer;
+}
+
+.custom-select-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  cursor: text;
+}
+
+.custom-select-input:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.dropdown-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+}
+
+.dropdown-item {
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: #f8fafc;
+}
+
+.dropdown-item .item-main {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.dropdown-item .item-secondary {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.dropdown-empty {
+  padding: 24px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-style: italic;
 }
 
 .form-label {
