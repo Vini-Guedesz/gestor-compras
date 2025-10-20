@@ -150,10 +150,10 @@
           <table class="pedidos-table" v-if="pedidosFiltrados.length > 0">
             <thead>
               <tr>
-                <th>Pedido</th>
-                <th>Status</th>
-                <th>Data</th>
-                <th>Ações</th>
+                <th class="col-pedido">Pedido</th>
+                <th class="col-status">Status</th>
+                <th class="col-data">Data</th>
+                <th class="col-acoes">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -179,18 +179,25 @@
                           d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
                       </svg>
                     </button>
-                    <button class="action-btn edit" @click="editarPedido(pedido)" title="Editar" v-if="podeEditar(pedido)">
+                    <button
+                      class="action-btn edit"
+                      @click="editarPedido(pedido)"
+                      title="Editar"
+                      :class="{ 'btn-hidden': !podeEditar(pedido) }"
+                      :disabled="!podeEditar(pedido)"
+                    >
                       <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor"
                           d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                       </svg>
                     </button>
-                    <div class="status-actions" v-if="podeAlterarStatus(pedido)">
+                    <div class="status-actions" :class="{ 'btn-hidden': !podeAlterarStatus(pedido) }">
                       <select
                         @change="alterarStatus(pedido, $event.target.value)"
                         class="status-select"
                         :value="pedido.status"
                         title="Alterar Status"
+                        :disabled="!podeAlterarStatus(pedido)"
                       >
                         <option :value="pedido.status" disabled>{{ getStatusLabel(pedido.status) }}</option>
                         <option v-for="status in getStatusDisponiveis(pedido.status)"
@@ -200,12 +207,24 @@
                         </option>
                       </select>
                     </div>
-                    <button class="action-btn approve" @click="aprovarPedido(pedido)" title="Aprovar" v-else-if="podeAprovar(pedido)">
+                    <button
+                      class="action-btn approve"
+                      @click="aprovarPedido(pedido)"
+                      title="Aprovar"
+                      :class="{ 'btn-hidden': !podeAprovar(pedido) || podeAlterarStatus(pedido) }"
+                      :disabled="!podeAprovar(pedido) || podeAlterarStatus(pedido)"
+                    >
                       <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                       </svg>
                     </button>
-                    <button class="action-btn delete" @click="confirmarExclusao(pedido)" title="Excluir" v-if="podeExcluir(pedido)">
+                    <button
+                      class="action-btn delete"
+                      @click="confirmarExclusao(pedido)"
+                      title="Excluir"
+                      :class="{ 'btn-hidden': !podeExcluir(pedido) }"
+                      :disabled="!podeExcluir(pedido)"
+                    >
                       <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor"
                           d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
@@ -1347,6 +1366,24 @@ export default {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  table-layout: fixed;
+}
+
+/* Larguras específicas das colunas */
+.pedidos-table .col-pedido {
+  width: 120px;
+}
+
+.pedidos-table .col-status {
+  width: 140px;
+}
+
+.pedidos-table .col-data {
+  width: 140px;
+}
+
+.pedidos-table .col-acoes {
+  width: 280px;
 }
 
 .pedidos-table th {
@@ -1362,7 +1399,7 @@ export default {
 .pedidos-table td {
   padding: 16px;
   border-bottom: 1px solid #f3f4f6;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .table-row {
@@ -1374,6 +1411,10 @@ export default {
 }
 
 /* CÃ©lulas da tabela */
+.pedido-cell {
+  padding-right: 8px !important;
+}
+
 .pedido-cell .pedido-info {
   display: flex;
   flex-direction: column;
@@ -1384,6 +1425,10 @@ export default {
   font-weight: 600;
   color: #111827;
   font-size: 0.875rem;
+}
+
+.data-cell {
+  padding-right: 12px !important;
 }
 
 .data-criacao {
@@ -1397,6 +1442,8 @@ export default {
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .status-draft {
@@ -1436,13 +1483,17 @@ export default {
 
 /* BotÃµes de aÃ§Ã£o */
 .actions-cell {
-  width: 120px;
+  min-width: 280px;
+  width: 280px;
+  padding-left: 8px !important;
+  padding-right: 16px !important;
 }
 
 .actions-cell .action-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .action-btn {
@@ -1455,6 +1506,13 @@ export default {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* Ocultar botões mas manter o espaço */
+.btn-hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .action-btn.view {
@@ -1496,6 +1554,7 @@ export default {
 /* Status Actions */
 .status-actions {
   position: relative;
+  flex-shrink: 0;
 }
 
 .status-select {
@@ -1509,6 +1568,7 @@ export default {
   cursor: pointer;
   transition: all 0.2s;
   min-width: 120px;
+  width: 120px;
 }
 
 .status-select:hover {
