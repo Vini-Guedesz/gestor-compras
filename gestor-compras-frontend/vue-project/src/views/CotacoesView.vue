@@ -383,133 +383,134 @@
       <!-- Modal de Detalhes da Cotação -->
       <div v-if="showDetalhesModal" class="modal-overlay" @click="fecharDetalhes">
         <div class="detalhes-modal" @click.stop>
+          <!-- Header -->
           <div class="detalhes-header">
-            <h2>Detalhes da Cotação #{{ cotacaoSelecionada?.id }}</h2>
+            <div class="header-title-group">
+              <h2>Detalhes da Cotação #{{ String(cotacaoSelecionada?.id).padStart(3, '0') }}</h2>
+            </div>
             <button @click="fecharDetalhes" class="close-button">&times;</button>
           </div>
+
           <div class="detalhes-body" v-if="cotacaoSelecionada">
-            <div class="detalhes-grid">
-              <div class="detalhe-group">
-                <h4>Informações do Item</h4>
-                <div v-if="itemSelecionado" class="item-detalhes">
-                  <div class="detalhe-item">
-                    <span class="detalhe-label">Nome do Item:</span>
-                    <span class="detalhe-value item-name">{{ itemSelecionado.nome }}</span>
-                  </div>
-                  <div class="detalhe-item">
-                    <span class="detalhe-label">Quantidade:</span>
-                    <span class="detalhe-value">{{ itemSelecionado.quantidade }}</span>
-                  </div>
-                  <div v-if="itemSelecionado.descricao" class="detalhe-item">
-                    <span class="detalhe-label">Descrição:</span>
-                    <span class="detalhe-value">{{ itemSelecionado.descricao }}</span>
-                  </div>
-                  <div v-if="itemSelecionado.observacao" class="detalhe-item">
-                    <span class="detalhe-label">Observações:</span>
-                    <span class="detalhe-value">{{ itemSelecionado.observacao }}</span>
-                  </div>
+            <!-- Informações do Item -->
+            <div class="detalhe-section">
+              <h3 class="section-title">Informações do Item</h3>
+              <div v-if="itemSelecionado" class="info-grid">
+                <div class="info-item full-width">
+                  <span class="info-label">Nome do Item</span>
+                  <span class="info-value highlight">{{ itemSelecionado.nome }}</span>
                 </div>
-                <div v-else class="item-loading">
-                  <span class="detalhe-label">Item do Pedido:</span>
-                  <span class="detalhe-value">Item #{{ cotacaoSelecionada.itemPedidoId }}</span>
+                <div class="info-item">
+                  <span class="info-label">Quantidade</span>
+                  <span class="info-value">{{ itemSelecionado.quantidade }}</span>
                 </div>
-              </div>
-
-              <div class="detalhe-group">
-                <h4>Informações da Cotação</h4>
-                <div class="detalhe-item">
-                  <span class="detalhe-label">Fornecedor:</span>
-                  <span class="detalhe-value">{{ getNomeFornecedor(cotacaoSelecionada.fornecedorId) }}</span>
+                <div class="info-item">
+                  <span class="info-label">ID do Item</span>
+                  <span class="info-value">#{{ cotacaoSelecionada.itemPedidoId }}</span>
                 </div>
-                <div class="detalhe-item">
-                  <span class="detalhe-label">ID da Cotação:</span>
-                  <span class="detalhe-value">#{{ cotacaoSelecionada.id }}</span>
+                <div v-if="itemSelecionado.descricao" class="info-item full-width">
+                  <span class="info-label">Descrição</span>
+                  <span class="info-value">{{ itemSelecionado.descricao }}</span>
+                </div>
+                <div v-if="itemSelecionado.observacao" class="info-item full-width">
+                  <span class="info-label">Observações</span>
+                  <span class="info-value">{{ itemSelecionado.observacao }}</span>
                 </div>
               </div>
+              <div v-else class="loading-state">
+                <div class="loading-spinner-small"></div>
+                <span>Carregando detalhes do item...</span>
+              </div>
+            </div>
 
-              <div class="detalhe-group">
-                <h4>Valores e Prazos</h4>
-                <div class="detalhe-item">
-                  <span class="detalhe-label">Preço:</span>
-                  <span class="detalhe-value price-highlight">R$ {{ formatarPreco(cotacaoSelecionada.preco) }}</span>
+            <!-- Informações da Cotação -->
+            <div class="detalhe-section">
+              <h3 class="section-title">Dados da Cotação</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Fornecedor</span>
+                  <span class="info-value">{{ getNomeFornecedor(cotacaoSelecionada.fornecedorId) }}</span>
                 </div>
-                <div class="detalhe-item">
-                  <span class="detalhe-label">Prazo de Entrega:</span>
-                  <span class="detalhe-value" :class="{ 'expired': isPrazoVencido(cotacaoSelecionada.prazoEntrega) }">
+                <div class="info-item">
+                  <span class="info-label">ID da Cotação</span>
+                  <span class="info-value">#{{ cotacaoSelecionada.id }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Preço</span>
+                  <span class="info-value price-highlight">R$ {{ formatarPreco(cotacaoSelecionada.preco) }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Data da Cotação</span>
+                  <span class="info-value">{{ formatarData(cotacaoSelecionada.dataCotacao) }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Prazo de Entrega</span>
+                  <span class="info-value" :class="{ 'expired': isPrazoVencido(cotacaoSelecionada.prazoEntrega) }">
                     {{ formatarData(cotacaoSelecionada.prazoEntrega) }}
-                    <span class="prazo-status">({{ getDiasRestantes(cotacaoSelecionada.prazoEntrega) }})</span>
                   </span>
                 </div>
-                <div class="detalhe-item">
-                  <span class="detalhe-label">Data da Cotação:</span>
-                  <span class="detalhe-value">{{ formatarData(cotacaoSelecionada.dataCotacao) }}</span>
+                <div class="info-item">
+                  <span class="info-label">Status do Prazo</span>
+                  <span class="info-value" :class="{ 'expired': isPrazoVencido(cotacaoSelecionada.prazoEntrega) }">
+                    {{ getDiasRestantes(cotacaoSelecionada.prazoEntrega) }}
+                  </span>
                 </div>
               </div>
+            </div>
 
-              <div class="detalhe-group">
-                <h4>Relatórios</h4>
-                <div class="detalhe-item">
-                  <span class="detalhe-label">Comparativo de Cotações:</span>
-                  <div class="detalhe-value">
-                    <button
-                      @click="gerarRelatorioComparativo(cotacaoSelecionada.itemPedidoId)"
-                      class="relatorio-btn"
-                      :disabled="gerandoRelatorio"
+            <!-- Comparação de Cotações -->
+            <div v-if="cotacoesDoItem.length > 1" class="detalhe-section">
+              <h3 class="section-title">Comparação de Cotações para este Item</h3>
+              <div class="comparacao-table">
+                <table class="cotacoes-comparativas">
+                  <thead>
+                    <tr>
+                      <th>Cotação</th>
+                      <th>Fornecedor</th>
+                      <th>Preço</th>
+                      <th>Prazo</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(cotacao, index) in cotacoesDoItem"
+                      :key="cotacao.id"
+                      :class="{ 'cotacao-atual': cotacao.id === cotacaoSelecionada?.id, 'melhor-preco': index === 0 }"
                     >
-                      <span v-if="gerandoRelatorio" class="loading-content">
-                        <span class="loading-spinner-small"></span>
-                        Gerando...
-                      </span>
-                      <span v-else>
-                        📊 Gerar Comparativo do Item
-                      </span>
-                    </button>
-                    <small class="form-hint">
-                      Compara todas as cotações para o item #{{ cotacaoSelecionada?.itemPedidoId }}
-                    </small>
-                  </div>
-                </div>
+                      <td>
+                        <span class="cotacao-id">#{{ String(cotacao.id).padStart(3, '0') }}</span>
+                      </td>
+                      <td>{{ getNomeFornecedor(cotacao.fornecedorId) }}</td>
+                      <td>
+                        <span class="preco-comparativo" :class="{ 'destaque': index === 0 }">
+                          R$ {{ formatarPreco(cotacao.preco) }}
+                        </span>
+                      </td>
+                      <td>{{ formatarData(cotacao.prazoEntrega) }}</td>
+                      <td>
+                        <span v-if="index === 0" class="badge-melhor">Melhor Preço</span>
+                        <span v-if="cotacao.id === cotacaoSelecionada?.id" class="badge-atual">Atual</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
+            </div>
 
-              <div class="detalhe-group">
-                <h4>Outras Cotações do Item</h4>
-                <div class="detalhe-item">
-                  <div class="detalhe-value">
-                    <div v-if="cotacoesDoItem.length > 1" class="comparacao-visual">
-                      <div
-                        v-for="cotacao in cotacoesDoItem"
-                        :key="cotacao.id"
-                        :class="['cotacao-comparativa', { 'atual': cotacao.id === cotacaoSelecionada?.id }]"
-                      >
-                        <div class="cotacao-header">
-                          <span class="cotacao-id">Cotação #{{ cotacao.id }}</span>
-                          <span v-if="cotacao.id === cotacaoSelecionada?.id" class="badge-atual">Atual</span>
-                        </div>
-                        <div class="cotacao-info">
-                          <div class="info-item">
-                            <span class="info-label">Fornecedor:</span>
-                            <span class="info-value">{{ getNomeFornecedor(cotacao.fornecedorId) }}</span>
-                          </div>
-                          <div class="info-item">
-                            <span class="info-label">Preço:</span>
-                            <span class="info-value price-highlight">R$ {{ formatarPreco(cotacao.preco) }}</span>
-                          </div>
-                          <div class="info-item">
-                            <span class="info-label">Prazo:</span>
-                            <span class="info-value">{{ formatarData(cotacao.prazoEntrega) }}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div v-else class="sem-outras-cotacoes">
-                      <p>Esta é a única cotação para este item.</p>
-                      <small class="form-hint">
-                        Adicione mais cotações para comparar preços e prazos.
-                      </small>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <!-- Botão de Relatório -->
+            <div class="acoes-detalhes">
+              <button
+                @click="gerarRelatorioComparativo(cotacaoSelecionada.itemPedidoId)"
+                class="btn-acao primary"
+                :disabled="gerandoRelatorio"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                  <path fill="white" d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z"/>
+                </svg>
+                <span v-if="gerandoRelatorio">Gerando Relatório...</span>
+                <span v-else>Gerar Relatório Comparativo</span>
+              </button>
             </div>
           </div>
         </div>
@@ -2033,7 +2034,7 @@ onMounted(async () => {
 .detalhes-modal {
   background: white;
   border-radius: 12px;
-  max-width: 800px;
+  max-width: 900px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -2046,24 +2047,33 @@ onMounted(async () => {
   align-items: center;
   padding: 24px;
   border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .detalhes-header h2 {
   margin: 0;
-  color: #1f2937;
+  color: #1F285F;
   font-size: 1.5rem;
   font-weight: 600;
+  font-family: Arial, sans-serif;
 }
 
 .close-button {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 28px;
   color: #6b7280;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
   transition: all 0.2s;
+  line-height: 1;
 }
 
 .close-button:hover {
@@ -2073,69 +2083,87 @@ onMounted(async () => {
 
 .detalhes-body {
   padding: 24px;
-}
-
-.detalhes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 24px;
 }
 
-.detalhe-group {
+/* Seções de Detalhes */
+.detalhe-section {
   background: #f9fafb;
-  padding: 20px;
   border-radius: 8px;
+  padding: 20px;
   border: 1px solid #e5e7eb;
 }
 
-.detalhe-group h4 {
+.section-title {
   margin: 0 0 16px 0;
-  color: #374151;
+  color: #1F285F;
   font-size: 1.125rem;
   font-weight: 600;
-  border-bottom: 2px solid #3b82f6;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e5e7eb;
+  font-family: Arial, sans-serif;
 }
 
-.detalhe-item {
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.info-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #e5e7eb;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
 }
 
-.detalhe-item:last-child {
-  border-bottom: none;
+.info-item.full-width {
+  grid-column: 1 / -1;
 }
 
-.detalhe-label {
-  font-weight: 500;
+.info-label {
+  font-size: 0.75rem;
   color: #6b7280;
-  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: Arial, sans-serif;
 }
 
-.detalhe-value {
+.info-value {
+  font-size: 0.9375rem;
   font-weight: 600;
   color: #1f2937;
-  text-align: right;
+  font-family: Arial, sans-serif;
 }
 
-.detalhe-value.price-highlight {
-  color: #059669;
+.info-value.highlight {
   font-size: 1.125rem;
+  color: #1F285F;
 }
 
-.detalhe-value.expired {
+.info-value.price-highlight {
+  font-size: 1.25rem;
+  color: #059669;
+  font-weight: 700;
+}
+
+.info-value.expired {
   color: #dc2626;
 }
 
-.prazo-status {
-  font-size: 0.75rem;
-  font-weight: 400;
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
   color: #6b7280;
-  display: block;
-  margin-top: 2px;
 }
 
 .anexo-link {
@@ -2360,107 +2388,134 @@ onMounted(async () => {
   }
 }
 
-/* Estilos para comparação visual de cotações */
-.comparacao-visual {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  margin-top: 12px;
+/* Tabela de Comparação */
+.comparacao-table {
+  overflow-x: auto;
 }
 
-.cotacao-comparativa {
+.cotacoes-comparativas {
+  width: 100%;
+  border-collapse: collapse;
   background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-.cotacao-comparativa:hover {
-  border-color: #3b82f6;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.cotacoes-comparativas thead {
+  background: #1F285F;
+  color: white;
 }
 
-.cotacao-comparativa.atual {
-  border-color: #10b981;
+.cotacoes-comparativas th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  font-family: Arial, sans-serif;
+}
+
+.cotacoes-comparativas tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.cotacoes-comparativas tbody tr:hover {
+  background: #f9fafb;
+}
+
+.cotacoes-comparativas tbody tr.cotacao-atual {
+  background: #eff6ff;
+}
+
+.cotacoes-comparativas tbody tr.melhor-preco {
   background: #f0fdf4;
 }
 
-.cotacao-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+.cotacoes-comparativas td {
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  color: #374151;
+  font-family: Arial, sans-serif;
 }
 
 .cotacao-id {
+  background: #f3f4f6;
+  color: #1F285F;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-family: Arial, sans-serif;
+  font-size: 0.8125rem;
+}
+
+.preco-comparativo {
   font-weight: 600;
   color: #374151;
-  font-size: 0.9rem;
 }
 
-.badge-atual {
-  background: #10b981;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.cotacao-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.info-label {
-  color: #6b7280;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.info-value {
-  color: #374151;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.sem-outras-cotacoes {
-  text-align: center;
-  padding: 24px;
-  color: #6b7280;
-}
-
-.sem-outras-cotacoes p {
-  margin: 0 0 8px 0;
-  font-weight: 500;
-}
-
-/* Estilos para detalhes do item */
-.item-detalhes {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.item-name {
-  font-weight: 600;
-  color: #1f2937;
+.preco-comparativo.destaque {
+  color: #059669;
+  font-weight: 700;
   font-size: 1rem;
 }
 
-.item-loading {
+.badge-melhor {
+  background: #10b981;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.badge-atual {
+  background: #1F285F;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Ações do Modal */
+.acoes-detalhes {
   display: flex;
-  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-acao {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  opacity: 0.7;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: Arial, sans-serif;
+}
+
+.btn-acao.primary {
+  background: #1F285F;
+  color: white;
+}
+
+.btn-acao.primary:hover:not(:disabled) {
+  background: #151f4a;
+  transform: translateY(-1px);
+}
+
+.btn-acao:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 </style>
