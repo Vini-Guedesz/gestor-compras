@@ -1384,7 +1384,6 @@ export default {
 
 .pedidos-table .col-acoes {
   width: auto;
-  text-align: right;
 }
 
 .pedidos-table th {
@@ -1398,13 +1397,19 @@ export default {
 }
 
 .pedidos-table th.col-acoes {
-  padding-right: 16px;
+  text-align: right;
+  padding: 16px;
 }
 
 .pedidos-table td {
   padding: 16px;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
+}
+
+.pedidos-table td.actions-td {
+  text-align: right;
+  padding: 16px;
 }
 
 .table-row {
@@ -1487,16 +1492,12 @@ export default {
 }
 
 /* BotÃµes de aÃ§Ã£o */
-.actions-td {
-  padding-right: 16px !important;
-  text-align: right;
-}
-
 .actions-cell {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: flex-end;
+  width: 100%;
 }
 
 .action-btn {
