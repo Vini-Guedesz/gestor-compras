@@ -171,26 +171,8 @@
                 <td class="data-cell">
                   <span class="data-criacao">{{ formatarData(pedido.dataCriacao || pedido.dataPedido) }}</span>
                 </td>
-                <td class="actions-cell">
-                  <div class="action-buttons">
-                    <button class="action-btn view" @click="visualizarPedido(pedido)" title="Visualizar">
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor"
-                          d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
-                      </svg>
-                    </button>
-                    <button
-                      class="action-btn edit"
-                      @click="editarPedido(pedido)"
-                      title="Editar"
-                      :class="{ 'btn-hidden': !podeEditar(pedido) }"
-                      :disabled="!podeEditar(pedido)"
-                    >
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor"
-                          d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                      </svg>
-                    </button>
+                <td class="actions-td">
+                  <div class="actions-cell">
                     <div class="status-actions" :class="{ 'btn-hidden': !podeAlterarStatus(pedido) }">
                       <select
                         @change="alterarStatus(pedido, $event.target.value)"
@@ -216,6 +198,24 @@
                     >
                       <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      </svg>
+                    </button>
+                    <button class="action-btn view" @click="visualizarPedido(pedido)" title="Visualizar">
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor"
+                          d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                      </svg>
+                    </button>
+                    <button
+                      class="action-btn edit"
+                      @click="editarPedido(pedido)"
+                      title="Editar"
+                      :class="{ 'btn-hidden': !podeEditar(pedido) }"
+                      :disabled="!podeEditar(pedido)"
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor"
+                          d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                       </svg>
                     </button>
                     <button
@@ -1383,7 +1383,7 @@ export default {
 }
 
 .pedidos-table .col-acoes {
-  width: 280px;
+  width: auto;
   text-align: right;
 }
 
@@ -1395,6 +1395,10 @@ export default {
   font-weight: 600;
   font-size: 0.875rem;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.pedidos-table th.col-acoes {
+  padding-right: 16px;
 }
 
 .pedidos-table td {
@@ -1483,15 +1487,12 @@ export default {
 }
 
 /* BotÃµes de aÃ§Ã£o */
-.actions-cell {
-  min-width: 280px;
-  width: 280px;
-  padding-left: 16px !important;
+.actions-td {
   padding-right: 16px !important;
   text-align: right;
 }
 
-.actions-cell .action-buttons {
+.actions-cell {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -1499,58 +1500,43 @@ export default {
 }
 
 .action-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
+  background: none;
+  border: 1px solid #e5e7eb;
+  padding: 8px;
   border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
+  color: #6b7280;
   flex-shrink: 0;
+}
+
+.action-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.action-btn.edit:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #3b82f6;
+}
+
+.action-btn.approve:hover {
+  background: #d1fae5;
+  color: #059669;
+  border-color: #10b981;
+}
+
+.action-btn.delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #f87171;
 }
 
 /* Ocultar botões mas manter o espaço */
 .btn-hidden {
   visibility: hidden;
   pointer-events: none;
-}
-
-.action-btn.view {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.action-btn.view:hover {
-  background: #e5e7eb;
-}
-
-.action-btn.edit {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.action-btn.edit:hover {
-  background: #fde68a;
-}
-
-.action-btn.approve {
-  background: #d1fae5;
-  color: #059669;
-}
-
-.action-btn.approve:hover {
-  background: #a7f3d0;
-}
-
-.action-btn.delete {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.action-btn.delete:hover {
-  background: #fecaca;
 }
 
 /* Status Actions */
