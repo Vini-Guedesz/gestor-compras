@@ -537,10 +537,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
-import CotacaoForm from '../components/CotacaoForm.vue'
+// Lazy loading para componente pesado
+const CotacaoForm = defineAsyncComponent(() => import('../components/CotacaoForm.vue'))
 import { cotacaoService } from '../services/cotacaoService.js'
 import fornecedorService from '../services/fornecedorService.js'
 import itemPedidoService from '../services/itemPedidoService.js'

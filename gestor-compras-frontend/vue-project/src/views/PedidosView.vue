@@ -359,11 +359,12 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, defineAsyncComponent } from 'vue'
 import DashboardHeader from '@/components/DashboardHeader.vue'
 import DashboardSidebar from '@/components/DashboardSidebar.vue'
-import PedidoForm from '@/components/PedidoForm.vue'
-import ConfirmModal from '@/components/ConfirmModal.vue'
+// Lazy loading para componentes pesados
+const PedidoForm = defineAsyncComponent(() => import('@/components/PedidoForm.vue'))
+const ConfirmModal = defineAsyncComponent(() => import('@/components/ConfirmModal.vue'))
 import pedidoService from '@/services/pedidoService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import fornecedorService from '@/services/fornecedorService.js'

@@ -15,13 +15,16 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import LoginView from '../views/LoginView.vue'
-import DashboardView from '../views/DashboardView.vue'
-import FornecedoresView from '../views/FornecedoresView.vue'
-import PedidosView from '../views/PedidosView.vue'
-import PerfilView from '../views/PerfilView.vue'
-import ConfiguracoesView from '../views/ConfiguracoesView.vue'
-import CotacoesView from '../views/CotacoesView.vue'
+
+// Lazy loading de rotas para melhor performance
+// Cada view será carregada apenas quando necessária
+const LoginView = () => import('../views/LoginView.vue')
+const DashboardView = () => import('../views/DashboardView.vue')
+const FornecedoresView = () => import('../views/FornecedoresView.vue')
+const PedidosView = () => import('../views/PedidosView.vue')
+const PerfilView = () => import('../views/PerfilView.vue')
+const ConfiguracoesView = () => import('../views/ConfiguracoesView.vue')
+const CotacoesView = () => import('../views/CotacoesView.vue')
 
 // Criação do router com histórico de navegação do navegador
 const router = createRouter({
