@@ -104,7 +104,7 @@ const iconComponent = computed(() => {
 .metric-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border-color: #1F285F;
+  border-color: #6366f1;
 }
 
 .card-header {
@@ -203,7 +203,7 @@ const iconComponent = computed(() => {
 
 /* Variantes */
 .variant-primary {
-  border-left: 4px solid #1F285F;
+  border-left: 4px solid #6366f1;
 }
 
 .variant-success {

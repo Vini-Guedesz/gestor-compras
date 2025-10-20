@@ -36,10 +36,10 @@
             title="Pedidos de Compra"
             description="Criar, editar e acompanhar pedidos"
             :metrics="[
-              { value: metricas.pedidos.pendentes.toString(), label: 'pendentes', color: '#f59e0b' },
-              { value: metricas.pedidos.total.toString(), label: 'total', color: '#1F285F' }
+              { value: metricas.pedidos.pendentes.toString(), label: 'pendentes', color: '#818cf8' },
+              { value: metricas.pedidos.total.toString(), label: 'total', color: '#6366f1' }
             ]"
-            icon-color="#1F285F"
+            icon-color="#6366f1"
             variant="primary"
             @action="navigateTo('/pedidos')"
           />
@@ -49,8 +49,8 @@
             title="Cotações"
             description="Gerenciar cotações e fornecedores"
             :metrics="[
-              { value: metricas.cotacoes.abertas.toString(), label: 'cadastradas', color: '#10b981' },
-              { value: metricas.cotacoes.emAnalise.toString(), label: 'recentes', color: '#f59e0b' }
+              { value: metricas.cotacoes.abertas.toString(), label: 'cadastradas', color: '#34d399' },
+              { value: metricas.cotacoes.emAnalise.toString(), label: 'recentes', color: '#10b981' }
             ]"
             icon-color="#10b981"
             variant="success"
@@ -62,11 +62,11 @@
             title="Fornecedores"
             description="Cadastro e avaliação"
             :metrics="[
-              { value: metricas.fornecedores.ativos.toString(), label: 'cadastrados', color: '#1F285F' },
-              { value: metricas.fornecedores.novos.toString(), label: 'recentes', color: '#10b981' }
+              { value: metricas.fornecedores.ativos.toString(), label: 'cadastrados', color: '#f59e0b' },
+              { value: metricas.fornecedores.novos.toString(), label: 'recentes', color: '#fbbf24' }
             ]"
-            icon-color="#6366f1"
-            variant="default"
+            icon-color="#f59e0b"
+            variant="warning"
             @action="navigateTo('/fornecedores')"
           />
 

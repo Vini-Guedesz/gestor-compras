@@ -35,7 +35,7 @@ const actions = ref([
     title: 'Novo Pedido',
     description: 'Criar novo pedido de compra',
     icon: 'plus',
-    color: '#1F285F',
+    color: '#6366f1',
     variant: 'primary',
     route: '/pedidos',
     action: 'novo-pedido'
@@ -163,7 +163,7 @@ const getIconPath = (iconName) => {
 
 /* Variantes */
 .action-button.primary:hover {
-  background: linear-gradient(135deg, #1F285F 0%, rgba(31, 40, 95, 0.05) 100%);
+  background: linear-gradient(135deg, #6366f1 0%, rgba(99, 102, 241, 0.05) 100%);
 }
 
 .action-button.success:hover {
