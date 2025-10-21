@@ -27,8 +27,8 @@ public class CotacaoMapper {
                 tipoFornecedor,
                 cotacao.getItemPedido() != null ? cotacao.getItemPedido().getId() : null,
                 cotacao.getPreco(),
-                cotacao.getPrazoEntrega(),
-                cotacao.getDataCotacao(),
+                cotacao.getPrazoEmDiasUteis(),
+                cotacao.getDataLimite(),
                 cotacao.getCaminhoAnexo()
         );
     }
@@ -40,7 +40,8 @@ public class CotacaoMapper {
 
         Cotacao cotacao = new Cotacao();
         cotacao.setPreco(cotacaoCreateDTO.preco());
-        cotacao.setPrazoEntrega(cotacaoCreateDTO.prazoEntrega());
+        cotacao.setPrazoEmDiasUteis(cotacaoCreateDTO.prazoEmDiasUteis());
+        cotacao.setDataLimite(cotacaoCreateDTO.dataLimite());
 
         return cotacao;
     }

@@ -183,15 +183,15 @@
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
-                <th @click="ordenar('prazoEntrega')" class="sortable">
-                  Prazo Entrega
-                  <svg v-if="ordenacao.campo === 'prazoEntrega'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
+                <th @click="ordenar('prazoEmDiasUteis')" class="sortable">
+                  Prazo de Entrega
+                  <svg v-if="ordenacao.campo === 'prazoEmDiasUteis'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
-                <th @click="ordenar('dataCotacao')" class="sortable">
-                  Data Cotação
-                  <svg v-if="ordenacao.campo === 'dataCotacao'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
+                <th @click="ordenar('dataLimite')" class="sortable">
+                  Validade da Cotação
+                  <svg v-if="ordenacao.campo === 'dataLimite'" class="sort-icon" viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" :d="ordenacao.direcao === 'asc' ? 'M7,10L12,15L17,10H7Z' : 'M7,15L12,10L17,15H7Z'"/>
                   </svg>
                 </th>
@@ -241,14 +241,14 @@
                   </div>
                 </td>
                 <td>
-                  <div class="deadline-cell" :class="{ 'deadline-expired': isPrazoVencido(cotacao.prazoEntrega) }">
-                    <div class="deadline-date">{{ formatarData(cotacao.prazoEntrega) }}</div>
-                    <div class="deadline-remaining">{{ getDiasRestantes(cotacao.prazoEntrega) }}</div>
+                  <div class="prazo-cell">
+                    <span class="prazo-value">{{ cotacao.prazoEmDiasUteis ? cotacao.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</span>
                   </div>
                 </td>
                 <td>
-                  <div class="date-cell">
-                    <span class="date-value">{{ formatarData(cotacao.dataCotacao) }}</span>
+                  <div class="deadline-cell" :class="{ 'deadline-expired': isDataLimiteVencida(cotacao.dataLimite) }">
+                    <div class="deadline-date">{{ formatarData(cotacao.dataLimite) }}</div>
+                    <div v-if="cotacao.dataLimite" class="deadline-remaining">{{ getDiasRestantes(cotacao.dataLimite) }}</div>
                   </div>
                 </td>
                 <td>
@@ -304,14 +304,12 @@
                   <span class="meta-value">#{{ cotacao.itemPedidoId }}</span>
                 </div>
                 <div class="meta-item">
-                  <span class="meta-label">Prazo:</span>
-                  <span class="meta-value" :class="{ expired: isPrazoVencido(cotacao.prazoEntrega) }">
-                    {{ formatarData(cotacao.prazoEntrega) }}
-                  </span>
+                  <span class="meta-label">Prazo de Entrega:</span>
+                  <span class="meta-value">{{ cotacao.prazoEmDiasUteis ? cotacao.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</span>
                 </div>
                 <div class="meta-item">
-                  <span class="meta-label">Data Cotação:</span>
-                  <span class="meta-value">{{ formatarData(cotacao.dataCotacao) }}</span>
+                  <span class="meta-label">Validade da Cotação:</span>
+                  <span class="meta-value" :class="{ expired: isDataLimiteVencida(cotacao.dataLimite) }">{{ formatarData(cotacao.dataLimite) }}</span>
                 </div>
               </div>
             </div>
@@ -440,19 +438,19 @@
                   <span class="info-value price-highlight">R$ {{ formatarPreco(cotacaoSelecionada.preco) }}</span>
                 </div>
                 <div class="info-item">
-                  <span class="info-label">Data da Cotação</span>
-                  <span class="info-value">{{ formatarData(cotacaoSelecionada.dataCotacao) }}</span>
+                  <span class="info-label">Prazo de Entrega</span>
+                  <span class="info-value">{{ cotacaoSelecionada.prazoEmDiasUteis ? cotacaoSelecionada.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</span>
                 </div>
                 <div class="info-item">
-                  <span class="info-label">Prazo de Entrega</span>
-                  <span class="info-value" :class="{ 'expired': isPrazoVencido(cotacaoSelecionada.prazoEntrega) }">
-                    {{ formatarData(cotacaoSelecionada.prazoEntrega) }}
+                  <span class="info-label">Validade da Cotação</span>
+                  <span class="info-value" :class="{ 'expired': isDataLimiteVencida(cotacaoSelecionada.dataLimite) }">
+                    {{ formatarData(cotacaoSelecionada.dataLimite) }}
                   </span>
                 </div>
                 <div class="info-item">
-                  <span class="info-label">Status do Prazo</span>
-                  <span class="info-value" :class="{ 'expired': isPrazoVencido(cotacaoSelecionada.prazoEntrega) }">
-                    {{ getDiasRestantes(cotacaoSelecionada.prazoEntrega) }}
+                  <span class="info-label">Status da Validade</span>
+                  <span class="info-value" :class="{ 'expired': isDataLimiteVencida(cotacaoSelecionada.dataLimite) }">
+                    {{ getDiasRestantes(cotacaoSelecionada.dataLimite) }}
                   </span>
                 </div>
               </div>
@@ -468,7 +466,7 @@
                       <th>Cotação</th>
                       <th>Fornecedor</th>
                       <th>Preço</th>
-                      <th>Prazo</th>
+                      <th>Prazo de Entrega</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -487,7 +485,7 @@
                           R$ {{ formatarPreco(cotacao.preco) }}
                         </span>
                       </td>
-                      <td>{{ formatarData(cotacao.prazoEntrega) }}</td>
+                      <td>{{ cotacao.prazoEmDiasUteis ? cotacao.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</td>
                       <td>
                         <span v-if="index === 0" class="badge-melhor">Melhor Preço</span>
                         <span v-if="cotacao.id === cotacaoSelecionada?.id" class="badge-atual">Atual</span>
@@ -575,15 +573,6 @@ const ordenacao = ref({
 })
 
 // Dados calculados
-const novasCotacoesMes = computed(() => {
-  const umMesAtras = new Date()
-  umMesAtras.setMonth(umMesAtras.getMonth() - 1)
-
-  return cotacoes.value.filter(c => {
-    if (!c.dataCotacao) return false
-    return new Date(c.dataCotacao) >= umMesAtras
-  }).length
-})
 
 const percentualFinalizadas = computed(() => {
   const total = cotacoes.value.length
@@ -614,16 +603,19 @@ const fornecedoresUnicos = computed(() => {
 // Computadas
 const resumo = computed(() => {
   const total = cotacoes.value.length
-  const comPrazo = cotacoes.value.filter(c => c.prazoEntrega).length
+  const comDataLimite = cotacoes.value.filter(c => c.dataLimite).length
   const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
   const vencidas = cotacoes.value.filter(c => {
-    if (!c.prazoEntrega) return false
-    return new Date(c.prazoEntrega) < hoje
+    if (!c.dataLimite) return false
+    const limite = new Date(c.dataLimite)
+    limite.setHours(0, 0, 0, 0)
+    return limite < hoje
   }).length
 
   return {
     abertas: total,
-    aguardando: comPrazo,
+    aguardando: comDataLimite,
     finalizadas: total - vencidas,
     vencidas
   }
@@ -672,7 +664,7 @@ const cotacoesFiltradas = computed(() => {
         break
     }
 
-    resultado = resultado.filter(c => new Date(c.dataCotacao) >= filtroData)
+    resultado = resultado.filter(c => c.dataLimite && new Date(c.dataLimite) >= filtroData)
   }
 
   // Aplicar ordenação
@@ -680,7 +672,7 @@ const cotacoesFiltradas = computed(() => {
     let valorA = a[ordenacao.value.campo]
     let valorB = b[ordenacao.value.campo]
 
-    if (ordenacao.value.campo === 'prazoEntrega' || ordenacao.value.campo === 'dataCotacao') {
+    if (ordenacao.value.campo === 'dataLimite') {
       valorA = new Date(valorA)
       valorB = new Date(valorB)
     }
@@ -833,11 +825,14 @@ const getDiasRestantes = (dataLimite) => {
   return `${diferenca} dias`
 }
 
-const isPrazoVencido = (dataLimite) => {
+const isDataLimiteVencida = (dataLimite) => {
   if (!dataLimite) return false
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
   const limite = new Date(dataLimite)
+  limite.setHours(0, 0, 0, 0)
   if (isNaN(limite.getTime())) return false
-  return limite < new Date()
+  return limite < hoje
 }
 
 const podeEditar = () => {

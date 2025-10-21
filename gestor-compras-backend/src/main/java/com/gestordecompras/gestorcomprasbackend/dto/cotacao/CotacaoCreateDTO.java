@@ -10,6 +10,7 @@ public record CotacaoCreateDTO(
         @NotNull String tipoFornecedor,
         @NotNull Long itemPedidoId,
         @NotNull BigDecimal preco,
-        LocalDate prazoEntrega
+        Integer prazoEmDiasUteis,
+        LocalDate dataLimite
 ) {
 }

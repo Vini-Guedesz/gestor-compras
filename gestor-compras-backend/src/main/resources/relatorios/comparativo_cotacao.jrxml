@@ -24,8 +24,8 @@
     <field name="fornecedor" class="java.lang.String"/>
     <field name="cnpjFornecedor" class="java.lang.String"/>
     <field name="preco" class="java.math.BigDecimal"/>
-    <field name="prazoEntrega" class="java.time.LocalDate"/>
-    <field name="dataCotacao" class="java.time.LocalDate"/>
+    <field name="prazoEmDiasUteis" class="java.lang.Integer"/>
+    <field name="dataLimite" class="java.time.LocalDate"/>
     <field name="tipoFornecedor" class="java.lang.String"/>
 
     <variable name="MENOR_PRECO" class="java.math.BigDecimal" calculation="Lowest">
@@ -98,12 +98,12 @@
             <staticText>
                 <reportElement style="Header" x="360" y="2" width="70" height="20"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <text><![CDATA[Prazo]]></text>
+                <text><![CDATA[Prazo (dias)]]></text>
             </staticText>
             <staticText>
                 <reportElement style="Header" x="435" y="2" width="95" height="20"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <text><![CDATA[Data Cotação]]></text>
+                <text><![CDATA[Data Limite]]></text>
             </staticText>
         </band>
     </columnHeader>
@@ -148,15 +148,15 @@
                 </textElement>
                 <textFieldExpression><![CDATA[$F{preco}]]></textFieldExpression>
             </textField>
-            <textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+            <textField isBlankWhenNull="true">
                 <reportElement style="Detail" x="360" y="2" width="70" height="20"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <textFieldExpression><![CDATA[$F{prazoEntrega}]]></textFieldExpression>
+                <textFieldExpression><![CDATA[$F{prazoEmDiasUteis} != null ? $F{prazoEmDiasUteis} + " dias úteis" : "N/A"]]></textFieldExpression>
             </textField>
-            <textField pattern="dd/MM/yyyy">
+            <textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
                 <reportElement style="Detail" x="435" y="2" width="95" height="20"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <textFieldExpression><![CDATA[$F{dataCotacao}]]></textFieldExpression>
+                <textFieldExpression><![CDATA[$F{dataLimite}]]></textFieldExpression>
             </textField>
             <staticText>
                 <reportElement x="265" y="5" width="10" height="15" forecolor="#4CAF50">

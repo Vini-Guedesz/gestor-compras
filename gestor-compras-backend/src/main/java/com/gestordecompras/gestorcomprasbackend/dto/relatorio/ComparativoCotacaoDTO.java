@@ -18,7 +18,7 @@ public class ComparativoCotacaoDTO {
     private String fornecedor;
     private String cnpjFornecedor;
     private BigDecimal preco;
-    private LocalDate prazoEntrega;
-    private LocalDate dataCotacao;
+    private Integer prazoEmDiasUteis;
+    private LocalDate dataLimite;
     private String tipoFornecedor; // "PRODUTO" ou "SERVICO"
 }

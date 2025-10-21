@@ -36,9 +36,9 @@ public class Cotacao {
 
     private BigDecimal preco;
 
-    private LocalDate prazoEntrega;
+    private Integer prazoEmDiasUteis;
 
-    private LocalDate dataCotacao;
+    private LocalDate dataLimite;
 
     @Column(columnDefinition = "bytea")
     private byte[] anexoPdf;
@@ -47,7 +47,6 @@ public class Cotacao {
 
     @PrePersist
     public void prePersist() {
-        this.dataCotacao = LocalDate.now();
         validarFornecedor();
     }
 

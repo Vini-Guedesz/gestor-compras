@@ -150,19 +150,29 @@
 
                 <!-- Prazo de Entrega -->
                 <div class="form-group">
-                  <label class="form-label">Prazo de Entrega (dias)</label>
+                  <label class="form-label">Prazo de Entrega (Dias Úteis)</label>
                   <input
                     type="number"
-                    v-model.number="formData.prazoEntrega"
+                    v-model.number="formData.prazoEmDiasUteis"
                     class="form-input"
                     min="1"
-                    placeholder="Ex: 30"
+                    placeholder="Ex: 20"
                   />
                   <small class="form-hint">
-                    Prazo em dias corridos
-                    <span v-if="formData.prazoEntrega && formData.prazoEntrega > 0" class="data-calculada">
-                      (Entrega: {{ calcularDataEntrega(formData.prazoEntrega) }})
-                    </span>
+                    Prazo para entrega do produto/serviço em dias úteis
+                  </small>
+                </div>
+
+                <!-- Validade da Cotação -->
+                <div class="form-group">
+                  <label class="form-label">Validade da Cotação</label>
+                  <input
+                    type="date"
+                    v-model="formData.dataLimite"
+                    class="form-input"
+                  />
+                  <small class="form-hint">
+                    Data limite de vencimento desta cotação (até quando o preço é válido)
                   </small>
                 </div>
               </div>
@@ -238,7 +248,8 @@ const formData = ref({
   fornecedorId: null,
   itemPedidoId: null,
   preco: null,
-  prazoEntrega: null
+  prazoEmDiasUteis: null,
+  dataLimite: null
 })
 
 // Lista de fornecedores, itens e pedidos
@@ -336,35 +347,6 @@ const mostrarAlerta = (mensagem, tipo = 'error') => {
   }, 5000)
 }
 
-
-
-// Converter data para número de dias a partir de hoje
-const calcularDiasParaEntrega = (dataEntrega) => {
-  if (!dataEntrega) return null
-
-  const hoje = new Date()
-  const entrega = new Date(dataEntrega)
-
-  // Zerrar as horas para comparação correta
-  hoje.setHours(0, 0, 0, 0)
-  entrega.setHours(0, 0, 0, 0)
-
-  const diffTime = entrega.getTime() - hoje.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-  return diffDays > 0 ? diffDays : null
-}
-
-// Calcular data de entrega a partir de dias
-const calcularDataEntrega = (dias) => {
-  if (!dias || dias <= 0) return ''
-
-  const hoje = new Date()
-  const dataEntrega = new Date(hoje)
-  dataEntrega.setDate(hoje.getDate() + parseInt(dias))
-
-  return dataEntrega.toLocaleDateString('pt-BR')
-}
 
 // Métodos de fornecedor
 const handleTipoFornecedorChange = () => {
@@ -465,28 +447,13 @@ const handleSubmit = async () => {
     console.log('🚀 Iniciando envio de cotação...')
     console.log('📋 Dados do formulário:', formData.value)
 
-    // Preparar dados com tipos corretos para o backend
-    // Converter prazo de entrega de dias para data
-    let prazoEntregaData = null
-    if (formData.value.prazoEntrega && formData.value.prazoEntrega > 0) {
-      const hoje = new Date()
-      const dataEntrega = new Date(hoje)
-      dataEntrega.setDate(hoje.getDate() + parseInt(formData.value.prazoEntrega))
-      prazoEntregaData = dataEntrega.toISOString().split('T')[0] // Formato YYYY-MM-DD
-
-      console.log('📅 Conversão prazo:', {
-        diasInformados: formData.value.prazoEntrega,
-        hoje: hoje.toISOString().split('T')[0],
-        dataEntrega: prazoEntregaData
-      })
-    }
-
     const dadosParaSalvar = {
       fornecedorId: parseInt(formData.value.fornecedorId),
       tipoFornecedor: tipoFornecedor.value,
       itemPedidoId: parseInt(formData.value.itemPedidoId),
       preco: parseFloat(formData.value.preco),
-      prazoEntrega: prazoEntregaData
+      prazoEmDiasUteis: formData.value.prazoEmDiasUteis ? parseInt(formData.value.prazoEmDiasUteis) : null,
+      dataLimite: formData.value.dataLimite || null
     }
 
     // Validar conversões
@@ -621,25 +588,25 @@ const carregarPedidos = async () => {
 
 const inicializarFormulario = () => {
   if (props.cotacao) {
-    // Editando cotação existente - converter data de volta para dias
-    const diasParaEntrega = calcularDiasParaEntrega(props.cotacao.prazoEntrega)
-
+    // Editando cotação existente
     formData.value = {
       fornecedorId: props.cotacao.fornecedorId,
       itemPedidoId: props.cotacao.itemPedidoId,
       preco: props.cotacao.preco,
-      prazoEntrega: diasParaEntrega
+      prazoEmDiasUteis: props.cotacao.prazoEmDiasUteis,
+      dataLimite: props.cotacao.dataLimite
     }
 
-    console.log('📝 Editando cotação - Prazo original:', props.cotacao.prazoEntrega, 'Convertido para dias:', diasParaEntrega)
-    // TODO: Determinar tipo de fornecedor baseado no fornecedorId
+    tipoFornecedor.value = props.cotacao.tipoFornecedor || ''
+    console.log('📝 Editando cotação:', props.cotacao)
   } else {
     // Nova cotação
     formData.value = {
       fornecedorId: null,
       itemPedidoId: null,
       preco: null,
-      prazoEntrega: null
+      prazoEmDiasUteis: null,
+      dataLimite: null
     }
     tipoFornecedor.value = ''
   }

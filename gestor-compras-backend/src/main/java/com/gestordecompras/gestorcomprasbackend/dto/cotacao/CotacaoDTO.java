@@ -9,8 +9,8 @@ public record CotacaoDTO(
         String tipoFornecedor,
         Long itemPedidoId,
         BigDecimal preco,
-        LocalDate prazoEntrega,
-        LocalDate dataCotacao,
+        Integer prazoEmDiasUteis,
+        LocalDate dataLimite,
         String caminhoAnexo
 ) {
 }

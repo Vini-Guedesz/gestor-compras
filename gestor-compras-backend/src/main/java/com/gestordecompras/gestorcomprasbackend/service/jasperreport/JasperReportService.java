@@ -304,8 +304,8 @@ public class JasperReportService {
                     fornecedor,
                     cnpj,
                     cotacao.getPreco(),
-                    cotacao.getPrazoEntrega(),
-                    cotacao.getDataCotacao(),
+                    cotacao.getPrazoEmDiasUteis(),
+                    cotacao.getDataLimite(),
                     tipo
             );
         }).collect(Collectors.toList());

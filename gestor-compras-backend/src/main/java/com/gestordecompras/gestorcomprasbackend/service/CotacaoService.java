@@ -80,8 +80,11 @@ public class CotacaoService {
                     if (cotacaoUpdateDTO.preco() != null) {
                         existingCotacao.setPreco(cotacaoUpdateDTO.preco());
                     }
-                    if (cotacaoUpdateDTO.prazoEntrega() != null) {
-                        existingCotacao.setPrazoEntrega(cotacaoUpdateDTO.prazoEntrega());
+                    if (cotacaoUpdateDTO.prazoEmDiasUteis() != null) {
+                        existingCotacao.setPrazoEmDiasUteis(cotacaoUpdateDTO.prazoEmDiasUteis());
+                    }
+                    if (cotacaoUpdateDTO.dataLimite() != null) {
+                        existingCotacao.setDataLimite(cotacaoUpdateDTO.dataLimite());
                     }
                     if (cotacaoUpdateDTO.anexoPdf() != null) {
                         existingCotacao.setAnexoPdf(cotacaoUpdateDTO.anexoPdf());
