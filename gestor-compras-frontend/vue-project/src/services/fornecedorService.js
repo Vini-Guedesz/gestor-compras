@@ -150,11 +150,37 @@ const fornecedorService = {
   async atualizarFornecedorServico(id, fornecedor) {
     try {
       console.log(`🔄 Atualizando fornecedor de serviço ID ${id} no backend...`)
-      const data = await api.put(`/api/fornecedores-de-servico/${id}`, fornecedor)
+      console.log('📦 Dados enviados:', JSON.stringify(fornecedor, null, 2))
+
+      // O ID deve ser incluído no body da requisição conforme o DTO
+      const fornecedorComId = { ...fornecedor, id: id }
+      const data = await api.put(`/api/fornecedores-de-servico`, fornecedorComId)
       console.log('✅ Fornecedor de serviço atualizado no backend')
       return data
     } catch (error) {
       console.error(`❌ Erro ao atualizar fornecedor de serviço ID ${id} no backend:`, error.message)
+
+      // Tratamento específico para erros de validação
+      if (error.response && error.response.status === 400) {
+        const validationErrors = error.response.data
+        console.error('📛 Erros de validação:', validationErrors)
+
+        // Criar mensagem mais amigável baseada nos erros de validação
+        let friendlyMessage = 'Erro de validação:\n'
+        if (typeof validationErrors === 'object') {
+          Object.keys(validationErrors).forEach(field => {
+            friendlyMessage += `• ${field}: ${validationErrors[field]}\n`
+          })
+        } else if (typeof validationErrors === 'string') {
+          friendlyMessage = validationErrors
+        }
+
+        const enhancedError = new Error(friendlyMessage)
+        enhancedError.type = 'VALIDATION_ERROR'
+        enhancedError.details = validationErrors
+        throw enhancedError
+      }
+
       throw error
     }
   },

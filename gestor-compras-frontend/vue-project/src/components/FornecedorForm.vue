@@ -11,22 +11,27 @@
           <!-- Tipo de Fornecedor -->
           <div class="form-section">
             <h3 class="section-title">Tipo de Fornecedor</h3>
+            <div v-if="fornecedor" class="info-message">
+              O tipo de fornecedor não pode ser alterado após o cadastro
+            </div>
             <div class="radio-group">
-              <label class="radio-option">
+              <label class="radio-option" :class="{ disabled: fornecedor }">
                 <input
                   type="radio"
                   v-model="formData.tipo"
                   value="produto"
                   @change="clearSecondaryFields"
+                  :disabled="fornecedor !== null"
                 />
                 <span class="radio-label">Fornecedor de Produto</span>
               </label>
-              <label class="radio-option">
+              <label class="radio-option" :class="{ disabled: fornecedor }">
                 <input
                   type="radio"
                   v-model="formData.tipo"
                   value="servico"
                   @change="clearSecondaryFields"
+                  :disabled="fornecedor !== null"
                 />
                 <span class="radio-label">Fornecedor de Serviço</span>
               </label>
@@ -376,15 +381,17 @@ const formData = ref({
   cnpj: '',
   inscricao: '', // inscricaoEstadual (produto) ou inscricaoMunicipal (serviço)
 
-  // Objeto CONTATO (ContatoCreateDTO)
+  // Objeto CONTATO (ContatoCreateDTO ou ContatoUpdateDTO)
   contato: {
+    id: null,           // ID - obrigatório para update
     email: '',           // OBRIGATÓRIO
     telefoneFixo: '',    // OPCIONAL - 10 ou 11 dígitos
     celular: ''          // OPCIONAL - 11 dígitos (deve começar com 9 após DDD)
   },
 
-  // Objeto ENDERECO (EnderecoCreateDTO)
+  // Objeto ENDERECO (EnderecoCreateDTO ou EnderecoUpdateDTO)
   endereco: {
+    id: null,           // ID - obrigatório para update
     cep: '',            // OBRIGATÓRIO - 8 dígitos
     estado: '',         // OBRIGATÓRIO - sigla UF
     cidade: '',         // OBRIGATÓRIO
@@ -612,11 +619,13 @@ const resetForm = () => {
   formData.value.inscricao = ''
 
   // Resetar contato
+  formData.value.contato.id = null
   formData.value.contato.email = ''
   formData.value.contato.telefoneFixo = ''
   formData.value.contato.celular = ''
 
   // Resetar endereco
+  formData.value.endereco.id = null
   formData.value.endereco.cep = ''
   formData.value.endereco.estado = ''
   formData.value.endereco.cidade = ''
@@ -726,15 +735,17 @@ const loadFornecedorData = (fornecedor) => {
     formData.value.inscricao = fornecedor.inscricaoMunicipal || ''
   }
 
-  // Carregar contato
+  // Carregar contato (incluindo ID para update)
   if (fornecedor.contato) {
+    formData.value.contato.id = fornecedor.contato.id || null
     formData.value.contato.email = fornecedor.contato.email || ''
     formData.value.contato.telefoneFixo = fornecedor.contato.telefoneFixo || ''
     formData.value.contato.celular = fornecedor.contato.celular || ''
   }
 
-  // Carregar endereco
+  // Carregar endereco (incluindo ID para update)
   if (fornecedor.endereco) {
+    formData.value.endereco.id = fornecedor.endereco.id || null
     formData.value.endereco.cep = fornecedor.endereco.cep || ''
     formData.value.endereco.estado = fornecedor.endereco.estado || ''
     formData.value.endereco.cidade = fornecedor.endereco.cidade || ''
@@ -790,6 +801,14 @@ const handleSubmit = () => {
     celular: celular || null
   }
 
+  // Se for edição (fornecedor existente), incluir o ID do contato
+  if (props.fornecedor && formData.value.contato.id) {
+    contato.id = formData.value.contato.id
+    console.log('   ✅ Modo EDIÇÃO: ID do contato incluído:', contato.id)
+  } else {
+    console.log('   ✅ Modo CRIAÇÃO: Contato sem ID')
+  }
+
   console.log('   Contato criado:', contato)
   console.log('   ⚠️ contato tem "numero"?', 'numero' in contato, '(deve ser false)')
 
@@ -804,6 +823,14 @@ const handleSubmit = () => {
     rua: formData.value.endereco.rua.trim(),
     numero: formData.value.endereco.numero.trim(),
     complemento: formData.value.endereco.complemento.trim() || null
+  }
+
+  // Se for edição (fornecedor existente), incluir o ID do endereco
+  if (props.fornecedor && formData.value.endereco.id) {
+    endereco.id = formData.value.endereco.id
+    console.log('   ✅ Modo EDIÇÃO: ID do endereco incluído:', endereco.id)
+  } else {
+    console.log('   ✅ Modo CRIAÇÃO: Endereco sem ID')
   }
 
   console.log('   Endereco criado:', endereco)
@@ -1031,6 +1058,20 @@ const handleSubmit = () => {
   font-style: italic;
 }
 
+.info-message {
+  background: #e0f2fe;
+  border: 1px solid #7dd3fc;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #0369a1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .radio-group {
   display: flex;
   gap: 24px;
@@ -1043,10 +1084,24 @@ const handleSubmit = () => {
   gap: 8px;
   cursor: pointer;
   font-size: 0.875rem;
+  transition: opacity 0.2s;
+}
+
+.radio-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.radio-option.disabled input[type="radio"] {
+  cursor: not-allowed;
 }
 
 .radio-option input[type="radio"] {
   margin: 0;
+}
+
+.radio-option input[type="radio"]:disabled {
+  cursor: not-allowed;
 }
 
 .radio-label {
