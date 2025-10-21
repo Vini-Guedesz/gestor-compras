@@ -11,27 +11,22 @@
           <!-- Tipo de Fornecedor -->
           <div class="form-section">
             <h3 class="section-title">Tipo de Fornecedor</h3>
-            <div v-if="fornecedor" class="info-message">
-              O tipo de fornecedor não pode ser alterado após o cadastro
-            </div>
             <div class="radio-group">
-              <label class="radio-option" :class="{ disabled: fornecedor }">
+              <label class="radio-option">
                 <input
                   type="radio"
                   v-model="formData.tipo"
                   value="produto"
                   @change="clearSecondaryFields"
-                  :disabled="fornecedor !== null"
                 />
                 <span class="radio-label">Fornecedor de Produto</span>
               </label>
-              <label class="radio-option" :class="{ disabled: fornecedor }">
+              <label class="radio-option">
                 <input
                   type="radio"
                   v-model="formData.tipo"
                   value="servico"
                   @change="clearSecondaryFields"
-                  :disabled="fornecedor !== null"
                 />
                 <span class="radio-label">Fornecedor de Serviço</span>
               </label>
@@ -765,6 +760,30 @@ const handleSubmit = () => {
   console.log('📝 INICIANDO ENVIO DO FORMULÁRIO')
   console.log('='.repeat(60))
 
+  // ===== VALIDAÇÃO: VERIFICAR MUDANÇA DE TIPO =====
+  if (props.fornecedor && props.fornecedor.tipo !== formData.value.tipo) {
+    console.warn('⚠️ TENTATIVA DE MUDAR TIPO DE FORNECEDOR DETECTADA!')
+    console.warn('   Tipo original:', props.fornecedor.tipo)
+    console.warn('   Tipo atual no form:', formData.value.tipo)
+    
+    const tipoOriginal = props.fornecedor.tipo === 'produto' ? 'Produto' : 'Serviço'
+    const tipoNovo = formData.value.tipo === 'produto' ? 'Produto' : 'Serviço'
+    
+    alert(
+      `❌ Não é possível alterar o tipo do fornecedor!\n\n` +
+      `Tipo atual: Fornecedor de ${tipoOriginal}\n` +
+      `Tipo selecionado: Fornecedor de ${tipoNovo}\n\n` +
+      `O tipo de fornecedor não pode ser alterado após o cadastro.\n` +
+      `Isso ocorre porque fornecedores de Produto e Serviço são armazenados em tabelas diferentes.\n\n` +
+      `Para manter o tipo ${tipoOriginal}, continue a edição.\n` +
+      `Para criar um fornecedor de ${tipoNovo}, cadastre um novo fornecedor.`
+    )
+    
+    // Reverter o tipo para o original
+    formData.value.tipo = props.fornecedor.tipo
+    return
+  }
+
   // Marcar todos os campos como tocados para mostrar erros
   Object.keys(fieldTouched.value).forEach(key => {
     fieldTouched.value[key] = true
@@ -1058,20 +1077,6 @@ const handleSubmit = () => {
   font-style: italic;
 }
 
-.info-message {
-  background: #e0f2fe;
-  border: 1px solid #7dd3fc;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  color: #0369a1;
-  font-size: 0.875rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .radio-group {
   display: flex;
   gap: 24px;
@@ -1084,24 +1089,10 @@ const handleSubmit = () => {
   gap: 8px;
   cursor: pointer;
   font-size: 0.875rem;
-  transition: opacity 0.2s;
-}
-
-.radio-option.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.radio-option.disabled input[type="radio"] {
-  cursor: not-allowed;
 }
 
 .radio-option input[type="radio"] {
   margin: 0;
-}
-
-.radio-option input[type="radio"]:disabled {
-  cursor: not-allowed;
 }
 
 .radio-label {
