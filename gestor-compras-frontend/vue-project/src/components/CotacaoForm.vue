@@ -31,7 +31,7 @@
                 <div class="form-group">
                   <label class="form-label">Fornecedor *</label>
                   <div class="custom-select-wrapper" :class="{ disabled: !tipoFornecedor }">
-                    <div class="custom-select" @click="!tipoFornecedor ? null : toggleDropdown('fornecedor')">
+                    <div class="custom-select">
                       <input
                         v-model="pesquisaFornecedor"
                         type="text"
@@ -41,7 +41,7 @@
                         @input="openDropdown('fornecedor')"
                         :disabled="!tipoFornecedor"
                       />
-                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20">
+                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20" @click="!tipoFornecedor ? null : toggleDropdown('fornecedor')">
                         <path fill="currentColor" d="M7 10l5 5 5-5z"/>
                       </svg>
                     </div>
@@ -67,7 +67,7 @@
                 <div class="form-group">
                   <label class="form-label">Pedido *</label>
                   <div class="custom-select-wrapper">
-                    <div class="custom-select" @click="toggleDropdown('pedido')">
+                    <div class="custom-select">
                       <input
                         v-model="pesquisaPedido"
                         type="text"
@@ -76,7 +76,7 @@
                         @focus="openDropdown('pedido')"
                         @input="openDropdown('pedido')"
                       />
-                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20">
+                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20" @click="toggleDropdown('pedido')">
                         <path fill="currentColor" d="M7 10l5 5 5-5z"/>
                       </svg>
                     </div>
@@ -102,7 +102,7 @@
                 <div class="form-group">
                   <label class="form-label">Item do Pedido *</label>
                   <div class="custom-select-wrapper" :class="{ disabled: !pedidoSelecionado }">
-                    <div class="custom-select" @click="!pedidoSelecionado ? null : toggleDropdown('item')">
+                    <div class="custom-select">
                       <input
                         v-model="pesquisaItem"
                         type="text"
@@ -112,7 +112,7 @@
                         @input="openDropdown('item')"
                         :disabled="!pedidoSelecionado"
                       />
-                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20">
+                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20" @click="!pedidoSelecionado ? null : toggleDropdown('item')">
                         <path fill="currentColor" d="M7 10l5 5 5-5z"/>
                       </svg>
                     </div>
@@ -138,13 +138,13 @@
                 <div class="form-group">
                   <label class="form-label">Preço (R$) *</label>
                   <input
-                    type="number"
-                    v-model.number="formData.preco"
+                    type="text"
+                    v-model="precoFormatado"
+                    @input="formatarPrecoInput"
                     class="form-input"
                     required
-                    min="0.01"
-                    step="0.01"
                     placeholder="0,00"
+                    inputmode="numeric"
                   />
                 </div>
 
@@ -243,6 +243,9 @@ const fornecedorSelecionadoNome = ref('')
 const pedidoSelecionadoLabel = ref('')
 const itemSelecionadoNome = ref('')
 
+// Campo de preço formatado
+const precoFormatado = ref('')
+
 // Dados do formulário - alinhado com CotacaoCreateDTO/CotacaoUpdateDTO
 const formData = ref({
   fornecedorId: null,
@@ -338,6 +341,42 @@ const formularioValido = computed(() => {
          pedidoSelecionado.value
 })
 
+// Métodos de formatação de preço
+const formatarPrecoInput = (event) => {
+  let valor = event.target.value.replace(/\D/g, '') // Remove tudo que não é dígito
+
+  if (!valor) {
+    precoFormatado.value = ''
+    formData.value.preco = null
+    return
+  }
+
+  // Converte para número e divide por 100 para ter os centavos
+  const numero = parseInt(valor) / 100
+
+  // Formata com 2 casas decimais
+  precoFormatado.value = numero.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+
+  // Atualiza o valor numérico no formData
+  formData.value.preco = numero
+}
+
+const formatarPrecoExistente = (preco) => {
+  if (!preco && preco !== 0) {
+    precoFormatado.value = ''
+    return
+  }
+
+  const numero = parseFloat(preco)
+  precoFormatado.value = numero.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
 // Métodos de UI
 const mostrarAlerta = (mensagem, tipo = 'error') => {
   mensagemAlerta.value = mensagem
@@ -376,7 +415,7 @@ const closeDropdown = () => {
 const selecionarFornecedor = (fornecedor) => {
   formData.value.fornecedorId = fornecedor.id
   fornecedorSelecionadoNome.value = fornecedor.razaoSocial
-  pesquisaFornecedor.value = fornecedor.razaoSocial
+  pesquisaFornecedor.value = fornecedor.id.toString() // Apenas o número do ID
   closeDropdown()
 }
 
@@ -386,7 +425,7 @@ const selecionarPedido = (pedido) => {
 
   pedidoSelecionado.value = pedido.id
   pedidoSelecionadoLabel.value = `Pedido #${pedido.id} - ${getStatusLabel(pedido.status)}`
-  pesquisaPedido.value = `#${pedido.id}`
+  pesquisaPedido.value = pedido.id.toString() // Apenas o número do ID
 
   // Limpar item selecionado quando pedido muda
   formData.value.itemPedidoId = null
@@ -404,7 +443,7 @@ const selecionarPedido = (pedido) => {
 const selecionarItem = (item) => {
   formData.value.itemPedidoId = item.id
   itemSelecionadoNome.value = item.nome || 'Item sem nome'
-  pesquisaItem.value = item.nome || 'Item sem nome'
+  pesquisaItem.value = item.id.toString() // Apenas o número do ID
   closeDropdown()
 }
 
@@ -586,9 +625,11 @@ const carregarPedidos = async () => {
   }
 }
 
-const inicializarFormulario = () => {
+const inicializarFormulario = async () => {
   if (props.cotacao) {
     // Editando cotação existente
+    console.log('📝 Editando cotação:', props.cotacao)
+
     formData.value = {
       fornecedorId: props.cotacao.fornecedorId,
       itemPedidoId: props.cotacao.itemPedidoId,
@@ -597,10 +638,39 @@ const inicializarFormulario = () => {
       dataLimite: props.cotacao.dataLimite
     }
 
+    // Formatar preço existente
+    formatarPrecoExistente(props.cotacao.preco)
+
     tipoFornecedor.value = props.cotacao.tipoFornecedor || ''
-    console.log('📝 Editando cotação:', props.cotacao)
+
+    // Preencher o fornecedor selecionado
+    const fornecedor = fornecedoresDisponiveis.value.find(f =>
+      f.id === props.cotacao.fornecedorId &&
+      (f.tipo === props.cotacao.tipoFornecedor || f.tipo === props.cotacao.tipoFornecedor?.toLowerCase())
+    )
+    if (fornecedor) {
+      fornecedorSelecionadoNome.value = fornecedor.razaoSocial
+      pesquisaFornecedor.value = fornecedor.id.toString() // Apenas o número do ID
+    }
+
+    // Preencher o pedido selecionado - precisa encontrar qual pedido contém o item
+    const pedido = pedidosDisponiveis.value.find(p =>
+      p.itens?.some(item => item.id === props.cotacao.itemPedidoId)
+    )
+    if (pedido) {
+      pedidoSelecionado.value = pedido.id
+      pedidoSelecionadoLabel.value = `Pedido #${pedido.id} - ${getStatusLabel(pedido.status)}`
+      pesquisaPedido.value = pedido.id.toString() // Apenas o número do ID
+
+      // Preencher o item selecionado
+      const item = pedido.itens?.find(i => i.id === props.cotacao.itemPedidoId)
+      if (item) {
+        itemSelecionadoNome.value = item.nome || 'Item sem nome'
+        pesquisaItem.value = item.id.toString() // Apenas o número do ID
+      }
+    }
   } else {
-    // Nova cotação
+    // Nova cotação - resetar tudo
     formData.value = {
       fornecedorId: null,
       itemPedidoId: null,
@@ -609,6 +679,16 @@ const inicializarFormulario = () => {
       dataLimite: null
     }
     tipoFornecedor.value = ''
+    pedidoSelecionado.value = ''
+
+    // Limpar labels e pesquisas
+    fornecedorSelecionadoNome.value = ''
+    pedidoSelecionadoLabel.value = ''
+    itemSelecionadoNome.value = ''
+    pesquisaFornecedor.value = ''
+    pesquisaPedido.value = ''
+    pesquisaItem.value = ''
+    precoFormatado.value = ''
   }
 }
 
@@ -825,7 +905,7 @@ watch(() => props.cotacao, () => {
   top: 50%;
   transform: translateY(-50%);
   color: #6b7280;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .dropdown-list {
@@ -890,7 +970,13 @@ watch(() => props.cotacao, () => {
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 0.875rem;
+  font-family: Arial, sans-serif;
   transition: all 0.2s;
+}
+
+/* Garantir fonte Arial nos inputs de data */
+.form-input[type="date"] {
+  font-family: Arial, sans-serif;
 }
 
 .form-input:focus,
