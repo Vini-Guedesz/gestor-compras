@@ -483,6 +483,7 @@ const handleSubmit = async () => {
 
     const dadosParaSalvar = {
       fornecedorId: parseInt(formData.value.fornecedorId),
+      tipoFornecedor: tipoFornecedor.value,
       itemPedidoId: parseInt(formData.value.itemPedidoId),
       preco: parseFloat(formData.value.preco),
       prazoEntrega: prazoEntregaData

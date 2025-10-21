@@ -12,9 +12,19 @@ public class CotacaoMapper {
         if (cotacao == null) {
             return null;
         }
+
+        // Determinar o tipo de fornecedor
+        String tipoFornecedor = null;
+        if (cotacao.getFornecedorProduto() != null) {
+            tipoFornecedor = "PRODUTO";
+        } else if (cotacao.getFornecedorServico() != null) {
+            tipoFornecedor = "SERVICO";
+        }
+
         return new CotacaoDTO(
                 cotacao.getId(),
                 cotacao.getFornecedorId(),
+                tipoFornecedor,
                 cotacao.getItemPedido() != null ? cotacao.getItemPedido().getId() : null,
                 cotacao.getPreco(),
                 cotacao.getPrazoEntrega(),

@@ -7,6 +7,7 @@ import java.time.LocalDate;
 
 public record CotacaoCreateDTO(
         @NotNull Integer fornecedorId,
+        @NotNull String tipoFornecedor,
         @NotNull Long itemPedidoId,
         @NotNull BigDecimal preco,
         LocalDate prazoEntrega

@@ -124,8 +124,8 @@
 
           <select v-model="filtros.fornecedor" class="filter-select" @change="aplicarFiltros">
             <option value="">Todos os Fornecedores</option>
-            <option v-for="fornecedorId in fornecedoresUnicos" :key="fornecedorId" :value="fornecedorId">
-              Fornecedor #{{ fornecedorId }}
+            <option v-for="fornecedor in fornecedoresUnicos" :key="`${fornecedor.id}-${fornecedor.tipo}`" :value="fornecedor.id">
+              {{ fornecedor.nome }}
             </option>
           </select>
 
@@ -227,7 +227,7 @@
                 </td>
                 <td>
                   <div class="fornecedor-cell">
-                    <span class="fornecedor-id">Fornecedor #{{ cotacao.fornecedorId || 'N/A' }}</span>
+                    <span class="fornecedor-id">{{ getNomeFornecedor(cotacao.fornecedorId, cotacao.tipoFornecedor) }}</span>
                   </div>
                 </td>
                 <td>
@@ -297,7 +297,7 @@
             </div>
             <div class="card-body">
               <h3 class="card-title">Cotação #{{ cotacao.id }}</h3>
-              <p class="card-subtitle">Fornecedor #{{ cotacao.fornecedorId }}</p>
+              <p class="card-subtitle">{{ getNomeFornecedor(cotacao.fornecedorId, cotacao.tipoFornecedor) }}</p>
               <div class="card-meta">
                 <div class="meta-item">
                   <span class="meta-label">Item do Pedido:</span>
@@ -429,7 +429,7 @@
               <div class="info-grid">
                 <div class="info-item">
                   <span class="info-label">Fornecedor</span>
-                  <span class="info-value">{{ getNomeFornecedor(cotacaoSelecionada.fornecedorId) }}</span>
+                  <span class="info-value">{{ getNomeFornecedor(cotacaoSelecionada.fornecedorId, cotacaoSelecionada.tipoFornecedor) }}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">ID da Cotação</span>
@@ -481,7 +481,7 @@
                       <td>
                         <span class="cotacao-id">#{{ String(cotacao.id).padStart(3, '0') }}</span>
                       </td>
-                      <td>{{ getNomeFornecedor(cotacao.fornecedorId) }}</td>
+                      <td>{{ getNomeFornecedor(cotacao.fornecedorId, cotacao.tipoFornecedor) }}</td>
                       <td>
                         <span class="preco-comparativo" :class="{ 'destaque': index === 0 }">
                           R$ {{ formatarPreco(cotacao.preco) }}
@@ -595,13 +595,20 @@ const percentualFinalizadas = computed(() => {
 })
 
 const fornecedoresUnicos = computed(() => {
-  const fornecedores = new Set()
+  const fornecedoresMap = new Map()
   cotacoes.value.forEach(c => {
     if (c.fornecedorId) {
-      fornecedores.add(c.fornecedorId)
+      const key = `${c.fornecedorId}-${c.tipoFornecedor || ''}`
+      if (!fornecedoresMap.has(key)) {
+        fornecedoresMap.set(key, {
+          id: c.fornecedorId,
+          tipo: c.tipoFornecedor,
+          nome: getNomeFornecedor(c.fornecedorId, c.tipoFornecedor)
+        })
+      }
     }
   })
-  return Array.from(fornecedores).sort((a, b) => a - b)
+  return Array.from(fornecedoresMap.values()).sort((a, b) => a.nome.localeCompare(b.nome))
 })
 
 // Computadas
@@ -866,10 +873,18 @@ const fecharDetalhes = () => {
   itemSelecionado.value = null
 }
 
-const getNomeFornecedor = (fornecedorId) => {
+const getNomeFornecedor = (fornecedorId, tipoFornecedor) => {
   if (!fornecedorId) return 'Não informado'
 
-  const fornecedor = fornecedores.value.find(f => f.id === fornecedorId)
+  // Buscar fornecedor considerando o tipo
+  const fornecedor = fornecedores.value.find(f => {
+    // Comparar ID e tipo
+    const tipoMatch = tipoFornecedor ?
+      (f.tipo === tipoFornecedor || f.tipo === tipoFornecedor.toLowerCase()) :
+      true
+    return f.id === fornecedorId && tipoMatch
+  })
+
   if (fornecedor) {
     return fornecedor.razaoSocial || `Fornecedor #${fornecedorId}`
   }

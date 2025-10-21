@@ -52,15 +52,17 @@ public class CotacaoService {
     public CotacaoDTO createCotacao(CotacaoCreateDTO cotacaoCreateDTO) {
         Cotacao cotacao = cotacaoMapper.toEntity(cotacaoCreateDTO);
 
-        // Tenta buscar como fornecedor de produto primeiro
-        var fornecedorProduto = fornecedorDeProdutoRepository.findById(cotacaoCreateDTO.fornecedorId());
-        if (fornecedorProduto.isPresent()) {
-            cotacao.setFornecedorProduto(fornecedorProduto.get());
-        } else {
-            // Se não encontrar, busca como fornecedor de serviço
+        // Usa o tipo de fornecedor para buscar corretamente
+        if ("PRODUTO".equals(cotacaoCreateDTO.tipoFornecedor())) {
+            var fornecedorProduto = fornecedorDeProdutoRepository.findById(cotacaoCreateDTO.fornecedorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Fornecedor de Produto não encontrado"));
+            cotacao.setFornecedorProduto(fornecedorProduto);
+        } else if ("SERVICO".equals(cotacaoCreateDTO.tipoFornecedor())) {
             var fornecedorServico = fornecedorDeServicoRepository.findById(cotacaoCreateDTO.fornecedorId())
-                    .orElseThrow(() -> new EntityNotFoundException("Fornecedor not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Fornecedor de Serviço não encontrado"));
             cotacao.setFornecedorServico(fornecedorServico);
+        } else {
+            throw new IllegalArgumentException("Tipo de fornecedor inválido: " + cotacaoCreateDTO.tipoFornecedor());
         }
 
         ItemPedido itemPedido = itemPedidoRepository.findById(cotacaoCreateDTO.itemPedidoId())
