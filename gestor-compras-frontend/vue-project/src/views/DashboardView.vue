@@ -199,21 +199,12 @@ onMounted(() => {
 const handleQuickAction = (action) => {
   console.log('Ação rápida:', action)
 
-  // Navegar para a rota correspondente
+  // Navegar para a rota correspondente com query param para abrir modal
   if (action.route) {
-    router.push(action.route)
-
-    // Executar ação específica após navegar
-    setTimeout(() => {
-      if (action.action === 'novo-pedido') {
-        // Simular clique no botão "Novo Pedido" da página de pedidos
-        console.log('Ação: Abrir formulário de novo pedido')
-      } else if (action.action === 'nova-cotacao') {
-        console.log('Ação: Acessar cotações')
-      } else if (action.action === 'novo-fornecedor') {
-        console.log('Ação: Acessar fornecedores')
-      }
-    }, 100)
+    router.push({
+      path: action.route,
+      query: { action: action.action }
+    })
   }
 }
 

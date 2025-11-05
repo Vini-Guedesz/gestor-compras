@@ -314,21 +314,51 @@
 
               <!-- Aba Itens -->
               <div v-if="detalhesTabAtiva === 'itens'" class="detalhes-section">
-                <h4>Itens do Pedido</h4>
+                <div class="itens-header-section">
+                  <h4>Itens do Pedido</h4>
+
+                  <!-- Filtro de busca por ID do item -->
+                  <div class="filtro-itens-container" v-if="pedidoSelecionado?.itens?.length">
+                    <div class="filtro-input-wrapper">
+                      <svg class="filtro-icon" viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                      </svg>
+                      <input
+                        type="text"
+                        v-model="filtroItemId"
+                        placeholder="Buscar por ID, nome, descrição ou observação..."
+                        class="filtro-item-input"
+                      />
+                      <button
+                        v-if="filtroItemId"
+                        @click="filtroItemId = ''"
+                        class="limpar-filtro-btn"
+                        title="Limpar filtro"
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14">
+                          <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <span class="filtro-resultado-count">
+                      {{ itensFiltrados.length }} de {{ pedidoSelecionado.itens.length }} item(ns)
+                    </span>
+                  </div>
+                </div>
 
                 <div v-if="carregandoItens" class="loading-message">
                   <p>Carregando itens...</p>
                 </div>
 
-                <div v-else-if="pedidoSelecionado?.itens?.length" class="itens-list-detalhada">
-                  <div v-for="(item, index) in pedidoSelecionado.itens" :key="item.id || index" class="item-card-detalhado">
+                <div v-else-if="itensFiltrados.length" class="itens-list-detalhada">
+                  <div v-for="(item, index) in itensFiltrados" :key="item.id || index" class="item-card-detalhado">
                     <div class="item-header-detalhado">
                       <div class="item-numero-badge">Item #{{ index + 1 }}</div>
                       <div class="item-quantidade-badge">{{ item.quantidade }}x</div>
                     </div>
 
                     <div class="item-content">
-                      <h5 class="item-nome">{{ item.nome || item.produto || 'Item sem nome' }}</h5>
+                      <h5 class="item-nome" :class="{ 'highlight-match': filtroItemId && item.nome?.toLowerCase().includes(filtroItemId.toLowerCase()) }">{{ item.nome || item.produto || 'Item sem nome' }}</h5>
 
                       <div class="item-info-grid">
                         <div class="item-info" v-if="item.quantidade">
@@ -338,7 +368,7 @@
 
                         <div class="item-info" v-if="item.id">
                           <span class="info-label">ID do Item:</span>
-                          <span class="info-value">#{{ item.id }}</span>
+                          <span class="info-value" :class="{ 'highlight-match': filtroItemId && item.id?.toString().toLowerCase().includes(filtroItemId.toLowerCase()) }">#{{ item.id }}</span>
                         </div>
                       </div>
 
@@ -367,6 +397,12 @@
                   </div>
                 </div>
 
+                <div v-else-if="pedidoSelecionado?.itens?.length && !itensFiltrados.length" class="empty-message">
+                  <p>Nenhum item encontrado para "{{ filtroItemId }}"</p>
+                  <p class="empty-hint">Tente buscar por ID, nome, descrição ou observação do item</p>
+                  <button @click="filtroItemId = ''" class="btn-secondary-small">Limpar filtro</button>
+                </div>
+
                 <p v-else class="empty-message">Nenhum item cadastrado neste pedido.</p>
               </div>
             </div>
@@ -379,6 +415,7 @@
 
 <script>
 import { ref, onMounted, computed, defineAsyncComponent } from 'vue'
+import { useRoute } from 'vue-router'
 import DashboardHeader from '@/components/DashboardHeader.vue'
 import DashboardSidebar from '@/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
@@ -399,6 +436,9 @@ export default {
     ConfirmModal
   },
   setup() {
+    // Router
+    const route = useRoute()
+
     // Estados reativos
     const pedidos = ref([])
     const isLoading = ref(false)
@@ -426,6 +466,28 @@ export default {
 
     // Estados para itens
     const carregandoItens = ref(false)
+    const filtroItemId = ref('')
+
+    // Computed para itens filtrados - busca global inteligente
+    const itensFiltrados = computed(() => {
+      if (!pedidoSelecionado.value?.itens) return []
+
+      if (!filtroItemId.value.trim()) {
+        return pedidoSelecionado.value.itens
+      }
+
+      const filtro = filtroItemId.value.toLowerCase().trim()
+      return pedidoSelecionado.value.itens.filter(item => {
+        // Busca global em múltiplos campos
+        const buscaId = item.id?.toString().toLowerCase().includes(filtro)
+        const buscaNome = item.nome?.toLowerCase().includes(filtro)
+        const buscaDescricao = item.descricao?.toLowerCase().includes(filtro)
+        const buscaObservacao = item.observacao?.toLowerCase().includes(filtro)
+
+        // Retorna true se encontrar em qualquer um dos campos
+        return buscaId || buscaNome || buscaDescricao || buscaObservacao
+      })
+    })
 
     // Computed properties para mÃ©tricas
     const totalPedidos = computed(() => pedidos.value.length)
@@ -716,6 +778,7 @@ export default {
     const fecharDetalhes = () => {
       showDetalhesModal.value = false
       pedidoSelecionado.value = null
+      filtroItemId.value = '' // Limpa o filtro ao fechar o modal
     }
 
     const carregarDetalhesPedido = async (pedido) => {
@@ -1001,6 +1064,11 @@ export default {
     // Lifecycle
     onMounted(() => {
       carregarPedidos()
+
+      // Verificar se deve abrir modal de novo pedido (ação rápida do dashboard)
+      if (route.query.action === 'novo-pedido') {
+        showPedidoForm.value = true
+      }
     })
 
     return {
@@ -1011,6 +1079,7 @@ export default {
       filtroStatus,
       filtroPeriodo,
       gerandoRelatorio,
+      filtroItemId,
 
       // Modais
       showPedidoForm,
@@ -1023,6 +1092,7 @@ export default {
       // Detalhes
       detalhesTabAtiva,
       detalhesTabs,
+      carregandoItens,
 
       // Computed
       totalPedidos,
@@ -1032,6 +1102,7 @@ export default {
       percentualPendentes,
       valorTotalFormatado,
       pedidosFiltrados,
+      itensFiltrados,
 
       // MÃ©todos
       carregarPedidos,
@@ -2287,5 +2358,138 @@ export default {
   font-size: 0.75rem;
   background: #e5e7eb;
   color: #374151;
+}
+
+/* Estilos para filtro de itens */
+.itens-header-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.itens-header-section h4 {
+  margin: 0;
+}
+
+.filtro-itens-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filtro-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+  max-width: 400px;
+}
+
+.filtro-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.filtro-item-input {
+  width: 100%;
+  padding: 10px 40px 10px 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background: white;
+}
+
+.filtro-item-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filtro-item-input::placeholder {
+  color: #9ca3af;
+}
+
+.limpar-filtro-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.limpar-filtro-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.filtro-resultado-count {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.btn-secondary-small {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.btn-secondary-small:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.empty-hint {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+/* Destaque nos resultados da busca */
+.highlight-match {
+  background: linear-gradient(to bottom, transparent 0%, transparent 50%, #fef3c7 50%, #fef3c7 100%);
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+@media (max-width: 640px) {
+  .filtro-itens-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtro-input-wrapper {
+    max-width: none;
+  }
+
+  .filtro-resultado-count {
+    text-align: center;
+  }
 }
 </style>

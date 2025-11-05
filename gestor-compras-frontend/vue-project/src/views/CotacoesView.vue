@@ -537,6 +537,7 @@
 
 <script setup>
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+import { useRoute } from 'vue-router'
 import DashboardHeader from '../components/DashboardHeader.vue'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
 // Lazy loading para componente pesado
@@ -544,6 +545,9 @@ const CotacaoForm = defineAsyncComponent(() => import('../components/CotacaoForm
 import { cotacaoService } from '../services/cotacaoService.js'
 import fornecedorService from '../services/fornecedorService.js'
 import itemPedidoService from '../services/itemPedidoService.js'
+
+// Router
+const route = useRoute()
 
 // Estado reativo
 const gerandoRelatorio = ref(false)
@@ -1091,6 +1095,11 @@ onMounted(async () => {
     carregarCotacoes(),
     carregarFornecedores()
   ])
+
+  // Verificar se deve abrir modal de nova cotação (ação rápida do dashboard)
+  if (route.query.action === 'nova-cotacao') {
+    showCotacaoForm.value = true
+  }
 })
 </script>
 

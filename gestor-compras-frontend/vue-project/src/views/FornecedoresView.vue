@@ -418,6 +418,7 @@
 
 <script setup>
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+import { useRoute } from 'vue-router'
 import DashboardHeader from '@/components/DashboardHeader.vue'
 import DashboardSidebar from '@/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
@@ -428,6 +429,9 @@ import relatorioService from '@/services/relatorioService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
 import pedidoService from '@/services/pedidoService.js'
+
+// Router
+const route = useRoute()
 
 // Estados reativo
 const isLoading = ref(true)
@@ -852,6 +856,11 @@ const gerarRelatorioFornecedores = async () => {
 // Lifecycle
 onMounted(() => {
   carregarFornecedores()
+
+  // Verificar se deve abrir modal de cadastrar fornecedor (ação rápida do dashboard)
+  if (route.query.action === 'novo-fornecedor') {
+    showFornecedorForm.value = true
+  }
 })
 </script>
 
