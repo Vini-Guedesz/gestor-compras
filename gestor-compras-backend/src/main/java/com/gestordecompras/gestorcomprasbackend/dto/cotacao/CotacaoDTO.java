@@ -11,6 +11,7 @@ public record CotacaoDTO(
         BigDecimal preco,
         Integer prazoEmDiasUteis,
         LocalDate dataLimite,
-        String caminhoAnexo
+        String caminhoAnexo,
+        byte[] anexoPdf
 ) {
 }

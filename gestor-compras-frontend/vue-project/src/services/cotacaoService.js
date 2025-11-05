@@ -115,7 +115,36 @@ export const cotacaoService = {
 
       console.log('📤 Enviando dados para backend:', dadosCotacao)
 
-      const response = await api.post(BASE_URL, dadosCotacao)
+      // Preparar payload
+      const payload = {
+        fornecedorId: dadosCotacao.fornecedorId,
+        tipoFornecedor: dadosCotacao.tipoFornecedor,
+        itemPedidoId: dadosCotacao.itemPedidoId,
+        preco: dadosCotacao.preco,
+        prazoEmDiasUteis: dadosCotacao.prazoEmDiasUteis,
+        dataLimite: dadosCotacao.dataLimite
+      }
+
+      // Se houver arquivo PDF, converter para bytes
+      if (dadosCotacao.arquivoPdf) {
+        console.log('📄 Convertendo arquivo PDF para bytes...')
+
+        // Validar arquivo PDF
+        if (dadosCotacao.arquivoPdf.type !== 'application/pdf') {
+          throw new Error('Apenas arquivos PDF são permitidos')
+        }
+
+        const maxSize = 10 * 1024 * 1024 // 10MB
+        if (dadosCotacao.arquivoPdf.size > maxSize) {
+          throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
+        }
+
+        const bytesArray = await this.arquivoParaBytes(dadosCotacao.arquivoPdf)
+        payload.anexoPdf = bytesArray
+        console.log('✅ Arquivo PDF convertido para bytes:', bytesArray.length, 'bytes')
+      }
+
+      const response = await api.post(BASE_URL, payload)
       console.log('✅ Cotação criada no backend:', response)
       return response
 

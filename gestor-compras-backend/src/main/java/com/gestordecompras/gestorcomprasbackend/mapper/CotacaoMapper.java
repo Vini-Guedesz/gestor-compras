@@ -29,7 +29,8 @@ public class CotacaoMapper {
                 cotacao.getPreco(),
                 cotacao.getPrazoEmDiasUteis(),
                 cotacao.getDataLimite(),
-                cotacao.getCaminhoAnexo()
+                cotacao.getCaminhoAnexo(),
+                cotacao.getAnexoPdf()
         );
     }
 
@@ -42,6 +43,7 @@ public class CotacaoMapper {
         cotacao.setPreco(cotacaoCreateDTO.preco());
         cotacao.setPrazoEmDiasUteis(cotacaoCreateDTO.prazoEmDiasUteis());
         cotacao.setDataLimite(cotacaoCreateDTO.dataLimite());
+        cotacao.setAnexoPdf(cotacaoCreateDTO.anexoPdf());
 
         return cotacao;
     }
