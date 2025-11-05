@@ -765,10 +765,10 @@ const handleSubmit = () => {
     console.warn('⚠️ TENTATIVA DE MUDAR TIPO DE FORNECEDOR DETECTADA!')
     console.warn('   Tipo original:', props.fornecedor.tipo)
     console.warn('   Tipo atual no form:', formData.value.tipo)
-    
+
     const tipoOriginal = props.fornecedor.tipo === 'produto' ? 'Produto' : 'Serviço'
     const tipoNovo = formData.value.tipo === 'produto' ? 'Produto' : 'Serviço'
-    
+
     alert(
       `❌ Não é possível alterar o tipo do fornecedor!\n\n` +
       `Tipo atual: Fornecedor de ${tipoOriginal}\n` +
@@ -778,7 +778,7 @@ const handleSubmit = () => {
       `Para manter o tipo ${tipoOriginal}, continue a edição.\n` +
       `Para criar um fornecedor de ${tipoNovo}, cadastre um novo fornecedor.`
     )
-    
+
     // Reverter o tipo para o original
     formData.value.tipo = props.fornecedor.tipo
     return
