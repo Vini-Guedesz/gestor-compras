@@ -274,141 +274,166 @@
       <!-- Modal de Detalhes do Pedido -->
       <div v-if="showDetalhesModal" class="modal-overlay" @click="fecharDetalhes">
         <div class="detalhes-modal" @click.stop>
+          <!-- Header -->
           <div class="detalhes-header">
-            <h2>Pedido #{{ pedidoSelecionado?.id }}</h2>
+            <div class="header-title-group">
+              <h2>Detalhes do Pedido #{{ String(pedidoSelecionado?.id).padStart(3, '0') }}</h2>
+              <span class="status-badge" :class="getStatusClass(pedidoSelecionado?.status)">
+                {{ getStatusLabel(pedidoSelecionado?.status) }}
+              </span>
+            </div>
             <button @click="fecharDetalhes" class="close-button">&times;</button>
           </div>
-          <div class="detalhes-body">
-            <div class="detalhes-tabs">
-              <button
-                v-for="tab in detalhesTabs"
-                :key="tab.id"
-                :class="['tab-button', { active: detalhesTabAtiva === tab.id }]"
-                @click="detalhesTabAtiva = tab.id"
-              >
-                {{ tab.label }}
-              </button>
+
+          <div class="detalhes-body" v-if="pedidoSelecionado">
+            <!-- Informações do Pedido -->
+            <div class="detalhe-section">
+              <h3 class="section-title">📋 Informações do Pedido</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">ID do Pedido</span>
+                  <span class="info-value">#{{ pedidoSelecionado.id }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Data de Criação</span>
+                  <span class="info-value">{{ formatarDataCompleta(pedidoSelecionado.dataCriacao || pedidoSelecionado.dataPedido) }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Quantidade de Itens</span>
+                  <span class="info-value highlight">{{ pedidoSelecionado.itens?.length || 0 }} item(ns)</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Status</span>
+                  <span class="info-value" :class="getStatusClass(pedidoSelecionado.status)">
+                    {{ getStatusLabel(pedidoSelecionado.status) }}
+                  </span>
+                </div>
+                <div v-if="pedidoSelecionado.observacao" class="info-item full-width">
+                  <span class="info-label">Descrição/Observações</span>
+                  <span class="info-value">{{ pedidoSelecionado.observacao }}</span>
+                </div>
+              </div>
             </div>
 
-            <div class="detalhes-content">
-              <!-- Aba Informações -->
-              <div v-if="detalhesTabAtiva === 'info'" class="detalhes-section">
-                <div class="info-grid">
-                  <div class="info-group">
-                    <h4>Dados do Pedido</h4>
-                    <p><strong>ID:</strong> #{{ pedidoSelecionado?.id }}</p>
-                    <p><strong>Status:</strong>
-                      <span class="status-badge" :class="getStatusClass(pedidoSelecionado?.status)">
-                        {{ getStatusLabel(pedidoSelecionado?.status) }}
-                      </span>
-                    </p>
-                    <p><strong>Data de Criação:</strong> {{ formatarDataCompleta(pedidoSelecionado?.dataCriacao || pedidoSelecionado?.dataPedido) }}</p>
-                  </div>
+            <!-- Itens do Pedido -->
+            <div class="detalhe-section">
+              <h3 class="section-title">📦 Itens Solicitados</h3>
 
-                  <div class="info-group full-width">
-                    <h4>Descrição/Observações</h4>
-                    <p>{{ pedidoSelecionado?.observacao || 'Nenhuma descrição informada' }}</p>
-                  </div>
-                </div>
+              <div v-if="carregandoItens" class="loading-state">
+                <div class="loading-spinner-small"></div>
+                <span>Carregando itens...</span>
               </div>
 
-              <!-- Aba Itens -->
-              <div v-if="detalhesTabAtiva === 'itens'" class="detalhes-section">
-                <div class="itens-header-section">
-                  <h4>Itens do Pedido</h4>
-
-                  <!-- Filtro de busca por ID do item -->
-                  <div class="filtro-itens-container" v-if="pedidoSelecionado?.itens?.length">
-                    <div class="filtro-input-wrapper">
-                      <svg class="filtro-icon" viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-                      </svg>
-                      <input
-                        type="text"
-                        v-model="filtroItemId"
-                        placeholder="Buscar por ID, nome, descrição ou observação..."
-                        class="filtro-item-input"
-                      />
-                      <button
-                        v-if="filtroItemId"
-                        @click="filtroItemId = ''"
-                        class="limpar-filtro-btn"
-                        title="Limpar filtro"
-                      >
-                        <svg viewBox="0 0 24 24" width="14" height="14">
-                          <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <span class="filtro-resultado-count">
-                      {{ itensFiltrados.length }} de {{ pedidoSelecionado.itens.length }} item(ns)
-                    </span>
+              <div v-else-if="pedidoSelecionado?.itens?.length" class="itens-lista">
+                <div v-for="(item, index) in pedidoSelecionado.itens" :key="item.id || index" class="item-detalhado">
+                  <div class="item-header-info">
+                    <span class="item-badge">Item {{ index + 1 }}</span>
+                    <h4 class="item-nome">{{ item.nome || item.produto || 'Item sem nome' }}</h4>
                   </div>
-                </div>
 
-                <div v-if="carregandoItens" class="loading-message">
-                  <p>Carregando itens...</p>
-                </div>
-
-                <div v-else-if="itensFiltrados.length" class="itens-list-detalhada">
-                  <div v-for="(item, index) in itensFiltrados" :key="item.id || index" class="item-card-detalhado">
-                    <div class="item-header-detalhado">
-                      <div class="item-numero-badge">Item #{{ index + 1 }}</div>
-                      <div class="item-quantidade-badge">{{ item.quantidade }}x</div>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <span class="info-label">Quantidade</span>
+                      <span class="info-value highlight">{{ item.quantidade }}x</span>
                     </div>
+                    <div class="info-item">
+                      <span class="info-label">ID do Item</span>
+                      <span class="info-value">#{{ item.id }}</span>
+                    </div>
+                    <div v-if="item.descricao" class="info-item full-width">
+                      <span class="info-label">Descrição</span>
+                      <span class="info-value">{{ item.descricao }}</span>
+                    </div>
+                    <div v-if="item.observacao" class="info-item full-width">
+                      <span class="info-label">Observações</span>
+                      <span class="info-value">{{ item.observacao }}</span>
+                    </div>
+                  </div>
 
-                    <div class="item-content">
-                      <h5 class="item-nome" :class="{ 'highlight-match': filtroItemId && item.nome?.toLowerCase().includes(filtroItemId.toLowerCase()) }">{{ item.nome || item.produto || 'Item sem nome' }}</h5>
+                  <!-- Cotações deste Item -->
+                  <div v-if="item.cotacoes && item.cotacoes.length > 0" class="cotacoes-subsection">
+                    <h5 class="subsection-title">💰 Cotações Recebidas ({{ item.cotacoes.length }})</h5>
+                    <div class="cotacoes-cards">
+                      <div v-for="cotacao in item.cotacoes" :key="cotacao.id" class="cotacao-wrapper">
+                        <div class="cotacao-card">
+                          <div class="cotacao-fornecedor-info">
+                            <div class="fornecedor-detalhes">
+                              <div class="fornecedor-nome">{{ cotacao.fornecedorNome || `Fornecedor #${cotacao.fornecedorId}` }}</div>
+                              <div class="fornecedor-id">ID: #{{ cotacao.fornecedorId }}</div>
+                            </div>
+                          </div>
 
-                      <div class="item-info-grid">
-                        <div class="item-info" v-if="item.quantidade">
-                          <span class="info-label">Quantidade:</span>
-                          <span class="info-value">{{ item.quantidade }} unidade(s)</span>
-                        </div>
+                          <div class="cotacao-valores-grid">
+                            <div class="valor-item">
+                              <span class="valor-label">Preço</span>
+                              <span class="valor-preco">R$ {{ cotacao.preco?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
+                            </div>
+                            <div class="valor-item" v-if="cotacao.prazoEmDiasUteis">
+                              <span class="valor-label">Prazo</span>
+                              <span class="valor-text">{{ cotacao.prazoEmDiasUteis }} dias úteis</span>
+                            </div>
+                            <div class="valor-item" v-if="cotacao.dataLimite">
+                              <span class="valor-label">Validade</span>
+                              <span class="valor-text">{{ formatarData(cotacao.dataLimite) }}</span>
+                            </div>
+                          </div>
 
-                        <div class="item-info" v-if="item.id">
-                          <span class="info-label">ID do Item:</span>
-                          <span class="info-value" :class="{ 'highlight-match': filtroItemId && item.id?.toString().toLowerCase().includes(filtroItemId.toLowerCase()) }">#{{ item.id }}</span>
-                        </div>
-                      </div>
-
-                      <div class="item-descricao" v-if="item.descricao">
-                        <span class="info-label">Descrição:</span>
-                        <p class="info-value">{{ item.descricao }}</p>
-                      </div>
-
-                      <div class="item-observacao" v-if="item.observacao">
-                        <span class="info-label">Observações:</span>
-                        <p class="info-value">{{ item.observacao }}</p>
-                      </div>
-
-                      <!-- Cotações relacionadas ao item -->
-                      <div class="item-cotacoes" v-if="item.cotacoes && item.cotacoes.length > 0">
-                        <span class="info-label">Cotações Recebidas:</span>
-                        <div class="cotacoes-mini-list">
-                          <div v-for="cotacao in item.cotacoes" :key="cotacao.id" class="cotacao-mini-card">
-                            <div class="cotacao-fornecedor">{{ cotacao.fornecedorNome || `Fornecedor #${cotacao.fornecedorId}` }}</div>
-                            <div class="cotacao-valor">R$ {{ cotacao.preco?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</div>
-                            <div class="cotacao-prazo">Entrega: {{ formatarData(cotacao.prazoEntrega) }}</div>
+                          <div class="cotacao-acao">
+                            <button
+                              v-if="cotacao.anexoPdf || cotacao.caminhoAnexo"
+                              @click="togglePdfViewer(cotacao.id)"
+                              :class="['btn-ver-pdf-small', { 'active': pdfAberto === cotacao.id }]"
+                              :title="pdfAberto === cotacao.id ? 'Fechar PDF' : 'Visualizar PDF da cotação'"
+                            >
+                              <svg v-if="pdfAberto !== cotacao.id" viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,15H9V10H15V15L13,19H10Z"/>
+                              </svg>
+                              <svg v-else viewBox="0 0 24 24" width="16" height="16">
+                                <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                              </svg>
+                              {{ pdfAberto === cotacao.id ? 'Fechar' : 'Ver PDF' }}
+                            </button>
+                            <span v-else class="sem-pdf">Sem PDF</span>
                           </div>
                         </div>
+
+                        <!-- PDF Inline -->
+                        <div v-if="pdfAberto === cotacao.id" class="pdf-container">
+                          <div v-if="carregandoPdf" class="loading-state">
+                            <div class="loading-spinner-small"></div>
+                            <span>Carregando PDF...</span>
+                          </div>
+                          <div v-else-if="erroPdf" class="error-state">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                              <path fill="currentColor" d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                            </svg>
+                            <span>{{ erroPdf }}</span>
+                          </div>
+                          <iframe
+                            v-else-if="pdfUrl"
+                            :src="pdfUrl"
+                            class="pdf-iframe"
+                            frameborder="0"
+                          ></iframe>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div v-else class="no-cotacoes">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                      <path fill="currentColor" d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                    </svg>
+                    <span>Nenhuma cotação recebida para este item</span>
+                  </div>
                 </div>
-
-                <div v-else-if="pedidoSelecionado?.itens?.length && !itensFiltrados.length" class="empty-message">
-                  <p>Nenhum item encontrado para "{{ filtroItemId }}"</p>
-                  <p class="empty-hint">Tente buscar por ID, nome, descrição ou observação do item</p>
-                  <button @click="filtroItemId = ''" class="btn-secondary-small">Limpar filtro</button>
-                </div>
-
-                <p v-else class="empty-message">Nenhum item cadastrado neste pedido.</p>
               </div>
+
+              <p v-else class="empty-message">Nenhum item cadastrado neste pedido.</p>
             </div>
           </div>
         </div>
       </div>
+
     </main>
   </div>
 </template>
@@ -457,39 +482,16 @@ export default {
     const pedidoParaExcluir = ref(null)
     const pedidoSelecionado = ref(null)
 
-    // Detalhes modal
-    const detalhesTabAtiva = ref('info')
-    const detalhesTabs = ref([
-      { id: 'info', label: 'Informações' },
-      { id: 'itens', label: 'Itens' }
-    ])
-
     // Estados para itens
     const carregandoItens = ref(false)
-    const filtroItemId = ref('')
 
-    // Computed para itens filtrados - busca global inteligente
-    const itensFiltrados = computed(() => {
-      if (!pedidoSelecionado.value?.itens) return []
+    // Estados para visualizador de PDF inline
+    const pdfAberto = ref(null) // ID da cotação com PDF aberto
+    const carregandoPdf = ref(false)
+    const erroPdf = ref(null)
+    const pdfUrl = ref(null)
 
-      if (!filtroItemId.value.trim()) {
-        return pedidoSelecionado.value.itens
-      }
-
-      const filtro = filtroItemId.value.toLowerCase().trim()
-      return pedidoSelecionado.value.itens.filter(item => {
-        // Busca global em múltiplos campos
-        const buscaId = item.id?.toString().toLowerCase().includes(filtro)
-        const buscaNome = item.nome?.toLowerCase().includes(filtro)
-        const buscaDescricao = item.descricao?.toLowerCase().includes(filtro)
-        const buscaObservacao = item.observacao?.toLowerCase().includes(filtro)
-
-        // Retorna true se encontrar em qualquer um dos campos
-        return buscaId || buscaNome || buscaDescricao || buscaObservacao
-      })
-    })
-
-    // Computed properties para mÃ©tricas
+    // Computed properties para métricas
     const totalPedidos = computed(() => pedidos.value.length)
 
     const novosPedidosMes = computed(() => {
@@ -756,7 +758,6 @@ export default {
 
         // Usar o pedido completo do backend
         pedidoSelecionado.value = pedidoCompleto
-        detalhesTabAtiva.value = 'info'
         showDetalhesModal.value = true
 
         // Carregar detalhes das cotacoes para os itens
@@ -765,7 +766,6 @@ export default {
         console.error('Erro ao carregar pedido completo:', error)
         // Fallback para o pedido da lista
         pedidoSelecionado.value = { ...pedido, itens: pedido.itens ? [...pedido.itens] : [] }
-        detalhesTabAtiva.value = 'info'
         showDetalhesModal.value = true
       }
     }
@@ -778,7 +778,131 @@ export default {
     const fecharDetalhes = () => {
       showDetalhesModal.value = false
       pedidoSelecionado.value = null
-      filtroItemId.value = '' // Limpa o filtro ao fechar o modal
+    }
+
+    // Funções do visualizador de PDF inline
+    const togglePdfViewer = async (cotacaoId) => {
+      // Se o PDF já está aberto, fechar
+      if (pdfAberto.value === cotacaoId) {
+        fecharPdfViewer()
+        return
+      }
+
+      // Fechar PDF anterior se houver
+      if (pdfAberto.value !== null) {
+        fecharPdfViewer()
+      }
+
+      // Abrir novo PDF
+      console.log('Visualizando PDF da cotação:', cotacaoId)
+      pdfAberto.value = cotacaoId
+      carregandoPdf.value = true
+      erroPdf.value = null
+      pdfUrl.value = null
+
+      try {
+        // Buscar o PDF do backend
+        const response = await cotacaoService.buscarPorId(cotacaoId)
+        console.log('📄 Cotação recebida completa:', response)
+        console.log('📄 Tipo da resposta:', typeof response)
+        console.log('📄 Chaves da resposta:', response ? Object.keys(response) : 'null')
+
+        if (response && response.anexoPdf) {
+          console.log('📦 anexoPdf existe!')
+          console.log('📦 Tipo de anexoPdf:', typeof response.anexoPdf)
+          console.log('📦 É Array?', Array.isArray(response.anexoPdf))
+          console.log('📦 É Uint8Array?', response.anexoPdf instanceof Uint8Array)
+          console.log('📦 Constructor:', response.anexoPdf.constructor.name)
+          console.log('📦 Tamanho/length:', response.anexoPdf.length)
+          console.log('📦 Primeiros 10 bytes:', response.anexoPdf.slice ? response.anexoPdf.slice(0, 10) : 'não tem slice')
+
+          // Tentar diferentes conversões
+          let byteArray
+
+          if (Array.isArray(response.anexoPdf)) {
+            console.log('✓ Convertendo de Array para Uint8Array')
+            byteArray = new Uint8Array(response.anexoPdf)
+          } else if (response.anexoPdf instanceof Uint8Array) {
+            console.log('✓ Já é Uint8Array')
+            byteArray = response.anexoPdf
+          } else if (response.anexoPdf instanceof ArrayBuffer) {
+            console.log('✓ Convertendo de ArrayBuffer para Uint8Array')
+            byteArray = new Uint8Array(response.anexoPdf)
+          } else if (typeof response.anexoPdf === 'string') {
+            console.log('✓ Convertendo de String base64 para Uint8Array')
+            // Pode ser base64
+            try {
+              const binaryString = atob(response.anexoPdf)
+              byteArray = new Uint8Array(binaryString.length)
+              for (let i = 0; i < binaryString.length; i++) {
+                byteArray[i] = binaryString.charCodeAt(i)
+              }
+            } catch (e) {
+              console.error('Falha ao decodificar base64:', e)
+              throw new Error('Formato de PDF inválido (string não base64)')
+            }
+          } else if (typeof response.anexoPdf === 'object') {
+            console.log('✓ Tentando converter objeto para array')
+            // Pode ser um objeto com propriedades numéricas
+            const keys = Object.keys(response.anexoPdf)
+            byteArray = new Uint8Array(keys.length)
+            keys.forEach((key, index) => {
+              byteArray[index] = response.anexoPdf[key]
+            })
+          } else {
+            console.error('❌ Tipo desconhecido:', typeof response.anexoPdf)
+            throw new Error(`Formato de PDF inválido (tipo: ${typeof response.anexoPdf})`)
+          }
+
+          console.log('📄 ByteArray criado:', byteArray.length, 'bytes')
+          console.log('📄 Primeiros bytes:', Array.from(byteArray.slice(0, 10)))
+
+          // Verificar se parece um PDF válido (começa com %PDF)
+          const pdfHeader = String.fromCharCode(byteArray[0], byteArray[1], byteArray[2], byteArray[3])
+          console.log('📄 Header do arquivo:', pdfHeader)
+
+          if (!pdfHeader.includes('%PDF') && byteArray.length > 0) {
+            console.warn('⚠️ Arquivo não parece ser um PDF válido!')
+          }
+
+          // Criar Blob com tipo MIME correto
+          const blob = new Blob([byteArray], { type: 'application/pdf' })
+          console.log('📄 Blob criado:', blob.size, 'bytes, tipo:', blob.type)
+
+          // Criar URL do blob para o iframe
+          const url = URL.createObjectURL(blob)
+          pdfUrl.value = url
+          console.log('✅ PDF carregado com sucesso:', url)
+        } else if (response && response.caminhoAnexo) {
+          // Se houver caminho de anexo, usar URL direta
+          pdfUrl.value = response.caminhoAnexo
+          console.log('✅ PDF carregado via caminho:', response.caminhoAnexo)
+        } else {
+          console.error('❌ Nenhum PDF encontrado')
+          console.log('anexoPdf:', response?.anexoPdf)
+          console.log('caminhoAnexo:', response?.caminhoAnexo)
+          throw new Error('Nenhum PDF encontrado para esta cotação')
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar PDF:', error)
+        console.error('Stack:', error.stack)
+        erroPdf.value = error.message || 'Erro ao carregar PDF. Tente novamente.'
+      } finally {
+        carregandoPdf.value = false
+      }
+    }
+
+    const fecharPdfViewer = () => {
+      // Limpar URL do blob para liberar memória
+      if (pdfUrl.value && pdfUrl.value.startsWith('blob:')) {
+        URL.revokeObjectURL(pdfUrl.value)
+      }
+
+      pdfAberto.value = null
+      carregandoPdf.value = false
+      erroPdf.value = null
+      pdfUrl.value = null
+      console.log('📄 Visualizador de PDF fechado')
     }
 
     const carregarDetalhesPedido = async (pedido) => {
@@ -1079,7 +1203,6 @@ export default {
       filtroStatus,
       filtroPeriodo,
       gerandoRelatorio,
-      filtroItemId,
 
       // Modais
       showPedidoForm,
@@ -1089,10 +1212,16 @@ export default {
       pedidoParaExcluir,
       pedidoSelecionado,
 
-      // Detalhes
-      detalhesTabAtiva,
-      detalhesTabs,
+      // Estados para itens
       carregandoItens,
+
+      // Visualizador de PDF inline
+      pdfAberto,
+      carregandoPdf,
+      erroPdf,
+      pdfUrl,
+      togglePdfViewer,
+      fecharPdfViewer,
 
       // Computed
       totalPedidos,
@@ -1102,9 +1231,8 @@ export default {
       percentualPendentes,
       valorTotalFormatado,
       pedidosFiltrados,
-      itensFiltrados,
 
-      // MÃ©todos
+      // Métodos
       carregarPedidos,
       formatarData,
       formatarDataCompleta,
@@ -1749,59 +1877,6 @@ export default {
   color: #374151;
 }
 
-.detalhes-body {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.detalhes-tabs {
-  display: flex;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-}
-
-.tab-button {
-  padding: 16px 24px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-weight: 500;
-  color: #6b7280;
-  transition: all 0.2s ease;
-  border-bottom: 2px solid transparent;
-}
-
-.tab-button.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
-  background: white;
-}
-
-.tab-button:hover:not(.active) {
-  color: #374151;
-  background: #f3f4f6;
-}
-
-.detalhes-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 2rem;
-}
-
-.detalhes-section h4 {
-  margin: 0 0 1rem 0;
-  color: #2d3748;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.info-grid {
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
 
 .info-group {
   background: #f7fafc;
@@ -1958,6 +2033,332 @@ export default {
   padding: 2rem;
 }
 
+/* Seções de Detalhes - Padrão do Projeto */
+.detalhe-section {
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detalhe-section:last-child {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detalhes-body {
+  overflow-y: auto;
+  max-height: calc(90vh - 80px);
+}
+
+/* Info Grid - Layout de Informações */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.info-value {
+  font-size: 0.9375rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.info-value.highlight {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+/* Header do Modal */
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Lista de Itens */
+.itens-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.item-detalhado {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.item-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.item-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.item-nome {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Cotações Subsection */
+.cotacoes-subsection {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.subsection-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cotacoes-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cotacao-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cotacao-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.cotacao-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Informações do Fornecedor */
+.cotacao-fornecedor-info {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.fornecedor-detalhes {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fornecedor-nome {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.fornecedor-id {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* Valores da Cotação */
+.cotacao-valores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.valor-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.valor-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+.valor-preco {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.valor-text {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Ações da Cotação */
+.cotacao-acao {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.btn-ver-pdf-small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-ver-pdf-small:hover {
+  background: #2563eb;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+.btn-ver-pdf-small.active {
+  background: #dc2626;
+}
+
+.btn-ver-pdf-small.active:hover {
+  background: #b91c1c;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+}
+
+.btn-ver-pdf-small svg {
+  flex-shrink: 0;
+}
+
+.sem-pdf {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Container do PDF */
+.pdf-container {
+  width: 100%;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  margin-top: -8px;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+  display: block;
+}
+
+/* Estados de Loading e Erro */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.loading-spinner-small {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.error-state svg {
+  color: #dc2626;
+}
+
+.error-state span {
+  font-size: 0.875rem;
+}
+
+/* Sem Cotações */
+.no-cotacoes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 20px;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-style: italic;
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.no-cotacoes svg {
+  opacity: 0.5;
+}
+
 /* Responsividade */
 @media (max-width: 1024px) {
   .welcome-header {
@@ -2011,13 +2412,12 @@ export default {
     grid-template-columns: 1fr;
   }
 
-  .detalhes-tabs {
-    overflow-x: auto;
+  .cotacao-valores-grid {
+    grid-template-columns: 1fr;
   }
 
-  .tab-button {
-    white-space: nowrap;
-    min-width: 120px;
+  .pdf-iframe {
+    height: 400px;
   }
 }
 
@@ -2070,6 +2470,33 @@ export default {
 
   .historico-stats {
     grid-template-columns: 1fr;
+  }
+
+  .detalhe-section {
+    padding: 16px;
+  }
+
+  .item-detalhado {
+    padding: 16px;
+  }
+
+  .item-header-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .cotacao-card {
+    padding: 12px;
+  }
+
+  .btn-ver-pdf-small {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pdf-iframe {
+    height: 300px;
   }
 }
 
@@ -2490,6 +2917,422 @@ export default {
 
   .filtro-resultado-count {
     text-align: center;
+  }
+}
+
+/* ===========================================
+   NOVAS SEÇÕES - ITENS E COTAÇÕES
+   =========================================== */
+
+/* Seção de Itens */
+.secao-itens, .secao-cotacoes {
+  margin-bottom: 24px;
+}
+
+.secao-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.secao-header h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.secao-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.secao-separador {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+  margin: 32px 0;
+}
+
+/* Lista de Itens Simples */
+.itens-simples-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item-simples-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.item-simples-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.item-simples-numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.item-simples-info {
+  flex: 1;
+}
+
+.item-simples-nome {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.item-simples-detalhes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.item-simples-quantidade {
+  font-weight: 500;
+  color: #059669;
+}
+
+.item-simples-descricao {
+  font-style: italic;
+}
+
+/* Cotações por Item */
+.cotacoes-por-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cotacao-item-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.cotacao-item-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+.cotacao-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1F285F, #2563eb);
+  color: white;
+}
+
+.cotacao-item-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cotacao-item-numero {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cotacao-item-nome {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.cotacao-item-badge {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Lista de Fornecedores */
+.cotacoes-fornecedores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.cotacao-fornecedor-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cotacao-fornecedor-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.cotacao-fornecedor-card:hover {
+  background: white;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+.cotacao-fornecedor-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cotacao-fornecedor-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cotacao-fornecedor-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1F285F, #2563eb);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.cotacao-fornecedor-dados {
+  flex: 1;
+}
+
+.cotacao-fornecedor-nome {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.cotacao-fornecedor-id {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.cotacao-fornecedor-valores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cotacao-valor-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cotacao-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.cotacao-preco {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.cotacao-prazo-texto, .cotacao-validade {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.cotacao-acoes {
+  display: flex;
+  align-items: center;
+}
+
+.btn-ver-pdf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-ver-pdf:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+.btn-ver-pdf.active {
+  background: #dc2626;
+}
+
+.btn-ver-pdf.active:hover {
+  background: #b91c1c;
+}
+
+.btn-ver-pdf svg {
+  flex-shrink: 0;
+}
+
+/* Visualizador de PDF Inline */
+.pdf-viewer-inline {
+  width: 100%;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.pdf-iframe-inline {
+  width: 100%;
+  height: 600px;
+  border: none;
+  display: block;
+}
+
+.loading-pdf-inline,
+.error-pdf-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  min-height: 200px;
+}
+
+.loading-pdf-inline .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.error-pdf-inline svg {
+  color: #dc2626;
+}
+
+.error-pdf-inline p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.sem-pdf-texto {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.empty-cotacoes-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.empty-cotacoes-message svg {
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-cotacoes-message p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+/* Animação para loading spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cotacao-fornecedor-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cotacao-fornecedor-valores {
+    gap: 12px;
+  }
+
+  .cotacao-acoes {
+    justify-content: stretch;
+  }
+
+  .btn-ver-pdf {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .item-simples-card {
+    flex-direction: column;
+  }
+
+  .item-simples-numero {
+    align-self: flex-start;
+  }
+
+  .pdf-iframe-inline {
+    height: 400px;
   }
 }
 </style>

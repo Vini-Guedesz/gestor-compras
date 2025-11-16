@@ -175,6 +175,40 @@
                     Data limite de vencimento desta cotação (até quando o preço é válido)
                   </small>
                 </div>
+
+                <!-- Upload de PDF -->
+                <div class="form-group">
+                  <label class="form-label">PDF da Cotação</label>
+                  <div class="file-upload-wrapper">
+                    <input
+                      type="file"
+                      ref="fileInput"
+                      @change="handleFileUpload"
+                      accept="application/pdf"
+                      class="file-input"
+                      id="pdf-upload"
+                    />
+                    <label for="pdf-upload" class="file-label">
+                      <svg class="upload-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path fill="currentColor" d="M9 16v-6H5l7-7 7 7h-4v6H9zm-4 2h14v2H5v-2z"/>
+                      </svg>
+                      <span v-if="!arquivoPdf">Escolher arquivo PDF</span>
+                      <span v-else class="file-selected">{{ arquivoPdf.name }}</span>
+                    </label>
+                  </div>
+                  <small class="form-hint">
+                    Faça upload do PDF com a cotação do fornecedor (opcional)
+                  </small>
+                  <div v-if="arquivoPdf" class="file-info">
+                    <span class="file-name">📄 {{ arquivoPdf.name }}</span>
+                    <span class="file-size">({{ formatarTamanhoArquivo(arquivoPdf.size) }})</span>
+                    <button type="button" @click="removerArquivo" class="btn-remove-file">
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -246,13 +280,18 @@ const itemSelecionadoNome = ref('')
 // Campo de preço formatado
 const precoFormatado = ref('')
 
+// Arquivo PDF
+const arquivoPdf = ref(null)
+const fileInput = ref(null)
+
 // Dados do formulário - alinhado com CotacaoCreateDTO/CotacaoUpdateDTO
 const formData = ref({
   fornecedorId: null,
   itemPedidoId: null,
   preco: null,
   prazoEmDiasUteis: null,
-  dataLimite: null
+  dataLimite: null,
+  arquivoPdf: null
 })
 
 // Lista de fornecedores, itens e pedidos
@@ -377,6 +416,50 @@ const formatarPrecoExistente = (preco) => {
   })
 }
 
+// Métodos de manipulação de arquivo
+const handleFileUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    // Validar tipo de arquivo
+    if (file.type !== 'application/pdf') {
+      mostrarAlerta('Por favor, selecione apenas arquivos PDF', 'error')
+      event.target.value = ''
+      return
+    }
+
+    // Validar tamanho (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024 // 10MB em bytes
+    if (file.size > maxSize) {
+      mostrarAlerta('O arquivo deve ter no máximo 10MB', 'error')
+      event.target.value = ''
+      return
+    }
+
+    arquivoPdf.value = file
+    formData.value.arquivoPdf = file
+    console.log('📄 Arquivo PDF selecionado:', file.name, `(${formatarTamanhoArquivo(file.size)})`)
+  }
+}
+
+const removerArquivo = () => {
+  arquivoPdf.value = null
+  formData.value.arquivoPdf = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+  console.log('🗑️ Arquivo PDF removido')
+}
+
+const formatarTamanhoArquivo = (bytes) => {
+  if (bytes === 0) return '0 Bytes'
+
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
+}
+
 // Métodos de UI
 const mostrarAlerta = (mensagem, tipo = 'error') => {
   mensagemAlerta.value = mensagem
@@ -492,7 +575,12 @@ const handleSubmit = async () => {
       itemPedidoId: parseInt(formData.value.itemPedidoId),
       preco: parseFloat(formData.value.preco),
       prazoEmDiasUteis: formData.value.prazoEmDiasUteis ? parseInt(formData.value.prazoEmDiasUteis) : null,
-      dataLimite: formData.value.dataLimite || null
+      dataLimite: formData.value.dataLimite || null,
+      arquivoPdf: formData.value.arquivoPdf || null
+    }
+
+    if (dadosParaSalvar.arquivoPdf) {
+      console.log('📄 Incluindo arquivo PDF:', dadosParaSalvar.arquivoPdf.name)
     }
 
     // Validar conversões
@@ -676,7 +764,8 @@ const inicializarFormulario = async () => {
       itemPedidoId: null,
       preco: null,
       prazoEmDiasUteis: null,
-      dataLimite: null
+      dataLimite: null,
+      arquivoPdf: null
     }
     tipoFornecedor.value = ''
     pedidoSelecionado.value = ''
@@ -689,6 +778,12 @@ const inicializarFormulario = async () => {
     pesquisaPedido.value = ''
     pesquisaItem.value = ''
     precoFormatado.value = ''
+
+    // Limpar arquivo
+    arquivoPdf.value = null
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
   }
 }
 
@@ -1419,5 +1514,92 @@ watch(() => props.cotacao, () => {
   color: #059669;
   font-weight: 500;
   font-style: normal;
+}
+
+/* Upload de arquivo */
+.file-upload-wrapper {
+  position: relative;
+}
+
+.file-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.file-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 2px dashed #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.file-label:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.upload-icon {
+  color: currentColor;
+}
+
+.file-selected {
+  color: #059669;
+  font-weight: 600;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.file-name {
+  flex: 1;
+  color: #059669;
+  font-weight: 500;
+}
+
+.file-size {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.btn-remove-file {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remove-file:hover {
+  background: #fee2e2;
+}
+
+.btn-remove-file svg {
+  display: block;
 }
 </style>

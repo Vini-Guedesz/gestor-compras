@@ -11,6 +11,7 @@ public record CotacaoCreateDTO(
         @NotNull Long itemPedidoId,
         @NotNull BigDecimal preco,
         Integer prazoEmDiasUteis,
-        LocalDate dataLimite
+        LocalDate dataLimite,
+        byte[] anexoPdf
 ) {
 }
