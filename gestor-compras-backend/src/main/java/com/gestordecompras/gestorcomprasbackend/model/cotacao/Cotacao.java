@@ -3,6 +3,7 @@ package com.gestordecompras.gestorcomprasbackend.model.cotacao;
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeProduto;
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeServico;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
+import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "cotacao")
@@ -30,9 +33,17 @@ public class Cotacao {
     @JoinColumn(name = "fornecedor_servico_id")
     private FornecedorDeServico fornecedorServico;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_pedido_id")
-    private ItemPedido itemPedido;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "solicitacao_de_pedido_id")
+    private SolicitacaoDePedido solicitacaoDePedido;
+
+    @ManyToMany
+    @JoinTable(
+        name = "cotacao_item_pedido",
+        joinColumns = @JoinColumn(name = "cotacao_id"),
+        inverseJoinColumns = @JoinColumn(name = "item_pedido_id")
+    )
+    private Set<ItemPedido> itensPedido = new HashSet<>();
 
     private BigDecimal preco;
 

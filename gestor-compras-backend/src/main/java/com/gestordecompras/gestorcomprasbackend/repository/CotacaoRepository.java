@@ -18,10 +18,10 @@ public interface CotacaoRepository extends JpaRepository<Cotacao, Long> {
     @Query("SELECT MAX(c.preco) FROM Cotacao c")
     BigDecimal findMaxPreco();
 
-    @Query("SELECT c FROM Cotacao c " +
-           "LEFT JOIN FETCH c.itemPedido " +
+    @Query("SELECT DISTINCT c FROM Cotacao c " +
+           "LEFT JOIN FETCH c.itensPedido ip " +
            "LEFT JOIN FETCH c.fornecedorProduto " +
            "LEFT JOIN FETCH c.fornecedorServico " +
-           "WHERE c.itemPedido.id = :itemPedidoId")
+           "WHERE :itemPedidoId MEMBER OF c.itensPedido")
     List<Cotacao> findByItemPedidoIdWithFornecedores(@Param("itemPedidoId") Long itemPedidoId);
 }
