@@ -748,12 +748,12 @@ const buscarItemPedidoComCache = async (itemPedidoId) => {
   try {
     console.log(`🔄 Buscando item ${itemPedidoId} do backend...`)
     const item = await itemPedidoService.buscarPorId(itemPedidoId)
-    
+
     if (item) {
       cacheItensPedido.value.set(itemPedidoId, item)
       console.log(`✅ Item ${itemPedidoId} adicionado ao cache`)
     }
-    
+
     return item
   } catch (error) {
     console.warn(`⚠️ Erro ao buscar item ${itemPedidoId}:`, error)
@@ -774,12 +774,12 @@ const buscarPedidoComCache = async (pedidoId) => {
   try {
     console.log(`🔄 Buscando pedido ${pedidoId} do backend...`)
     const pedido = await pedidoService.buscarPorId(pedidoId)
-    
+
     if (pedido) {
       cachePedidos.value.set(pedidoId, pedido)
       console.log(`✅ Pedido ${pedidoId} adicionado ao cache`)
     }
-    
+
     return pedido
   } catch (error) {
     console.warn(`⚠️ Erro ao buscar pedido ${pedidoId}:`, error)

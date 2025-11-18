@@ -922,7 +922,7 @@ export default {
         const idsItens = pedido.itens
           .map(item => item?.id)
           .filter(id => id != null && id !== undefined)
-        
+
         if (idsItens.length === 0) {
           console.warn('⚠️ Nenhum item com ID válido encontrado no pedido')
           // Garantir que todos os itens tenham array vazio de cotações
@@ -963,7 +963,7 @@ export default {
         console.log('✅ Fornecedores mapeados:', Object.keys(fornecedoresMap).length)
 
         // Filtrar apenas cotações relacionadas aos itens deste pedido (otimização)
-        const cotacoesRelacionadas = todasCotacoes.filter(cot => 
+        const cotacoesRelacionadas = todasCotacoes.filter(cot =>
           cot?.itemPedidoId && idsItens.includes(cot.itemPedidoId)
         )
         console.log('💰 Cotações relacionadas a este pedido:', cotacoesRelacionadas.length)
@@ -978,7 +978,7 @@ export default {
         // IMPORTANTE: ItemPedidoDTO não inclui cotacoes, então enriquecemos aqui
         pedido.itens.forEach(item => {
           if (item?.id) {
-            const cotacoesDoItem = cotacoesComFornecedor.filter(cot => 
+            const cotacoesDoItem = cotacoesComFornecedor.filter(cot =>
               cot.itemPedidoId === item.id
             )
             item.cotacoes = cotacoesDoItem

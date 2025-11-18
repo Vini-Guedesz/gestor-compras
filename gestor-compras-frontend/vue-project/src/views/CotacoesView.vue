@@ -859,13 +859,13 @@ const buscarItemPedidoComCache = async (itemPedidoId) => {
   try {
     console.log(`🔄 Buscando item ${itemPedidoId} do backend...`)
     const item = await itemPedidoService.buscarPorId(itemPedidoId)
-    
+
     // Adicionar ao cache
     if (item) {
       cacheItensPedido.value.set(itemPedidoId, item)
       console.log(`✅ Item ${itemPedidoId} adicionado ao cache`)
     }
-    
+
     return item
   } catch (error) {
     console.error(`❌ Erro ao buscar item ${itemPedidoId}:`, error)
