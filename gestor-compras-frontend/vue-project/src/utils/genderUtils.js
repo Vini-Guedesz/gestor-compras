@@ -38,7 +38,7 @@ export function getUserGender(user) {
   }
 
   // Caso contrário, inferir pelo nome
-  const nomeCompleto = (user.name || user.username || '').toLowerCase()
+  const nomeCompleto = (user.username || user.name || '').toLowerCase()
   const primeiroNome = nomeCompleto.split(' ')[0]
 
   // Verificar se o primeiro nome está na lista de nomes femininos
@@ -86,7 +86,12 @@ export function getWelcomeMessage(user, tipo = 'volta') {
  * @returns {string} - Role formatado com gênero correto
  */
 export function getUserRole(user, defaultRole = 'Compras') {
-  if (user?.role) return user.role
+  // Se o usuário tem role do backend (ADMIN ou USER), retornar ele
+  if (user?.role === 'ADMIN') {
+    return 'Administrador'
+  } else if (user?.role === 'USER') {
+    return 'Usuário'
+  }
 
   const genero = getUserGender(user)
 

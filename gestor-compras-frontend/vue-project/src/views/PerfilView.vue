@@ -91,7 +91,7 @@
                                 <div class="form-group">
                                     <label class="form-label">Função/Perfil</label>
                                     <input type="text" v-model="formData.funcao" class="form-input" disabled />
-                                    <small class="form-hint">Este campo é definido pelo administrador</small>
+                                    <small class="form-hint">Role do sistema (ADMIN ou USER)</small>
                                 </div>
                             </div>
                         </form>
@@ -137,11 +137,11 @@ const notificationMessage = ref('')
 
 // Dados do formulário - usar dados reais do usuário logado
 const formData = ref({
-    nome: authStore.user?.name || '',
+    nome: authStore.user?.username || 'Usuário',
     email: authStore.user?.email || '',
-    telefone: authStore.user?.telefone || '',
-    unidadeFuncional: authStore.user?.unidadeFuncional || '',
-    funcao: authStore.user?.funcao || authStore.user?.role || ''
+    telefone: '',  // Campo não existe no backend atual
+    unidadeFuncional: '',  // Campo não existe no backend atual
+    funcao: authStore.user?.role || 'USER'
 })
 
 // Dados originais para cancelamento
@@ -202,8 +202,9 @@ const hideNotification = () => {
 onMounted(() => {
     // Carregar dados do usuário da store ou API
     if (authStore.user) {
-        formData.value.nome = authStore.user.name || 'Usuário'
-        formData.value.email = authStore.user.email || 'joao.silva@empresa.com'
+        formData.value.nome = authStore.user.username || 'Usuário'
+        formData.value.email = authStore.user.email || ''
+        formData.value.funcao = authStore.user.role || 'USER'
     }
 })
 </script>

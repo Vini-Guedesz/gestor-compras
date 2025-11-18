@@ -564,6 +564,9 @@ const itensPorPagina = ref(10)
 const carregandoCotacoes = ref(false)
 const operacaoEmAndamento = ref(false)
 
+// Cache de itens de pedido para evitar requisições duplicadas
+const cacheItensPedido = ref(new Map())
+
 // Filtros
 const filtros = ref({
   status: '',
@@ -839,6 +842,37 @@ const isDataLimiteVencida = (dataLimite) => {
   return limite < hoje
 }
 
+// Função auxiliar para buscar item de pedido com cache
+const buscarItemPedidoComCache = async (itemPedidoId) => {
+  if (!itemPedidoId) {
+    console.warn('⚠️ itemPedidoId não fornecido')
+    return null
+  }
+
+  // Verificar se já está no cache
+  if (cacheItensPedido.value.has(itemPedidoId)) {
+    console.log(`✅ Item ${itemPedidoId} encontrado no cache`)
+    return cacheItensPedido.value.get(itemPedidoId)
+  }
+
+  // Buscar do backend se não estiver no cache
+  try {
+    console.log(`🔄 Buscando item ${itemPedidoId} do backend...`)
+    const item = await itemPedidoService.buscarPorId(itemPedidoId)
+    
+    // Adicionar ao cache
+    if (item) {
+      cacheItensPedido.value.set(itemPedidoId, item)
+      console.log(`✅ Item ${itemPedidoId} adicionado ao cache`)
+    }
+    
+    return item
+  } catch (error) {
+    console.error(`❌ Erro ao buscar item ${itemPedidoId}:`, error)
+    return null
+  }
+}
+
 const podeEditar = () => {
   // Como não há campo status no backend, permite editar sempre
   // Pode adicionar lógica baseada em data ou outros critérios se necessário
@@ -930,11 +964,14 @@ const visualizarCotacao = async (id) => {
     if (cotacao) {
       cotacaoSelecionada.value = cotacao
 
-      // Buscar detalhes do item do pedido
-      try {
-        itemSelecionado.value = await itemPedidoService.buscarPorId(cotacao.itemPedidoId)
-      } catch (error) {
-        console.warn('⚠️ Não foi possível carregar detalhes do item:', error)
+      // Buscar detalhes do item do pedido usando cache
+      if (cotacao.itemPedidoId) {
+        itemSelecionado.value = await buscarItemPedidoComCache(cotacao.itemPedidoId)
+        if (!itemSelecionado.value) {
+          console.warn('⚠️ Item do pedido não encontrado:', cotacao.itemPedidoId)
+        }
+      } else {
+        console.warn('⚠️ Cotação sem itemPedidoId')
         itemSelecionado.value = null
       }
 
@@ -944,11 +981,14 @@ const visualizarCotacao = async (id) => {
       const response = await cotacaoService.buscarPorId(id)
       cotacaoSelecionada.value = response
 
-      // Buscar detalhes do item do pedido
-      try {
-        itemSelecionado.value = await itemPedidoService.buscarPorId(response.itemPedidoId)
-      } catch (error) {
-        console.warn('⚠️ Não foi possível carregar detalhes do item:', error)
+      // Buscar detalhes do item do pedido usando cache
+      if (response.itemPedidoId) {
+        itemSelecionado.value = await buscarItemPedidoComCache(response.itemPedidoId)
+        if (!itemSelecionado.value) {
+          console.warn('⚠️ Item do pedido não encontrado:', response.itemPedidoId)
+        }
+      } else {
+        console.warn('⚠️ Cotação sem itemPedidoId')
         itemSelecionado.value = null
       }
 

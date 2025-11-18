@@ -916,53 +916,92 @@ export default {
 
       try {
         carregandoItens.value = true
-        console.log('Carregando cotações...')
+        console.log('🔄 Carregando cotações para os itens do pedido...')
 
-        // Buscar todas as cotaÃ§Ãµes
-        const todasCotacoes = await cotacaoService.listar()
-        console.log('œ… Cotações carregadas:', todasCotacoes.length)
+        // IDs dos itens deste pedido - validação antecipada
+        const idsItens = pedido.itens
+          .map(item => item?.id)
+          .filter(id => id != null && id !== undefined)
+        
+        if (idsItens.length === 0) {
+          console.warn('⚠️ Nenhum item com ID válido encontrado no pedido')
+          // Garantir que todos os itens tenham array vazio de cotações
+          pedido.itens.forEach(item => {
+            item.cotacoes = []
+          })
+          return
+        }
 
-        // Buscar todos os fornecedores para mapear nomes
-        const fornecedoresProduto = await fornecedorService.listarProdutos()
-        const fornecedoresServico = await fornecedorService.listarServicos()
-        const todosFornecedores = [...fornecedoresProduto, ...fornecedoresServico]
-        console.log('DEBUG - Fornecedores carregados:', todosFornecedores.length)
+        console.log('📋 IDs dos itens:', idsItens)
+
+        // Buscar dados em paralelo para otimização
+        const [todasCotacoes, fornecedoresProduto, fornecedoresServico] = await Promise.all([
+          cotacaoService.listar().catch(err => {
+            console.error('❌ Erro ao carregar cotações:', err)
+            return []
+          }),
+          fornecedorService.listarProdutos().catch(err => {
+            console.error('❌ Erro ao carregar fornecedores de produto:', err)
+            return []
+          }),
+          fornecedorService.listarServicos().catch(err => {
+            console.error('❌ Erro ao carregar fornecedores de serviço:', err)
+            return []
+          })
+        ])
+
+        console.log('✅ Cotações carregadas:', todasCotacoes.length)
 
         // Criar mapa de fornecedores por ID
+        const todosFornecedores = [...fornecedoresProduto, ...fornecedoresServico]
         const fornecedoresMap = {}
         todosFornecedores.forEach(f => {
-          fornecedoresMap[f.id] = f.razaoSocial || 'Fornecedor desconhecido'
+          if (f?.id) {
+            fornecedoresMap[f.id] = f.razaoSocial || 'Fornecedor desconhecido'
+          }
         })
+        console.log('✅ Fornecedores mapeados:', Object.keys(fornecedoresMap).length)
 
-        // IDs dos itens deste pedido
-        const idsItens = pedido.itens.map(item => item.id).filter(id => id != null)
-        console.log('IDs dos itens:', idsItens)
-
-        // Filtrar cotaÃ§Ãµes relacionadas aos itens do pedido
-        const cotacoesRelacionadas = todasCotacoes.filter(cot =>
-          idsItens.includes(cot.itemPedidoId)
+        // Filtrar apenas cotações relacionadas aos itens deste pedido (otimização)
+        const cotacoesRelacionadas = todasCotacoes.filter(cot => 
+          cot?.itemPedidoId && idsItens.includes(cot.itemPedidoId)
         )
-        console.log('œ… Cotações relacionadas:', cotacoesRelacionadas.length)
+        console.log('💰 Cotações relacionadas a este pedido:', cotacoesRelacionadas.length)
 
-        // Enriquecer cotaÃ§Ãµes com nome do fornecedor
+        // Enriquecer cotações com nome do fornecedor
         const cotacoesComFornecedor = cotacoesRelacionadas.map(cot => ({
           ...cot,
           fornecedorNome: fornecedoresMap[cot.fornecedorId] || `Fornecedor #${cot.fornecedorId}`
         }))
 
-        // Adicionar cotaÃ§Ãµes aos itens
+        // Adicionar cotações aos itens correspondentes
+        // IMPORTANTE: ItemPedidoDTO não inclui cotacoes, então enriquecemos aqui
         pedido.itens.forEach(item => {
-          if (item.id) {
-            const cotacoesDoItem = cotacoesComFornecedor.filter(cot => cot.itemPedidoId === item.id)
+          if (item?.id) {
+            const cotacoesDoItem = cotacoesComFornecedor.filter(cot => 
+              cot.itemPedidoId === item.id
+            )
             item.cotacoes = cotacoesDoItem
-            console.log(`Item ${item.id} - ${item.nome}: ${cotacoesDoItem.length} cotaÃ§Ãµes`)
+            console.log(`📦 Item ${item.id} - ${item.nome}: ${cotacoesDoItem.length} cotação(ões)`)
+          } else {
+            // Garantir array vazio para itens sem ID
+            item.cotacoes = []
+            console.warn('⚠️ Item sem ID encontrado:', item)
           }
         })
 
-        console.log('Detalhes carregados com sucesso!')
+        console.log('✅ Detalhes do pedido carregados com sucesso!')
 
       } catch (error) {
-        console.error('Erro ao carregar detalhes do pedido:', error)
+        console.error('❌ Erro ao carregar detalhes do pedido:', error)
+        // Garantir que todos os itens tenham cotacoes como array vazio em caso de erro
+        if (pedido?.itens) {
+          pedido.itens.forEach(item => {
+            if (item && !Array.isArray(item.cotacoes)) {
+              item.cotacoes = []
+            }
+          })
+        }
       } finally {
         carregandoItens.value = false
       }

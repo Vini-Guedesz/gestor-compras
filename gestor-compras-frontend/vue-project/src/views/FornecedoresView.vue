@@ -469,6 +469,10 @@ const historicoCompras = ref({
 
 const carregandoHistorico = ref(false)
 
+// Cache para itens de pedido e pedidos (evitar requisições duplicadas)
+const cacheItensPedido = ref(new Map())
+const cachePedidos = ref(new Map())
+
 // Computeds
 const todosFornecedores = computed(() => {
   const produtoComTipo = fornecedoresProduto.value.map(f => ({ ...f, tipo: 'produto' }))
@@ -718,12 +722,68 @@ const visualizarFornecedor = async (fornecedor) => {
 const fecharPerfil = () => {
   showPerfilModal.value = false
   fornecedorSelecionado.value = null
-  // Limpar histórico ao fechar
+  // Limpar histórico e caches ao fechar
   historicoCompras.value = {
     total: 0,
     valor: 0,
     ultimoPedido: '-',
     cotacoes: []
+  }
+  // Limpar caches para liberar memória
+  cacheItensPedido.value.clear()
+  cachePedidos.value.clear()
+}
+
+// Funções auxiliares para buscar com cache
+const buscarItemPedidoComCache = async (itemPedidoId) => {
+  if (!itemPedidoId) return null
+
+  // Verificar cache primeiro
+  if (cacheItensPedido.value.has(itemPedidoId)) {
+    console.log(`✅ Item ${itemPedidoId} encontrado no cache`)
+    return cacheItensPedido.value.get(itemPedidoId)
+  }
+
+  // Buscar do backend
+  try {
+    console.log(`🔄 Buscando item ${itemPedidoId} do backend...`)
+    const item = await itemPedidoService.buscarPorId(itemPedidoId)
+    
+    if (item) {
+      cacheItensPedido.value.set(itemPedidoId, item)
+      console.log(`✅ Item ${itemPedidoId} adicionado ao cache`)
+    }
+    
+    return item
+  } catch (error) {
+    console.warn(`⚠️ Erro ao buscar item ${itemPedidoId}:`, error)
+    return null
+  }
+}
+
+const buscarPedidoComCache = async (pedidoId) => {
+  if (!pedidoId) return null
+
+  // Verificar cache primeiro
+  if (cachePedidos.value.has(pedidoId)) {
+    console.log(`✅ Pedido ${pedidoId} encontrado no cache`)
+    return cachePedidos.value.get(pedidoId)
+  }
+
+  // Buscar do backend
+  try {
+    console.log(`🔄 Buscando pedido ${pedidoId} do backend...`)
+    const pedido = await pedidoService.buscarPorId(pedidoId)
+    
+    if (pedido) {
+      cachePedidos.value.set(pedidoId, pedido)
+      console.log(`✅ Pedido ${pedidoId} adicionado ao cache`)
+    }
+    
+    return pedido
+  } catch (error) {
+    console.warn(`⚠️ Erro ao buscar pedido ${pedidoId}:`, error)
+    return null
   }
 }
 
@@ -750,24 +810,20 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
         ? new Date(ultimaCotacao.dataCotacao).toLocaleDateString('pt-BR')
         : '-'
 
-      // Buscar detalhes dos itens dos pedidos para cada cotação
+      // Buscar detalhes dos itens dos pedidos para cada cotação usando cache
       const cotacoesComDetalhes = await Promise.all(
         cotacoesOrdenadas.map(async (cot) => {
           let itemPedido = null
           let pedido = null
 
-          try {
-            // Buscar o item do pedido relacionado
-            if (cot.itemPedidoId) {
-              itemPedido = await itemPedidoService.buscarPorId(cot.itemPedidoId)
+          // Buscar o item do pedido relacionado usando cache
+          if (cot.itemPedidoId) {
+            itemPedido = await buscarItemPedidoComCache(cot.itemPedidoId)
 
-              // Se tiver o item, buscar o pedido completo
-              if (itemPedido?.solicitacaoDePedidoId) {
-                pedido = await pedidoService.buscarPorId(itemPedido.solicitacaoDePedidoId)
-              }
+            // Se tiver o item, buscar o pedido completo usando cache
+            if (itemPedido?.solicitacaoDePedidoId) {
+              pedido = await buscarPedidoComCache(itemPedido.solicitacaoDePedidoId)
             }
-          } catch (err) {
-            console.warn('Erro ao buscar detalhes do item:', err)
           }
 
           return {

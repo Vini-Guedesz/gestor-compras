@@ -86,12 +86,22 @@ export const authService = {
         throw new Error('Token expirado')
       }
 
+      // Extrai role do JWT (formato: [{"authority": "ROLE_ADMIN"}])
+      let userRole = 'USER'
+      if (payload.roles && Array.isArray(payload.roles)) {
+        const roleObj = payload.roles[0]
+        if (roleObj && roleObj.authority) {
+          // Remove o prefixo "ROLE_" se existir
+          userRole = roleObj.authority.replace('ROLE_', '')
+        }
+      }
+
       return {
         success: true,
         user: {
-          id: payload.sub,
-          email: payload.sub, // O subject geralmente é o email/username
-          name: payload.name || 'Usuário'
+          email: payload.sub,           // Subject é o email
+          username: payload.sub,         // Username também é o email no backend atual
+          role: userRole                // ADMIN ou USER
         }
       }
     } catch (error) {
