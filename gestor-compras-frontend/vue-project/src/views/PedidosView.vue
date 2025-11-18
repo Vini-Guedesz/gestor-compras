@@ -441,11 +441,11 @@
 <script>
 import { ref, onMounted, computed, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
-import DashboardHeader from '@/components/DashboardHeader.vue'
-import DashboardSidebar from '@/components/DashboardSidebar.vue'
+import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
+import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
-const PedidoForm = defineAsyncComponent(() => import('@/components/PedidoForm.vue'))
-const ConfirmModal = defineAsyncComponent(() => import('@/components/ConfirmModal.vue'))
+const PedidoForm = defineAsyncComponent(() => import('@/features/pedidos/components/pedido-wizard/PedidoWizard.vue'))
+const ConfirmModal = defineAsyncComponent(() => import('@/components/ui/modals/ConfirmModal.vue'))
 import pedidoService from '@/services/pedidoService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import fornecedorService from '@/services/fornecedorService.js'

@@ -123,8 +123,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import DashboardHeader from '../components/DashboardHeader.vue'
-import DashboardSidebar from '../components/DashboardSidebar.vue'
+import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
+import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import { useAuthStore } from '../stores/auth.js'
 
 const authStore = useAuthStore()

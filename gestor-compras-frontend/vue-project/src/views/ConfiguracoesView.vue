@@ -232,8 +232,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import DashboardHeader from '../components/DashboardHeader.vue'
-import DashboardSidebar from '../components/DashboardSidebar.vue'
+import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
+import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 
 // Estados reativo
 const isEditMode = ref(false)

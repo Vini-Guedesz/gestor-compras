@@ -98,10 +98,10 @@
 
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import { getUserRole } from '../utils/genderUtils'
-import { useMobileSidebar } from '../composables/useMobileSidebar'
-import LogoutModal from './LogoutModal.vue'
+import { useAuthStore } from '@/stores/auth'
+import { getUserRole } from '@/utils/genderUtils'
+import { useMobileSidebar } from '@/composables/useMobileSidebar'
+import LogoutModal from '@/components/ui/modals/LogoutModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

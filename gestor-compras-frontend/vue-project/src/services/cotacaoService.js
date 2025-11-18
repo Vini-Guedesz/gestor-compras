@@ -97,10 +97,38 @@ export const cotacaoService = {
     }
   },
 
+  // Listar cotações por pedido
+  async listarPorPedido(pedidoId) {
+    try {
+      console.log('🔍 Buscando cotações do pedido:', pedidoId)
+      const response = await api.get(`${BASE_URL}/pedido/${pedidoId}`)
+      console.log('✅ Cotações carregadas:', response.length)
+      return response
+    } catch (error) {
+      console.error('❌ Erro ao buscar cotações do pedido:', error)
+      // Retornar array vazio em caso de erro ao invés de falhar
+      return []
+    }
+  },
+
+  // Listar cotações por item
+  async listarPorItem(itemPedidoId) {
+    try {
+      console.log('🔍 Buscando cotações do item:', itemPedidoId)
+      const response = await api.get(`${BASE_URL}/item/${itemPedidoId}`)
+      console.log('✅ Cotações do item carregadas:', response.length)
+      return response
+    } catch (error) {
+      console.error('❌ Erro ao buscar cotações do item:', error)
+      // Retornar array vazio em caso de erro
+      return []
+    }
+  },
+
   // Criar nova cotação
   async criar(dadosCotacao) {
     try {
-      // Validação básica alinhada com CotacaoCreateDTO
+      // Validação básica
       if (!dadosCotacao.fornecedorId) {
         throw new Error('Fornecedor é obrigatório')
       }
@@ -109,39 +137,44 @@ export const cotacaoService = {
         throw new Error('Item do pedido é obrigatório')
       }
 
-      if (!dadosCotacao.preco || dadosCotacao.preco <= 0) {
-        throw new Error('Preço deve ser maior que zero')
+      if (!dadosCotacao.valorUnitario || dadosCotacao.valorUnitario <= 0) {
+        throw new Error('Valor unitário deve ser maior que zero')
       }
 
-      console.log('📤 Enviando dados para backend:', dadosCotacao)
+      console.log('📤 Enviando cotação para backend:', dadosCotacao)
 
-      // Preparar payload
+      // Preparar payload conforme CotacaoDTO do backend
       const payload = {
         fornecedorId: dadosCotacao.fornecedorId,
-        tipoFornecedor: dadosCotacao.tipoFornecedor,
         itemPedidoId: dadosCotacao.itemPedidoId,
-        preco: dadosCotacao.preco,
-        prazoEmDiasUteis: dadosCotacao.prazoEmDiasUteis,
-        dataLimite: dadosCotacao.dataLimite
+        tipo: dadosCotacao.tipo || 'PRODUTO', // PRODUTO ou SERVICO
+        valorUnitario: parseFloat(dadosCotacao.valorUnitario),
+        prazoEntrega: dadosCotacao.prazoEntrega ? parseInt(dadosCotacao.prazoEntrega) : null,
+        validadeCotacao: dadosCotacao.validadeCotacao || null
       }
 
       // Se houver arquivo PDF, converter para bytes
-      if (dadosCotacao.arquivoPdf) {
+      if (dadosCotacao.arquivo) {
         console.log('📄 Convertendo arquivo PDF para bytes...')
 
-        // Validar arquivo PDF
-        if (dadosCotacao.arquivoPdf.type !== 'application/pdf') {
-          throw new Error('Apenas arquivos PDF são permitidos')
-        }
+        // Se já for um array de bytes, usar direto
+        if (Array.isArray(dadosCotacao.arquivo)) {
+          payload.arquivo = dadosCotacao.arquivo
+        } else {
+          // Validar arquivo PDF
+          if (dadosCotacao.arquivo.type !== 'application/pdf') {
+            throw new Error('Apenas arquivos PDF são permitidos')
+          }
 
-        const maxSize = 10 * 1024 * 1024 // 10MB
-        if (dadosCotacao.arquivoPdf.size > maxSize) {
-          throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
-        }
+          const maxSize = 10 * 1024 * 1024 // 10MB
+          if (dadosCotacao.arquivo.size > maxSize) {
+            throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
+          }
 
-        const bytesArray = await this.arquivoParaBytes(dadosCotacao.arquivoPdf)
-        payload.anexoPdf = bytesArray
-        console.log('✅ Arquivo PDF convertido para bytes:', bytesArray.length, 'bytes')
+          const bytesArray = await this.arquivoParaBytes(dadosCotacao.arquivo)
+          payload.arquivo = bytesArray
+        }
+        console.log('✅ Arquivo PDF convertido:', payload.arquivo.length, 'bytes')
       }
 
       const response = await api.post(BASE_URL, payload)
@@ -152,6 +185,11 @@ export const cotacaoService = {
       console.error('❌ Erro ao criar cotação:', error)
       throw error
     }
+  },
+
+  // Método de conveniência para salvar
+  async salvar(dadosCotacao) {
+    return this.criar(dadosCotacao)
   },
 
   // Atualizar cotação

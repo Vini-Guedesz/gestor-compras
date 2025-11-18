@@ -240,9 +240,9 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import fornecedorService from '../services/fornecedorService.js'
-import itemPedidoService from '../services/itemPedidoService.js'
-import pedidoService from '../services/pedidoService.js'
+import fornecedorService from '@/services/fornecedorService.js'
+import itemPedidoService from '@/services/itemPedidoService.js'
+import pedidoService from '@/services/pedidoService.js'
 
 // Props
 const props = defineProps({
@@ -800,11 +800,6 @@ onMounted(async () => {
     }
   })
 })
-
-// Cleanup do listener ao desmontar
-const cleanup = () => {
-  document.removeEventListener('click', closeDropdown)
-}
 
 // Watchers
 watch(() => props.isVisible, (newVal) => {

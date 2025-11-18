@@ -185,8 +185,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import DashboardHeader from '../components/DashboardHeader.vue'
-import DashboardSidebar from '../components/DashboardSidebar.vue'
+import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
+import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import cotacaoService from '../services/cotacaoService.js'
 
 const router = useRouter()
@@ -280,7 +280,7 @@ const proximaEtapa = () => {
 
 const validarEtapaAtual = () => {
   erros.value = {}
-  
+
   switch (etapaAtual.value) {
     case 0:
       if (!cotacao.value.descricao) {
@@ -297,22 +297,22 @@ const validarEtapaAtual = () => {
       }
       break
   }
-  
+
   return Object.keys(erros.value).length === 0
 }
 
 const salvarCotacao = async () => {
   if (!validarEtapaAtual()) return
-  
+
   try {
     carregando.value = true
-    
+
     if (modoEdicao.value) {
       await cotacaoService.atualizar(cotacao.value.id, cotacao.value)
     } else {
       await cotacaoService.criar(cotacao.value)
     }
-    
+
     router.push('/cotacoes')
   } catch (error) {
     console.error('Erro ao salvar cotação:', error)
@@ -323,7 +323,7 @@ const salvarCotacao = async () => {
 
 const carregarCotacao = async () => {
   if (!modoEdicao.value) return
-  
+
   try {
     carregando.value = true
     const response = await cotacaoService.obterPorId(route.params.id)

@@ -68,7 +68,7 @@
  */
 
 import { useRoute } from 'vue-router'
-import { useMobileSidebar } from '../composables/useMobileSidebar'
+import { useMobileSidebar } from '@/composables/useMobileSidebar'
 
 const route = useRoute()
 const { isMobileSidebarOpen, closeSidebar } = useMobileSidebar()

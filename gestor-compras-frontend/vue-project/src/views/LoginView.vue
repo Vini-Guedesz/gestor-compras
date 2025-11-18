@@ -86,7 +86,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import LoadingSpinner from '../components/LoadingSpinner.vue'
+import LoadingSpinner from '@/components/ui/feedback/LoadingSpinner.vue'
 
 // Instâncias dos serviços necessários
 const router = useRouter()       // Para navegação entre páginas

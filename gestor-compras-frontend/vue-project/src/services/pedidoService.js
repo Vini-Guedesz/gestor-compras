@@ -187,6 +187,25 @@ const pedidoService = {
 
   async criarPedido(pedido) {
     return this.criar(pedido)
+  },
+
+  // Método unificado para salvar (criar ou atualizar)
+  async salvar(pedido) {
+    try {
+      console.log('💾 Salvando pedido...', pedido.id ? `(ID: ${pedido.id})` : '(novo)')
+
+      if (pedido.id) {
+        // Atualizar pedido existente
+        return await this.atualizar(pedido.id, pedido)
+      } else {
+        // Criar novo pedido
+        const resultado = await this.criar(pedido)
+        return resultado.data || resultado
+      }
+    } catch (error) {
+      console.error('❌ Erro ao salvar pedido:', error)
+      throw error
+    }
   }
 }
 
