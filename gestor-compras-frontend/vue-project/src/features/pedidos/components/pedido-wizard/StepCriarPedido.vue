@@ -44,12 +44,26 @@
     <div class="form-section">
       <div class="section-header">
         <h3 class="section-title">📦 Itens do Rascunho</h3>
-        <button type="button" @click="adicionarNovoItem" class="btn-add-item">
-          <svg viewBox="0 0 24 24" width="16" height="16">
-            <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-          Adicionar Item
-        </button>
+        <div class="header-actions">
+          <button
+            type="button"
+            @click="salvarTodosItens"
+            class="btn-save-all"
+            :disabled="!hasUnsavedChanges || salvandoTodos"
+            title="Salvar todos os itens não salvos"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="white" d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+            </svg>
+            {{ salvandoTodos ? 'Salvando...' : 'Salvar Tudo' }}
+          </button>
+          <button type="button" @click="adicionarNovoItem" class="btn-add-item">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Adicionar Item
+          </button>
+        </div>
       </div>
 
       <!-- Lista de Itens -->
@@ -62,7 +76,7 @@
         >
           <div class="item-header">
             <div class="item-badge-container">
-              <span class="item-badge">Item #{{ item.numeroItem || index + 1 }}</span>
+              <span class="item-badge">Item #{{ index + 1 }}</span>
               <span v-if="item._unsaved" class="item-status unsaved">● Não salvo</span>
               <span v-else-if="item.id" class="item-status saved">✓ Salvo</span>
             </div>
@@ -195,6 +209,7 @@ export default {
   setup(props, { emit }) {
     const formData = ref({ ...props.modelValue })
     const hasUnsavedChanges = ref(false)
+    const salvandoTodos = ref(false)
 
     // Observar mudanças no modelValue (quando rascunho é carregado)
     watch(() => props.modelValue, (newValue) => {
@@ -238,7 +253,7 @@ export default {
       }
 
       formData.value.itens.forEach((item, index) => {
-        const itemNum = item.numeroItem || index + 1
+        const itemNum = index + 1
         if (!item.nome?.trim()) {
           errors.push(`Item ${itemNum}: Nome é obrigatório`)
         }
@@ -301,6 +316,11 @@ export default {
           observacao: item.observacao || ''
         }
 
+        // Guardar os itens não salvos antes de atualizar (exceto o item sendo salvo)
+        const itensNaoSalvos = formData.value.itens.filter((i, idx) =>
+          !i.id && i._unsaved && idx !== index
+        )
+
         let rascunhoAtualizado
 
         if (!formData.value.id) {
@@ -321,12 +341,15 @@ export default {
           )
         }
 
-        // Atualizar lista de itens com dados do servidor
-        formData.value.itens = rascunhoAtualizado.itens.map(serverItem => ({
+        // Mesclar itens do servidor com itens não salvos
+        const itensDoServidor = rascunhoAtualizado.itens.map(serverItem => ({
           ...serverItem,
           _unsaved: false,
           _saving: false
         }))
+
+        // Adicionar de volta os itens que não estavam salvos
+        formData.value.itens = [...itensDoServidor, ...itensNaoSalvos]
 
         hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
 
@@ -338,6 +361,42 @@ export default {
       }
     }
 
+    const salvarTodosItens = async () => {
+      // Verificar se há itens não salvos válidos
+      const itensNaoSalvos = formData.value.itens.filter(item => item._unsaved && itemValido(item))
+      if (itensNaoSalvos.length === 0) {
+        alert('Todos os itens já estão salvos ou não são válidos.')
+        return
+      }
+
+      salvandoTodos.value = true
+
+      try {
+        // Salvar cada item não salvo sequencialmente
+        for (let i = 0; i < formData.value.itens.length; i++) {
+          const item = formData.value.itens[i]
+          if (item._unsaved && itemValido(item)) {
+            await salvarItem(i)
+          }
+        }
+
+        // Atualizar observação se houver rascunho
+        if (formData.value.id && formData.value.observacao !== undefined) {
+          await rascunhoService.atualizar(formData.value.id, {
+            observacao: formData.value.observacao || ''
+          })
+        }
+
+        hasUnsavedChanges.value = false
+        alert('Todos os itens foram salvos com sucesso!')
+      } catch (error) {
+        console.error('Erro ao salvar itens:', error)
+        alert(error.message || 'Erro ao salvar alguns itens')
+      } finally {
+        salvandoTodos.value = false
+      }
+    }
+
     const removerItem = async (index) => {
       const item = formData.value.itens[index]
 
@@ -346,25 +405,36 @@ export default {
         if (!confirm('Deseja remover este item do rascunho?')) return
 
         try {
+          // Guardar os itens não salvos antes de atualizar
+          const itensNaoSalvos = formData.value.itens.filter(i => !i.id || i._unsaved)
+
           const rascunhoAtualizado = await rascunhoService.removerItem(
             formData.value.id,
             item.id
           )
 
-          formData.value.itens = rascunhoAtualizado.itens.map(serverItem => ({
+          // Mesclar itens do servidor com itens não salvos que ainda existem localmente
+          const itensDoServidor = rascunhoAtualizado.itens.map(serverItem => ({
             ...serverItem,
             _unsaved: false,
             _saving: false
           }))
+
+          // Adicionar de volta os itens que não estavam salvos (exceto o item removido)
+          const itensNaoSalvosRestantes = itensNaoSalvos.filter(i =>
+            !i.id && i !== item
+          )
+
+          formData.value.itens = [...itensDoServidor, ...itensNaoSalvosRestantes]
 
         } catch (error) {
           console.error('Erro ao remover item:', error)
           alert(error.message || 'Erro ao remover item')
         }
       } else {
-        // Item ainda não salvo - bloquear remoção
-        alert('Salve o item antes de removê-lo.')
-        return
+        // Item não salvo - remover localmente
+        if (!confirm('Deseja remover este item não salvo?')) return
+        formData.value.itens.splice(index, 1)
       }
 
       hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
@@ -385,6 +455,7 @@ export default {
     return {
       formData,
       hasUnsavedChanges,
+      salvandoTodos,
       dataFormatada,
       quantidadeTotal,
       itensSalvos,
@@ -395,6 +466,7 @@ export default {
       markItemAsUnsaved,
       adicionarNovoItem,
       salvarItem,
+      salvarTodosItens,
       removerItem
     }
   }
@@ -436,6 +508,38 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-save-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save-all:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-save-all:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Form Elements */

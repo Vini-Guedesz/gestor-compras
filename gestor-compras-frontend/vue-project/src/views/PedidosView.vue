@@ -435,6 +435,9 @@
             <HistoricoPedido
               v-if="pedidoSelecionado?.id"
               :pedidoId="pedidoSelecionado.id"
+              :rascunhoId="pedidoSelecionado.rascunhoId"
+              :isRascunho="pedidoSelecionado.isRascunho"
+              :historicoData="pedidoSelecionado.historico"
             />
           </div>
         </div>
@@ -455,6 +458,7 @@ const ConfirmModal = defineAsyncComponent(() => import('@/components/ui/modals/C
 const HistoricoPedido = defineAsyncComponent(() => import('@/features/pedidos/components/HistoricoPedido.vue'))
 import pedidoService from '@/services/pedidoService.js'
 import cotacaoService from '@/services/cotacaoService.js'
+import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
 import relatorioService from '@/services/relatorioService.js'
@@ -768,27 +772,22 @@ export default {
       }
     }
 
-    const visualizarPedido = async (pedido) => {
+    const visualizarPedido = (pedido) => {
       console.log('Visualizando pedido:', pedido)
 
-      try {
-        // Buscar o pedido completo do backend para garantir que os itens sejam carregados
-        console.log('Buscando pedido completo do backend...')
-        const pedidoCompleto = await pedidoService.obterPorId(pedido.id)
-        console.log('Pedido completo carregado:', pedidoCompleto)
-        console.log('Itens do pedido:', pedidoCompleto.itens)
-
-        // Usar o pedido completo do backend
-        pedidoSelecionado.value = pedidoCompleto
-        showDetalhesModal.value = true
-
-        // Carregar detalhes das cotacoes para os itens
-        await carregarDetalhesPedido(pedidoSelecionado.value)
-      } catch (error) {
-        console.error('Erro ao carregar pedido completo:', error)
-        // Fallback para o pedido da lista
-        pedidoSelecionado.value = { ...pedido, itens: pedido.itens ? [...pedido.itens] : [] }
-        showDetalhesModal.value = true
+      // Verificar se é um rascunho
+      if (pedido.isRascunho) {
+        // Navegar para a view de visualização de rascunho
+        router.push({
+          path: `/pedidos/visualizar/${pedido.rascunhoId}`,
+          query: { tipo: 'rascunho' }
+        })
+      } else {
+        // Navegar para a view de visualização de pedido
+        router.push({
+          path: `/pedidos/visualizar/${pedido.id}`,
+          query: { tipo: 'pedido' }
+        })
       }
     }
 
@@ -823,8 +822,17 @@ export default {
       pdfUrl.value = null
 
       try {
-        // Buscar o PDF do backend
-        const response = await cotacaoService.buscarPorId(cotacaoId)
+        // Buscar o PDF do backend - verificar se é rascunho ou pedido
+        let response
+        if (pedidoSelecionado.value?.isRascunho) {
+          console.log('Buscando PDF de cotação de rascunho...')
+          response = await cotacaoRascunhoService.obterPorId(
+            pedidoSelecionado.value.rascunhoId,
+            cotacaoId
+          )
+        } else {
+          response = await cotacaoService.buscarPorId(cotacaoId)
+        }
         console.log('📄 Cotação recebida completa:', response)
         console.log('📄 Tipo da resposta:', typeof response)
         console.log('📄 Chaves da resposta:', response ? Object.keys(response) : 'null')
@@ -1116,15 +1124,26 @@ export default {
     const excluirPedido = async () => {
       try {
         if (pedidoParaExcluir.value?.id) {
-          await pedidoService.excluir(pedidoParaExcluir.value.id)
-          const index = pedidos.value.findIndex(p => p.id === pedidoParaExcluir.value.id)
+          const id = pedidoParaExcluir.value.id
+
+          // Verificar se é um rascunho (ID começa com "R-")
+          if (typeof id === 'string' && id.startsWith('R-')) {
+            // Extrair o ID numérico do rascunho
+            const rascunhoId = parseInt(id.replace('R-', ''))
+            await rascunhoService.remover(rascunhoId)
+          } else {
+            // É um pedido normal
+            await pedidoService.excluir(id)
+          }
+
+          const index = pedidos.value.findIndex(p => p.id === id)
           if (index !== -1) {
             pedidos.value.splice(index, 1)
           }
         }
       } catch (error) {
-        console.error('Erro ao excluir pedido:', error)
-        alert('Erro ao excluir pedido. Tente novamente.')
+        console.error('Erro ao excluir:', error)
+        alert('Erro ao excluir. Tente novamente.')
       } finally {
         showConfirmModal.value = false
         pedidoParaExcluir.value = null

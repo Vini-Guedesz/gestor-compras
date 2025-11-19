@@ -26,6 +26,7 @@ const PerfilView = () => import('../views/PerfilView.vue')
 const ConfiguracoesView = () => import('../views/ConfiguracoesView.vue')
 const CotacoesView = () => import('../views/CotacoesView.vue')
 const NovoPedidoView = () => import('../views/NovoPedidoView.vue')
+const VisualizarPedidoView = () => import('../views/VisualizarPedidoView.vue')
 
 // Criação do router com histórico de navegação do navegador
 const router = createRouter({
@@ -66,9 +67,21 @@ const router = createRouter({
       meta: { requiresAuth: true } // Requer autenticação
     },
     {
+      path: '/pedidos/novo/:id',
+      name: 'continuar-pedido',
+      component: NovoPedidoView,
+      meta: { requiresAuth: true } // Requer autenticação - continuar rascunho existente
+    },
+    {
       path: '/pedidos/rascunho/:id',
       name: 'editar-rascunho',
       component: NovoPedidoView,
+      meta: { requiresAuth: true } // Requer autenticação
+    },
+    {
+      path: '/pedidos/visualizar/:id',
+      name: 'visualizar-pedido',
+      component: VisualizarPedidoView,
       meta: { requiresAuth: true } // Requer autenticação
     },
     {

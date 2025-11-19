@@ -320,6 +320,12 @@ export default {
           wizardData.value.rascunho.dataCriacao = rascunhoSalvo.dataCriacao
           wizardData.value.rascunho.itens = rascunhoSalvo.itens
           wizardData.value.pedido.itens = rascunhoSalvo.itens
+
+          // Atualizar URL com o ID do rascunho para persistência
+          router.replace({
+            path: `/pedidos/novo/${rascunhoSalvo.id}`,
+            query: { step: '2' }
+          })
         }
 
         hasUnsavedChanges.value = false
@@ -337,6 +343,15 @@ export default {
     const irParaPagina3 = () => {
       // Selecionar todos os itens cotados por padrão
       itensSelecionados.value = itensCotados.value.map(item => item.id)
+
+      // Atualizar URL com step 3
+      if (wizardData.value.rascunho.id) {
+        router.replace({
+          path: `/pedidos/novo/${wizardData.value.rascunho.id}`,
+          query: { step: '3' }
+        })
+      }
+
       proximaPagina()
     }
 
@@ -446,7 +461,7 @@ export default {
       }
     }
 
-    const carregarRascunhoExistente = async (rascunhoId) => {
+    const carregarRascunhoExistente = async (rascunhoId, stepInicial = null) => {
       try {
         isLoading.value = true
         console.log('Carregando rascunho existente:', rascunhoId)
@@ -469,6 +484,22 @@ export default {
         }
 
         console.log('Rascunho carregado:', wizardData.value.rascunho)
+
+        // Se houver step na URL, ir para a etapa correta
+        if (stepInicial) {
+          const step = parseInt(stepInicial)
+          if (step === 2 || step === 3) {
+            // Carregar dados necessários para as etapas posteriores
+            await carregarFornecedores()
+            await carregarCotacoesDoRascunho()
+            currentPage.value = step
+
+            // Se for step 3, pré-selecionar itens cotados
+            if (step === 3) {
+              itensSelecionados.value = itensCotados.value.map(item => item.id)
+            }
+          }
+        }
       } catch (error) {
         console.error('Erro ao carregar rascunho:', error)
         alert('Erro ao carregar rascunho. Redirecionando...')
@@ -481,8 +512,10 @@ export default {
     // Carregar rascunho existente se houver ID na rota
     onMounted(() => {
       const rascunhoId = route.params.id
+      const stepInicial = route.query.step
+
       if (rascunhoId) {
-        carregarRascunhoExistente(rascunhoId)
+        carregarRascunhoExistente(rascunhoId, stepInicial)
       }
     })
 

@@ -79,6 +79,7 @@
 <script>
 import { ref, watch, onMounted } from 'vue'
 import historicoPedidoService, { tipoModificacaoConfig, formatarDataHistorico } from '@/services/historicoPedidoService.js'
+import rascunhoService from '@/services/rascunhoService.js'
 
 export default {
   name: 'HistoricoPedido',
@@ -86,6 +87,18 @@ export default {
     pedidoId: {
       type: [Number, String],
       required: true
+    },
+    rascunhoId: {
+      type: [Number, String],
+      default: null
+    },
+    isRascunho: {
+      type: Boolean,
+      default: false
+    },
+    historicoData: {
+      type: Array,
+      default: null
     }
   },
   setup(props) {
@@ -93,6 +106,46 @@ export default {
     const carregando = ref(false)
 
     const carregarHistorico = async () => {
+      // Se há dados de histórico passados diretamente, usar eles
+      if (props.historicoData) {
+        historico.value = props.historicoData.map(h => ({
+          id: h.id,
+          tipoModificacao: h.tipoAcao,
+          dataModificacao: h.dataModificacao,
+          nomeUsuario: h.username || 'Usuário',
+          campoModificado: h.nomeItem,
+          valorAnterior: null,
+          valorNovo: h.detalhes,
+          observacao: h.descricao
+        }))
+        return
+      }
+
+      // Se é um rascunho, usar o serviço de rascunho
+      if (props.isRascunho && props.rascunhoId) {
+        try {
+          carregando.value = true
+          const historicoRascunho = await rascunhoService.listarHistorico(props.rascunhoId)
+          historico.value = historicoRascunho.map(h => ({
+            id: h.id,
+            tipoModificacao: h.tipoAcao,
+            dataModificacao: h.dataModificacao,
+            nomeUsuario: h.username || 'Usuário',
+            campoModificado: h.nomeItem,
+            valorAnterior: null,
+            valorNovo: h.detalhes,
+            observacao: h.descricao
+          }))
+        } catch (error) {
+          console.error('Erro ao carregar histórico do rascunho:', error)
+          historico.value = []
+        } finally {
+          carregando.value = false
+        }
+        return
+      }
+
+      // Caso padrão: carregar histórico de pedido
       if (!props.pedidoId) return
 
       try {

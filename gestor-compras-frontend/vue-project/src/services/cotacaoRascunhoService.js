@@ -71,13 +71,32 @@ const cotacaoRascunhoService = {
     }
   },
 
-  async obterAnexoPdf(rascunhoId, cotacaoId) {
+  async obterAnexoPdf(rascunhoId, cotacaoId, pdfIndex = 0) {
     try {
-      console.log(`Buscando PDF da cotação ${cotacaoId}...`)
-      const response = await api.get(`/api/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}/anexo`, {
-        responseType: 'blob'
+      console.log(`Buscando PDF ${pdfIndex} da cotação ${cotacaoId}...`)
+
+      // Obter o token de autenticação
+      const token = localStorage.getItem('authToken')
+
+      // Usar fetch diretamente para suportar responseType blob
+      // Se o backend suportar múltiplos PDFs, incluir o índice na URL
+      const url = pdfIndex > 0
+        ? `http://localhost:8081/api/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
+        : `http://localhost:8081/api/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}/anexo`
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
       })
-      return response
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar PDF: ${response.status}`)
+      }
+
+      const blob = await response.blob()
+      return blob
     } catch (error) {
       console.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
       throw error
