@@ -440,7 +440,7 @@
 
 <script>
 import { ref, onMounted, computed, defineAsyncComponent } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
@@ -463,6 +463,7 @@ export default {
   setup() {
     // Router
     const route = useRoute()
+    const router = useRouter()
 
     // Estados reativos
     const pedidos = ref([])
@@ -721,8 +722,7 @@ export default {
     }
 
     const abrirFormularioNovo = () => {
-      pedidoEditando.value = null
-      showPedidoForm.value = true
+      router.push('/pedidos/novo')
     }
 
     const editarPedido = async (pedido) => {
@@ -1228,9 +1228,9 @@ export default {
     onMounted(() => {
       carregarPedidos()
 
-      // Verificar se deve abrir modal de novo pedido (ação rápida do dashboard)
+      // Verificar se deve redirecionar para novo pedido (ação rápida do dashboard)
       if (route.query.action === 'novo-pedido') {
-        showPedidoForm.value = true
+        router.push('/pedidos/novo')
       }
     })
 

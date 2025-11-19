@@ -25,6 +25,7 @@ const PedidosView = () => import('../views/PedidosView.vue')
 const PerfilView = () => import('../views/PerfilView.vue')
 const ConfiguracoesView = () => import('../views/ConfiguracoesView.vue')
 const CotacoesView = () => import('../views/CotacoesView.vue')
+const NovoPedidoView = () => import('../views/NovoPedidoView.vue')
 
 // Criação do router com histórico de navegação do navegador
 const router = createRouter({
@@ -56,6 +57,12 @@ const router = createRouter({
       path: '/pedidos',
       name: 'pedidos',
       component: PedidosView,
+      meta: { requiresAuth: true } // Requer autenticação
+    },
+    {
+      path: '/pedidos/novo',
+      name: 'novo-pedido',
+      component: NovoPedidoView,
       meta: { requiresAuth: true } // Requer autenticação
     },
     {
