@@ -49,7 +49,9 @@ public class SecurityConfig {
             "/api/relatorios/**",
             "/error",
             "/api/fornecedores-de-produto/**",
-            "/api/fornecedores-de-servico/**"
+            "/api/fornecedores-de-servico/**",
+            "/api/rascunhos/**",
+            "/api/historico-pedidos/**"
     };
 
     private static final String[] USER_ENDPOINTS = {

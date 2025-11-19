@@ -296,11 +296,23 @@ public class JasperReportService {
                 tipo = "SERVICO";
             }
 
+            // Pegar o primeiro item do pedido associado à cotação (ou null se não houver)
+            Long itemId = null;
+            String itemNome = "";
+            String itemDescricao = "";
+
+            if (cotacao.getItensPedido() != null && !cotacao.getItensPedido().isEmpty()) {
+                var primeiroItem = cotacao.getItensPedido().iterator().next();
+                itemId = primeiroItem.getId();
+                itemNome = primeiroItem.getNome();
+                itemDescricao = primeiroItem.getDescricao();
+            }
+
             return new ComparativoCotacaoDTO(
                     cotacao.getId().toString(),
-                    cotacao.getItemPedido().getId(),
-                    cotacao.getItemPedido().getNome(),
-                    cotacao.getItemPedido().getDescricao(),
+                    itemId,
+                    itemNome,
+                    itemDescricao,
                     fornecedor,
                     cnpj,
                     cotacao.getPreco(),

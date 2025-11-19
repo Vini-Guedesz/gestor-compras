@@ -3,7 +3,11 @@ package com.gestordecompras.gestorcomprasbackend.mapper;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoDTO;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
+import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class CotacaoMapper {
@@ -21,11 +25,19 @@ public class CotacaoMapper {
             tipoFornecedor = "SERVICO";
         }
 
+        // Extrair IDs dos itens do pedido
+        List<Long> itensPedidoIds = cotacao.getItensPedido() != null
+                ? cotacao.getItensPedido().stream()
+                    .map(ItemPedido::getId)
+                    .collect(Collectors.toList())
+                : List.of();
+
         return new CotacaoDTO(
                 cotacao.getId(),
                 cotacao.getFornecedorId(),
                 tipoFornecedor,
-                cotacao.getItemPedido() != null ? cotacao.getItemPedido().getId() : null,
+                cotacao.getSolicitacaoDePedido() != null ? cotacao.getSolicitacaoDePedido().getId() : null,
+                itensPedidoIds,
                 cotacao.getPreco(),
                 cotacao.getPrazoEmDiasUteis(),
                 cotacao.getDataLimite(),

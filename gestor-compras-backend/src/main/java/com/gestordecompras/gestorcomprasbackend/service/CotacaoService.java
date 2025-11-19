@@ -6,15 +6,19 @@ import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoUpdateDTO;
 import com.gestordecompras.gestorcomprasbackend.mapper.CotacaoMapper;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
+import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.repository.CotacaoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeProdutoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeServicoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.ItemPedidoRepository;
+import com.gestordecompras.gestorcomprasbackend.repository.SolicitacaoDePedidoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,13 +29,19 @@ public class CotacaoService {
     private final FornecedorDeProdutoRepository fornecedorDeProdutoRepository;
     private final FornecedorDeServicoRepository fornecedorDeServicoRepository;
     private final ItemPedidoRepository itemPedidoRepository;
+    private final SolicitacaoDePedidoRepository solicitacaoDePedidoRepository;
 
-    public CotacaoService(CotacaoRepository cotacaoRepository, CotacaoMapper cotacaoMapper, FornecedorDeProdutoRepository fornecedorDeProdutoRepository, FornecedorDeServicoRepository fornecedorDeServicoRepository, ItemPedidoRepository itemPedidoRepository) {
+    public CotacaoService(CotacaoRepository cotacaoRepository, CotacaoMapper cotacaoMapper,
+                         FornecedorDeProdutoRepository fornecedorDeProdutoRepository,
+                         FornecedorDeServicoRepository fornecedorDeServicoRepository,
+                         ItemPedidoRepository itemPedidoRepository,
+                         SolicitacaoDePedidoRepository solicitacaoDePedidoRepository) {
         this.cotacaoRepository = cotacaoRepository;
         this.cotacaoMapper = cotacaoMapper;
         this.fornecedorDeProdutoRepository = fornecedorDeProdutoRepository;
         this.fornecedorDeServicoRepository = fornecedorDeServicoRepository;
         this.itemPedidoRepository = itemPedidoRepository;
+        this.solicitacaoDePedidoRepository = solicitacaoDePedidoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -52,6 +62,14 @@ public class CotacaoService {
     public CotacaoDTO createCotacao(CotacaoCreateDTO cotacaoCreateDTO) {
         Cotacao cotacao = cotacaoMapper.toEntity(cotacaoCreateDTO);
 
+        // Buscar a solicitação de pedido
+        SolicitacaoDePedido solicitacaoDePedido = solicitacaoDePedidoRepository
+                .findById(cotacaoCreateDTO.solicitacaoDePedidoId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Solicitação de Pedido não encontrada com ID: " + cotacaoCreateDTO.solicitacaoDePedidoId()));
+
+        cotacao.setSolicitacaoDePedido(solicitacaoDePedido);
+
         // Usa o tipo de fornecedor para buscar corretamente
         if ("PRODUTO".equals(cotacaoCreateDTO.tipoFornecedor())) {
             var fornecedorProduto = fornecedorDeProdutoRepository.findById(cotacaoCreateDTO.fornecedorId())
@@ -65,10 +83,22 @@ public class CotacaoService {
             throw new IllegalArgumentException("Tipo de fornecedor inválido: " + cotacaoCreateDTO.tipoFornecedor());
         }
 
-        ItemPedido itemPedido = itemPedidoRepository.findById(cotacaoCreateDTO.itemPedidoId())
-                .orElseThrow(() -> new EntityNotFoundException("ItemPedido not found"));
+        // Buscar e associar múltiplos itens do pedido
+        Set<ItemPedido> itensPedido = new HashSet<>();
+        for (Long itemId : cotacaoCreateDTO.itensPedidoIds()) {
+            ItemPedido itemPedido = itemPedidoRepository.findById(itemId)
+                    .orElseThrow(() -> new EntityNotFoundException("ItemPedido não encontrado com ID: " + itemId));
 
-        cotacao.setItemPedido(itemPedido);
+            // Validar que o item pertence à solicitação de pedido informada
+            if (!itemPedido.getSolicitacaoDePedido().getId().equals(cotacaoCreateDTO.solicitacaoDePedidoId())) {
+                throw new IllegalArgumentException(
+                        "Item " + itemId + " não pertence à solicitação de pedido " + cotacaoCreateDTO.solicitacaoDePedidoId());
+            }
+
+            itensPedido.add(itemPedido);
+        }
+
+        cotacao.setItensPedido(itensPedido);
 
         return cotacaoMapper.toDTO(cotacaoRepository.save(cotacao));
     }
