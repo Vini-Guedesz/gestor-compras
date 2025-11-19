@@ -1,0 +1,61 @@
+/**
+ * Serviço de Histórico de Pedidos
+ *
+ * Gerencia consultas ao histórico de modificações dos pedidos
+ */
+
+import api from './api.js'
+
+const historicoPedidoService = {
+  async listarPorPedido(pedidoId) {
+    try {
+      console.log(`Buscando histórico do pedido ${pedidoId}...`)
+      const data = await api.get(`/api/historico-pedidos/pedido/${pedidoId}`)
+      console.log('Histórico carregado:', data.length, 'registros')
+      return data
+    } catch (error) {
+      console.error(`Erro ao buscar histórico do pedido ${pedidoId}:`, error.message)
+      throw error
+    }
+  },
+
+  async listarPorUsuario(userId) {
+    try {
+      console.log(`Buscando histórico do usuário ${userId}...`)
+      const data = await api.get(`/api/historico-pedidos/usuario/${userId}`)
+      console.log('Histórico do usuário carregado:', data.length, 'registros')
+      return data
+    } catch (error) {
+      console.error(`Erro ao buscar histórico do usuário ${userId}:`, error.message)
+      throw error
+    }
+  }
+}
+
+// Configuração de tipos de modificação para exibição
+export const tipoModificacaoConfig = {
+  CRIACAO: { label: 'Criação', icon: 'plus', color: '#10b981' },
+  ATUALIZACAO: { label: 'Atualização', icon: 'edit', color: '#3b82f6' },
+  MUDANCA_STATUS: { label: 'Mudança de Status', icon: 'refresh', color: '#f59e0b' },
+  ADICAO_ITEM: { label: 'Item Adicionado', icon: 'plus-circle', color: '#10b981' },
+  REMOCAO_ITEM: { label: 'Item Removido', icon: 'minus-circle', color: '#ef4444' },
+  ATUALIZACAO_ITEM: { label: 'Item Atualizado', icon: 'edit', color: '#3b82f6' },
+  ADICAO_COTACAO: { label: 'Cotação Adicionada', icon: 'document-add', color: '#8b5cf6' },
+  REMOCAO_COTACAO: { label: 'Cotação Removida', icon: 'document-remove', color: '#ef4444' },
+  CANCELAMENTO: { label: 'Cancelamento', icon: 'x-circle', color: '#ef4444' },
+  APROVACAO: { label: 'Aprovação', icon: 'check-circle', color: '#10b981' }
+}
+
+export const formatarDataHistorico = (data) => {
+  if (!data) return ''
+  const date = new Date(data)
+  return date.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+export default historicoPedidoService

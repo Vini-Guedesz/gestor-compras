@@ -16,11 +16,15 @@ public interface RascunhoMapper {
     @Mapping(target = "criador", ignore = true)
     @Mapping(target = "dataCriacao", ignore = true)
     @Mapping(target = "dataModificacao", ignore = true)
+    @Mapping(target = "proximoNumeroItem", ignore = true)
+    @Mapping(target = "numerosDisponiveis", ignore = true)
     Rascunho toEntity(RascunhoCreateDTO dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "criador", ignore = true)
     @Mapping(target = "dataCriacao", ignore = true)
     @Mapping(target = "dataModificacao", ignore = true)
+    @Mapping(target = "proximoNumeroItem", ignore = true)
+    @Mapping(target = "numerosDisponiveis", ignore = true)
     void updateEntityFromDTO(RascunhoUpdateDTO dto, @MappingTarget Rascunho rascunho);
 }

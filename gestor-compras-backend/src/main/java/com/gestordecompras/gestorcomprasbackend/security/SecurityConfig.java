@@ -50,7 +50,6 @@ public class SecurityConfig {
             "/error",
             "/api/fornecedores-de-produto/**",
             "/api/fornecedores-de-servico/**",
-            "/api/rascunhos/**",
             "/api/historico-pedidos/**"
     };
 

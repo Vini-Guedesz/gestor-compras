@@ -1,10 +1,9 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
-import com.gestordecompras.gestorcomprasbackend.dto.rascunho.ConverterRascunhoParaPedidoDTO;
-import com.gestordecompras.gestorcomprasbackend.dto.rascunho.RascunhoCreateDTO;
-import com.gestordecompras.gestorcomprasbackend.dto.rascunho.RascunhoDTO;
-import com.gestordecompras.gestorcomprasbackend.dto.rascunho.RascunhoUpdateDTO;
+import com.gestordecompras.gestorcomprasbackend.dto.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.dto.solicitacaodepedido.SolicitacaoDePedidoDTO;
+import com.gestordecompras.gestorcomprasbackend.model.rascunho.HistoricoRascunho;
+import com.gestordecompras.gestorcomprasbackend.service.HistoricoRascunhoService;
 import com.gestordecompras.gestorcomprasbackend.service.RascunhoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,6 +22,7 @@ import java.util.List;
 public class RascunhoController {
 
     private final RascunhoService rascunhoService;
+    private final HistoricoRascunhoService historicoRascunhoService;
 
     @GetMapping
     @Operation(summary = "Listar todos os rascunhos")
@@ -72,5 +72,57 @@ public class RascunhoController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(rascunhoService.converterRascunhoParaPedido(id, dto));
+    }
+
+    // Endpoints para gerenciamento individual de itens
+
+    @PostMapping("/{id}/itens")
+    @Operation(summary = "Adicionar item ao rascunho", description = "Adiciona um novo item ao rascunho e salva imediatamente")
+    public ResponseEntity<RascunhoDTO> adicionarItem(
+            @PathVariable Long id,
+            @Valid @RequestBody ItemRascunhoCreateDTO itemDTO
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(rascunhoService.adicionarItem(id, itemDTO));
+    }
+
+    @PutMapping("/{id}/itens/{itemId}")
+    @Operation(summary = "Atualizar item do rascunho", description = "Atualiza um item existente do rascunho")
+    public ResponseEntity<RascunhoDTO> atualizarItem(
+            @PathVariable Long id,
+            @PathVariable Long itemId,
+            @Valid @RequestBody ItemRascunhoUpdateDTO itemDTO
+    ) {
+        return ResponseEntity.ok(rascunhoService.atualizarItem(id, itemId, itemDTO));
+    }
+
+    @DeleteMapping("/{id}/itens/{itemId}")
+    @Operation(summary = "Remover item do rascunho", description = "Remove um item do rascunho e libera o número para reutilização")
+    public ResponseEntity<RascunhoDTO> removerItem(
+            @PathVariable Long id,
+            @PathVariable Long itemId
+    ) {
+        return ResponseEntity.ok(rascunhoService.removerItem(id, itemId));
+    }
+
+    @GetMapping("/{id}/historico")
+    @Operation(summary = "Listar histórico do rascunho", description = "Retorna todas as ações realizadas no rascunho")
+    public ResponseEntity<List<HistoricoRascunhoDTO>> listarHistorico(@PathVariable Long id) {
+        List<HistoricoRascunho> historico = historicoRascunhoService.listarPorRascunho(id);
+        List<HistoricoRascunhoDTO> historicoDTO = historico.stream()
+                .map(h -> new HistoricoRascunhoDTO(
+                        h.getId(),
+                        h.getRascunho().getId(),
+                        h.getUsuario().getId(),
+                        h.getUsuario().getUsername(),
+                        h.getDataModificacao(),
+                        h.getTipoAcao().name(),
+                        h.getDescricao(),
+                        h.getNumeroItem(),
+                        h.getNomeItem(),
+                        h.getDetalhes()
+                ))
+                .toList();
+        return ResponseEntity.ok(historicoDTO);
     }
 }

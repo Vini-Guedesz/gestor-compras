@@ -13,5 +13,6 @@ public interface ItemRascunhoMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "rascunho", ignore = true)
+    @Mapping(target = "numeroItem", ignore = true)
     ItemRascunho toEntity(ItemRascunhoCreateDTO dto);
 }

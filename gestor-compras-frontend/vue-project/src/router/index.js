@@ -66,6 +66,12 @@ const router = createRouter({
       meta: { requiresAuth: true } // Requer autenticação
     },
     {
+      path: '/pedidos/rascunho/:id',
+      name: 'editar-rascunho',
+      component: NovoPedidoView,
+      meta: { requiresAuth: true } // Requer autenticação
+    },
+    {
       path: '/cotacoes',
       name: 'cotacoes',
       component: CotacoesView,

@@ -7,33 +7,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "item_rascunho")
+@Table(name = "numero_item_disponivel")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemRascunho {
+public class NumeroItemDisponivel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "numero_item", nullable = false)
-    private Integer numeroItem;
-
-    @Column(name = "nome", nullable = false)
-    private String nome;
-
-    @Column(name = "quantidade", nullable = false)
-    private Integer quantidade;
-
-    @Column(name = "descricao")
-    private String descricao;
-
-    @Column(name = "observacao")
-    private String observacao;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "rascunho_id", nullable = false)
     private Rascunho rascunho;
+
+    @Column(name = "numero_item", nullable = false)
+    private Integer numeroItem;
 }

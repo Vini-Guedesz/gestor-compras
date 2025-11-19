@@ -1,22 +1,15 @@
 package com.gestordecompras.gestorcomprasbackend.service;
 
-import com.gestordecompras.gestorcomprasbackend.dto.rascunho.ConverterRascunhoParaPedidoDTO;
-import com.gestordecompras.gestorcomprasbackend.dto.rascunho.RascunhoCreateDTO;
-import com.gestordecompras.gestorcomprasbackend.dto.rascunho.RascunhoDTO;
-import com.gestordecompras.gestorcomprasbackend.dto.rascunho.RascunhoUpdateDTO;
+import com.gestordecompras.gestorcomprasbackend.dto.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.dto.solicitacaodepedido.SolicitacaoDePedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.mapper.RascunhoMapper;
-import com.gestordecompras.gestorcomprasbackend.model.pedido.HistoricoPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.StatusPedido;
-import com.gestordecompras.gestorcomprasbackend.model.rascunho.ItemRascunho;
-import com.gestordecompras.gestorcomprasbackend.model.rascunho.Rascunho;
+import com.gestordecompras.gestorcomprasbackend.model.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.model.user.User;
-import com.gestordecompras.gestorcomprasbackend.repository.ItemRascunhoRepository;
-import com.gestordecompras.gestorcomprasbackend.repository.RascunhoRepository;
-import com.gestordecompras.gestorcomprasbackend.repository.SolicitacaoDePedidoRepository;
-import com.gestordecompras.gestorcomprasbackend.repository.UserRepository;
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
+import com.gestordecompras.gestorcomprasbackend.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -24,8 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +30,10 @@ public class RascunhoService {
     private final UserRepository userRepository;
     private final RascunhoMapper rascunhoMapper;
     private final HistoricoPedidoService historicoPedidoService;
+    private final HistoricoRascunhoService historicoRascunhoService;
+    private final CotacaoRascunhoRepository cotacaoRascunhoRepository;
+    private final CotacaoRepository cotacaoRepository;
+    private final NumeroItemDisponivelRepository numeroItemDisponivelRepository;
 
     @Transactional(readOnly = true)
     public List<RascunhoDTO> getAllRascunhos() {
@@ -64,19 +60,143 @@ public class RascunhoService {
 
     @Transactional
     public RascunhoDTO createRascunho(RascunhoCreateDTO dto) {
-        Rascunho rascunho = rascunhoMapper.toEntity(dto);
-
-        // Obter usuário autenticado
         User criador = getUsuarioAutenticado();
-        rascunho.setCriador(criador);
 
-        // Associar itens ao rascunho
-        if (rascunho.getItens() != null && !rascunho.getItens().isEmpty()) {
-            rascunho.getItens().forEach(item -> item.setRascunho(rascunho));
-        }
+        Rascunho rascunho = new Rascunho();
+        rascunho.setCriador(criador);
+        rascunho.setObservacao(dto.observacao());
+        rascunho.setProximoNumeroItem(1);
 
         Rascunho rascunhoSalvo = rascunhoRepository.save(rascunho);
+
+        // Registrar criação no histórico
+        historicoRascunhoService.registrarCriacaoRascunho(rascunhoSalvo, criador);
+
+        // Adicionar itens se existirem
+        if (dto.itens() != null && !dto.itens().isEmpty()) {
+            for (ItemRascunhoCreateDTO itemDTO : dto.itens()) {
+                adicionarItemInterno(rascunhoSalvo, itemDTO, criador);
+            }
+        }
+
         return rascunhoMapper.toDTO(rascunhoSalvo);
+    }
+
+    @Transactional
+    public RascunhoDTO adicionarItem(Long rascunhoId, ItemRascunhoCreateDTO itemDTO) {
+        Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
+                .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId));
+
+        User usuario = getUsuarioAutenticado();
+        adicionarItemInterno(rascunho, itemDTO, usuario);
+
+        return rascunhoMapper.toDTO(rascunho);
+    }
+
+    private void adicionarItemInterno(Rascunho rascunho, ItemRascunhoCreateDTO itemDTO, User usuario) {
+        // Obter próximo número de item (reutilizar se disponível)
+        Integer numeroItem = obterProximoNumeroItem(rascunho);
+
+        ItemRascunho item = new ItemRascunho();
+        item.setNumeroItem(numeroItem);
+        item.setNome(itemDTO.nome());
+        item.setQuantidade(itemDTO.quantidade());
+        item.setDescricao(itemDTO.descricao());
+        item.setObservacao(itemDTO.observacao());
+        item.setRascunho(rascunho);
+
+        rascunho.getItens().add(item);
+        itemRascunhoRepository.save(item);
+
+        // Registrar no histórico
+        historicoRascunhoService.registrarAdicaoItem(rascunho, item, usuario);
+    }
+
+    private Integer obterProximoNumeroItem(Rascunho rascunho) {
+        // Primeiro, verificar se há números disponíveis para reutilização
+        Optional<NumeroItemDisponivel> disponivel = numeroItemDisponivelRepository
+                .findFirstByRascunhoIdOrderByNumeroItemAsc(rascunho.getId());
+
+        if (disponivel.isPresent()) {
+            Integer numero = disponivel.get().getNumeroItem();
+            numeroItemDisponivelRepository.delete(disponivel.get());
+            return numero;
+        }
+
+        // Se não há números disponíveis, usar o próximo sequencial
+        Integer numero = rascunho.getProximoNumeroItem();
+        rascunho.setProximoNumeroItem(numero + 1);
+        rascunhoRepository.save(rascunho);
+        return numero;
+    }
+
+    @Transactional
+    public RascunhoDTO atualizarItem(Long rascunhoId, Long itemId, ItemRascunhoUpdateDTO itemDTO) {
+        Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
+                .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId));
+
+        ItemRascunho item = itemRascunhoRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("Item não encontrado com ID: " + itemId));
+
+        if (!item.getRascunho().getId().equals(rascunhoId)) {
+            throw new IllegalArgumentException("Item não pertence ao rascunho especificado");
+        }
+
+        User usuario = getUsuarioAutenticado();
+
+        // Registrar alterações
+        StringBuilder detalhes = new StringBuilder();
+        if (!item.getNome().equals(itemDTO.nome())) {
+            detalhes.append("Nome: ").append(item.getNome()).append(" -> ").append(itemDTO.nome()).append("; ");
+        }
+        if (!item.getQuantidade().equals(itemDTO.quantidade())) {
+            detalhes.append("Quantidade: ").append(item.getQuantidade()).append(" -> ").append(itemDTO.quantidade()).append("; ");
+        }
+
+        // Atualizar item
+        item.setNome(itemDTO.nome());
+        item.setQuantidade(itemDTO.quantidade());
+        item.setDescricao(itemDTO.descricao());
+        item.setObservacao(itemDTO.observacao());
+
+        itemRascunhoRepository.save(item);
+
+        // Registrar no histórico
+        if (detalhes.length() > 0) {
+            historicoRascunhoService.registrarAtualizacaoItem(rascunho, item, usuario, detalhes.toString());
+        }
+
+        return rascunhoMapper.toDTO(rascunho);
+    }
+
+    @Transactional
+    public RascunhoDTO removerItem(Long rascunhoId, Long itemId) {
+        Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
+                .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId));
+
+        ItemRascunho item = itemRascunhoRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("Item não encontrado com ID: " + itemId));
+
+        if (!item.getRascunho().getId().equals(rascunhoId)) {
+            throw new IllegalArgumentException("Item não pertence ao rascunho especificado");
+        }
+
+        User usuario = getUsuarioAutenticado();
+
+        // Registrar no histórico antes de remover
+        historicoRascunhoService.registrarRemocaoItem(rascunho, item, usuario);
+
+        // Guardar número do item para reutilização
+        NumeroItemDisponivel numeroDisponivel = new NumeroItemDisponivel();
+        numeroDisponivel.setRascunho(rascunho);
+        numeroDisponivel.setNumeroItem(item.getNumeroItem());
+        numeroItemDisponivelRepository.save(numeroDisponivel);
+
+        // Remover item
+        rascunho.getItens().remove(item);
+        itemRascunhoRepository.delete(item);
+
+        return rascunhoMapper.toDTO(rascunho);
     }
 
     @Transactional
@@ -84,23 +204,27 @@ public class RascunhoService {
         Rascunho rascunho = rascunhoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + id));
 
+        User usuario = getUsuarioAutenticado();
+
+        // Registrar atualização de observação se mudou
+        if (dto.observacao() != null && !dto.observacao().equals(rascunho.getObservacao())) {
+            historicoRascunhoService.registrarAtualizacaoObservacao(rascunho, usuario,
+                rascunho.getObservacao(), dto.observacao());
+        }
+
         rascunho.setObservacao(dto.observacao());
 
-        // Atualizar itens
+        // Atualizar itens se fornecidos
         if (dto.itens() != null) {
-            // Remover itens existentes
+            // Limpar itens existentes e números disponíveis
             rascunho.getItens().clear();
+            rascunho.getNumerosDisponiveis().clear();
+            rascunho.setProximoNumeroItem(1);
 
             // Adicionar novos itens
-            dto.itens().forEach(itemDTO -> {
-                ItemRascunho item = new ItemRascunho();
-                item.setNome(itemDTO.nome());
-                item.setQuantidade(itemDTO.quantidade());
-                item.setDescricao(itemDTO.descricao());
-                item.setObservacao(itemDTO.observacao());
-                item.setRascunho(rascunho);
-                rascunho.getItens().add(item);
-            });
+            for (ItemRascunhoCreateDTO itemDTO : dto.itens()) {
+                adicionarItemInterno(rascunho, itemDTO, usuario);
+            }
         }
 
         Rascunho rascunhoAtualizado = rascunhoRepository.save(rascunho);
@@ -133,6 +257,25 @@ public class RascunhoService {
             }
         }
 
+        // Buscar cotações do rascunho
+        List<CotacaoRascunho> cotacoesRascunho = cotacaoRascunhoRepository.findByRascunhoIdWithItens(rascunhoId);
+
+        // Validar que todos os itens selecionados possuem pelo menos uma cotação
+        Set<Long> itensCotados = new HashSet<>();
+        for (CotacaoRascunho cotacao : cotacoesRascunho) {
+            for (ItemRascunho item : cotacao.getItensRascunho()) {
+                itensCotados.add(item.getId());
+            }
+        }
+
+        List<Long> itensSemCotacao = dto.itemRascunhoIds().stream()
+                .filter(itemId -> !itensCotados.contains(itemId))
+                .collect(Collectors.toList());
+
+        if (!itensSemCotacao.isEmpty()) {
+            throw new IllegalArgumentException("Os seguintes itens não possuem cotação: " + itensSemCotacao + ". Apenas itens cotados podem ser convertidos em pedido.");
+        }
+
         // Criar novo pedido
         SolicitacaoDePedido pedido = new SolicitacaoDePedido();
         pedido.setObservacao(rascunho.getObservacao());
@@ -140,6 +283,7 @@ public class RascunhoService {
         pedido.setItens(new ArrayList<>());
 
         // Converter itens selecionados do rascunho para itens do pedido
+        Map<Long, ItemPedido> mapaItens = new HashMap<>();
         List<ItemRascunho> itensSelecionados = rascunho.getItens().stream()
                 .filter(item -> dto.itemRascunhoIds().contains(item.getId()))
                 .collect(Collectors.toList());
@@ -152,16 +296,44 @@ public class RascunhoService {
             itemPedido.setObservacao(itemRascunho.getObservacao());
             itemPedido.setSolicitacaoDePedido(pedido);
             pedido.getItens().add(itemPedido);
+            mapaItens.put(itemRascunho.getId(), itemPedido);
         }
 
         // Salvar pedido
         SolicitacaoDePedido pedidoSalvo = solicitacaoDePedidoRepository.save(pedido);
 
-        // Registrar no histórico
+        // Converter cotações do rascunho para cotações do pedido
+        for (CotacaoRascunho cotacaoRascunho : cotacoesRascunho) {
+            Set<ItemPedido> itensPedidoCotacao = new HashSet<>();
+            for (ItemRascunho itemRascunho : cotacaoRascunho.getItensRascunho()) {
+                if (mapaItens.containsKey(itemRascunho.getId())) {
+                    itensPedidoCotacao.add(mapaItens.get(itemRascunho.getId()));
+                }
+            }
+
+            if (!itensPedidoCotacao.isEmpty()) {
+                Cotacao cotacao = new Cotacao();
+                cotacao.setSolicitacaoDePedido(pedidoSalvo);
+                cotacao.setFornecedorProduto(cotacaoRascunho.getFornecedorProduto());
+                cotacao.setFornecedorServico(cotacaoRascunho.getFornecedorServico());
+                cotacao.setPreco(cotacaoRascunho.getPreco());
+                cotacao.setPrazoEmDiasUteis(cotacaoRascunho.getPrazoEmDiasUteis());
+                cotacao.setDataLimite(cotacaoRascunho.getDataLimite());
+                cotacao.setAnexoPdf(cotacaoRascunho.getAnexoPdf());
+                cotacao.setCaminhoAnexo(cotacaoRascunho.getCaminhoAnexo());
+                cotacao.setItensPedido(itensPedidoCotacao);
+
+                cotacaoRepository.save(cotacao);
+            }
+        }
+
+        // Registrar no histórico do pedido
         User usuario = getUsuarioAutenticado();
         historicoPedidoService.registrarCriacao(pedidoSalvo, usuario);
 
-        // Converter para DTO
+        // Registrar no histórico do rascunho
+        historicoRascunhoService.registrarConversaoPedido(rascunho, usuario, pedidoSalvo.getId());
+
         return convertToDTO(pedidoSalvo);
     }
 
@@ -171,11 +343,9 @@ public class RascunhoService {
             throw new IllegalStateException("Usuário não autenticado");
         }
 
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new EntityNotFoundException("Usuário não encontrado: " + username);
-        }
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + email));
         return user;
     }
 

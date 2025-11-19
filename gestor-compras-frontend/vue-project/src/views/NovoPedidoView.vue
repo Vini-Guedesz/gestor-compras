@@ -35,7 +35,7 @@
             <WizardProgress
               :currentStep="currentPage"
               :totalSteps="3"
-              :stepLabels="['Criar Pedido', 'Aprovar Itens', 'Adicionar Cotações']"
+              :stepLabels="['Criar Rascunho', 'Adicionar Cotações', 'Gerar Pedido']"
             />
 
             <div class="wizard-body">
@@ -45,24 +45,49 @@
                 @validation-change="page1Valid = $event"
               />
 
-              <PedidoFormPage2
+              <StepCotacoesRascunho
                 v-if="currentPage === 2"
-                :pedido="wizardData.pedido"
+                :rascunho="wizardData.rascunho"
                 :cotacoes="todasCotacoes"
+                :fornecedores="fornecedores"
                 :carregando="carregandoCotacoes"
-                @add-cotacao="abrirPaginaCotacoes"
-                @view-cotacoes="abrirDrawerCotacoes"
+                @save-cotacao="salvarCotacao"
+                @delete-cotacao="deletarCotacao"
               />
 
-              <PedidoFormPage3
-                v-if="currentPage === 3"
-                :pedido="wizardData.pedido"
-                :item="wizardData.itemAtual"
-                :fornecedores="fornecedores"
-                :carregandoFornecedores="carregandoFornecedores"
-                v-model="wizardData.cotacoes"
-                @validation-change="page3Valid = $event"
-              />
+              <!-- Step 3: Seleção de itens para pedido final -->
+              <div v-if="currentPage === 3" class="step-selecao-itens">
+                <div class="info-box">
+                  <h4>Selecione os itens para o pedido final</h4>
+                  <p>Apenas itens com cotação podem ser selecionados</p>
+                </div>
+
+                <div class="itens-lista">
+                  <div
+                    v-for="item in itensCotados"
+                    :key="item.id"
+                    class="item-selecao"
+                    :class="{ 'selecionado': itensSelecionados.includes(item.id) }"
+                    @click="toggleItemSelecionado(item.id)"
+                  >
+                    <div class="item-checkbox">
+                      <input
+                        type="checkbox"
+                        :checked="itensSelecionados.includes(item.id)"
+                        @change.stop="toggleItemSelecionado(item.id)"
+                      />
+                    </div>
+                    <div class="item-info">
+                      <span class="item-nome">{{ item.nome }}</span>
+                      <span class="item-quantidade">Qtd: {{ item.quantidade }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="itensCotados.length === 0" class="empty-state">
+                  <p>Nenhum item com cotação encontrado.</p>
+                </div>
+              </div>
             </div>
 
             <div class="wizard-footer">
@@ -103,52 +128,43 @@
                 <button
                   v-if="currentPage === 2"
                   type="button"
-                  @click="finalizarPedido"
-                  class="btn-success"
+                  @click="irParaPagina3"
+                  class="btn-primary"
+                  :disabled="!temItensCotados"
                 >
-                  Finalizar Pedido
+                  Selecionar Itens para Pedido
                 </button>
 
                 <button
                   v-if="currentPage === 3"
                   type="button"
-                  @click="salvarCotacoes"
-                  class="btn-primary"
-                  :disabled="!page3Valid || isLoading"
+                  @click="gerarPedidoFinal"
+                  class="btn-success"
+                  :disabled="itensSelecionados.length === 0 || isLoading"
                 >
-                  {{ isLoading ? 'Salvando...' : 'Salvar Cotações' }}
+                  {{ isLoading ? 'Gerando...' : 'Gerar Pedido Final' }}
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <DrawerCotacoes
-          :isVisible="showDrawer"
-          :item="itemDrawer"
-          :cotacoes="cotacoesDrawer"
-          :carregando="carregandoDrawer"
-          @close="fecharDrawer"
-          @view-pdf="visualizarPdf"
-        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import pedidoService from '@/services/pedidoService.js'
+import rascunhoService from '@/services/rascunhoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
-import cotacaoService from '@/services/cotacaoService.js'
+import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import WizardProgress from '@/features/pedidos/components/pedido-wizard/WizardProgressBar.vue'
 import PedidoFormPage1 from '@/features/pedidos/components/pedido-wizard/StepCriarPedido.vue'
-import PedidoFormPage2 from '@/features/pedidos/components/pedido-wizard/StepAprovarItens.vue'
-import PedidoFormPage3 from '@/features/pedidos/components/pedido-wizard/StepAdicionarCotacoes.vue'
-import DrawerCotacoes from '@/features/pedidos/components/pedido-wizard/CotacoesDrawer.vue'
+import StepCotacoesRascunho from '@/features/pedidos/components/pedido-wizard/StepAdicionarCotacoesRascunho.vue'
 
 export default {
   name: 'NovoPedidoView',
@@ -157,9 +173,7 @@ export default {
     DashboardSidebar,
     WizardProgress,
     PedidoFormPage1,
-    PedidoFormPage2,
-    PedidoFormPage3,
-    DrawerCotacoes
+    StepCotacoesRascunho
   },
   setup() {
     const router = useRouter()
@@ -178,9 +192,15 @@ export default {
     const page3Valid = ref(false)
 
     const wizardData = ref({
+      rascunho: {
+        id: null,
+        observacao: '',
+        itens: [],
+        dataCriacao: null
+      },
       pedido: {
         id: null,
-        objetivo: '',
+        observacao: '',
         status: 'PENDENTE',
         itens: [],
         dataCriacao: null
@@ -189,32 +209,52 @@ export default {
       cotacoes: []
     })
 
-    const showDrawer = ref(false)
-    const itemDrawer = ref(null)
-    const cotacoesDrawer = ref([])
-    const carregandoDrawer = ref(false)
     const fornecedores = ref([])
     const carregandoFornecedores = ref(false)
     const todasCotacoes = ref([])
     const carregandoCotacoes = ref(false)
+    const itensSelecionados = ref([])
+
+    // Computed para verificar se há itens cotados
+    const temItensCotados = computed(() => {
+      if (todasCotacoes.value.length === 0) return false
+      const itensCotados = new Set()
+      todasCotacoes.value.forEach(cotacao => {
+        if (cotacao.itensRascunhoIds) {
+          cotacao.itensRascunhoIds.forEach(id => itensCotados.add(id))
+        }
+      })
+      return itensCotados.size > 0
+    })
+
+    // Computed para obter itens cotados
+    const itensCotados = computed(() => {
+      const idsSet = new Set()
+      todasCotacoes.value.forEach(cotacao => {
+        if (cotacao.itensRascunhoIds) {
+          cotacao.itensRascunhoIds.forEach(id => idsSet.add(id))
+        }
+      })
+      return wizardData.value.rascunho.itens.filter(item => idsSet.has(item.id))
+    })
 
     const getTituloModal = () => {
       if (currentPage.value === 1) {
-        return wizardData.value.pedido.id ? 'Editar Pedido' : 'Novo Pedido de Compra'
+        return wizardData.value.rascunho.id ? 'Editar Rascunho' : 'Novo Rascunho de Pedido'
       } else if (currentPage.value === 2) {
-        return 'Aprovar Itens e Gerenciar Cotações'
+        return 'Adicionar Cotações aos Itens'
       } else {
-        return 'Adicionar Cotações'
+        return 'Selecionar Itens para Pedido Final'
       }
     }
 
     const getSubtituloModal = () => {
       if (currentPage.value === 1) {
-        return 'Preencha as informações do pedido e adicione os itens necessários'
+        return 'Preencha as informações e adicione os itens necessários'
       } else if (currentPage.value === 2) {
-        return 'Revise os itens e adicione cotações de fornecedores'
+        return 'Adicione cotações de fornecedores para cada item do rascunho'
       } else {
-        return `Adicione cotações para: ${wizardData.value.itemAtual?.nome || ''}`
+        return 'Selecione os itens cotados que deseja incluir no pedido final'
       }
     }
 
@@ -246,94 +286,133 @@ export default {
 
       try {
         isLoading.value = true
-        const dadosParaSalvar = {
-          id: wizardData.value.pedido.id,
-          objetivo: wizardData.value.pedido.objetivo,
-          status: wizardData.value.pedido.status,
-          dataCriacao: wizardData.value.pedido.dataCriacao,
-          itens: wizardData.value.pedido.itens.map(item => ({
-            id: item.id || null,
-            nome: item.nome,
-            quantidade: item.quantidade,
-            descricao: item.descricao || '',
-            observacao: item.observacao || ''
-          }))
-        }
 
-        const pedidoSalvo = await pedidoService.salvar(dadosParaSalvar)
-        wizardData.value.pedido.id = pedidoSalvo.id
-        wizardData.value.pedido.dataCriacao = pedidoSalvo.dataCriacao
+        if (wizardData.value.rascunho.id) {
+          // Rascunho já existe - apenas atualizar observação se necessário
+          // Os itens já são gerenciados individualmente pelo StepCriarPedido
+          const rascunhoAtual = await rascunhoService.obterPorId(wizardData.value.rascunho.id)
 
-        if (pedidoSalvo.itens && pedidoSalvo.itens.length > 0) {
-          wizardData.value.pedido.itens = pedidoSalvo.itens
+          // Atualizar observação se mudou
+          if (rascunhoAtual.observacao !== wizardData.value.pedido.observacao) {
+            await rascunhoService.atualizar(wizardData.value.rascunho.id, {
+              observacao: wizardData.value.pedido.observacao || ''
+            })
+          }
+
+          // Recarregar rascunho atualizado
+          const rascunhoSalvo = await rascunhoService.obterPorId(wizardData.value.rascunho.id)
+          wizardData.value.rascunho.itens = rascunhoSalvo.itens
+          wizardData.value.pedido.itens = rascunhoSalvo.itens
+        } else {
+          // Criar novo rascunho com os itens
+          const dadosRascunho = {
+            observacao: wizardData.value.pedido.observacao || wizardData.value.pedido.objetivo || '',
+            itens: wizardData.value.pedido.itens.map(item => ({
+              nome: item.nome,
+              quantidade: item.quantidade,
+              descricao: item.descricao || '',
+              observacao: item.observacao || ''
+            }))
+          }
+
+          const rascunhoSalvo = await rascunhoService.criar(dadosRascunho)
+          wizardData.value.rascunho.id = rascunhoSalvo.id
+          wizardData.value.rascunho.dataCriacao = rascunhoSalvo.dataCriacao
+          wizardData.value.rascunho.itens = rascunhoSalvo.itens
+          wizardData.value.pedido.itens = rascunhoSalvo.itens
         }
 
         hasUnsavedChanges.value = false
-        await carregarCotacoesDoPedido()
+        await carregarCotacoesDoRascunho()
+        await carregarFornecedores()
         proximaPagina()
       } catch (error) {
-        console.error('Erro ao salvar pedido:', error)
-        alert('Erro ao salvar pedido. Tente novamente.')
+        console.error('Erro ao salvar rascunho:', error)
+        alert('Erro ao salvar. Tente novamente.')
       } finally {
         isLoading.value = false
       }
     }
 
-    const abrirPaginaCotacoes = (item) => {
-      wizardData.value.itemAtual = item
-      wizardData.value.cotacoes = []
-      carregarFornecedores()
-      irParaPagina(3)
+    const irParaPagina3 = () => {
+      // Selecionar todos os itens cotados por padrão
+      itensSelecionados.value = itensCotados.value.map(item => item.id)
+      proximaPagina()
     }
 
-    const salvarCotacoes = async () => {
-      if (!page3Valid.value) {
-        alert('Por favor, preencha todas as cotações corretamente.')
+    const gerarPedidoFinal = async () => {
+      if (itensSelecionados.value.length === 0) {
+        alert('Selecione pelo menos um item para gerar o pedido.')
         return
       }
 
       try {
         isLoading.value = true
-        for (const cotacao of wizardData.value.cotacoes) {
-          const dadosCotacao = {
-            fornecedorId: cotacao.fornecedorId,
-            itemPedidoId: wizardData.value.itemAtual.id,
-            tipo: cotacao.tipo,
-            valorUnitario: parseFloat(cotacao.valorUnitario),
-            prazoEntrega: parseInt(cotacao.prazoEntrega),
-            validadeCotacao: cotacao.validadeCotacao,
-            arquivo: cotacao.arquivo
-          }
-          await cotacaoService.salvar(dadosCotacao)
-        }
 
-        alert('Cotações salvas com sucesso!')
-        await carregarCotacoesDoPedido()
-        wizardData.value.cotacoes = []
-        wizardData.value.itemAtual = null
-        voltarPagina()
+        // Converter rascunho em pedido com os itens selecionados
+        const pedidoCriado = await rascunhoService.converterParaPedido(
+          wizardData.value.rascunho.id,
+          itensSelecionados.value
+        )
+
+        alert(`Pedido #${pedidoCriado.id} criado com sucesso!`)
+        router.push('/pedidos')
       } catch (error) {
-        console.error('Erro ao salvar cotações:', error)
-        alert('Erro ao salvar cotações. Tente novamente.')
+        console.error('Erro ao gerar pedido:', error)
+        alert(error.message || 'Erro ao gerar pedido. Tente novamente.')
       } finally {
         isLoading.value = false
       }
     }
 
-    const finalizarPedido = () => {
-      const itensSemCotacao = wizardData.value.pedido.itens.filter(item => {
-        const cotacoesDoItem = todasCotacoes.value.filter(c => c.itemPedidoId === item.id)
-        return cotacoesDoItem.length === 0
-      })
+    const carregarCotacoesDoRascunho = async () => {
+      if (!wizardData.value.rascunho.id) return
 
-      if (itensSemCotacao.length > 0) {
-        const confirmacao = confirm(
-          `${itensSemCotacao.length} item(ns) ainda não possui(em) cotações. Deseja finalizar mesmo assim?`
-        )
-        if (!confirmacao) return
+      try {
+        carregandoCotacoes.value = true
+        const cotacoes = await cotacaoRascunhoService.listarPorRascunho(wizardData.value.rascunho.id)
+        todasCotacoes.value = cotacoes
+      } catch (error) {
+        console.error('Erro ao carregar cotações:', error)
+      } finally {
+        carregandoCotacoes.value = false
       }
+    }
 
-      router.push('/pedidos')
+    const salvarCotacao = async (dadosCotacao) => {
+      try {
+        isLoading.value = true
+        await cotacaoRascunhoService.criar(wizardData.value.rascunho.id, dadosCotacao)
+        await carregarCotacoesDoRascunho()
+      } catch (error) {
+        console.error('Erro ao salvar cotação:', error)
+        alert(error.message || 'Erro ao salvar cotação. Tente novamente.')
+        throw error
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    const deletarCotacao = async (cotacaoId) => {
+      try {
+        isLoading.value = true
+        await cotacaoRascunhoService.deletar(wizardData.value.rascunho.id, cotacaoId)
+        await carregarCotacoesDoRascunho()
+      } catch (error) {
+        console.error('Erro ao deletar cotação:', error)
+        alert('Erro ao deletar cotação. Tente novamente.')
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    const toggleItemSelecionado = (itemId) => {
+      const index = itensSelecionados.value.indexOf(itemId)
+      if (index === -1) {
+        itensSelecionados.value.push(itemId)
+      } else {
+        itensSelecionados.value.splice(index, 1)
+      }
     }
 
     const cancelar = () => {
@@ -367,45 +446,45 @@ export default {
       }
     }
 
-    const carregarCotacoesDoPedido = async () => {
-      if (!wizardData.value.pedido.id) return
-
+    const carregarRascunhoExistente = async (rascunhoId) => {
       try {
-        carregandoCotacoes.value = true
-        const cotacoes = await cotacaoService.listarPorPedido(wizardData.value.pedido.id)
-        todasCotacoes.value = cotacoes
+        isLoading.value = true
+        console.log('Carregando rascunho existente:', rascunhoId)
+
+        const rascunho = await rascunhoService.obterPorId(rascunhoId)
+
+        wizardData.value.rascunho = {
+          id: rascunho.id,
+          observacao: rascunho.observacao,
+          itens: rascunho.itens || [],
+          dataCriacao: rascunho.dataCriacao
+        }
+
+        wizardData.value.pedido = {
+          id: rascunho.id,
+          observacao: rascunho.observacao,
+          status: 'RASCUNHO',
+          itens: rascunho.itens || [],
+          dataCriacao: rascunho.dataCriacao
+        }
+
+        console.log('Rascunho carregado:', wizardData.value.rascunho)
       } catch (error) {
-        console.error('Erro ao carregar cotações:', error)
+        console.error('Erro ao carregar rascunho:', error)
+        alert('Erro ao carregar rascunho. Redirecionando...')
+        router.push('/pedidos')
       } finally {
-        carregandoCotacoes.value = false
+        isLoading.value = false
       }
     }
 
-    const abrirDrawerCotacoes = async (item) => {
-      itemDrawer.value = item
-      carregandoDrawer.value = true
-      showDrawer.value = true
-
-      try {
-        const cotacoes = await cotacaoService.listarPorItem(item.id)
-        cotacoesDrawer.value = cotacoes
-      } catch (error) {
-        console.error('Erro ao carregar cotações do item:', error)
-        cotacoesDrawer.value = []
-      } finally {
-        carregandoDrawer.value = false
+    // Carregar rascunho existente se houver ID na rota
+    onMounted(() => {
+      const rascunhoId = route.params.id
+      if (rascunhoId) {
+        carregarRascunhoExistente(rascunhoId)
       }
-    }
-
-    const fecharDrawer = () => {
-      showDrawer.value = false
-      itemDrawer.value = null
-      cotacoesDrawer.value = []
-    }
-
-    const visualizarPdf = (cotacao) => {
-      console.log('Visualizar PDF da cotação:', cotacao)
-    }
+    })
 
     return {
       // Sidebar
@@ -420,28 +499,26 @@ export default {
       page1Valid,
       page3Valid,
       wizardData,
-      showDrawer,
-      itemDrawer,
-      cotacoesDrawer,
-      carregandoDrawer,
       fornecedores,
       carregandoFornecedores,
       todasCotacoes,
       carregandoCotacoes,
+      itensSelecionados,
+      temItensCotados,
+      itensCotados,
       getTituloModal,
       getSubtituloModal,
       irParaPagina,
       voltarPagina,
       proximaPagina,
       irParaPagina2,
-      abrirPaginaCotacoes,
-      salvarCotacoes,
-      finalizarPedido,
+      irParaPagina3,
+      gerarPedidoFinal,
+      salvarCotacao,
+      deletarCotacao,
+      toggleItemSelecionado,
       cancelar,
-      voltar,
-      abrirDrawerCotacoes,
-      fecharDrawer,
-      visualizarPdf
+      voltar
     }
   }
 }
@@ -650,6 +727,87 @@ export default {
 .btn-success:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 8px -1px rgba(16, 185, 129, 0.4);
+}
+
+/* Step 3 - Seleção de Itens */
+.step-selecao-itens {
+  padding: 0;
+}
+
+.step-selecao-itens .info-box {
+  background: #f0f4ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.step-selecao-itens .info-box h4 {
+  margin: 0 0 4px 0;
+  color: #1F285F;
+  font-size: 1rem;
+}
+
+.step-selecao-itens .info-box p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.itens-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-selecao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.item-selecao:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.item-selecao.selecionado {
+  background: #e8f5e9;
+  border-color: #10b981;
+}
+
+.item-checkbox input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-nome {
+  font-weight: 500;
+  color: #374151;
+}
+
+.item-quantidade {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
 }
 
 /* Responsive */

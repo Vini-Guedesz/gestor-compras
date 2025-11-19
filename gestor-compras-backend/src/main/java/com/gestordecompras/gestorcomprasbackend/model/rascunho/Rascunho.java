@@ -39,10 +39,19 @@ public class Rascunho {
     @Column(name = "data_modificacao")
     private LocalDateTime dataModificacao;
 
+    @Column(name = "proximo_numero_item", nullable = false)
+    private Integer proximoNumeroItem = 1;
+
+    @OneToMany(mappedBy = "rascunho", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<NumeroItemDisponivel> numerosDisponiveis = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         this.dataCriacao = LocalDateTime.now();
         this.dataModificacao = LocalDateTime.now();
+        if (this.proximoNumeroItem == null) {
+            this.proximoNumeroItem = 1;
+        }
     }
 
     @PreUpdate

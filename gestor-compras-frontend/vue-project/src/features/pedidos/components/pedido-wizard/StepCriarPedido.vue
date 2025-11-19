@@ -1,8 +1,16 @@
 <template>
   <div class="page-1-container">
+    <!-- Indicador de alterações não salvas -->
+    <div v-if="hasUnsavedChanges" class="unsaved-warning">
+      <svg viewBox="0 0 24 24" width="20" height="20">
+        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+      <span>Você tem alterações não salvas</span>
+    </div>
+
     <!-- Informações do Pedido -->
     <div class="form-section">
-      <h3 class="section-title">📋 Informações do Pedido</h3>
+      <h3 class="section-title">📋 Informações do Rascunho</h3>
 
       <div class="form-group">
         <label class="form-label">Data de Criação</label>
@@ -17,40 +25,26 @@
 
       <div class="form-group">
         <label for="objetivo" class="form-label">
-          Objetivo / Descrição do Pedido
+          Observação / Descrição do Pedido
         </label>
         <textarea
           id="objetivo"
-          v-model="formData.objetivo"
+          v-model="formData.observacao"
           class="form-textarea"
           placeholder="Descreva o objetivo do pedido, justificativa, observações gerais..."
           rows="4"
           maxlength="1000"
+          @input="markAsUnsaved"
         ></textarea>
-        <span class="form-hint">{{ formData.objetivo?.length || 0 }}/1000 caracteres</span>
-      </div>
-
-      <div class="form-group">
-        <label for="status" class="form-label">Status do Pedido</label>
-        <select
-          id="status"
-          v-model="formData.status"
-          class="form-select"
-        >
-          <option value="RASCUNHO">Rascunho</option>
-          <option value="PENDENTE">Pendente</option>
-        </select>
-        <span class="form-hint">
-          Rascunho: pode ser editado posteriormente | Pendente: aguarda aprovação
-        </span>
+        <span class="form-hint">{{ formData.observacao?.length || 0 }}/1000 caracteres</span>
       </div>
     </div>
 
     <!-- Itens do Pedido -->
     <div class="form-section">
       <div class="section-header">
-        <h3 class="section-title">📦 Itens do Pedido</h3>
-        <button type="button" @click="adicionarItem" class="btn-add-item">
+        <h3 class="section-title">📦 Itens do Rascunho</h3>
+        <button type="button" @click="adicionarNovoItem" class="btn-add-item">
           <svg viewBox="0 0 24 24" width="16" height="16">
             <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
           </svg>
@@ -62,35 +56,31 @@
       <div v-if="formData.itens.length > 0" class="itens-lista">
         <div
           v-for="(item, index) in formData.itens"
-          :key="index"
+          :key="item.id || `new-${index}`"
           class="item-card"
+          :class="{ 'item-unsaved': item._unsaved, 'item-saving': item._saving }"
         >
           <div class="item-header">
-            <span class="item-badge">Item #{{ index + 1 }}</span>
+            <div class="item-badge-container">
+              <span class="item-badge">Item #{{ item.numeroItem || index + 1 }}</span>
+              <span v-if="item._unsaved" class="item-status unsaved">● Não salvo</span>
+              <span v-else-if="item.id" class="item-status saved">✓ Salvo</span>
+            </div>
             <div class="item-actions">
               <button
                 type="button"
-                @click="moverItemParaCima(index)"
-                class="btn-move"
-                :disabled="index === 0"
-                title="Mover para cima"
+                @click="salvarItem(index)"
+                class="btn-save-item"
+                :disabled="!itemValido(item) || item._saving"
+                title="Salvar este item"
               >
-                ▲
-              </button>
-              <button
-                type="button"
-                @click="moverItemParaBaixo(index)"
-                class="btn-move"
-                :disabled="index === formData.itens.length - 1"
-                title="Mover para baixo"
-              >
-                ▼
+                {{ item._saving ? 'Salvando...' : 'Salvar' }}
               </button>
               <button
                 type="button"
                 @click="removerItem(index)"
                 class="btn-remove"
-                :disabled="formData.itens.length === 1"
+                :disabled="item._saving"
                 title="Remover item"
               >
                 Remover
@@ -111,6 +101,7 @@
                   placeholder="Ex: Notebook Dell Inspiron 15"
                   maxlength="255"
                   required
+                  @input="markItemAsUnsaved(index)"
                 />
               </div>
 
@@ -125,6 +116,7 @@
                   placeholder="1"
                   min="1"
                   required
+                  @input="markItemAsUnsaved(index)"
                 />
               </div>
             </div>
@@ -137,6 +129,7 @@
                 placeholder="Descrição detalhada do item, especificações técnicas..."
                 rows="2"
                 maxlength="500"
+                @input="markItemAsUnsaved(index)"
               ></textarea>
             </div>
 
@@ -148,6 +141,7 @@
                 placeholder="Observações adicionais sobre este item..."
                 rows="2"
                 maxlength="255"
+                @input="markItemAsUnsaved(index)"
               ></textarea>
             </div>
           </div>
@@ -168,6 +162,10 @@
           <span class="resumo-label">Quantidade Total:</span>
           <span class="resumo-value">{{ quantidadeTotal }}</span>
         </div>
+        <div class="resumo-item">
+          <span class="resumo-label">Itens Salvos:</span>
+          <span class="resumo-value">{{ itensSalvos }} / {{ formData.itens.length }}</span>
+        </div>
       </div>
     </div>
 
@@ -183,6 +181,7 @@
 
 <script>
 import { ref, computed, watch } from 'vue'
+import rascunhoService from '@/services/rascunhoService.js'
 
 export default {
   name: 'PedidoFormPage1',
@@ -192,13 +191,30 @@ export default {
       required: true
     }
   },
-  emits: ['update:modelValue', 'validation-change'],
+  emits: ['update:modelValue', 'validation-change', 'rascunho-created'],
   setup(props, { emit }) {
-    // Form data local (sincronizado com parent via v-model)
     const formData = ref({ ...props.modelValue })
+    const hasUnsavedChanges = ref(false)
 
-    // Computed
+    // Observar mudanças no modelValue (quando rascunho é carregado)
+    watch(() => props.modelValue, (newValue) => {
+      if (newValue && newValue.id) {
+        formData.value = {
+          ...newValue,
+          itens: (newValue.itens || []).map(item => ({
+            ...item,
+            _unsaved: false,
+            _saving: false
+          }))
+        }
+        hasUnsavedChanges.value = false
+      }
+    }, { deep: true })
+
     const dataFormatada = computed(() => {
+      if (formData.value.dataCriacao) {
+        return new Date(formData.value.dataCriacao).toLocaleString('pt-BR')
+      }
       return new Date().toLocaleString('pt-BR')
     })
 
@@ -206,35 +222,28 @@ export default {
       return formData.value.itens.reduce((total, item) => total + (item.quantidade || 0), 0)
     })
 
+    const itensSalvos = computed(() => {
+      return formData.value.itens.filter(item => item.id && !item._unsaved).length
+    })
+
     const validationErrors = computed(() => {
       const errors = []
 
-      // Validar objetivo
-      if (formData.value.objetivo && formData.value.objetivo.length > 1000) {
-        errors.push('Objetivo deve ter no máximo 1000 caracteres')
+      if (formData.value.observacao && formData.value.observacao.length > 1000) {
+        errors.push('Observação deve ter no máximo 1000 caracteres')
       }
 
-      // Deve ter pelo menos 1 item
       if (formData.value.itens.length === 0) {
-        errors.push('Adicione pelo menos um item ao pedido')
+        errors.push('Adicione pelo menos um item ao rascunho')
       }
 
-      // Validar cada item
       formData.value.itens.forEach((item, index) => {
+        const itemNum = item.numeroItem || index + 1
         if (!item.nome?.trim()) {
-          errors.push(`Item ${index + 1}: Nome é obrigatório`)
+          errors.push(`Item ${itemNum}: Nome é obrigatório`)
         }
         if (!item.quantidade || item.quantidade <= 0) {
-          errors.push(`Item ${index + 1}: Quantidade deve ser maior que zero`)
-        }
-        if (item.nome && item.nome.length > 255) {
-          errors.push(`Item ${index + 1}: Nome deve ter no máximo 255 caracteres`)
-        }
-        if (item.descricao && item.descricao.length > 500) {
-          errors.push(`Item ${index + 1}: Descrição deve ter no máximo 500 caracteres`)
-        }
-        if (item.observacao && item.observacao.length > 255) {
-          errors.push(`Item ${index + 1}: Observação deve ter no máximo 255 caracteres`)
+          errors.push(`Item ${itemNum}: Quantidade deve ser maior que zero`)
         }
       })
 
@@ -243,36 +252,122 @@ export default {
 
     const isValid = computed(() => validationErrors.value.length === 0)
 
-    // Métodos
-    const adicionarItem = () => {
+    const itemValido = (item) => {
+      return item.nome?.trim() && item.quantidade > 0
+    }
+
+    const markAsUnsaved = () => {
+      hasUnsavedChanges.value = true
+    }
+
+    const markItemAsUnsaved = (index) => {
+      formData.value.itens[index]._unsaved = true
+      hasUnsavedChanges.value = true
+    }
+
+    const criarRascunhoComItem = async (itemData) => {
+      const novoRascunho = await rascunhoService.criar({
+        observacao: formData.value.observacao || '',
+        itens: [itemData]
+      })
+      formData.value.id = novoRascunho.id
+      formData.value.dataCriacao = novoRascunho.dataCriacao
+      emit('rascunho-created', novoRascunho)
+      return novoRascunho
+    }
+
+    const adicionarNovoItem = () => {
       formData.value.itens.push({
         nome: '',
         quantidade: 1,
         descricao: '',
-        observacao: ''
+        observacao: '',
+        _unsaved: true
       })
+      hasUnsavedChanges.value = true
     }
 
-    const removerItem = (index) => {
-      if (formData.value.itens.length > 1) {
-        formData.value.itens.splice(index, 1)
+    const salvarItem = async (index) => {
+      const item = formData.value.itens[index]
+      if (!itemValido(item)) return
+
+      item._saving = true
+
+      try {
+        const itemData = {
+          nome: item.nome,
+          quantidade: item.quantidade,
+          descricao: item.descricao || '',
+          observacao: item.observacao || ''
+        }
+
+        let rascunhoAtualizado
+
+        if (!formData.value.id) {
+          // Primeiro item - criar rascunho com o item
+          rascunhoAtualizado = await criarRascunhoComItem(itemData)
+        } else if (item.id) {
+          // Atualizar item existente
+          rascunhoAtualizado = await rascunhoService.atualizarItem(
+            formData.value.id,
+            item.id,
+            itemData
+          )
+        } else {
+          // Adicionar novo item ao rascunho existente
+          rascunhoAtualizado = await rascunhoService.adicionarItem(
+            formData.value.id,
+            itemData
+          )
+        }
+
+        // Atualizar lista de itens com dados do servidor
+        formData.value.itens = rascunhoAtualizado.itens.map(serverItem => ({
+          ...serverItem,
+          _unsaved: false,
+          _saving: false
+        }))
+
+        hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
+
+      } catch (error) {
+        console.error('Erro ao salvar item:', error)
+        alert(error.message || 'Erro ao salvar item')
+      } finally {
+        item._saving = false
       }
     }
 
-    const moverItemParaCima = (index) => {
-      if (index > 0) {
-        const item = formData.value.itens[index]
-        formData.value.itens.splice(index, 1)
-        formData.value.itens.splice(index - 1, 0, item)
-      }
-    }
+    const removerItem = async (index) => {
+      const item = formData.value.itens[index]
 
-    const moverItemParaBaixo = (index) => {
-      if (index < formData.value.itens.length - 1) {
-        const item = formData.value.itens[index]
-        formData.value.itens.splice(index, 1)
-        formData.value.itens.splice(index + 1, 0, item)
+      if (item.id && formData.value.id) {
+        // Item já salvo no servidor - remover via API
+        if (!confirm('Deseja remover este item do rascunho?')) return
+
+        try {
+          const rascunhoAtualizado = await rascunhoService.removerItem(
+            formData.value.id,
+            item.id
+          )
+
+          formData.value.itens = rascunhoAtualizado.itens.map(serverItem => ({
+            ...serverItem,
+            _unsaved: false,
+            _saving: false
+          }))
+
+        } catch (error) {
+          console.error('Erro ao remover item:', error)
+          alert(error.message || 'Erro ao remover item')
+        }
+      } else {
+        // Item ainda não salvo - bloquear remoção
+        alert('Salve o item antes de removê-lo.')
+        return
       }
+
+      hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
     }
 
     // Watchers
@@ -289,20 +384,39 @@ export default {
 
     return {
       formData,
+      hasUnsavedChanges,
       dataFormatada,
       quantidadeTotal,
+      itensSalvos,
       validationErrors,
       isValid,
-      adicionarItem,
-      removerItem,
-      moverItemParaCima,
-      moverItemParaBaixo
+      itemValido,
+      markAsUnsaved,
+      markItemAsUnsaved,
+      adicionarNovoItem,
+      salvarItem,
+      removerItem
     }
   }
 }
 </script>
 
 <style scoped>
+/* Unsaved Warning */
+.unsaved-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
 /* Form Sections */
 .form-section {
   margin-bottom: 32px;
@@ -406,34 +520,35 @@ export default {
   transform: translateY(-1px);
 }
 
-.btn-move,
+.btn-save-item {
+  padding: 6px 12px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save-item:hover:not(:disabled) {
+  background: #059669;
+}
+
+.btn-save-item:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
 .btn-remove {
-  padding: 4px 8px;
+  padding: 6px 12px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
   background: white;
-}
-
-.btn-move {
-  color: #3b82f6;
-  min-width: 32px;
-}
-
-.btn-move:hover:not(:disabled) {
-  background: #dbeafe;
-  border-color: #3b82f6;
-}
-
-.btn-move:disabled {
-  color: #9ca3af;
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.btn-remove {
   color: #ef4444;
 }
 
@@ -460,6 +575,16 @@ export default {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 16px;
+  transition: all 0.2s;
+}
+
+.item-card.item-unsaved {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.item-card.item-saving {
+  opacity: 0.7;
 }
 
 .item-header {
@@ -469,6 +594,12 @@ export default {
   margin-bottom: 16px;
 }
 
+.item-badge-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .item-badge {
   background: #3b82f6;
   color: white;
@@ -476,6 +607,19 @@ export default {
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.item-status {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.item-status.unsaved {
+  color: #f59e0b;
+}
+
+.item-status.saved {
+  color: #10b981;
 }
 
 .item-actions {
@@ -492,6 +636,7 @@ export default {
   border-radius: 8px;
   display: flex;
   gap: 32px;
+  flex-wrap: wrap;
 }
 
 .resumo-item {

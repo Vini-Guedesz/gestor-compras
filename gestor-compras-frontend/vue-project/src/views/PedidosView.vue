@@ -430,6 +430,12 @@
 
               <p v-else class="empty-message">Nenhum item cadastrado neste pedido.</p>
             </div>
+
+            <!-- Histórico de Modificações -->
+            <HistoricoPedido
+              v-if="pedidoSelecionado?.id"
+              :pedidoId="pedidoSelecionado.id"
+            />
           </div>
         </div>
       </div>
@@ -446,11 +452,13 @@ import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.v
 // Lazy loading para componentes pesados
 const PedidoForm = defineAsyncComponent(() => import('@/features/pedidos/components/pedido-wizard/PedidoWizard.vue'))
 const ConfirmModal = defineAsyncComponent(() => import('@/components/ui/modals/ConfirmModal.vue'))
+const HistoricoPedido = defineAsyncComponent(() => import('@/features/pedidos/components/HistoricoPedido.vue'))
 import pedidoService from '@/services/pedidoService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
 import relatorioService from '@/services/relatorioService.js'
+import rascunhoService from '@/services/rascunhoService.js'
 
 export default {
   name: 'PedidosView',
@@ -458,7 +466,8 @@ export default {
     DashboardHeader,
     DashboardSidebar,
     PedidoForm,
-    ConfirmModal
+    ConfirmModal,
+    HistoricoPedido
   },
   setup() {
     // Router
@@ -578,47 +587,41 @@ export default {
       return resultado
     })
 
-    // MÃ©todos de dados
+    // Métodos de dados
     const carregarPedidos = async () => {
       try {
         isLoading.value = true
-        console.log('Ÿ”„ Carregando pedidos...')
+        console.log('📄 Carregando pedidos e rascunhos...')
 
-        // Buscar pedidos e itens em paralelo
-        const [response, todosItens] = await Promise.all([
+        // Buscar pedidos, itens e rascunhos em paralelo
+        const [response, todosItens, rascunhos] = await Promise.all([
           pedidoService.listarTodos(),
-          itemPedidoService.listarTodos()
+          itemPedidoService.listarTodos(),
+          rascunhoService.listar()
         ])
 
         console.log('Itens carregados:', todosItens.length)
-        if (todosItens.length > 0) {
-          console.log('🔍 Primeiro item carregado:', todosItens[0])
-        }
+        console.log('Rascunhos carregados:', rascunhos.length)
 
-        // Processar dados do backend - estrutura simplificada
+        let listaPedidos = []
+
+        // Processar pedidos do backend
         if (response && Array.isArray(response)) {
-          pedidos.value = response.map(pedido => {
-            // Filtrar itens que pertencem a este pedido
+          listaPedidos = response.map(pedido => {
             const itensDoPedido = todosItens.filter(item => {
-              // O ItemPedido tem uma referÃªncia solicitacaoDePedido com id
               return item.solicitacaoDePedido?.id === pedido.id
             })
 
-            console.log(`Pedido #${pedido.id}: ${itensDoPedido.length} itens`)
-
             return {
               ...pedido,
-              // Adicionar os itens ao pedido
               itens: itensDoPedido,
-              // Usar observacao diretamente como descrição
               descricao: pedido.observacao || 'Sem descrição',
-              // Garantir que dataCriacao seja tratada corretamente
-              dataPedido: pedido.dataCriacao || pedido.dataPedido
+              dataPedido: pedido.dataCriacao || pedido.dataPedido,
+              isRascunho: false
             }
           })
-          console.log('DEBUG - Pedidos carregados:', pedidos.value.length)
         } else if (response && response.data && Array.isArray(response.data)) {
-          pedidos.value = response.data.map(pedido => {
+          listaPedidos = response.data.map(pedido => {
             const itensDoPedido = todosItens.filter(item => {
               return item.solicitacaoDePedido?.id === pedido.id
             })
@@ -627,18 +630,31 @@ export default {
               ...pedido,
               itens: itensDoPedido,
               descricao: pedido.observacao || 'Sem descrição',
-              dataPedido: pedido.dataCriacao || pedido.dataPedido
+              dataPedido: pedido.dataCriacao || pedido.dataPedido,
+              isRascunho: false
             }
           })
-          console.log('DEBUG - Pedidos carregados:', pedidos.value.length)
-        } else {
-          // Se não há dados válidos do backend, exibir lista vazia
-          console.log('⚠️ Nenhum dado válido recebido do backend')
-          pedidos.value = []
         }
+
+        // Adicionar rascunhos à lista com status RASCUNHO
+        const rascunhosFormatados = rascunhos.map(rascunho => ({
+          id: `R-${rascunho.id}`,
+          rascunhoId: rascunho.id,
+          status: 'RASCUNHO',
+          dataCriacao: rascunho.dataCriacao,
+          dataPedido: rascunho.dataCriacao,
+          observacao: rascunho.observacao,
+          descricao: rascunho.observacao || 'Sem descrição',
+          itens: rascunho.itens || [],
+          isRascunho: true
+        }))
+
+        // Combinar pedidos e rascunhos
+        pedidos.value = [...listaPedidos, ...rascunhosFormatados]
+        console.log('DEBUG - Total de itens na lista:', pedidos.value.length)
+
       } catch (error) {
         console.error('❌ Erro ao carregar pedidos do backend:', error)
-        // Exibir lista vazia em caso de erro - apenas dados reais
         pedidos.value = []
       } finally {
         isLoading.value = false
@@ -729,7 +745,13 @@ export default {
       try {
         console.log('Editando pedido:', pedido)
 
-        // Buscar o pedido completo do backend para garantir que os itens estejam atualizados
+        // Verificar se é um rascunho - redirecionar para o wizard
+        if (pedido.isRascunho) {
+          router.push(`/pedidos/rascunho/${pedido.rascunhoId}`)
+          return
+        }
+
+        // Buscar o pedido completo do backend
         console.log('Buscando pedido completo do backend...')
         const pedidoCompleto = await pedidoService.obterPorId(pedido.id)
         console.log('Pedido completo carregado para edição:', pedidoCompleto)
