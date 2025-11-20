@@ -18,6 +18,8 @@ public interface RascunhoMapper {
     @Mapping(target = "dataModificacao", ignore = true)
     @Mapping(target = "proximoNumeroItem", ignore = true)
     @Mapping(target = "numerosDisponiveis", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "pedidoGeradoId", ignore = true)
     Rascunho toEntity(RascunhoCreateDTO dto);
 
     @Mapping(target = "id", ignore = true)
@@ -26,5 +28,7 @@ public interface RascunhoMapper {
     @Mapping(target = "dataModificacao", ignore = true)
     @Mapping(target = "proximoNumeroItem", ignore = true)
     @Mapping(target = "numerosDisponiveis", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "pedidoGeradoId", ignore = true)
     void updateEntityFromDTO(RascunhoUpdateDTO dto, @MappingTarget Rascunho rascunho);
 }

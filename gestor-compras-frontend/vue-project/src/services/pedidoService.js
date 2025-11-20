@@ -107,26 +107,23 @@ const pedidoService = {
     return this.atualizar(id, pedido)
   },
 
-  async alterarStatus(id, novoStatus) {
+  async _updatePedido(id, updates) {
     try {
-      console.log(`🔄 Alterando status do pedido ID ${id} para ${novoStatus}...`)
-
-      // Primeiro busca o pedido atual
+      console.log(`🔄 Atualizando dados do pedido ID ${id}...`, updates)
       const pedidoAtual = await this.obterPorId(id)
-
-      // Atualiza apenas o status
-      const pedidoAtualizado = {
-        ...pedidoAtual,
-        status: novoStatus
-      }
-
+      const pedidoAtualizado = { ...pedidoAtual, ...updates }
       const data = await api.put(`/api/solicitacoes-pedido/${id}`, pedidoAtualizado)
-      console.log('✅ Status do pedido alterado com sucesso')
+      console.log(`✅ Pedido ID ${id} atualizado com sucesso.`)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao alterar status do pedido ID ${id}:`, error.message)
+      console.error(`❌ Erro ao atualizar o pedido ID ${id}:`, error.message)
       throw error
     }
+  },
+
+  async alterarStatus(id, novoStatus) {
+    console.log(`🔄 Alterando status do pedido ID ${id} para ${novoStatus}...`)
+    return this._updatePedido(id, { status: novoStatus })
   },
 
   async remover(id) {
@@ -154,15 +151,8 @@ const pedidoService = {
   },
 
   async aprovar(id) {
-    try {
-      console.log(`🔄 Aprovando pedido ID ${id} no backend...`)
-      const data = await api.patch(`/api/solicitacoes-pedido/${id}/aprovar`)
-      console.log('✅ Pedido aprovado no backend')
-      return data
-    } catch (error) {
-      console.error(`❌ Erro ao aprovar pedido ID ${id} no backend:`, error.message)
-      throw error
-    }
+    console.log(`🔄 Aprovando pedido ID ${id} no backend...`)
+    return this.alterarStatus(id, 'APROVADO')
   },
 
   async aprovarPedido(id) {
@@ -170,15 +160,8 @@ const pedidoService = {
   },
 
   async rejeitar(id, motivo = '') {
-    try {
-      console.log(`🔄 Rejeitando pedido ID ${id} no backend...`)
-      const data = await api.patch(`/api/solicitacoes-pedido/${id}/rejeitar`, { motivo })
-      console.log('✅ Pedido rejeitado no backend')
-      return data
-    } catch (error) {
-      console.error(`❌ Erro ao rejeitar pedido ID ${id} no backend:`, error.message)
-      throw error
-    }
+    console.log(`🔄 Rejeitando pedido ID ${id} no backend...`)
+    return this._updatePedido(id, { status: 'REJEITADO', observacao: motivo })
   },
 
   async rejeitarPedido(id, motivo) {

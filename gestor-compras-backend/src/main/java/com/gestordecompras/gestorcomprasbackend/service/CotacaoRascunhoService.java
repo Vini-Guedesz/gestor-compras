@@ -4,6 +4,7 @@ import com.gestordecompras.gestorcomprasbackend.dto.rascunho.CotacaoRascunhoCrea
 import com.gestordecompras.gestorcomprasbackend.dto.rascunho.CotacaoRascunhoDTO;
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeProduto;
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeServico;
+import com.gestordecompras.gestorcomprasbackend.model.rascunho.AnexoCotacaoRascunho;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.CotacaoRascunho;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.ItemRascunho;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.Rascunho;
@@ -94,6 +95,21 @@ public class CotacaoRascunhoService {
         }
         cotacao.setItensRascunho(itens);
 
+        // Processar múltiplos PDFs
+        if (dto.anexosPdf() != null && !dto.anexosPdf().isEmpty()) {
+            int ordem = 0;
+            for (byte[] pdfBytes : dto.anexosPdf()) {
+                if (pdfBytes != null && pdfBytes.length > 0) {
+                    AnexoCotacaoRascunho anexo = new AnexoCotacaoRascunho(cotacao, pdfBytes, ordem++);
+                    cotacao.getAnexos().add(anexo);
+                }
+            }
+        } else if (dto.anexoPdf() != null && dto.anexoPdf().length > 0) {
+            // Compatibilidade com PDF único
+            AnexoCotacaoRascunho anexo = new AnexoCotacaoRascunho(cotacao, dto.anexoPdf(), 0);
+            cotacao.getAnexos().add(anexo);
+        }
+
         CotacaoRascunho salva = cotacaoRascunhoRepository.save(cotacao);
         return toDTO(salva);
     }
@@ -108,9 +124,31 @@ public class CotacaoRascunhoService {
 
     @Transactional(readOnly = true)
     public byte[] obterAnexoPdf(Long id) {
-        CotacaoRascunho cotacao = cotacaoRascunhoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
-        return cotacao.getAnexoPdf();
+        return obterAnexoPdf(id, 0);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] obterAnexoPdf(Long id, int index) {
+        // Usar query que faz fetch dos anexos
+        CotacaoRascunho cotacao = cotacaoRascunhoRepository.findByIdWithItens(id);
+        if (cotacao == null) {
+            throw new EntityNotFoundException("Cotação não encontrada com ID: " + id);
+        }
+
+        // Primeiro verificar se há anexos na nova estrutura
+        if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
+            if (index >= 0 && index < cotacao.getAnexos().size()) {
+                return cotacao.getAnexos().get(index).getConteudo();
+            }
+            throw new EntityNotFoundException("Anexo não encontrado no índice: " + index);
+        }
+
+        // Fallback para o campo antigo (compatibilidade)
+        if (index == 0 && cotacao.getAnexoPdf() != null) {
+            return cotacao.getAnexoPdf();
+        }
+
+        throw new EntityNotFoundException("Nenhum anexo encontrado para esta cotação");
     }
 
     private CotacaoRascunhoDTO toDTO(CotacaoRascunho cotacao) {
@@ -125,6 +163,16 @@ public class CotacaoRascunhoService {
                 .map(ItemRascunho::getId)
                 .collect(Collectors.toList());
 
+        // Calcular quantidade de anexos
+        int quantidadeAnexos = 0;
+        if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
+            quantidadeAnexos = cotacao.getAnexos().size();
+        } else if (cotacao.getAnexoPdf() != null && cotacao.getAnexoPdf().length > 0) {
+            quantidadeAnexos = 1;
+        }
+
+        boolean temAnexo = quantidadeAnexos > 0;
+
         return new CotacaoRascunhoDTO(
                 cotacao.getId(),
                 cotacao.getRascunho().getId(),
@@ -135,7 +183,8 @@ public class CotacaoRascunhoService {
                 cotacao.getPreco(),
                 cotacao.getPrazoEmDiasUteis(),
                 cotacao.getDataLimite(),
-                cotacao.getAnexoPdf() != null && cotacao.getAnexoPdf().length > 0,
+                temAnexo,
+                quantidadeAnexos,
                 cotacao.getDataCriacao()
         );
     }

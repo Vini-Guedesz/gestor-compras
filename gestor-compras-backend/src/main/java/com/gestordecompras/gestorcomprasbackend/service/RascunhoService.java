@@ -3,11 +3,13 @@ package com.gestordecompras.gestorcomprasbackend.service;
 import com.gestordecompras.gestorcomprasbackend.dto.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.dto.solicitacaodepedido.SolicitacaoDePedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.mapper.RascunhoMapper;
+import com.gestordecompras.gestorcomprasbackend.mapper.SolicitacaoDePedidoMapper;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.StatusPedido;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.model.user.User;
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.AnexoCotacao;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
 import com.gestordecompras.gestorcomprasbackend.repository.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -29,6 +31,7 @@ public class RascunhoService {
     private final SolicitacaoDePedidoRepository solicitacaoDePedidoRepository;
     private final UserRepository userRepository;
     private final RascunhoMapper rascunhoMapper;
+    private final SolicitacaoDePedidoMapper solicitacaoDePedidoMapper;
     private final HistoricoPedidoService historicoPedidoService;
     private final HistoricoRascunhoService historicoRascunhoService;
     private final CotacaoRascunhoRepository cotacaoRascunhoRepository;
@@ -80,6 +83,21 @@ public class RascunhoService {
         }
 
         return rascunhoMapper.toDTO(rascunhoSalvo);
+    }
+
+    @Transactional
+    public RascunhoDTO atualizarStatus(Long rascunhoId, String status) {
+        Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
+                .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId));
+
+        try {
+            StatusRascunho novoStatus = StatusRascunho.valueOf(status.toUpperCase());
+            rascunho.setStatus(novoStatus);
+            rascunhoRepository.save(rascunho);
+            return rascunhoMapper.toDTO(rascunho);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Status inválido: " + status + ". Use: ATIVO, EM_COTACAO ou FINALIZADO");
+        }
     }
 
     @Transactional
@@ -323,6 +341,19 @@ public class RascunhoService {
                 cotacao.setCaminhoAnexo(cotacaoRascunho.getCaminhoAnexo());
                 cotacao.setItensPedido(itensPedidoCotacao);
 
+                // Copiar anexos múltiplos
+                if (cotacaoRascunho.getAnexos() != null && !cotacaoRascunho.getAnexos().isEmpty()) {
+                    for (AnexoCotacaoRascunho anexoRascunho : cotacaoRascunho.getAnexos()) {
+                        AnexoCotacao anexoCotacao = new AnexoCotacao(
+                            cotacao,
+                            anexoRascunho.getConteudo(),
+                            anexoRascunho.getOrdem()
+                        );
+                        anexoCotacao.setNomeArquivo(anexoRascunho.getNomeArquivo());
+                        cotacao.getAnexos().add(anexoCotacao);
+                    }
+                }
+
                 cotacaoRepository.save(cotacao);
             }
         }
@@ -334,7 +365,12 @@ public class RascunhoService {
         // Registrar no histórico do rascunho
         historicoRascunhoService.registrarConversaoPedido(rascunho, usuario, pedidoSalvo.getId());
 
-        return convertToDTO(pedidoSalvo);
+        // Marcar o rascunho como FINALIZADO ao invés de excluir
+        rascunho.setStatus(StatusRascunho.FINALIZADO);
+        rascunho.setPedidoGeradoId(pedidoSalvo.getId());
+        rascunhoRepository.save(rascunho);
+
+        return solicitacaoDePedidoMapper.toDTO(pedidoSalvo);
     }
 
     private User getUsuarioAutenticado() {
@@ -344,26 +380,14 @@ public class RascunhoService {
         }
 
         String email = authentication.getName();
+
+        // Verificar se é usuário anônimo
+        if ("anonymousUser".equals(email)) {
+            throw new IllegalStateException("Usuário não autenticado - acesso anônimo não permitido para esta operação");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + email));
         return user;
-    }
-
-    private SolicitacaoDePedidoDTO convertToDTO(SolicitacaoDePedido pedido) {
-        return new SolicitacaoDePedidoDTO(
-                pedido.getId(),
-                pedido.getItens().stream()
-                        .map(item -> new com.gestordecompras.gestorcomprasbackend.dto.itempedido.ItemPedidoDTO(
-                                item.getId(),
-                                item.getNome(),
-                                item.getQuantidade(),
-                                item.getDescricao(),
-                                item.getObservacao()
-                        ))
-                        .collect(Collectors.toList()),
-                pedido.getStatus(),
-                pedido.getObservacao(),
-                pedido.getDataCriacao()
-        );
     }
 }

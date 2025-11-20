@@ -10,7 +10,9 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -55,6 +57,10 @@ public class CotacaoRascunho {
     private byte[] anexoPdf;
 
     private String caminhoAnexo;
+
+    @OneToMany(mappedBy = "cotacaoRascunho", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordem ASC")
+    private List<AnexoCotacaoRascunho> anexos = new ArrayList<>();
 
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao;

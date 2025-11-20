@@ -65,4 +65,21 @@ public class CotacaoRascunhoController {
 
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
+
+    @GetMapping("/{id}/anexo/{index}")
+    public ResponseEntity<byte[]> obterAnexoPdfPorIndice(
+            @PathVariable Long rascunhoId,
+            @PathVariable Long id,
+            @PathVariable int index) {
+        byte[] pdf = cotacaoRascunhoService.obterAnexoPdf(id, index);
+        if (pdf == null || pdf.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "cotacao-" + id + "-" + index + ".pdf");
+
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
 }

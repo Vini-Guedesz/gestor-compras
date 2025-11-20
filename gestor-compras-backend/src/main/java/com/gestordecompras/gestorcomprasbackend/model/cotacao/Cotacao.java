@@ -11,7 +11,9 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -55,6 +57,10 @@ public class Cotacao {
     private byte[] anexoPdf;
 
     private String caminhoAnexo;
+
+    @OneToMany(mappedBy = "cotacao", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordem ASC")
+    private List<AnexoCotacao> anexos = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

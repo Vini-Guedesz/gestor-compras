@@ -6,6 +6,9 @@
 
 import api from './api.js'
 
+// Configuração da URL base da API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+
 const cotacaoRascunhoService = {
   async listarPorRascunho(rascunhoId) {
     try {
@@ -78,11 +81,11 @@ const cotacaoRascunhoService = {
       // Obter o token de autenticação
       const token = localStorage.getItem('authToken')
 
-      // Usar fetch diretamente para suportar responseType blob
-      // Se o backend suportar múltiplos PDFs, incluir o índice na URL
-      const url = pdfIndex > 0
-        ? `http://localhost:8081/api/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
-        : `http://localhost:8081/api/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}/anexo`
+      // Sempre usar o endpoint com índice para consistência
+      const url = `${API_BASE_URL}/api/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
+
+      console.log('URL do PDF:', url)
+      console.log('Token presente:', !!token)
 
       const response = await fetch(url, {
         method: 'GET',

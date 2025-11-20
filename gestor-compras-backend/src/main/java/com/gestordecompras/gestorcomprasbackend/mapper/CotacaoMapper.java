@@ -17,12 +17,15 @@ public class CotacaoMapper {
             return null;
         }
 
-        // Determinar o tipo de fornecedor
+        // Determinar o tipo de fornecedor e nome
         String tipoFornecedor = null;
+        String nomeFornecedor = "";
         if (cotacao.getFornecedorProduto() != null) {
             tipoFornecedor = "PRODUTO";
+            nomeFornecedor = cotacao.getFornecedorProduto().getRazaoSocial();
         } else if (cotacao.getFornecedorServico() != null) {
             tipoFornecedor = "SERVICO";
+            nomeFornecedor = cotacao.getFornecedorServico().getRazaoSocial();
         }
 
         // Extrair IDs dos itens do pedido
@@ -32,17 +35,29 @@ public class CotacaoMapper {
                     .collect(Collectors.toList())
                 : List.of();
 
+        // Calcular quantidade de anexos
+        int quantidadeAnexos = 0;
+        if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
+            quantidadeAnexos = cotacao.getAnexos().size();
+        } else if (cotacao.getAnexoPdf() != null && cotacao.getAnexoPdf().length > 0) {
+            quantidadeAnexos = 1;
+        }
+
+        boolean temAnexo = quantidadeAnexos > 0;
+
         return new CotacaoDTO(
                 cotacao.getId(),
                 cotacao.getFornecedorId(),
                 tipoFornecedor,
+                nomeFornecedor,
                 cotacao.getSolicitacaoDePedido() != null ? cotacao.getSolicitacaoDePedido().getId() : null,
                 itensPedidoIds,
                 cotacao.getPreco(),
                 cotacao.getPrazoEmDiasUteis(),
                 cotacao.getDataLimite(),
                 cotacao.getCaminhoAnexo(),
-                cotacao.getAnexoPdf()
+                temAnexo,
+                quantidadeAnexos
         );
     }
 

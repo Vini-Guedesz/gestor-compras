@@ -83,6 +83,28 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Object> handleIllegalState(IllegalStateException ex, WebRequest request) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("path", request.getDescription(false).replace("uri=", ""));
+
+        // Verificar se é erro de autenticação
+        String message = ex.getMessage();
+        if (message != null && (message.contains("não autenticado") || message.contains("anônimo"))) {
+            body.put("status", HttpStatus.UNAUTHORIZED.value());
+            body.put("error", "Não Autorizado");
+            body.put("message", "Sessão expirada. Por favor, faça login novamente.");
+            return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+        }
+
+        // Outros casos de IllegalStateException
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Estado Inválido");
+        body.put("message", message);
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(JRException.class)
     public ResponseEntity<Object> handleJasperReportException(JRException ex, WebRequest request) {
         Map<String, Object> body = new LinkedHashMap<>();

@@ -8,12 +8,14 @@ public record CotacaoDTO(
         Long id,
         Integer fornecedorId,
         String tipoFornecedor,
+        String nomeFornecedor,
         Long solicitacaoDePedidoId,
         List<Long> itensPedidoIds,
         BigDecimal preco,
         Integer prazoEmDiasUteis,
         LocalDate dataLimite,
         String caminhoAnexo,
-        byte[] anexoPdf
+        boolean temAnexoPdf,
+        int quantidadeAnexos
 ) {
 }

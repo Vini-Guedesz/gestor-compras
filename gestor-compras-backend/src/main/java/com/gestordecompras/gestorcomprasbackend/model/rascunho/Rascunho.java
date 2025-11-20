@@ -39,6 +39,13 @@ public class Rascunho {
     @Column(name = "data_modificacao")
     private LocalDateTime dataModificacao;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private StatusRascunho status = StatusRascunho.ATIVO;
+
+    @Column(name = "pedido_gerado_id")
+    private Long pedidoGeradoId;
+
     @Column(name = "proximo_numero_item", nullable = false)
     private Integer proximoNumeroItem = 1;
 

@@ -175,6 +175,18 @@ const rascunhoService = {
       console.error('Erro ao listar histórico:', error.message)
       throw error
     }
+  },
+
+  async atualizarStatus(rascunhoId, status) {
+    try {
+      console.log(`Atualizando status do rascunho ${rascunhoId} para ${status}...`)
+      const data = await api.patch(`/api/rascunhos/${rascunhoId}/status?status=${status}`)
+      console.log('Status atualizado')
+      return data
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error.message)
+      throw error
+    }
   }
 }
 

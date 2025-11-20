@@ -212,8 +212,12 @@ export default {
     const salvandoTodos = ref(false)
 
     // Observar mudanças no modelValue (quando rascunho é carregado)
-    watch(() => props.modelValue, (newValue) => {
-      if (newValue && newValue.id) {
+    watch(() => props.modelValue, (newValue, oldValue) => {
+      // Só atualizar se o ID mudou ou se é um carregamento inicial
+      const newId = newValue?.id
+      const oldId = oldValue?.id
+
+      if (newValue && (newId !== oldId || (newId && newId === formData.value.id && newValue.itens?.length !== formData.value.itens?.filter(i => i.id).length))) {
         formData.value = {
           ...newValue,
           itens: (newValue.itens || []).map(item => ({
@@ -224,7 +228,7 @@ export default {
         }
         hasUnsavedChanges.value = false
       }
-    }, { deep: true })
+    }, { deep: true, immediate: false })
 
     const dataFormatada = computed(() => {
       if (formData.value.dataCriacao) {

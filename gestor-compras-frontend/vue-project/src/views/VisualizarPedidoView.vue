@@ -40,8 +40,11 @@
               <span class="status-badge" :class="getStatusClass()">
                 {{ pedido?.status || 'RASCUNHO' }}
               </span>
-              <button v-if="isRascunho" @click="editarRascunho" class="btn-success">
+              <button v-if="isRascunho && !isFinalizado" @click="editarRascunho" class="btn-success">
                 Editar Rascunho
+              </button>
+              <button v-if="!isRascunho && podeEditarPedido" @click="editarPedido" class="btn-primary">
+                Editar Pedido
               </button>
             </div>
           </div>
@@ -129,14 +132,32 @@
                   </div>
                 </div>
 
-                <div class="cotacao-actions" v-if="cotacao.temAnexoPdf">
-                  <button @click="togglePdfViewer(cotacao)" class="btn-pdf">
-                    {{ pdfAberto === cotacao.id ? 'Fechar PDF' : 'Ver PDF' }}
+                <div class="cotacao-actions" v-if="cotacao.temAnexoPdf || cotacao.quantidadeAnexos > 0">
+                  <!-- Múltiplos PDFs -->
+                  <template v-if="cotacao.quantidadeAnexos > 1">
+                    <button
+                      v-for="index in cotacao.quantidadeAnexos"
+                      :key="index"
+                      @click="togglePdfViewer(cotacao, index - 1)"
+                      class="btn-pdf"
+                      :class="{ 'btn-pdf-active': pdfAberto === `${cotacao.id}-${index - 1}` }"
+                    >
+                      {{ pdfAberto === `${cotacao.id}-${index - 1}` ? 'Fechar' : `PDF ${index}` }}
+                    </button>
+                  </template>
+                  <!-- PDF único -->
+                  <button
+                    v-else
+                    @click="togglePdfViewer(cotacao, 0)"
+                    class="btn-pdf"
+                    :class="{ 'btn-pdf-active': pdfAberto === `${cotacao.id}-0` }"
+                  >
+                    {{ pdfAberto === `${cotacao.id}-0` ? 'Fechar PDF' : 'Ver PDF' }}
                   </button>
                 </div>
 
                 <!-- PDF Viewer -->
-                <div v-if="pdfAberto === cotacao.id" class="pdf-viewer-container">
+                <div v-if="pdfAberto && pdfAberto.startsWith(`${cotacao.id}-`)" class="pdf-viewer-container">
                   <div v-if="carregandoPdf" class="pdf-loading">
                     <div class="loading-spinner"></div>
                     <span>Carregando PDF...</span>
@@ -157,18 +178,18 @@
             <h3 class="section-title">Histórico de Modificações</h3>
             <div v-if="historico.length > 0" class="historico-lista">
               <div v-for="registro in historico" :key="registro.id" class="historico-item">
-                <div class="historico-icon" :style="{ background: getTipoModificacaoColor(registro.tipoModificacao) }">
+                <div class="historico-icon" :style="{ background: getTipoModificacaoColor(registro.tipoAcao || registro.tipoModificacao) }">
                   <svg viewBox="0 0 24 24" width="16" height="16">
                     <path fill="white" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                   </svg>
                 </div>
                 <div class="historico-content">
                   <div class="historico-header">
-                    <span class="historico-tipo">{{ getTipoModificacaoLabel(registro.tipoModificacao) }}</span>
+                    <span class="historico-tipo">{{ getTipoModificacaoLabel(registro.tipoAcao || registro.tipoModificacao) }}</span>
                     <span class="historico-data">{{ formatarDataHora(registro.dataModificacao) }}</span>
                   </div>
-                  <div class="historico-usuario" v-if="registro.usuarioNome">
-                    Por: {{ registro.usuarioNome }}
+                  <div class="historico-usuario" v-if="registro.nomeUsuario">
+                    Por: {{ registro.nomeUsuario }}
                   </div>
                   <div class="historico-descricao" v-if="registro.descricao">
                     {{ registro.descricao }}
@@ -187,11 +208,12 @@
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import pedidoService from '@/services/pedidoService.js'
 import rascunhoService from '@/services/rascunhoService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
+import cotacaoService from '@/services/cotacaoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import historicoPedidoService, { tipoModificacaoConfig } from '@/services/historicoPedidoService.js'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
@@ -218,6 +240,14 @@ export default {
     const cotacoes = ref([])
     const historico = ref([])
     const isRascunho = ref(false)
+    const isFinalizado = ref(false)
+    const isEditMode = ref(false)
+
+    // Computed
+    const podeEditarPedido = computed(() => {
+      if (!pedido.value) return false
+      return ['PENDENTE'].includes(pedido.value.status)
+    })
 
     // PDF Viewer
     const pdfAberto = ref(null)
@@ -282,7 +312,11 @@ export default {
       if (cotacao.itensRascunhoIds && cotacao.itensRascunhoIds.length > 0) {
         return cotacao.itensRascunhoIds
       }
-      // Para pedidos
+      // Para pedidos - array de IDs
+      if (cotacao.itensPedidoIds && cotacao.itensPedidoIds.length > 0) {
+        return cotacao.itensPedidoIds
+      }
+      // Para pedidos - ID único (compatibilidade)
       if (cotacao.itemPedidoId) {
         return [cotacao.itemPedidoId]
       }
@@ -302,24 +336,37 @@ export default {
       return tipoModificacaoConfig[tipo]?.color || '#6b7280'
     }
 
-    const togglePdfViewer = async (cotacao) => {
-      if (pdfAberto.value === cotacao.id) {
+    const togglePdfViewer = async (cotacao, pdfIndex = 0) => {
+      const pdfKey = `${cotacao.id}-${pdfIndex}`
+
+      // Se o PDF já está aberto, fechar
+      if (pdfAberto.value === pdfKey) {
         fecharPdfViewer()
         return
       }
 
+      // Fechar PDF anterior se houver
       if (pdfAberto.value !== null) {
         fecharPdfViewer()
       }
 
-      pdfAberto.value = cotacao.id
+      pdfAberto.value = pdfKey
       carregandoPdf.value = true
 
       try {
-        const blob = await cotacaoRascunhoService.obterAnexoPdf(
-          pedido.value.rascunhoId || pedido.value.id,
-          cotacao.id
-        )
+        let blob
+        // Usar o serviço correto baseado no tipo
+        if (isRascunho.value) {
+          blob = await cotacaoRascunhoService.obterAnexoPdf(
+            pedido.value.rascunhoId,
+            cotacao.id,
+            pdfIndex
+          )
+        } else {
+          // Para pedidos finais, usar o serviço de cotação
+          blob = await cotacaoService.obterAnexoPdf(cotacao.id, pdfIndex)
+        }
+
         if (blob && blob.size > 0) {
           pdfUrl.value = URL.createObjectURL(blob)
         }
@@ -381,6 +428,9 @@ export default {
             status: 'RASCUNHO'
           }
 
+          // Atualizar isFinalizado baseado no status do rascunho
+          isFinalizado.value = rascunhoCompleto.status === 'FINALIZADO'
+
           historico.value = historicoRascunho || []
         } else {
           isRascunho.value = false
@@ -393,19 +443,8 @@ export default {
           const historicoPedido = await historicoPedidoService.listarPorPedido(id)
           historico.value = historicoPedido || []
 
-          // Extrair cotações dos itens
-          const todasCotacoes = []
-          pedidoCompleto.itens?.forEach(item => {
-            if (item.cotacoes) {
-              item.cotacoes.forEach(c => {
-                todasCotacoes.push({
-                  ...c,
-                  itemPedidoId: item.id
-                })
-              })
-            }
-          })
-          cotacoes.value = todasCotacoes
+          // Cotações agora vêm diretamente do objeto do pedido
+          cotacoes.value = pedidoCompleto.cotacoes || []
         }
       } catch (error) {
         console.error('Erro ao carregar:', error)
@@ -422,6 +461,12 @@ export default {
 
     const editarRascunho = () => {
       router.push(`/pedidos/novo/${pedido.value.rascunhoId}?step=1`)
+    }
+
+    const editarPedido = () => {
+      // Por enquanto, mostrar alerta informativo
+      // TODO: Implementar edição inline ou criar view dedicada
+      alert('Funcionalidade de edição de pedido em desenvolvimento. Por favor, use a visualização para consultar os dados.')
     }
 
     onMounted(() => {
@@ -444,6 +489,8 @@ export default {
       cotacoes,
       historico,
       isRascunho,
+      isFinalizado,
+      podeEditarPedido,
 
       // PDF
       pdfAberto,
@@ -463,7 +510,8 @@ export default {
       getTipoModificacaoColor,
       togglePdfViewer,
       voltar,
-      editarRascunho
+      editarRascunho,
+      editarPedido
     }
   }
 }
@@ -853,6 +901,9 @@ export default {
 .cotacao-actions {
   padding-top: 12px;
   border-top: 1px solid #f1f5f9;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .btn-pdf {
@@ -863,6 +914,17 @@ export default {
   background: #f0f9ff;
   color: #0369a1;
   border: 1px solid #bae6fd;
+  transition: all 0.2s ease;
+}
+
+.btn-pdf:hover {
+  background: #e0f2fe;
+}
+
+.btn-pdf-active {
+  background: #0369a1;
+  color: white;
+  border-color: #0369a1;
 }
 
 .pdf-viewer-container {

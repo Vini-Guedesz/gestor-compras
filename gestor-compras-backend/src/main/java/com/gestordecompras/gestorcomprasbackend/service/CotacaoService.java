@@ -134,4 +134,30 @@ public class CotacaoService {
         }
         cotacaoRepository.deleteById(id);
     }
+
+    @Transactional(readOnly = true)
+    public byte[] obterAnexoPdf(Long id) {
+        return obterAnexoPdf(id, 0);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] obterAnexoPdf(Long id, int index) {
+        Cotacao cotacao = cotacaoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
+
+        // Primeiro verificar se há anexos na nova estrutura
+        if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
+            if (index >= 0 && index < cotacao.getAnexos().size()) {
+                return cotacao.getAnexos().get(index).getConteudo();
+            }
+            throw new EntityNotFoundException("Anexo não encontrado no índice: " + index);
+        }
+
+        // Fallback para o campo antigo (compatibilidade)
+        if (index == 0 && cotacao.getAnexoPdf() != null) {
+            return cotacao.getAnexoPdf();
+        }
+
+        throw new EntityNotFoundException("Nenhum anexo encontrado para esta cotação");
+    }
 }

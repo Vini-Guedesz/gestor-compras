@@ -10,7 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -75,5 +77,37 @@ public class CotacaoController {
     public ResponseEntity<Void> deleteCotacao(@PathVariable Long id) {
         cotacaoService.deleteCotacao(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/anexo")
+    @Operation(summary = "Obter anexo PDF da cotação", description = "Retorna o primeiro anexo PDF da cotação")
+    public ResponseEntity<byte[]> obterAnexoPdf(@PathVariable Long id) {
+        byte[] pdf = cotacaoService.obterAnexoPdf(id);
+        if (pdf == null || pdf.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "cotacao-" + id + ".pdf");
+
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/anexo/{index}")
+    @Operation(summary = "Obter anexo PDF por índice", description = "Retorna um anexo PDF específico da cotação pelo índice")
+    public ResponseEntity<byte[]> obterAnexoPdfPorIndice(
+            @PathVariable Long id,
+            @PathVariable int index) {
+        byte[] pdf = cotacaoService.obterAnexoPdf(id, index);
+        if (pdf == null || pdf.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "cotacao-" + id + "-" + index + ".pdf");
+
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 }

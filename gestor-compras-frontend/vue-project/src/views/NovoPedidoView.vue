@@ -14,141 +14,109 @@
             </svg>
             Voltar
           </button>
-          <span class="breadcrumb-separator">|</span>
-          <router-link to="/pedidos" class="breadcrumb-link">
-            Pedidos de Compra
-          </router-link>
-          <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-current">Novo Pedido</span>
         </div>
 
-        <!-- Conteúdo do Wizard -->
+        <!-- Conteúdo da Página -->
         <div class="wizard-container">
           <div class="wizard-card">
             <div class="wizard-header">
               <div class="header-content">
-                <h2 class="wizard-title">{{ getTituloModal() }}</h2>
-                <p class="wizard-subtitle">{{ getSubtituloModal() }}</p>
+                <h2 class="wizard-title">{{ getTitulo() }}</h2>
+                <p class="wizard-subtitle">{{ getSubtitulo() }}</p>
               </div>
             </div>
 
-            <WizardProgress
-              :currentStep="currentPage"
-              :totalSteps="3"
-              :stepLabels="['Criar Rascunho', 'Adicionar Cotações', 'Gerar Pedido']"
-            />
-
             <div class="wizard-body">
-              <PedidoFormPage1
-                v-if="currentPage === 1"
-                v-model="wizardData.pedido"
-                @validation-change="page1Valid = $event"
-              />
+              <!-- Estado de Edição do Rascunho -->
+              <div v-if="editState === 'EDITANDO_RASCUNHO'">
+                <PedidoFormPage1
+                  v-model="wizardData.pedido"
+                  @validation-change="page1Valid = $event"
+                  @rascunho-created="onRascunhoCreated"
+                />
+              </div>
 
-              <StepCotacoesRascunho
-                v-if="currentPage === 2"
-                :rascunho="wizardData.rascunho"
-                :cotacoes="todasCotacoes"
-                :fornecedores="fornecedores"
-                :carregando="carregandoCotacoes"
-                @save-cotacao="salvarCotacao"
-                @delete-cotacao="deletarCotacao"
-              />
+              <!-- Estado de Gerenciamento de Cotações -->
+              <div v-if="editState === 'GERENCIANDO_COTACOES'">
+                <StepCotacoesRascunho
+                  :rascunho="wizardData.rascunho"
+                  :cotacoes="todasCotacoes"
+                  :fornecedores="fornecedores"
+                  :carregando="carregandoCotacoes"
+                  @save-cotacao="salvarCotacao"
+                  @delete-cotacao="deletarCotacao"
+                />
 
-              <!-- Step 3: Seleção de itens para pedido final -->
-              <div v-if="currentPage === 3" class="step-selecao-itens">
-                <div class="info-box">
-                  <h4>Selecione os itens para o pedido final</h4>
-                  <p>Apenas itens com cotação podem ser selecionados</p>
-                </div>
+                <div class="step-selecao-itens">
+                  <div class="info-box">
+                    <h4>Selecione os itens para o pedido final</h4>
+                    <p>Apenas itens com cotação podem ser selecionados</p>
+                  </div>
 
-                <div class="itens-lista">
-                  <div
-                    v-for="item in itensCotados"
-                    :key="item.id"
-                    class="item-selecao"
-                    :class="{ 'selecionado': itensSelecionados.includes(item.id) }"
-                    @click="toggleItemSelecionado(item.id)"
-                  >
-                    <div class="item-checkbox">
-                      <input
-                        type="checkbox"
-                        :checked="itensSelecionados.includes(item.id)"
-                        @change.stop="toggleItemSelecionado(item.id)"
-                      />
-                    </div>
-                    <div class="item-info">
-                      <span class="item-nome">{{ item.nome }}</span>
-                      <span class="item-quantidade">Qtd: {{ item.quantidade }}</span>
+                  <div class="itens-lista">
+                    <div
+                      v-for="item in itensCotados"
+                      :key="item.id"
+                      class="item-selecao"
+                      :class="{ 'selecionado': itensSelecionados.includes(item.id) }"
+                      @click="toggleItemSelecionado(item.id)"
+                    >
+                      <div class="item-checkbox">
+                        <input
+                          type="checkbox"
+                          :checked="itensSelecionados.includes(item.id)"
+                          @change.stop="toggleItemSelecionado(item.id)"
+                        />
+                      </div>
+                      <div class="item-info">
+                        <span class="item-nome">{{ item.nome }}</span>
+                        <span class="item-quantidade">Qtd: {{ item.quantidade }}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div v-if="itensCotados.length === 0" class="empty-state">
-                  <p>Nenhum item com cotação encontrado.</p>
+                  <div v-if="itensCotados.length === 0" class="empty-state">
+                    <p>Nenhum item com cotação encontrado.</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div class="wizard-footer">
-              <div class="footer-left">
-                <span v-if="currentPage === 2 && wizardData.pedido.id" class="pedido-info">
-                  Pedido #{{ wizardData.pedido.id }}
-                </span>
-              </div>
               <div class="footer-actions">
-                <button
-                  v-if="currentPage === 1"
-                  type="button"
-                  @click="cancelar"
-                  class="btn-secondary"
-                >
-                  Cancelar
-                </button>
+                <!-- Ações para o estado EDITANDO_RASCUNHO -->
+                <template v-if="editState === 'EDITANDO_RASCUNHO'">
+                  <button type="button" @click="cancelar" class="btn-secondary">
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    @click="finalizarRascunho"
+                    class="btn-primary"
+                    :disabled="!page1Valid || isLoading"
+                  >
+                    {{ isLoading ? 'Salvando...' : 'Finalizar Rascunho' }}
+                  </button>
+                </template>
 
-                <button
-                  v-if="currentPage > 1"
-                  type="button"
-                  @click="voltarPagina"
-                  class="btn-secondary"
-                >
-                  Voltar
-                </button>
-
-                <button
-                  v-if="currentPage === 1"
-                  type="button"
-                  @click="irParaPagina2"
-                  class="btn-primary"
-                  :disabled="!page1Valid || isLoading"
-                >
-                  {{ isLoading ? 'Salvando...' : 'Próxima' }}
-                </button>
-
-                <button
-                  v-if="currentPage === 2"
-                  type="button"
-                  @click="irParaPagina3"
-                  class="btn-primary"
-                  :disabled="!temItensCotados"
-                >
-                  Selecionar Itens para Pedido
-                </button>
-
-                <button
-                  v-if="currentPage === 3"
-                  type="button"
-                  @click="gerarPedidoFinal"
-                  class="btn-success"
-                  :disabled="itensSelecionados.length === 0 || isLoading"
-                >
-                  {{ isLoading ? 'Gerando...' : 'Gerar Pedido Final' }}
-                </button>
+                <!-- Ações para o estado GERENCIANDO_COTACOES -->
+                <template v-if="editState === 'GERENCIANDO_COTACOES'">
+                  <button type="button" @click="editarRascunho" class="btn-secondary">
+                    Editar Rascunho
+                  </button>
+                  <button
+                    type="button"
+                    @click="gerarPedidoFinal"
+                    class="btn-success"
+                    :disabled="itensSelecionados.length === 0 || isLoading"
+                  >
+                    {{ isLoading ? 'Gerando...' : 'Gerar Pedido Final' }}
+                  </button>
+                </template>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -162,7 +130,6 @@ import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
-import WizardProgress from '@/features/pedidos/components/pedido-wizard/WizardProgressBar.vue'
 import PedidoFormPage1 from '@/features/pedidos/components/pedido-wizard/StepCriarPedido.vue'
 import StepCotacoesRascunho from '@/features/pedidos/components/pedido-wizard/StepAdicionarCotacoesRascunho.vue'
 
@@ -171,7 +138,6 @@ export default {
   components: {
     DashboardHeader,
     DashboardSidebar,
-    WizardProgress,
     PedidoFormPage1,
     StepCotacoesRascunho
   },
@@ -179,34 +145,15 @@ export default {
     const router = useRouter()
     const route = useRoute()
 
-    // Sidebar
+    // State
     const isSidebarOpen = ref(false)
-    const toggleSidebar = () => { isSidebarOpen.value = !isSidebarOpen.value }
-    const closeSidebar = () => { isSidebarOpen.value = false }
-
-    // Wizard state
-    const currentPage = ref(1)
+    const editState = ref('EDITANDO_RASCUNHO') // 'EDITANDO_RASCUNHO' | 'GERENCIANDO_COTACOES'
     const isLoading = ref(false)
-    const hasUnsavedChanges = ref(false)
     const page1Valid = ref(false)
-    const page3Valid = ref(false)
 
     const wizardData = ref({
-      rascunho: {
-        id: null,
-        observacao: '',
-        itens: [],
-        dataCriacao: null
-      },
-      pedido: {
-        id: null,
-        observacao: '',
-        status: 'PENDENTE',
-        itens: [],
-        dataCriacao: null
-      },
-      itemAtual: null,
-      cotacoes: []
+      rascunho: { id: null, observacao: '', itens: [], dataCriacao: null },
+      pedido: { id: null, observacao: '', itens: [] } // Mantém compatibilidade com PedidoFormPage1
     })
 
     const fornecedores = ref([])
@@ -215,7 +162,7 @@ export default {
     const carregandoCotacoes = ref(false)
     const itensSelecionados = ref([])
 
-    // Computed para verificar se há itens cotados
+    // Computed properties
     const temItensCotados = computed(() => {
       if (todasCotacoes.value.length === 0) return false
       const itensCotados = new Set()
@@ -227,7 +174,6 @@ export default {
       return itensCotados.size > 0
     })
 
-    // Computed para obter itens cotados
     const itensCotados = computed(() => {
       const idsSet = new Set()
       todasCotacoes.value.forEach(cotacao => {
@@ -238,121 +184,95 @@ export default {
       return wizardData.value.rascunho.itens.filter(item => idsSet.has(item.id))
     })
 
-    const getTituloModal = () => {
-      if (currentPage.value === 1) {
+    const getTitulo = () => {
+      if (editState.value === 'EDITANDO_RASCUNHO') {
         return wizardData.value.rascunho.id ? 'Editar Rascunho' : 'Novo Rascunho de Pedido'
-      } else if (currentPage.value === 2) {
-        return 'Adicionar Cotações aos Itens'
-      } else {
-        return 'Selecionar Itens para Pedido Final'
       }
+      return 'Gerenciar Cotações e Gerar Pedido'
     }
 
-    const getSubtituloModal = () => {
-      if (currentPage.value === 1) {
-        return 'Preencha as informações e adicione os itens necessários'
-      } else if (currentPage.value === 2) {
-        return 'Adicione cotações de fornecedores para cada item do rascunho'
-      } else {
-        return 'Selecione os itens cotados que deseja incluir no pedido final'
+    const getSubtitulo = () => {
+      if (editState.value === 'EDITANDO_RASCUNHO') {
+        return 'Adicione ou modifique os itens do seu rascunho'
       }
+      return 'Adicione cotações e selecione os itens para o pedido final'
     }
 
-    const irParaPagina = (page) => {
-      currentPage.value = page
+    // Methods
+    const toggleSidebar = () => { isSidebarOpen.value = !isSidebarOpen.value }
+    const closeSidebar = () => { isSidebarOpen.value = false }
+
+    const onRascunhoCreated = (rascunhoCriado) => {
+      wizardData.value.rascunho = { ...rascunhoCriado, itens: rascunhoCriado.itens || [] };
+      wizardData.value.pedido.id = rascunhoCriado.id;
+      wizardData.value.pedido.itens = rascunhoCriado.itens || [];
+      router.replace({ path: `/pedidos/novo/${rascunhoCriado.id}` })
     }
 
-    const voltarPagina = () => {
-      if (currentPage.value === 3) {
-        wizardData.value.cotacoes = []
-        wizardData.value.itemAtual = null
-      }
-      if (currentPage.value > 1) {
-        currentPage.value--
-      }
-    }
-
-    const proximaPagina = () => {
-      if (currentPage.value < 3) {
-        currentPage.value++
-      }
-    }
-
-    const irParaPagina2 = async () => {
+    const finalizarRascunho = async () => {
       if (!page1Valid.value) {
-        alert('Por favor, preencha todos os campos obrigatórios.')
+        alert('Por favor, preencha todos os campos obrigatórios e adicione ao menos um item.')
         return
       }
+
+      if (!wizardData.value.rascunho.id) {
+        alert('Por favor, salve pelo menos um item antes de finalizar o rascunho.');
+        return;
+      }
+
+      // Confirmar antes de finalizar
+      const totalItens = wizardData.value.rascunho.itens?.length || 0
+      const confirmado = confirm(
+        `Deseja finalizar o rascunho e prosseguir para adicionar cotações?\n\n` +
+        `Total de itens: ${totalItens}\n\n` +
+        `Após finalizar, o rascunho terá o status "Em Cotação".`
+      )
+      if (!confirmado) return
 
       try {
         isLoading.value = true
 
-        if (wizardData.value.rascunho.id) {
-          // Rascunho já existe - apenas atualizar observação se necessário
-          // Os itens já são gerenciados individualmente pelo StepCriarPedido
-          const rascunhoAtual = await rascunhoService.obterPorId(wizardData.value.rascunho.id)
+        // Atualizar status para EM_COTACAO
+        await rascunhoService.atualizarStatus(wizardData.value.rascunho.id, 'EM_COTACAO')
 
-          // Atualizar observação se mudou
-          if (rascunhoAtual.observacao !== wizardData.value.pedido.observacao) {
-            await rascunhoService.atualizar(wizardData.value.rascunho.id, {
-              observacao: wizardData.value.pedido.observacao || ''
-            })
-          }
+        const rascunhoSalvo = await rascunhoService.obterPorId(wizardData.value.rascunho.id);
+        wizardData.value.rascunho = rascunhoSalvo;
+        wizardData.value.pedido = { ...rascunhoSalvo, id: rascunhoSalvo.id };
 
-          // Recarregar rascunho atualizado
-          const rascunhoSalvo = await rascunhoService.obterPorId(wizardData.value.rascunho.id)
-          wizardData.value.rascunho.itens = rascunhoSalvo.itens
-          wizardData.value.pedido.itens = rascunhoSalvo.itens
-        } else {
-          // Criar novo rascunho com os itens
-          const dadosRascunho = {
-            observacao: wizardData.value.pedido.observacao || wizardData.value.pedido.objetivo || '',
-            itens: wizardData.value.pedido.itens.map(item => ({
-              nome: item.nome,
-              quantidade: item.quantidade,
-              descricao: item.descricao || '',
-              observacao: item.observacao || ''
-            }))
-          }
-
-          const rascunhoSalvo = await rascunhoService.criar(dadosRascunho)
-          wizardData.value.rascunho.id = rascunhoSalvo.id
-          wizardData.value.rascunho.dataCriacao = rascunhoSalvo.dataCriacao
-          wizardData.value.rascunho.itens = rascunhoSalvo.itens
-          wizardData.value.pedido.itens = rascunhoSalvo.itens
-
-          // Atualizar URL com o ID do rascunho para persistência
-          router.replace({
-            path: `/pedidos/novo/${rascunhoSalvo.id}`,
-            query: { step: '2' }
-          })
-        }
-
-        hasUnsavedChanges.value = false
-        await carregarCotacoesDoRascunho()
-        await carregarFornecedores()
-        proximaPagina()
+        await carregarDadosParaCotacao()
+        editState.value = 'GERENCIANDO_COTACOES'
+        router.replace({ query: { state: 'quotes' } })
       } catch (error) {
-        console.error('Erro ao salvar rascunho:', error)
-        alert('Erro ao salvar. Tente novamente.')
+        console.error('Erro ao finalizar rascunho:', error)
+        const mensagem = error.message || 'Erro ao salvar. Tente novamente.'
+        alert(`Erro ao finalizar rascunho:\n\n${mensagem}`)
       } finally {
         isLoading.value = false
       }
     }
-
-    const irParaPagina3 = () => {
-      // Selecionar todos os itens cotados por padrão
-      itensSelecionados.value = itensCotados.value.map(item => item.id)
-
-      // Atualizar URL com step 3
-      if (wizardData.value.rascunho.id) {
-        router.replace({
-          path: `/pedidos/novo/${wizardData.value.rascunho.id}`,
-          query: { step: '3' }
-        })
-      }
-
-      proximaPagina()
+    
+    const editarRascunho = async () => {
+        try {
+            isLoading.value = true
+            // Recarregar dados do rascunho para garantir sincronização
+            if (wizardData.value.rascunho.id) {
+                const rascunho = await rascunhoService.obterPorId(wizardData.value.rascunho.id)
+                wizardData.value.rascunho = { ...rascunho, itens: rascunho.itens || [] }
+                wizardData.value.pedido = {
+                    id: rascunho.id,
+                    observacao: rascunho.observacao,
+                    itens: rascunho.itens || [],
+                    dataCriacao: rascunho.dataCriacao
+                }
+            }
+            editState.value = 'EDITANDO_RASCUNHO'
+            router.replace({ query: { state: 'edit' } })
+        } catch (error) {
+            console.error('Erro ao carregar rascunho para edição:', error)
+            alert('Erro ao carregar rascunho para edição. Tente novamente.')
+        } finally {
+            isLoading.value = false
+        }
     }
 
     const gerarPedidoFinal = async () => {
@@ -361,32 +281,46 @@ export default {
         return
       }
 
+      // Verificar se o usuário está autenticado
+      const token = localStorage.getItem('authToken')
+      if (!token) {
+        alert('Sua sessão expirou. Por favor, faça login novamente.')
+        router.push('/login')
+        return
+      }
+
       try {
         isLoading.value = true
-
-        // Converter rascunho em pedido com os itens selecionados
         const pedidoCriado = await rascunhoService.converterParaPedido(
           wizardData.value.rascunho.id,
           itensSelecionados.value
         )
-
         alert(`Pedido #${pedidoCriado.id} criado com sucesso!`)
         router.push('/pedidos')
       } catch (error) {
         console.error('Erro ao gerar pedido:', error)
+        // Verificar se é erro de autenticação
+        if (error.message && (error.message.includes('401') || error.message.includes('não autenticado') || error.message.includes('Sessão expirada'))) {
+          alert('Sua sessão expirou. Por favor, faça login novamente.')
+          router.push('/login')
+          return
+        }
         alert(error.message || 'Erro ao gerar pedido. Tente novamente.')
       } finally {
         isLoading.value = false
       }
     }
 
+    const carregarDadosParaCotacao = async () => {
+        await carregarFornecedores();
+        await carregarCotacoesDoRascunho();
+    }
+    
     const carregarCotacoesDoRascunho = async () => {
       if (!wizardData.value.rascunho.id) return
-
       try {
         carregandoCotacoes.value = true
-        const cotacoes = await cotacaoRascunhoService.listarPorRascunho(wizardData.value.rascunho.id)
-        todasCotacoes.value = cotacoes
+        todasCotacoes.value = await cotacaoRascunhoService.listarPorRascunho(wizardData.value.rascunho.id)
       } catch (error) {
         console.error('Erro ao carregar cotações:', error)
       } finally {
@@ -401,7 +335,8 @@ export default {
         await carregarCotacoesDoRascunho()
       } catch (error) {
         console.error('Erro ao salvar cotação:', error)
-        alert(error.message || 'Erro ao salvar cotação. Tente novamente.')
+        const mensagem = error.message || 'Erro ao salvar cotação. Tente novamente.'
+        alert(`Erro ao salvar cotação:\n\n${mensagem}`)
         throw error
       } finally {
         isLoading.value = false
@@ -431,18 +366,10 @@ export default {
     }
 
     const cancelar = () => {
-      if (hasUnsavedChanges.value) {
-        const confirmacao = confirm('Você possui alterações não salvas. Deseja realmente sair?')
-        if (!confirmacao) return
-      }
       router.push('/pedidos')
     }
 
     const voltar = () => {
-      if (hasUnsavedChanges.value) {
-        const confirmacao = confirm('Você possui alterações não salvas. Deseja realmente sair?')
-        if (!confirmacao) return
-      }
       router.push('/pedidos')
     }
 
@@ -461,45 +388,22 @@ export default {
       }
     }
 
-    const carregarRascunhoExistente = async (rascunhoId, stepInicial = null) => {
+    const carregarRascunhoExistente = async (rascunhoId) => {
       try {
         isLoading.value = true
-        console.log('Carregando rascunho existente:', rascunhoId)
-
-        const rascunho = await rascunhoService.obterPorId(rascunhoId)
+        const rascunho = await rascunhoService.obterPorId(rascunhoId);
+        console.log('Rascunho carregado:', rascunho)
 
         wizardData.value.rascunho = {
-          id: rascunho.id,
-          observacao: rascunho.observacao,
-          itens: rascunho.itens || [],
-          dataCriacao: rascunho.dataCriacao
-        }
-
+          ...rascunho,
+          itens: rascunho.itens || []
+        };
         wizardData.value.pedido = {
           id: rascunho.id,
           observacao: rascunho.observacao,
-          status: 'RASCUNHO',
           itens: rascunho.itens || [],
           dataCriacao: rascunho.dataCriacao
-        }
-
-        console.log('Rascunho carregado:', wizardData.value.rascunho)
-
-        // Se houver step na URL, ir para a etapa correta
-        if (stepInicial) {
-          const step = parseInt(stepInicial)
-          if (step === 2 || step === 3) {
-            // Carregar dados necessários para as etapas posteriores
-            await carregarFornecedores()
-            await carregarCotacoesDoRascunho()
-            currentPage.value = step
-
-            // Se for step 3, pré-selecionar itens cotados
-            if (step === 3) {
-              itensSelecionados.value = itensCotados.value.map(item => item.id)
-            }
-          }
-        }
+        };
       } catch (error) {
         console.error('Erro ao carregar rascunho:', error)
         alert('Erro ao carregar rascunho. Redirecionando...')
@@ -509,28 +413,26 @@ export default {
       }
     }
 
-    // Carregar rascunho existente se houver ID na rota
-    onMounted(() => {
+    onMounted(async () => {
       const rascunhoId = route.params.id
-      const stepInicial = route.query.step
+      const initialState = route.query.state;
 
       if (rascunhoId) {
-        carregarRascunhoExistente(rascunhoId, stepInicial)
+        await carregarRascunhoExistente(rascunhoId)
+        if (initialState === 'quotes') {
+            await carregarDadosParaCotacao();
+            editState.value = 'GERENCIANDO_COTACOES';
+        }
       }
     })
 
     return {
-      // Sidebar
       isSidebarOpen,
       toggleSidebar,
       closeSidebar,
-
-      // Wizard
-      currentPage,
+      editState,
       isLoading,
-      hasUnsavedChanges,
       page1Valid,
-      page3Valid,
       wizardData,
       fornecedores,
       carregandoFornecedores,
@@ -539,19 +441,17 @@ export default {
       itensSelecionados,
       temItensCotados,
       itensCotados,
-      getTituloModal,
-      getSubtituloModal,
-      irParaPagina,
-      voltarPagina,
-      proximaPagina,
-      irParaPagina2,
-      irParaPagina3,
+      getTitulo,
+      getSubtitulo,
+      finalizarRascunho,
+      editarRascunho,
       gerarPedidoFinal,
       salvarCotacao,
       deletarCotacao,
       toggleItemSelecionado,
       cancelar,
-      voltar
+      voltar,
+      onRascunhoCreated
     }
   }
 }
@@ -603,28 +503,6 @@ export default {
   border-color: #9ca3af;
 }
 
-.breadcrumb-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #1F285F;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.breadcrumb-link:hover {
-  color: #2d3a7f;
-}
-
-.breadcrumb-separator {
-  color: #d1d5db;
-}
-
-.breadcrumb-current {
-  color: #6b7280;
-}
-
 /* Wizard Container */
 .wizard-container {
   max-width: 1000px;
@@ -673,25 +551,10 @@ export default {
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-}
-
-.footer-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pedido-info {
-  background: #e8eaf6;
-  color: #1F285F;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 500;
 }
 
 .footer-actions {
@@ -757,14 +620,22 @@ export default {
   box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
 }
 
-.btn-success:hover {
+.btn-success:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 8px -1px rgba(16, 185, 129, 0.4);
 }
 
-/* Step 3 - Seleção de Itens */
+.btn-success:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* Step Seleção de Itens */
 .step-selecao-itens {
   padding: 0;
+  margin-top: 24px;
 }
 
 .step-selecao-itens .info-box {

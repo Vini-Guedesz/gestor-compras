@@ -11,10 +11,10 @@ import java.util.List;
 @Repository
 public interface CotacaoRascunhoRepository extends JpaRepository<CotacaoRascunho, Long> {
 
-    @Query("SELECT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itensRascunho WHERE c.rascunho.id = :rascunhoId")
+    @Query("SELECT DISTINCT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itensRascunho LEFT JOIN FETCH c.anexos WHERE c.rascunho.id = :rascunhoId")
     List<CotacaoRascunho> findByRascunhoIdWithItens(@Param("rascunhoId") Long rascunhoId);
 
-    @Query("SELECT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itensRascunho WHERE c.id = :id")
+    @Query("SELECT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itensRascunho LEFT JOIN FETCH c.anexos WHERE c.id = :id")
     CotacaoRascunho findByIdWithItens(@Param("id") Long id);
 
     @Query("SELECT DISTINCT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itensRascunho ir WHERE ir.id = :itemRascunhoId")

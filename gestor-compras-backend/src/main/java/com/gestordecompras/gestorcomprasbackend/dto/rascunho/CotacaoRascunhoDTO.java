@@ -16,5 +16,6 @@ public record CotacaoRascunhoDTO(
     Integer prazoEmDiasUteis,
     LocalDate dataLimite,
     boolean temAnexoPdf,
+    int quantidadeAnexos,
     LocalDateTime dataCriacao
 ) {}

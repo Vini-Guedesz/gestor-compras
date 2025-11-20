@@ -113,8 +113,8 @@ public class RascunhoController {
                 .map(h -> new HistoricoRascunhoDTO(
                         h.getId(),
                         h.getRascunho().getId(),
-                        h.getUsuario().getId(),
-                        h.getUsuario().getUsername(),
+                        h.getUsuario() != null ? h.getUsuario().getId() : null,
+                        h.getUsuario() != null ? h.getUsuario().getUsername() : "Sistema",
                         h.getDataModificacao(),
                         h.getTipoAcao().name(),
                         h.getDescricao(),
@@ -124,5 +124,14 @@ public class RascunhoController {
                 ))
                 .toList();
         return ResponseEntity.ok(historicoDTO);
+    }
+
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Atualizar status do rascunho", description = "Atualiza o status do rascunho (ATIVO, EM_COTACAO, FINALIZADO)")
+    public ResponseEntity<RascunhoDTO> atualizarStatus(
+            @PathVariable Long id,
+            @RequestParam String status
+    ) {
+        return ResponseEntity.ok(rascunhoService.atualizarStatus(id, status));
     }
 }

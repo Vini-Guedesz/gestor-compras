@@ -23,5 +23,6 @@ public record CotacaoRascunhoCreateDTO(
 
     Integer prazoEmDiasUteis,
     LocalDate dataLimite,
-    byte[] anexoPdf
+    byte[] anexoPdf,
+    List<byte[]> anexosPdf
 ) {}

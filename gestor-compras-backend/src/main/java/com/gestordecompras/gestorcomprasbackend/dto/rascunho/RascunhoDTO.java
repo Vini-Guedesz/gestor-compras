@@ -9,5 +9,7 @@ public record RascunhoDTO(
     Long criadorId,
     String observacao,
     LocalDateTime dataCriacao,
-    LocalDateTime dataModificacao
+    LocalDateTime dataModificacao,
+    String status,
+    Long pedidoGeradoId
 ) {}

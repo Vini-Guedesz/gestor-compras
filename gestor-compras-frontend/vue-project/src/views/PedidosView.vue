@@ -251,15 +251,6 @@
         </div>
       </div>
 
-      <!-- Modal de Pedido -->
-      <PedidoForm
-        :isVisible="showPedidoForm"
-        :pedido="pedidoEditando"
-        @close="fecharFormulario"
-        @save="salvarPedido"
-        @save-draft="salvarRascunhoSemFechar"
-      />
-
       <!-- Modal de Confirmação de Exclusão -->
       <ConfirmModal
         :isVisible="showConfirmModal"
@@ -453,7 +444,7 @@ import { useRoute, useRouter } from 'vue-router'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
-const PedidoForm = defineAsyncComponent(() => import('@/features/pedidos/components/pedido-wizard/PedidoWizard.vue'))
+// PedidoForm removido - usando navegação para views dedicadas
 const ConfirmModal = defineAsyncComponent(() => import('@/components/ui/modals/ConfirmModal.vue'))
 const HistoricoPedido = defineAsyncComponent(() => import('@/features/pedidos/components/HistoricoPedido.vue'))
 import pedidoService from '@/services/pedidoService.js'
@@ -469,7 +460,6 @@ export default {
   components: {
     DashboardHeader,
     DashboardSidebar,
-    PedidoForm,
     ConfirmModal,
     HistoricoPedido
   },
@@ -489,10 +479,8 @@ export default {
     // Como simplificamos o formulário, não precisamos mais de extração complexa
 
     // Modais
-    const showPedidoForm = ref(false)
     const showConfirmModal = ref(false)
     const showDetalhesModal = ref(false)
-    const pedidoEditando = ref(null)
     const pedidoParaExcluir = ref(null)
     const pedidoSelecionado = ref(null)
 
@@ -640,18 +628,30 @@ export default {
           })
         }
 
-        // Adicionar rascunhos à lista com status RASCUNHO
-        const rascunhosFormatados = rascunhos.map(rascunho => ({
-          id: `R-${rascunho.id}`,
-          rascunhoId: rascunho.id,
-          status: 'RASCUNHO',
-          dataCriacao: rascunho.dataCriacao,
-          dataPedido: rascunho.dataCriacao,
-          observacao: rascunho.observacao,
-          descricao: rascunho.observacao || 'Sem descrição',
-          itens: rascunho.itens || [],
-          isRascunho: true
-        }))
+        // Adicionar rascunhos à lista com status baseado no status real
+        const rascunhosFormatados = rascunhos.map(rascunho => {
+          let status = 'RASCUNHO'
+          if (rascunho.status === 'FINALIZADO') {
+            status = 'RASCUNHO_FINALIZADO'
+          } else if (rascunho.status === 'EM_COTACAO') {
+            status = 'EM_COTACAO'
+          }
+
+          return {
+            id: `R-${rascunho.id}`,
+            rascunhoId: rascunho.id,
+            status: status,
+            statusRascunho: rascunho.status || 'ATIVO',
+            pedidoGeradoId: rascunho.pedidoGeradoId,
+            dataCriacao: rascunho.dataCriacao,
+            dataPedido: rascunho.dataCriacao,
+            observacao: rascunho.observacao,
+            descricao: rascunho.observacao || 'Sem descrição',
+            itens: rascunho.itens || [],
+            isRascunho: true,
+            isFinalizado: rascunho.status === 'FINALIZADO'
+          }
+        })
 
         // Combinar pedidos e rascunhos
         pedidos.value = [...listaPedidos, ...rascunhosFormatados]
@@ -688,6 +688,8 @@ export default {
       const labels = {
         // Status do backend (uppercase)
         'RASCUNHO': 'Rascunho',
+        'EM_COTACAO': 'Em Cotação',
+        'RASCUNHO_FINALIZADO': 'Rascunho Finalizado',
         'PENDENTE': 'Pendente',
         'EM_ANALISE': 'Em Análise',
         'EM_ANDAMENTO': 'Em Andamento',
@@ -708,6 +710,8 @@ export default {
       const classes = {
         // Status do backend (uppercase)
         'RASCUNHO': 'status-draft',
+        'EM_COTACAO': 'status-quoting',
+        'RASCUNHO_FINALIZADO': 'status-draft-finished',
         'PENDENTE': 'status-pending',
         'EM_ANALISE': 'status-progress',
         'EM_ANDAMENTO': 'status-progress',
@@ -749,26 +753,26 @@ export default {
       try {
         console.log('Editando pedido:', pedido)
 
-        // Verificar se é um rascunho - redirecionar para o wizard
-        if (pedido.isRascunho) {
-          router.push(`/pedidos/rascunho/${pedido.rascunhoId}`)
+        // Verificar se é um rascunho finalizado - não permitir edição
+        if (pedido.isRascunho && pedido.isFinalizado) {
+          alert('Este rascunho já foi convertido em pedido e não pode ser editado.')
           return
         }
 
-        // Buscar o pedido completo do backend
-        console.log('Buscando pedido completo do backend...')
-        const pedidoCompleto = await pedidoService.obterPorId(pedido.id)
-        console.log('Pedido completo carregado para edição:', pedidoCompleto)
-        console.log('Itens do pedido:', pedidoCompleto.itens)
+        // Verificar se é um rascunho - redirecionar para o wizard de rascunho
+        if (pedido.isRascunho) {
+          // Determinar o estado baseado no status do rascunho
+          // ATIVO = edição de itens, EM_COTACAO = gerenciar cotações
+          const state = pedido.statusRascunho === 'EM_COTACAO' ? 'quotes' : 'edit'
+          router.push(`/pedidos/novo/${pedido.rascunhoId}?state=${state}`)
+          return
+        }
 
-        // Usar o pedido completo do backend
-        pedidoEditando.value = pedidoCompleto
-        showPedidoForm.value = true
+        // Para pedidos normais (PENDENTE, etc.) - redirecionar para view de visualização/edição
+        router.push(`/pedidos/visualizar/${pedido.id}?mode=edit`)
       } catch (error) {
-        console.error('Erro ao carregar pedido completo:', error)
-        // Fallback para o pedido da lista
-        pedidoEditando.value = { ...pedido }
-        showPedidoForm.value = true
+        console.error('Erro ao redirecionar para edição:', error)
+        alert('Erro ao abrir pedido para edição.')
       }
     }
 
@@ -789,11 +793,6 @@ export default {
           query: { tipo: 'pedido' }
         })
       }
-    }
-
-    const fecharFormulario = () => {
-      showPedidoForm.value = false
-      pedidoEditando.value = null
     }
 
     const fecharDetalhes = () => {
@@ -1036,86 +1035,6 @@ export default {
         carregandoItens.value = false
       }
     }
-
-    const salvarRascunhoSemFechar = async (dadosPedido) => {
-      try {
-        isLoading.value = true
-
-        if (pedidoEditando.value?.id) {
-          // Edição - atualizar rascunho existente
-          const response = await pedidoService.atualizar(pedidoEditando.value.id, dadosPedido)
-          const index = pedidos.value.findIndex(p => p.id === pedidoEditando.value.id)
-          if (index !== -1) {
-            const pedidoAtualizado = response.data || { ...pedidoEditando.value, ...dadosPedido }
-            pedidos.value[index] = pedidoAtualizado
-
-            // IMPORTANTE: Não atualizar pedidoEditando.value aqui para não perder itens não salvos no formulário
-            // O formulário mantém seu próprio estado e só será recarregado quando o modal for fechado e reaberto
-            console.log('Pedido atualizado na lista, formulário mantém estado local')
-          }
-        } else {
-          // Criação - criar novo rascunho
-          const response = await pedidoService.criar(dadosPedido)
-          const novoPedido = response.data || {
-            id: Date.now(),
-            dataCriacao: new Date().toISOString(),
-            ...dadosPedido
-          }
-          pedidos.value.unshift(novoPedido)
-
-          // Para criação, atualizar pedidoEditando com o ID retornado, mas preservando os itens do formulário
-          // Apenas atualizar o ID para futuras operações serem update em vez de create
-          if (pedidoEditando.value) {
-            pedidoEditando.value.id = novoPedido.id
-          } else {
-            pedidoEditando.value = novoPedido
-          }
-        }
-
-        // NÃO fechar o formulário - mantém modal aberto
-        console.log('Rascunho salvo com sucesso, modal permanece aberto')
-
-      } catch (error) {
-        console.error('Erro ao salvar rascunho:', error)
-        alert('Erro ao salvar rascunho. Tente novamente.')
-      } finally {
-        isLoading.value = false
-      }
-    }
-
-    const salvarPedido = async (dadosPedido) => {
-      try {
-        isLoading.value = true
-
-        if (pedidoEditando.value?.id) {
-          // EdiÃ§Ã£o
-          const response = await pedidoService.atualizar(pedidoEditando.value.id, dadosPedido)
-          const index = pedidos.value.findIndex(p => p.id === pedidoEditando.value.id)
-          if (index !== -1) {
-            pedidos.value[index] = response.data || { ...pedidoEditando.value, ...dadosPedido }
-          }
-        } else {
-          // CriaÃ§Ã£o
-          const response = await pedidoService.criar(dadosPedido)
-          const novoPedido = response.data || {
-            id: Date.now(),
-
-            dataCriacao: new Date().toISOString(),
-            ...dadosPedido
-          }
-          pedidos.value.unshift(novoPedido)
-        }
-
-        fecharFormulario()
-
-      } catch (error) {
-        console.error('Erro ao salvar pedido:', error)
-        alert('Erro ao salvar pedido. Tente novamente.')
-      } finally {
-        isLoading.value = false
-      }
-    }
-
     const confirmarExclusao = (pedido) => {
       pedidoParaExcluir.value = pedido
       showConfirmModal.value = true
@@ -1174,20 +1093,26 @@ export default {
       }
     }
 
-    // MÃ©todos de permissÃ£o
+    // Métodos de permissão
     const podeEditar = (pedido) => {
-      // Permite editar APENAS pedidos com status RASCUNHO
-      return pedido.status === 'RASCUNHO'
+      // Permite editar rascunhos ATIVOS, EM_COTACAO ou pedidos PENDENTES
+      if (pedido.isFinalizado) {
+        return false
+      }
+      return ['RASCUNHO', 'EM_COTACAO', 'PENDENTE'].includes(pedido.status)
     }
 
     const podeAprovar = (pedido) => {
-      // SÃ³ pode aprovar pedidos pendentes ou em análise
+      // Só pode aprovar pedidos pendentes ou em análise
       return ['PENDENTE', 'EM_ANALISE'].includes(pedido.status)
     }
 
     const podeExcluir = (pedido) => {
-      // Pode excluir pedidos rascunho ou pendentes
-      return ['RASCUNHO', 'PENDENTE'].includes(pedido.status)
+      // Pode excluir pedidos rascunho (não finalizados) ou pendentes
+      if (pedido.isFinalizado) {
+        return false
+      }
+      return ['RASCUNHO', 'EM_COTACAO', 'PENDENTE'].includes(pedido.status)
     }
 
     const podeAlterarStatus = (pedido) => {
@@ -1285,10 +1210,8 @@ export default {
       gerandoRelatorio,
 
       // Modais
-      showPedidoForm,
       showConfirmModal,
       showDetalhesModal,
-      pedidoEditando,
       pedidoParaExcluir,
       pedidoSelecionado,
 
@@ -1324,10 +1247,7 @@ export default {
       abrirFormularioNovo,
       editarPedido,
       visualizarPedido,
-      fecharFormulario,
       fecharDetalhes,
-      salvarRascunhoSemFechar,
-      salvarPedido,
       confirmarExclusao,
       excluirPedido,
       aprovarPedido,
@@ -1738,6 +1658,16 @@ export default {
 .status-draft {
   background: #f3f4f6;
   color: #374151;
+}
+
+.status-quoting {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-draft-finished {
+  background: #e0e7ff;
+  color: #3730a3;
 }
 
 .status-pending {

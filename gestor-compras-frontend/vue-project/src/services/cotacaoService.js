@@ -668,6 +668,39 @@ export const cotacaoService = {
     }
   },
 
+  // Obter anexo PDF da cotação
+  async obterAnexoPdf(cotacaoId, pdfIndex = 0) {
+    try {
+      console.log(`Buscando PDF ${pdfIndex} da cotação ${cotacaoId}...`)
+
+      // Obter o token de autenticação
+      const token = localStorage.getItem('authToken')
+
+      // Usar o endpoint com índice para consistência
+      const url = `${API_BASE_URL}/api/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
+
+      console.log('URL do PDF:', url)
+      console.log('Token presente:', !!token)
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar PDF: ${response.status}`)
+      }
+
+      const blob = await response.blob()
+      return blob
+    } catch (error) {
+      console.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
+      throw error
+    }
+  },
+
   // Verificar se cotação tem anexo PDF
   async verificarAnexo(cotacaoId) {
     try {

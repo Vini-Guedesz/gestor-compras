@@ -23,8 +23,12 @@
     <div class="cotacoes-section">
       <div class="section-header">
         <h3 class="section-title">Cotações do Rascunho</h3>
-        <button @click="abrirFormularioCotacao" class="btn-add-cotacao">
-          <svg viewBox="0 0 24 24" width="18" height="18">
+        <button
+          @click="abrirFormularioCotacao"
+          class="btn-add-cotacao"
+          aria-label="Adicionar nova cotação ao rascunho"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
           </svg>
           Adicionar Cotação
@@ -95,7 +99,11 @@
             >
               {{ pdfAberto === `${cotacao.id}-0` ? 'Fechar PDF' : 'Ver PDF' }}
             </button>
-            <button @click="$emit('delete-cotacao', cotacao)" class="btn-delete">
+            <button
+              @click="confirmarDeleteCotacao(cotacao)"
+              class="btn-delete"
+              :aria-label="`Remover cotação de ${cotacao.nomeFornecedor || 'Fornecedor'}`"
+            >
               Remover
             </button>
           </div>
@@ -162,11 +170,22 @@
     </div>
 
     <!-- Modal de Nova Cotação -->
-    <div v-if="showFormulario" class="modal-overlay" @click.self="fecharFormulario">
-      <div class="modal-cotacao">
+    <div
+      v-if="showFormulario"
+      class="modal-overlay"
+      @click.self="fecharFormulario"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-titulo"
+    >
+      <div class="modal-cotacao" role="document">
         <div class="modal-header">
-          <h3>Nova Cotação</h3>
-          <button @click="fecharFormulario" class="btn-close">&times;</button>
+          <h3 id="modal-titulo">Nova Cotação</h3>
+          <button
+            @click="fecharFormulario"
+            class="btn-close"
+            aria-label="Fechar modal"
+          >&times;</button>
         </div>
 
         <div class="modal-body">
@@ -355,11 +374,11 @@
                 multiple
               >
               <label for="pdf-upload" class="pdf-upload-label">
-                <svg viewBox="0 0 24 24" width="24" height="24">
+                <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
                   <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,15H9V10H15V15L13,19H10Z"/>
                 </svg>
                 <span>Clique para selecionar ou arraste PDFs</span>
-                <span class="upload-hint">Você pode selecionar múltiplos arquivos</span>
+                <span class="upload-hint">Múltiplos arquivos • Máx. 5MB por arquivo • 20MB total</span>
               </label>
             </div>
 
@@ -367,21 +386,28 @@
             <div v-if="arquivosPdf.length > 0" class="pdf-list">
               <div v-for="(arquivo, index) in arquivosPdf" :key="index" class="pdf-item">
                 <div class="pdf-item-info">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                     <path fill="#dc2626" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                   </svg>
                   <span class="pdf-item-name">{{ arquivo.nome }}</span>
+                  <span v-if="arquivo.tamanho" class="pdf-item-size">
+                    {{ (arquivo.tamanho / 1024 / 1024).toFixed(2) }}MB
+                  </span>
                 </div>
                 <button
                   type="button"
                   @click="removerPdfIndividual(index)"
                   class="btn-remove-pdf-item"
-                  title="Remover arquivo"
+                  :title="`Remover ${arquivo.nome}`"
+                  :aria-label="`Remover arquivo ${arquivo.nome}`"
                 >
-                  <svg viewBox="0 0 24 24" width="14" height="14">
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
                     <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
                   </svg>
                 </button>
+              </div>
+              <div class="pdf-total-size">
+                Total: {{ (arquivosPdf.reduce((t, a) => t + (a.tamanho || 0), 0) / 1024 / 1024).toFixed(2) }}MB de 20MB
               </div>
             </div>
           </div>
@@ -628,8 +654,34 @@ export default {
 
     const handleFileUpload = (event) => {
       const files = event.target.files
+      const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB por arquivo
+      const MAX_TOTAL_SIZE = 20 * 1024 * 1024 // 20MB total
+
       if (files && files.length > 0) {
+        // Calcular tamanho total atual
+        let tamanhoAtual = arquivosPdf.value.reduce((total, arq) => total + (arq.bytes?.length || 0), 0)
+
         Array.from(files).forEach(file => {
+          // Validar tipo de arquivo
+          if (file.type !== 'application/pdf') {
+            alert(`Arquivo "${file.name}" não é um PDF válido. Apenas arquivos PDF são permitidos.`)
+            return
+          }
+
+          // Validar tamanho individual
+          if (file.size > MAX_FILE_SIZE) {
+            alert(`Arquivo "${file.name}" excede o limite de 5MB. Tamanho: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+            return
+          }
+
+          // Validar tamanho total
+          if (tamanhoAtual + file.size > MAX_TOTAL_SIZE) {
+            alert(`Limite total de 20MB excedido. Remova alguns arquivos antes de adicionar novos.`)
+            return
+          }
+
+          tamanhoAtual += file.size
+
           const reader = new FileReader()
           reader.onload = (e) => {
             // Converter para Base64 (remover prefixo data:application/pdf;base64,)
@@ -641,7 +693,7 @@ export default {
               bytes[i] = binaryString.charCodeAt(i)
             }
             // Adicionar ao array de PDFs
-            arquivosPdf.value.push({ nome: file.name, bytes: bytes })
+            arquivosPdf.value.push({ nome: file.name, bytes: bytes, tamanho: file.size })
             novaCotacao.value.anexosPdf.push(bytes)
           }
           reader.readAsDataURL(file)
@@ -650,6 +702,14 @@ export default {
         if (fileInput.value) {
           fileInput.value.value = ''
         }
+      }
+    }
+
+    const confirmarDeleteCotacao = (cotacao) => {
+      const nomeFornecedor = cotacao.nomeFornecedor || 'Fornecedor'
+      const confirmado = confirm(`Tem certeza que deseja remover a cotação de "${nomeFornecedor}"?\n\nEsta ação não pode ser desfeita.`)
+      if (confirmado) {
+        emit('delete-cotacao', cotacao)
       }
     }
 
@@ -771,7 +831,9 @@ export default {
       erroPdf,
       pdfUrl,
       togglePdfViewer,
-      fecharPdfViewer
+      fecharPdfViewer,
+      // Confirmação de delete
+      confirmarDeleteCotacao
     }
   }
 }
@@ -1343,6 +1405,22 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.pdf-item-size {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+.pdf-total-size {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: right;
+  padding: 8px 0 0;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
 }
 
 .btn-remove-pdf-item {
