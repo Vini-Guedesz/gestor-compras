@@ -106,8 +106,8 @@ export const cotacaoService = {
       return response
     } catch (error) {
       console.error('❌ Erro ao buscar cotações do pedido:', error)
-      // Retornar array vazio em caso de erro ao invés de falhar
-      return []
+      // Bug Fix #12: Propagar erro ao invés de retornar array vazio silenciosamente
+      throw new Error(`Erro ao carregar cotações do pedido: ${error.message}`)
     }
   },
 
@@ -120,61 +120,72 @@ export const cotacaoService = {
       return response
     } catch (error) {
       console.error('❌ Erro ao buscar cotações do item:', error)
-      // Retornar array vazio em caso de erro
-      return []
+      // Bug Fix #12: Propagar erro ao invés de retornar array vazio silenciosamente
+      throw new Error(`Erro ao carregar cotações do item: ${error.message}`)
     }
   },
 
   // Criar nova cotação
   async criar(dadosCotacao) {
     try {
-      // Validação básica
+      // Validação básica conforme CotacaoCreateDTO
       if (!dadosCotacao.fornecedorId) {
         throw new Error('Fornecedor é obrigatório')
       }
 
-      if (!dadosCotacao.itemPedidoId) {
-        throw new Error('Item do pedido é obrigatório')
+      if (!dadosCotacao.tipoFornecedor) {
+        throw new Error('Tipo de fornecedor é obrigatório')
       }
 
-      if (!dadosCotacao.valorUnitario || dadosCotacao.valorUnitario <= 0) {
-        throw new Error('Valor unitário deve ser maior que zero')
+      if (!dadosCotacao.solicitacaoDePedidoId) {
+        throw new Error('ID da solicitação de pedido é obrigatório')
+      }
+
+      if (!dadosCotacao.itensPedidoIds || dadosCotacao.itensPedidoIds.length === 0) {
+        throw new Error('Deve selecionar pelo menos um item do pedido')
+      }
+
+      if (!dadosCotacao.preco || dadosCotacao.preco <= 0) {
+        throw new Error('Preço deve ser maior que zero')
       }
 
       console.log('📤 Enviando cotação para backend:', dadosCotacao)
 
-      // Preparar payload conforme CotacaoDTO do backend
+      // Preparar payload conforme CotacaoCreateDTO do backend
       const payload = {
         fornecedorId: dadosCotacao.fornecedorId,
-        itemPedidoId: dadosCotacao.itemPedidoId,
-        tipo: dadosCotacao.tipo || 'PRODUTO', // PRODUTO ou SERVICO
-        valorUnitario: parseFloat(dadosCotacao.valorUnitario),
-        prazoEntrega: dadosCotacao.prazoEntrega ? parseInt(dadosCotacao.prazoEntrega) : null,
-        validadeCotacao: dadosCotacao.validadeCotacao || null
+        tipoFornecedor: dadosCotacao.tipoFornecedor, // PRODUTO ou SERVICO
+        solicitacaoDePedidoId: dadosCotacao.solicitacaoDePedidoId,
+        itensPedidoIds: dadosCotacao.itensPedidoIds,
+        preco: parseFloat(dadosCotacao.preco),
+        prazoEmDiasUteis: dadosCotacao.prazoEmDiasUteis ? parseInt(dadosCotacao.prazoEmDiasUteis) : null,
+        dataLimite: dadosCotacao.dataLimite || null,
+        anexoPdf: null
       }
 
-      // Se houver arquivo PDF, converter para bytes
-      if (dadosCotacao.arquivo) {
-        console.log('📄 Convertendo arquivo PDF para bytes...')
+      // Se houver anexo PDF, incluir no payload
+      if (dadosCotacao.anexoPdf) {
+        console.log('📄 Incluindo anexo PDF...')
 
         // Se já for um array de bytes, usar direto
-        if (Array.isArray(dadosCotacao.arquivo)) {
-          payload.arquivo = dadosCotacao.arquivo
-        } else {
+        if (Array.isArray(dadosCotacao.anexoPdf)) {
+          payload.anexoPdf = dadosCotacao.anexoPdf
+          console.log('✅ Anexo PDF incluído:', payload.anexoPdf.length, 'bytes')
+        } else if (dadosCotacao.anexoPdf instanceof File) {
           // Validar arquivo PDF
-          if (dadosCotacao.arquivo.type !== 'application/pdf') {
+          if (dadosCotacao.anexoPdf.type !== 'application/pdf') {
             throw new Error('Apenas arquivos PDF são permitidos')
           }
 
           const maxSize = 10 * 1024 * 1024 // 10MB
-          if (dadosCotacao.arquivo.size > maxSize) {
+          if (dadosCotacao.anexoPdf.size > maxSize) {
             throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
           }
 
-          const bytesArray = await this.arquivoParaBytes(dadosCotacao.arquivo)
-          payload.arquivo = bytesArray
+          const bytesArray = await this.arquivoParaBytes(dadosCotacao.anexoPdf)
+          payload.anexoPdf = bytesArray
+          console.log('✅ Arquivo PDF convertido:', payload.anexoPdf.length, 'bytes')
         }
-        console.log('✅ Arquivo PDF convertido:', payload.arquivo.length, 'bytes')
       }
 
       const response = await api.post(BASE_URL, payload)
@@ -229,6 +240,23 @@ export const cotacaoService = {
 
     } catch (error) {
       console.error('❌ Erro ao atualizar cotação:', error)
+      throw error
+    }
+  },
+
+  // Excluir cotação
+  async deleteCotacao(id) {
+    try {
+      if (!id) {
+        throw new Error('ID da cotação é obrigatório')
+      }
+
+      console.log('🗑️ Excluindo cotação:', id)
+      await api.delete(`${BASE_URL}/${id}`)
+      console.log('✅ Cotação excluída com sucesso')
+      return true
+    } catch (error) {
+      console.error('❌ Erro ao excluir cotação:', error)
       throw error
     }
   },
@@ -756,6 +784,30 @@ export const cotacaoService = {
       return response.data
     } catch (error) {
       console.error('Erro ao salvar como modelo:', error)
+      throw error
+    }
+  },
+
+  // Vincular itens a uma cotação
+  async vincularItens(cotacaoId, itensPedidoIds) {
+    try {
+      if (!cotacaoId) {
+        throw new Error('ID da cotação é obrigatório')
+      }
+
+      if (!itensPedidoIds || itensPedidoIds.length === 0) {
+        throw new Error('Deve fornecer pelo menos um item para vincular')
+      }
+
+      console.log(`📤 Vinculando itens à cotação ${cotacaoId}:`, itensPedidoIds)
+
+      const response = await api.patch(`${BASE_URL}/${cotacaoId}/vincular-itens`, itensPedidoIds)
+
+      console.log('✅ Itens vinculados com sucesso')
+      return response
+
+    } catch (error) {
+      console.error('❌ Erro ao vincular itens:', error)
       throw error
     }
   }

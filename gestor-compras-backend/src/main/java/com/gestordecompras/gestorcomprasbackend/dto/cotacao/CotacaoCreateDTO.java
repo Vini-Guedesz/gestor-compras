@@ -2,6 +2,7 @@ package com.gestordecompras.gestorcomprasbackend.dto.cotacao;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ public record CotacaoCreateDTO(
         List<Long> itensPedidoIds,
 
         @NotNull(message = "Preço é obrigatório")
+        @Positive(message = "Preço deve ser maior que zero")  // Bug Fix #11
         BigDecimal preco,
 
         Integer prazoEmDiasUteis,

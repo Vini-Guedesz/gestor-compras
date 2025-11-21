@@ -24,4 +24,12 @@ public interface CotacaoRepository extends JpaRepository<Cotacao, Long> {
            "LEFT JOIN FETCH c.fornecedorServico " +
            "WHERE :itemPedidoId MEMBER OF c.itensPedido")
     List<Cotacao> findByItemPedidoIdWithFornecedores(@Param("itemPedidoId") Long itemPedidoId);
+
+    // Bug Fix #9: Query otimizada para evitar N+1 ao buscar todas as cotações
+    @Query("SELECT DISTINCT c FROM Cotacao c " +
+           "LEFT JOIN FETCH c.itensPedido " +
+           "LEFT JOIN FETCH c.fornecedorProduto " +
+           "LEFT JOIN FETCH c.fornecedorServico " +
+           "LEFT JOIN FETCH c.solicitacaoDePedido")
+    List<Cotacao> findAllWithRelationships();
 }

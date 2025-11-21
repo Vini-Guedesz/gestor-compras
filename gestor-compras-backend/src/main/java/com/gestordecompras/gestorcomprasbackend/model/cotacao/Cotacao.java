@@ -39,6 +39,22 @@ public class Cotacao {
     @JoinColumn(name = "solicitacao_de_pedido_id")
     private SolicitacaoDePedido solicitacaoDePedido;
 
+    /**
+     * Bug #5 - Limitação de Design: Relacionamento N:N direto
+     *
+     * ATENÇÃO: Este relacionamento N:N direto tem limitações arquiteturais.
+     * Ele não permite armazenar informações específicas do par cotação-item, como:
+     * - Preço unitário do item nesta cotação específica
+     * - Quantidade cotada (que pode diferir da quantidade solicitada)
+     * - Observações específicas sobre o item nesta cotação
+     *
+     * QUANDO REFATORAR: Se o sistema precisar de qualquer das funcionalidades acima,
+     * este relacionamento deve ser convertido em uma entidade intermediária:
+     * CotacaoItem { cotacao_id, item_pedido_id, preco_unitario, quantidade_cotada, observacao }
+     *
+     * Por enquanto, este design é suficiente pois o preço é armazenado no nível da cotação
+     * inteira, não por item individual.
+     */
     @ManyToMany
     @JoinTable(
         name = "cotacao_item_pedido",

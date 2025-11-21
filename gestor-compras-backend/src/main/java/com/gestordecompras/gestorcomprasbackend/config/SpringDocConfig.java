@@ -26,43 +26,77 @@ public class SpringDocConfig {
                                 .bearerFormat("JWT")))
                 .info(new Info()
                         .title("API Gestor de Compras")
-                        .version("1.0.0")
+                        .version("2.0.0")
                         .description("""
-                                API REST para gerenciamento de compras e fornecedores.
+                                API REST para gerenciamento de compras, fornecedores e cotações.
 
                                 ## Funcionalidades Principais
 
-                                - **Gestão de Usuários**: Cadastro e gerenciamento de usuários do sistema
-                                - **Gestão de Fornecedores**: Cadastro de fornecedores de produtos e serviços
-                                - **Gestão de Pedidos**: Criação e acompanhamento de solicitações de pedido
+                                - **Gestão de Usuários**: Cadastro e gerenciamento de usuários do sistema com controle de roles (USER/ADMIN)
+                                - **Gestão de Fornecedores**: Cadastro de fornecedores de produtos e serviços com endereços e contatos
+                                - **Gestão de Pedidos**: Criação e acompanhamento de solicitações de pedido com itens
+                                - **Sistema de Rascunhos**: Criação de rascunhos de pedidos antes da finalização
+                                  - Gerenciamento individual de itens (adicionar, editar, remover)
+                                  - Numeração automática de itens com reutilização de números
+                                  - Histórico completo de ações realizadas no rascunho
+                                  - Conversão de rascunho em pedido final
                                 - **Gestão de Cotações**: Registro e comparação de cotações de fornecedores
+                                  - Cotações em rascunhos com múltiplos anexos PDF
+                                  - Cotações finalizadas vinculadas a pedidos
+                                  - Vinculação de múltiplos itens por cotação
+                                - **Histórico de Pedidos**: Rastreamento completo de todas as modificações
+                                  - Criação, edição e exclusão de pedidos
+                                  - Mudanças de status
+                                  - Adição/remoção de itens
+                                  - Adição/remoção/edição de cotações
                                 - **Relatórios**: Geração de relatórios em PDF (JasperReports)
                                 - **Autenticação**: Sistema de autenticação via JWT
 
                                 ## Validações Implementadas
 
-                                - Validação de CEP integrada com API ViaCEP
-                                - Validação de telefone fixo e celular (padrão brasileiro)
-                                - Validação de CNPJ
-                                - Validação de e-mail
-                                - Validação de senhas fortes
+                                - **CEP**: Validação integrada com API ViaCEP
+                                - **Telefones**: Validação de telefone fixo e celular (padrão brasileiro)
+                                - **CNPJ**: Validação de formato e dígitos verificadores
+                                - **E-mail**: Validação de formato
+                                - **Senhas**: Validação de senhas fortes
+                                - **Dados de Negócio**: Validação de vínculos entre entidades (ex: item pertence ao pedido correto)
 
                                 ## Autenticação
 
                                 Para acessar endpoints protegidos, é necessário:
                                 1. Fazer login em `/auth/login` com credenciais válidas
                                 2. Copiar o token JWT retornado
-                                3. Clicar no botão "Authorize" no topo desta página
+                                3. Clicar no botão "Authorize" 🔓 no topo desta página
                                 4. Inserir o token no formato: `Bearer {seu-token-aqui}`
+                                5. Clicar em "Authorize" e depois "Close"
+
+                                ## Fluxo de Trabalho Recomendado
+
+                                1. **Criar Rascunho**: POST `/api/rascunhos`
+                                2. **Adicionar Itens**: POST `/api/rascunhos/{id}/itens`
+                                3. **Solicitar Cotações**: POST `/api/rascunhos/{rascunhoId}/cotacoes`
+                                4. **Anexar PDFs**: Incluir anexos na criação da cotação (suporta múltiplos PDFs)
+                                5. **Converter para Pedido**: POST `/api/rascunhos/{id}/converter-para-pedido`
+                                6. **Acompanhar Histórico**: GET `/api/historico-pedidos/pedido/{pedidoId}`
 
                                 ## Tecnologias
 
+                                - Java 21
                                 - Spring Boot 3.3.1
                                 - PostgreSQL 17.4
-                                - Flyway (Migrations)
+                                - Flyway (Database Migrations)
                                 - Spring Security + JWT
-                                - JasperReports
+                                - JasperReports (PDF Generation)
                                 - Bean Validation
+                                - MapStruct (DTO Mapping)
+                                - Lombok
+
+                                ## Otimizações Implementadas
+
+                                - Queries otimizadas para evitar N+1 problem
+                                - Separação de queries para evitar produto cartesiano
+                                - Retry logic para conflitos de concorrência (OptimisticLocking)
+                                - Estratégia de diff para atualizações de coleções
                                 """)
                         .contact(new Contact()
                                 .name("Time de Desenvolvimento")

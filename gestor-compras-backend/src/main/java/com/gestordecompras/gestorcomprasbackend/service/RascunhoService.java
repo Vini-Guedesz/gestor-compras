@@ -14,6 +14,7 @@ import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
 import com.gestordecompras.gestorcomprasbackend.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RascunhoService {
@@ -320,7 +322,8 @@ public class RascunhoService {
         // Salvar pedido
         SolicitacaoDePedido pedidoSalvo = solicitacaoDePedidoRepository.save(pedido);
 
-        // Converter cotações do rascunho para cotações do pedido
+        // Bug Fix #3: Converter cotações do rascunho para cotações do pedido com logging
+        int cotacoesConvertidas = 0;
         for (CotacaoRascunho cotacaoRascunho : cotacoesRascunho) {
             Set<ItemPedido> itensPedidoCotacao = new HashSet<>();
             for (ItemRascunho itemRascunho : cotacaoRascunho.getItensRascunho()) {
@@ -355,7 +358,26 @@ public class RascunhoService {
                 }
 
                 cotacaoRepository.save(cotacao);
+                cotacoesConvertidas++;
+            } else {
+                log.warn("Cotação do rascunho {} não foi convertida pois nenhum item foi mapeado. " +
+                        "Fornecedor: {}, Preço: {}",
+                        rascunhoId,
+                        cotacaoRascunho.getFornecedorProduto() != null
+                            ? cotacaoRascunho.getFornecedorProduto().getRazaoSocial()
+                            : cotacaoRascunho.getFornecedorServico().getRazaoSocial(),
+                        cotacaoRascunho.getPreco());
             }
+        }
+
+        // Bug Fix #3: Avisar se havia cotações no rascunho mas nenhuma foi migrada
+        if (!cotacoesRascunho.isEmpty() && cotacoesConvertidas == 0) {
+            log.warn("ATENÇÃO: Rascunho {} tinha {} cotação(ões) mas nenhuma foi convertida para o pedido {}. " +
+                    "Possível perda de dados durante conversão.",
+                    rascunhoId, cotacoesRascunho.size(), pedidoSalvo.getId());
+        } else if (cotacoesConvertidas < cotacoesRascunho.size()) {
+            log.warn("Rascunho {} tinha {} cotação(ões) mas apenas {} foram convertidas para o pedido {}.",
+                    rascunhoId, cotacoesRascunho.size(), cotacoesConvertidas, pedidoSalvo.getId());
         }
 
         // Registrar no histórico do pedido

@@ -122,4 +122,56 @@ public class HistoricoPedidoService {
                 "Item removido: " + nomeItem
         );
     }
+
+    @Transactional
+    public void registrarAdicaoCotacao(
+            SolicitacaoDePedido pedido,
+            User usuario,
+            String nomeFornecedor
+    ) {
+        registrarHistorico(
+                pedido,
+                usuario,
+                HistoricoPedido.TipoModificacao.ADICAO_COTACAO,
+                "cotacoes",
+                null,
+                nomeFornecedor,
+                "Cotação adicionada: " + nomeFornecedor
+        );
+    }
+
+    @Transactional
+    public void registrarRemocaoCotacao(
+            SolicitacaoDePedido pedido,
+            User usuario,
+            String nomeFornecedor
+    ) {
+        registrarHistorico(
+                pedido,
+                usuario,
+                HistoricoPedido.TipoModificacao.REMOCAO_COTACAO,
+                "cotacoes",
+                nomeFornecedor,
+                null,
+                "Cotação removida: " + nomeFornecedor
+        );
+    }
+
+    @Transactional
+    public void registrarEdicaoCotacao(
+            SolicitacaoDePedido pedido,
+            User usuario,
+            String nomeFornecedor,
+            String detalhes
+    ) {
+        registrarHistorico(
+                pedido,
+                usuario,
+                HistoricoPedido.TipoModificacao.ATUALIZACAO,
+                "cotacao",
+                null,
+                nomeFornecedor,
+                "Cotação editada: " + nomeFornecedor + (detalhes != null ? " - " + detalhes : "")
+        );
+    }
 }

@@ -246,10 +246,14 @@ const api = {
   /**
    * Requisição DELETE
    * @param {string} endpoint - Endpoint da API
-   * @returns {Promise} Dados da resposta
+   * @returns {Promise} Dados da resposta (ou true se 204 No Content)
    */
   async delete(endpoint) {
     const response = await apiClient.delete(endpoint)
+    // Status 204 No Content não tem body, retornar true para indicar sucesso
+    if (response.status === 204) {
+      return true
+    }
     return response.data
   }
 }

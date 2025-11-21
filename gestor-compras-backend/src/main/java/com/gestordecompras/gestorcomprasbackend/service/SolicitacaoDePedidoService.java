@@ -33,9 +33,19 @@ public class SolicitacaoDePedidoService {
     }
 
     public SolicitacaoDePedidoDTO getSolicitacaoById(Long id) {
-        return solicitacaoDePedidoRepository.findById(id)
-                .map(solicitacaoDePedidoMapper::toDTO)
+        // Bug Fix #1: Carregar dados em múltiplas queries para evitar produto cartesiano
+
+        // 1. Carregar pedido com itens
+        SolicitacaoDePedido pedido = solicitacaoDePedidoRepository.findByIdWithItensAndCotacoes(id)
                 .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com ID: " + id));
+
+        // 2. Carregar cotações com fornecedores (segunda query)
+        solicitacaoDePedidoRepository.findByIdWithCotacoes(id);
+
+        // 3. Carregar itens das cotações (terceira query)
+        solicitacaoDePedidoRepository.findCotacoesWithItensByPedidoId(id);
+
+        return solicitacaoDePedidoMapper.toDTO(pedido);
     }
 
     public SolicitacaoDePedidoDTO createSolicitacao(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {

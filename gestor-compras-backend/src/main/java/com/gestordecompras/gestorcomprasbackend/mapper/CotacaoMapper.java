@@ -36,10 +36,13 @@ public class CotacaoMapper {
                 : List.of();
 
         // Calcular quantidade de anexos
+        // Priorizar a nova estrutura de anexos múltiplos, caso contrário usar o campo legado
         int quantidadeAnexos = 0;
         if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
+            // Nova estrutura: múltiplos anexos
             quantidadeAnexos = cotacao.getAnexos().size();
         } else if (cotacao.getAnexoPdf() != null && cotacao.getAnexoPdf().length > 0) {
+            // Estrutura legada: apenas um anexo
             quantidadeAnexos = 1;
         }
 

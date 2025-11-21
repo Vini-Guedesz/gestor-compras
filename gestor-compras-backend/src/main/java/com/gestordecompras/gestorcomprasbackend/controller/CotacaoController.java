@@ -110,4 +110,16 @@ public class CotacaoController {
 
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
+
+    @PatchMapping("/{cotacaoId}/vincular-itens")
+    @Operation(summary = "Vincular itens à cotação", description = "Atualiza os itens vinculados a uma cotação específica")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Itens vinculados com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Cotação não encontrada")
+    })
+    public ResponseEntity<CotacaoDTO> vincularItens(
+            @PathVariable Long cotacaoId,
+            @RequestBody List<Long> itensPedidoIds) {
+        return ResponseEntity.ok(cotacaoService.vincularItens(cotacaoId, itensPedidoIds));
+    }
 }

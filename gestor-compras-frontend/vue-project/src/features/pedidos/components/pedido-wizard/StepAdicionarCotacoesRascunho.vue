@@ -709,7 +709,7 @@ export default {
       const nomeFornecedor = cotacao.nomeFornecedor || 'Fornecedor'
       const confirmado = confirm(`Tem certeza que deseja remover a cotação de "${nomeFornecedor}"?\n\nEsta ação não pode ser desfeita.`)
       if (confirmado) {
-        emit('delete-cotacao', cotacao)
+        emit('delete-cotacao', cotacao.id)
       }
     }
 

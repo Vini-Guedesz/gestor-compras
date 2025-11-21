@@ -43,7 +43,15 @@ public class CotacaoRascunhoService {
 
     @Transactional(readOnly = true)
     public List<CotacaoRascunhoDTO> listarPorRascunho(Long rascunhoId) {
+        // Carregar cotações com itens (primeira query)
         List<CotacaoRascunho> cotacoes = cotacaoRascunhoRepository.findByRascunhoIdWithItens(rascunhoId);
+
+        // Se houver cotações, carregar anexos separadamente para evitar produto cartesiano
+        if (!cotacoes.isEmpty()) {
+            List<Long> ids = cotacoes.stream().map(CotacaoRascunho::getId).collect(Collectors.toList());
+            cotacaoRascunhoRepository.findByIdsWithAnexos(ids); // Carrega anexos em segunda query
+        }
+
         return cotacoes.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
@@ -53,6 +61,8 @@ public class CotacaoRascunhoService {
         if (cotacao == null) {
             throw new EntityNotFoundException("Cotação não encontrada com ID: " + id);
         }
+        // Carregar anexos separadamente
+        cotacaoRascunhoRepository.findByIdsWithAnexos(List.of(id));
         return toDTO(cotacao);
     }
 
@@ -66,7 +76,7 @@ public class CotacaoRascunhoService {
         cotacao.setPreco(dto.preco());
         cotacao.setPrazoEmDiasUteis(dto.prazoEmDiasUteis());
         cotacao.setDataLimite(dto.dataLimite());
-        cotacao.setAnexoPdf(dto.anexoPdf());
+        // Não usar mais anexoPdf legado - usar apenas a nova estrutura de anexos múltiplos
 
         // Definir fornecedor
         if ("PRODUTO".equalsIgnoreCase(dto.tipoFornecedor())) {
