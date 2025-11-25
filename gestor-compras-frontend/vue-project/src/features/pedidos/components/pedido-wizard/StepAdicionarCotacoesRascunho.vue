@@ -308,17 +308,20 @@
           <div class="form-group">
             <label>Itens Contemplados *</label>
             <div class="checkbox-lista-styled">
-              <label
+              <div
                 v-for="item in rascunho.itens"
                 :key="item.id"
                 class="checkbox-item-styled"
                 :class="{ 'selected': novaCotacao.itensRascunhoIds.includes(item.id) }"
+                @click="toggleItemCheckbox(item.id)"
               >
                 <input
                   type="checkbox"
                   :value="item.id"
                   v-model="novaCotacao.itensRascunhoIds"
                   class="checkbox-hidden"
+                  :id="`item-checkbox-${item.id}`"
+                  @click.stop
                 >
                 <div class="checkbox-custom">
                   <svg v-if="novaCotacao.itensRascunhoIds.includes(item.id)" viewBox="0 0 24 24" width="14" height="14">
@@ -329,7 +332,7 @@
                   <span class="checkbox-nome">{{ item.nome }}</span>
                   <span class="checkbox-qtd">Quantidade: {{ item.quantidade }}</span>
                 </div>
-              </label>
+              </div>
             </div>
             <span v-if="novaCotacao.itensRascunhoIds.length > 0" class="selected-count">
               {{ novaCotacao.itensRascunhoIds.length }} item(ns) selecionado(s)
@@ -346,6 +349,7 @@
                 :value="precoFormatado"
                 @input="handlePrecoInput($event)"
                 @keypress="validarTeclaPreco($event)"
+                @click.stop
                 class="preco-input"
                 placeholder="0,00"
                 inputmode="numeric"
@@ -361,6 +365,7 @@
               <input
                 type="number"
                 v-model="novaCotacao.prazoEmDiasUteis"
+                @click.stop
                 min="1"
                 placeholder="Ex: 15"
               >
@@ -370,6 +375,7 @@
               <input
                 type="date"
                 v-model="novaCotacao.dataLimite"
+                @click.stop
               >
             </div>
           </div>
@@ -384,10 +390,10 @@
                 @change="handleFileUpload"
                 ref="fileInput"
                 class="pdf-file-input"
-                id="pdf-upload"
+                id="pdf-upload-rascunho"
                 multiple
               >
-              <label for="pdf-upload" class="pdf-upload-label">
+              <label for="pdf-upload-rascunho" class="pdf-upload-label">
                 <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
                   <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,15H9V10H15V15L13,19H10Z"/>
                 </svg>
@@ -693,6 +699,17 @@ export default {
       showFormulario.value = false
     }
 
+    const toggleItemCheckbox = (itemId) => {
+      const index = novaCotacao.value.itensRascunhoIds.indexOf(itemId)
+      if (index > -1) {
+        // Remove o item se já está selecionado
+        novaCotacao.value.itensRascunhoIds.splice(index, 1)
+      } else {
+        // Adiciona o item se não está selecionado
+        novaCotacao.value.itensRascunhoIds.push(itemId)
+      }
+    }
+
     const handleFileUpload = (event) => {
       const files = event.target.files
       const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB por arquivo
@@ -850,6 +867,7 @@ export default {
       gerarRelatorio,
       abrirFormularioCotacao,
       fecharFormulario,
+      toggleItemCheckbox,
       handleFileUpload,
       salvarCotacao,
       onFornecedorChange,
@@ -1442,6 +1460,12 @@ export default {
   font-size: 0.875rem;
 }
 
+.pdf-upload-label > span {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
 .pdf-upload-label:hover {
   border-color: #3b82f6;
   background: #eff6ff;
@@ -1455,9 +1479,12 @@ export default {
 }
 
 .upload-hint {
+  display: block;
   font-size: 0.75rem;
   color: #9ca3af;
   margin-top: 4px;
+  text-align: center;
+  line-height: 1.5;
 }
 
 /* Lista de PDFs anexados */

@@ -124,7 +124,7 @@
             @change="handleFileUpload"
             accept=".pdf,application/pdf"
             class="file-input"
-            id="file-upload"
+            :id="`file-upload-${numero}`"
           />
           <label :for="`file-upload-${numero}`" class="upload-label">
             <svg viewBox="0 0 24 24" width="20" height="20">
