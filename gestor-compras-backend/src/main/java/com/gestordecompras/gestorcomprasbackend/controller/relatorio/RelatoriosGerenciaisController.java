@@ -1,8 +1,10 @@
 package com.gestordecompras.gestorcomprasbackend.controller.relatorio;
 
+import com.gestordecompras.gestorcomprasbackend.dto.relatorio.SolicitacaoRelatorioRequestDTO;
 import com.gestordecompras.gestorcomprasbackend.service.jasperreport.JasperReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import net.sf.jasperreports.engine.JRException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,6 +110,56 @@ public class RelatoriosGerenciaisController {
             return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
         } catch (JRException e) {
             logger.error("Erro ao gerar relatório de pedidos fechados: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/itens-para-cotacao")
+    @Operation(summary = "Itens para Cotação",
+               description = "Gera relatório com os itens selecionados de uma solicitação para envio aos fornecedores. " +
+                           "Se nenhum ID de item for fornecido, inclui todos os itens da solicitação.")
+    public ResponseEntity<byte[]> gerarRelatorioItensParaCotacao(@RequestBody SolicitacaoRelatorioRequestDTO request) {
+        try {
+            byte[] pdf = jasperReportService.gerarRelatorioItensParaCotacao(request);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("inline", "itens_para_cotacao_" + request.getSolicitacaoId() + ".pdf");
+
+            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            logger.error("Solicitação não encontrada: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException e) {
+            logger.error("Dados inválidos na requisição: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (JRException e) {
+            logger.error("Erro ao gerar relatório de itens para cotação: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/itens-para-cotacao-rascunho")
+    @Operation(summary = "Itens para Cotação (Rascunho)",
+               description = "Gera relatório com os itens selecionados de um rascunho para envio aos fornecedores. " +
+                           "Se nenhum ID de item for fornecido, inclui todos os itens do rascunho.")
+    public ResponseEntity<byte[]> gerarRelatorioItensParaCotacaoRascunho(@RequestBody SolicitacaoRelatorioRequestDTO request) {
+        try {
+            byte[] pdf = jasperReportService.gerarRelatorioItensParaCotacaoRascunho(request);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("inline", "itens_para_cotacao_rascunho_" + request.getSolicitacaoId() + ".pdf");
+
+            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            logger.error("Rascunho não encontrado: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException e) {
+            logger.error("Dados inválidos na requisição: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (JRException e) {
+            logger.error("Erro ao gerar relatório de itens para cotação (rascunho): {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

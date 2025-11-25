@@ -6,12 +6,17 @@ import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDePro
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.StatusPedido;
+import com.gestordecompras.gestorcomprasbackend.model.rascunho.Rascunho;
+import com.gestordecompras.gestorcomprasbackend.model.rascunho.ItemRascunho;
 import com.gestordecompras.gestorcomprasbackend.repository.CotacaoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeProdutoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeServicoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.SolicitacaoDePedidoRepository;
+import com.gestordecompras.gestorcomprasbackend.repository.ItemPedidoRepository;
+import com.gestordecompras.gestorcomprasbackend.repository.RascunhoRepository;
 import com.gestordecompras.gestorcomprasbackend.service.FornecedorDeProdutoService;
 import com.gestordecompras.gestorcomprasbackend.service.ItemPedidoService;
+import jakarta.persistence.EntityNotFoundException;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.stereotype.Service;
@@ -21,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,19 +39,25 @@ public class JasperReportService {
     private final CotacaoRepository cotacaoRepository;
     private final FornecedorDeProdutoRepository fornecedorProdutoRepository;
     private final FornecedorDeServicoRepository fornecedorServicoRepository;
+    private final ItemPedidoRepository itemPedidoRepository;
+    private final RascunhoRepository rascunhoRepository;
 
     public JasperReportService(FornecedorDeProdutoService fornecedorDeProdutoService,
                                ItemPedidoService itemPedidoService,
                                SolicitacaoDePedidoRepository solicitacaoRepository,
                                CotacaoRepository cotacaoRepository,
                                FornecedorDeProdutoRepository fornecedorProdutoRepository,
-                               FornecedorDeServicoRepository fornecedorServicoRepository) {
+                               FornecedorDeServicoRepository fornecedorServicoRepository,
+                               ItemPedidoRepository itemPedidoRepository,
+                               RascunhoRepository rascunhoRepository) {
         this.fornecedorDeProdutoService = fornecedorDeProdutoService;
         this.itemPedidoService = itemPedidoService;
         this.solicitacaoRepository = solicitacaoRepository;
         this.cotacaoRepository = cotacaoRepository;
         this.fornecedorProdutoRepository = fornecedorProdutoRepository;
         this.fornecedorServicoRepository = fornecedorServicoRepository;
+        this.itemPedidoRepository = itemPedidoRepository;
+        this.rascunhoRepository = rascunhoRepository;
     }
 
     public byte[] gerarRelatorioFornecedores() throws JRException {
@@ -363,5 +375,125 @@ public class JasperReportService {
                     itensResumidos
             );
         }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] gerarRelatorioItensParaCotacao(SolicitacaoRelatorioRequestDTO request) throws JRException {
+        // Validar e buscar a solicitação
+        SolicitacaoDePedido solicitacao = solicitacaoRepository.findById(request.getSolicitacaoId())
+                .orElseThrow(() -> new EntityNotFoundException("Solicitação não encontrada: " + request.getSolicitacaoId()));
+
+        // Buscar os itens da solicitação
+        List<ItemPedido> itens;
+        if (request.getItensIds() != null && !request.getItensIds().isEmpty()) {
+            // Se IDs específicos foram fornecidos, buscar apenas esses itens
+            itens = itemPedidoRepository.findAllById(request.getItensIds()).stream()
+                    .filter(item -> item.getSolicitacaoDePedido().getId().equals(request.getSolicitacaoId()))
+                    .collect(Collectors.toList());
+        } else {
+            // Se nenhum ID foi fornecido, buscar todos os itens da solicitação
+            itens = solicitacao.getItens();
+        }
+
+        if (itens == null || itens.isEmpty()) {
+            throw new IllegalArgumentException("Nenhum item encontrado para a solicitação informada");
+        }
+
+        // Converter para DTO
+        List<ItemParaCotacaoDTO> itensDTO = itens.stream()
+                .map(item -> new ItemParaCotacaoDTO(
+                        item.getId(),
+                        item.getNome(),
+                        item.getDescricao(),
+                        item.getQuantidade(),
+                        item.getObservacao(),
+                        solicitacao.getId()
+                ))
+                .collect(Collectors.toList());
+
+        // Carregar template
+        InputStream inputStream = getClass().getResourceAsStream("/relatorios/itens_para_cotacao.jrxml");
+        if (inputStream == null) {
+            throw new JRException("Arquivo de relatório não encontrado em /relatorios/itens_para_cotacao.jrxml");
+        }
+
+        // Compilar e preencher relatório
+        JasperReport jasperReport = JasperCompileManager.compileReport(inputStream);
+        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(itensDTO);
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("SOLICITACAO_ID", request.getSolicitacaoId());
+        parameters.put("DATA_GERACAO", LocalDateTime.now());
+
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+
+        // Exportar para PDF
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        JasperExportManager.exportReportToPdfStream(jasperPrint, out);
+
+        return out.toByteArray();
+    }
+
+    /**
+     * Gera relatório de itens para cotação a partir de um rascunho
+     * @param request Dados da requisição contendo ID do rascunho e IDs opcionais dos itens
+     * @return Byte array do PDF gerado
+     * @throws JRException Se houver erro na geração do relatório
+     */
+    @Transactional(readOnly = true)
+    public byte[] gerarRelatorioItensParaCotacaoRascunho(SolicitacaoRelatorioRequestDTO request) throws JRException {
+        // Validar e buscar o rascunho
+        Rascunho rascunho = rascunhoRepository.findById(request.getSolicitacaoId())
+                .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado: " + request.getSolicitacaoId()));
+
+        // Buscar os itens do rascunho
+        List<ItemRascunho> itens;
+        if (request.getItensIds() != null && !request.getItensIds().isEmpty()) {
+            // Se IDs específicos foram fornecidos, filtrar apenas esses itens
+            itens = rascunho.getItens().stream()
+                    .filter(item -> request.getItensIds().contains(item.getId()))
+                    .collect(Collectors.toList());
+        } else {
+            // Se nenhum ID foi fornecido, buscar todos os itens do rascunho
+            itens = rascunho.getItens();
+        }
+
+        if (itens == null || itens.isEmpty()) {
+            throw new IllegalArgumentException("Nenhum item encontrado para o rascunho informado");
+        }
+
+        // Converter para DTO
+        List<ItemParaCotacaoDTO> itensDTO = itens.stream()
+                .map(item -> new ItemParaCotacaoDTO(
+                        item.getId(),
+                        item.getNome(),
+                        item.getDescricao(),
+                        item.getQuantidade(),
+                        item.getObservacao(),
+                        rascunho.getId()
+                ))
+                .collect(Collectors.toList());
+
+        // Carregar template
+        InputStream inputStream = getClass().getResourceAsStream("/relatorios/itens_para_cotacao.jrxml");
+        if (inputStream == null) {
+            throw new JRException("Arquivo de relatório não encontrado em /relatorios/itens_para_cotacao.jrxml");
+        }
+
+        // Compilar e preencher relatório
+        JasperReport jasperReport = JasperCompileManager.compileReport(inputStream);
+        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(itensDTO);
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("SOLICITACAO_ID", request.getSolicitacaoId());
+        parameters.put("DATA_GERACAO", LocalDateTime.now());
+
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+
+        // Exportar para PDF
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        JasperExportManager.exportReportToPdfStream(jasperPrint, out);
+
+        return out.toByteArray();
     }
 }

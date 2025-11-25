@@ -23,16 +23,30 @@
     <div class="cotacoes-section">
       <div class="section-header">
         <h3 class="section-title">Cotações do Rascunho</h3>
-        <button
-          @click="abrirFormularioCotacao"
-          class="btn-add-cotacao"
-          aria-label="Adicionar nova cotação ao rascunho"
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-          Adicionar Cotação
-        </button>
+        <div class="header-actions">
+          <button
+            @click="gerarRelatorio"
+            class="btn-relatorio"
+            :disabled="gerandoRelatorio || !rascunho.id"
+            title="Gerar relatório de itens para enviar aos fornecedores"
+          >
+            <svg v-if="!gerandoRelatorio" viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+            </svg>
+            <span v-if="gerandoRelatorio" class="loading-spinner-small"></span>
+            <span v-if="!gerandoRelatorio">Gerar Relatório</span>
+          </button>
+          <button
+            @click="abrirFormularioCotacao"
+            class="btn-add-cotacao"
+            aria-label="Adicionar nova cotação ao rascunho"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Adicionar Cotação
+          </button>
+        </div>
       </div>
 
       <!-- Lista de Cotações -->
@@ -431,6 +445,7 @@
 <script>
 import { ref, computed, onBeforeUnmount } from 'vue'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
+import relatorioService from '@/services/relatorioService.js'
 
 export default {
   name: 'StepAdicionarCotacoesRascunho',
@@ -456,6 +471,7 @@ export default {
   setup(props, { emit }) {
     const showFormulario = ref(false)
     const salvando = ref(false)
+    const gerandoRelatorio = ref(false)
     const fornecedorSelecionado = ref('')
     const arquivosPdf = ref([])
     const precoFormatado = ref('')
@@ -629,6 +645,31 @@ export default {
       )
     }
 
+    const gerarRelatorio = async () => {
+      if (!props.rascunho?.id) {
+        alert('Erro: Rascunho não encontrado')
+        return
+      }
+
+      try {
+        gerandoRelatorio.value = true
+        console.log('📄 Gerando relatório para o rascunho:', props.rascunho.id)
+
+        // Gera relatório com todos os itens do rascunho
+        await relatorioService.visualizarRelatorioItensParaCotacaoRascunho(
+          props.rascunho.id,
+          [] // Array vazio = todos os itens
+        )
+
+        console.log('✅ Relatório gerado com sucesso!')
+      } catch (error) {
+        console.error('❌ Erro ao gerar relatório:', error)
+        alert('Erro ao gerar relatório. Tente novamente.')
+      } finally {
+        gerandoRelatorio.value = false
+      }
+    }
+
     const abrirFormularioCotacao = () => {
       fornecedorSelecionado.value = ''
       fornecedorSelecionadoNome.value = ''
@@ -794,6 +835,7 @@ export default {
     return {
       showFormulario,
       salvando,
+      gerandoRelatorio,
       fornecedorSelecionado,
       novaCotacao,
       fornecedoresProduto,
@@ -805,6 +847,7 @@ export default {
       formatarPreco,
       getNomeItem,
       itemTemCotacao,
+      gerarRelatorio,
       abrirFormularioCotacao,
       fecharFormulario,
       handleFileUpload,
@@ -890,11 +933,55 @@ export default {
   margin-bottom: 16px;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
 .section-title {
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0;
+}
+
+.btn-relatorio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-relatorio:hover:not(:disabled) {
+  background: #059669;
+}
+
+.btn-relatorio:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #9ca3af;
+}
+
+.loading-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .btn-add-cotacao {

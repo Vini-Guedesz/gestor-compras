@@ -224,6 +224,19 @@
           <div class="footer-actions">
             <button
               type="button"
+              @click="gerarRelatorio"
+              class="btn-relatorio"
+              :disabled="!pedidoSelecionado || gerandoRelatorio"
+              title="Gerar relatório de itens para enviar aos fornecedores"
+            >
+              <svg v-if="!gerandoRelatorio" class="icon" viewBox="0 0 24 24" width="18" height="18">
+                <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+              </svg>
+              <span v-if="gerandoRelatorio" class="loading-spinner"></span>
+              Gerar Relatório
+            </button>
+            <button
+              type="button"
               @click.stop="handleSubmit"
               class="btn-primary"
               :disabled="carregando || !formularioValido"
@@ -243,6 +256,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import fornecedorService from '@/services/fornecedorService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
 import pedidoService from '@/services/pedidoService.js'
+import relatorioService from '@/services/relatorioService.js'
 
 // Props
 const props = defineProps({
@@ -261,6 +275,7 @@ const emit = defineEmits(['close', 'save'])
 
 // Estado reativo
 const carregando = ref(false)
+const gerandoRelatorio = ref(false)
 const mensagemAlerta = ref('')
 const tipoAlerta = ref('error') // 'error', 'success', 'warning'
 const tipoFornecedor = ref('')
@@ -544,6 +559,33 @@ const getStatusLabel = (status) => {
 }
 
 
+
+const gerarRelatorio = async () => {
+  if (!pedidoSelecionado.value) {
+    mostrarAlerta('Selecione um pedido primeiro', 'warning')
+    return
+  }
+
+  try {
+    gerandoRelatorio.value = true
+    console.log('📄 Gerando relatório para o pedido:', pedidoSelecionado.value)
+
+    // Se houver um item selecionado, incluir apenas ele, senão incluir todos
+    const itensIds = formData.value.itemPedidoId ? [formData.value.itemPedidoId] : []
+
+    await relatorioService.visualizarRelatorioItensParaCotacao(
+      parseInt(pedidoSelecionado.value),
+      itensIds
+    )
+
+    mostrarAlerta('Relatório gerado com sucesso!', 'success')
+  } catch (error) {
+    console.error('❌ Erro ao gerar relatório:', error)
+    mostrarAlerta('Erro ao gerar relatório. Tente novamente.', 'error')
+  } finally {
+    gerandoRelatorio.value = false
+  }
+}
 
 const handleSubmit = async () => {
   if (carregando.value) {
@@ -1220,6 +1262,35 @@ watch(() => props.cotacao, () => {
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-relatorio {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.btn-relatorio:hover {
+  background: #059669;
+}
+
+.btn-relatorio:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #9ca3af;
+}
+
+.btn-relatorio .icon {
+  flex-shrink: 0;
 }
 
 .btn-secondary {

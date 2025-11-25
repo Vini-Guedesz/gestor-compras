@@ -249,6 +249,122 @@ const relatorioService = {
       console.error(`Erro ao visualizar relatório do item de pedido ${id}:`, error)
       throw new Error('Erro ao visualizar relatório. Tente novamente.')
     }
+  },
+
+  /**
+   * Gera e faz download do relatório de itens para cotação
+   * @param {number} solicitacaoId - ID da solicitação/pedido
+   * @param {Array<number>} itensIds - IDs dos itens a serem incluídos (vazio para todos)
+   * @returns {Promise<void>}
+   */
+  async gerarRelatorioItensParaCotacao(solicitacaoId, itensIds = []) {
+    try {
+      const payload = {
+        solicitacaoId: solicitacaoId,
+        itensIds: itensIds
+      }
+
+      const response = await relatorioClient.post('/relatorios/itens-para-cotacao', payload)
+
+      // Cria um blob com os dados do PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+
+      // Cria uma URL temporária para o blob
+      const url = window.URL.createObjectURL(blob)
+
+      // Cria um elemento <a> temporário para fazer o download
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `itens-para-cotacao-${solicitacaoId}.pdf`
+
+      // Adiciona o elemento ao DOM, clica nele e depois remove
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      // Libera a URL temporária
+      window.URL.revokeObjectURL(url)
+
+      return true
+    } catch (error) {
+      console.error('Erro ao gerar relatório de itens para cotação:', error)
+      throw new Error('Erro ao gerar relatório. Tente novamente.')
+    }
+  },
+
+  /**
+   * Visualiza o relatório de itens para cotação em uma nova aba
+   * @param {number} solicitacaoId - ID da solicitação/pedido
+   * @param {Array<number>} itensIds - IDs dos itens a serem incluídos (vazio para todos)
+   * @returns {Promise<void>}
+   */
+  async visualizarRelatorioItensParaCotacao(solicitacaoId, itensIds = []) {
+    try {
+      const payload = {
+        solicitacaoId: solicitacaoId,
+        itensIds: itensIds
+      }
+
+      const response = await relatorioClient.post('/relatorios/itens-para-cotacao', payload)
+
+      // Cria um blob com os dados do PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+
+      // Cria uma URL temporária para o blob
+      const url = window.URL.createObjectURL(blob)
+
+      // Abre o PDF em uma nova aba
+      window.open(url, '_blank')
+
+      // Libera a URL após um tempo para permitir que o navegador carregue
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+      }, 1000)
+
+      return true
+    } catch (error) {
+      console.error('Erro ao visualizar relatório de itens para cotação:', error)
+      throw new Error('Erro ao visualizar relatório. Tente novamente.')
+    }
+  },
+
+  /**
+   * Visualiza o relatório de itens para cotação de um rascunho em uma nova aba
+   * @param {number} rascunhoId - ID do rascunho
+   * @param {Array<number>} itensIds - IDs dos itens a serem incluídos (vazio para todos)
+   * @returns {Promise<void>}
+   */
+  async visualizarRelatorioItensParaCotacaoRascunho(rascunhoId, itensIds = []) {
+    try {
+      const payload = {
+        solicitacaoId: rascunhoId,
+        itensIds: itensIds
+      }
+
+      const response = await relatorioClient.post(
+        '/relatorios/itens-para-cotacao-rascunho',
+        payload
+      )
+
+      // Cria um blob com os dados do PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+
+      // Cria uma URL temporária para o blob
+      const url = window.URL.createObjectURL(blob)
+
+      // Abre o PDF em uma nova aba
+      window.open(url, '_blank')
+
+      // Libera a URL após um tempo para permitir que o navegador carregue
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+      }, 1000)
+
+      return true
+    } catch (error) {
+      console.error('Erro ao visualizar relatório de itens para cotação (rascunho):', error)
+      throw new Error('Erro ao visualizar relatório. Tente novamente.')
+    }
   }
 }
 
