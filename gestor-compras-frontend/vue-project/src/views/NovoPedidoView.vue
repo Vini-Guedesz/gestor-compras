@@ -47,36 +47,85 @@
                   @delete-cotacao="deletarCotacao"
                 />
 
-                <div class="step-selecao-itens">
+                <div class="step-selecao-cotacoes">
                   <div class="info-box">
-                    <h4>Selecione os itens para o pedido final</h4>
-                    <p>Apenas itens com cotação podem ser selecionados</p>
+                    <h4>📋 Selecione as cotações e itens para o pedido final</h4>
+                    <p>Primeiro marque as cotações desejadas, depois selecione os itens de cada uma</p>
                   </div>
 
-                  <div class="itens-lista">
+                  <!-- Lista de Cotações -->
+                  <div v-if="todasCotacoes.length > 0" class="cotacoes-lista-selecao">
                     <div
-                      v-for="item in itensCotados"
-                      :key="item.id"
-                      class="item-selecao"
-                      :class="{ 'selecionado': itensSelecionados.includes(item.id) }"
-                      @click="toggleItemSelecionado(item.id)"
+                      v-for="cotacao in todasCotacoes"
+                      :key="cotacao.id"
+                      class="cotacao-selecao-card"
+                      :class="{ 'cotacao-selecionada': isCotacaoSelecionada(cotacao.id) }"
                     >
-                      <div class="item-checkbox">
-                        <input
-                          type="checkbox"
-                          :checked="itensSelecionados.includes(item.id)"
-                          @click.stop
-                        />
+                      <!-- Header da Cotação -->
+                      <div class="cotacao-selecao-header" @click="toggleCotacaoSelecionada(cotacao.id)">
+                        <div class="cotacao-checkbox">
+                          <input
+                            type="checkbox"
+                            :checked="isCotacaoSelecionada(cotacao.id)"
+                            @click.stop="toggleCotacaoSelecionada(cotacao.id)"
+                          />
+                        </div>
+                        <div class="cotacao-info-principal">
+                          <div class="cotacao-fornecedor-nome">
+                            <strong>{{ cotacao.nomeFornecedor || 'Fornecedor' }}</strong>
+                            <span class="cotacao-badge">{{ cotacao.tipoFornecedor }}</span>
+                          </div>
+                          <div class="cotacao-detalhes">
+                            <span class="cotacao-preco">R$ {{ formatarPreco(cotacao.preco) }}</span>
+                            <span v-if="cotacao.prazoEmDiasUteis" class="cotacao-prazo">
+                              {{ cotacao.prazoEmDiasUteis }} dias úteis
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div class="item-info">
-                        <span class="item-nome">{{ item.nome }}</span>
-                        <span class="item-quantidade">Qtd: {{ item.quantidade }}</span>
+
+                      <!-- Lista de Itens (só aparece se cotação selecionada) -->
+                      <div v-if="isCotacaoSelecionada(cotacao.id)" class="cotacao-itens-lista">
+                        <div class="itens-header">
+                          <span>Selecione os itens desta cotação:</span>
+                        </div>
+                        <div
+                          v-for="itemId in cotacao.itensRascunhoIds"
+                          :key="itemId"
+                          class="item-selecao"
+                          :class="{ 'item-selecionado': isItemSelecionadoNaCotacao(cotacao.id, itemId) }"
+                          @click="toggleItemNaCotacao(cotacao.id, itemId)"
+                        >
+                          <div class="item-checkbox">
+                            <input
+                              type="checkbox"
+                              :checked="isItemSelecionadoNaCotacao(cotacao.id, itemId)"
+                              @click.stop="toggleItemNaCotacao(cotacao.id, itemId)"
+                            />
+                          </div>
+                          <div class="item-info">
+                            <span class="item-nome">{{ getNomeItem(itemId) }}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div v-if="itensCotados.length === 0" class="empty-state">
-                    <p>Nenhum item com cotação encontrado.</p>
+                  <!-- Empty State -->
+                  <div v-else class="empty-state">
+                    <p>Nenhuma cotação encontrada. Adicione cotações antes de gerar o pedido.</p>
+                  </div>
+
+                  <!-- Resumo da Seleção -->
+                  <div v-if="cotacoesSelecionadas.length > 0" class="resumo-selecao">
+                    <div class="resumo-item">
+                      <span class="resumo-label">Cotações selecionadas:</span>
+                      <span class="resumo-valor">{{ cotacoesSelecionadas.length }}</span>
+                    </div>
+                    <div class="resumo-item">
+                      <span class="resumo-label">Itens selecionados:</span>
+                      <span class="resumo-valor">{{ totalItensSelecionados }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -108,7 +157,7 @@
                     type="button"
                     @click="gerarPedidoFinal"
                     class="btn-success"
-                    :disabled="itensSelecionados.length === 0 || isLoading"
+                    :disabled="totalItensSelecionados === 0 || isLoading"
                   >
                     {{ isLoading ? 'Gerando...' : 'Gerar Pedido Final' }}
                   </button>
@@ -160,28 +209,18 @@ export default {
     const carregandoFornecedores = ref(false)
     const todasCotacoes = ref([])
     const carregandoCotacoes = ref(false)
-    const itensSelecionados = ref([])
+    const cotacoesSelecionadas = ref([]) // IDs das cotações selecionadas
+    const itensPorCotacao = ref({}) // { cotacaoId: [itemId1, itemId2, ...] }
 
     // Computed properties
-    const temItensCotados = computed(() => {
-      if (todasCotacoes.value.length === 0) return false
-      const itensCotados = new Set()
-      todasCotacoes.value.forEach(cotacao => {
-        if (cotacao.itensRascunhoIds) {
-          cotacao.itensRascunhoIds.forEach(id => itensCotados.add(id))
-        }
-      })
-      return itensCotados.size > 0
-    })
+    const temCotacoes = computed(() => todasCotacoes.value.length > 0)
 
-    const itensCotados = computed(() => {
-      const idsSet = new Set()
-      todasCotacoes.value.forEach(cotacao => {
-        if (cotacao.itensRascunhoIds) {
-          cotacao.itensRascunhoIds.forEach(id => idsSet.add(id))
-        }
+    const totalItensSelecionados = computed(() => {
+      let total = 0
+      Object.values(itensPorCotacao.value).forEach(itens => {
+        total += itens.length
       })
-      return wizardData.value.rascunho.itens.filter(item => idsSet.has(item.id))
+      return total
     })
 
     const getTitulo = () => {
@@ -276,8 +315,15 @@ export default {
     }
 
     const gerarPedidoFinal = async () => {
-      if (itensSelecionados.value.length === 0) {
-        alert('Selecione pelo menos um item para gerar o pedido.')
+      // Validar seleção de cotações
+      if (cotacoesSelecionadas.value.length === 0) {
+        alert('Selecione pelo menos uma cotação para gerar o pedido.')
+        return
+      }
+
+      // Validar seleção de itens
+      if (totalItensSelecionados.value === 0) {
+        alert('Selecione pelo menos um item nas cotações para gerar o pedido.')
         return
       }
 
@@ -291,9 +337,24 @@ export default {
 
       try {
         isLoading.value = true
+
+        // Preparar dados para envio: extrair todos os itens selecionados
+        const todosItensSelecionados = []
+        Object.values(itensPorCotacao.value).forEach(itens => {
+          todosItensSelecionados.push(...itens)
+        })
+
+        // Remover duplicatas (caso um item esteja em múltiplas cotações)
+        const itensUnicos = [...new Set(todosItensSelecionados)]
+
+        console.log('🔍 Dados sendo enviados para gerar pedido:')
+        console.log('  - Cotações selecionadas:', cotacoesSelecionadas.value)
+        console.log('  - Itens por cotação:', itensPorCotacao.value)
+        console.log('  - Itens únicos enviados:', itensUnicos)
+
         const pedidoCriado = await rascunhoService.converterParaPedido(
           wizardData.value.rascunho.id,
-          itensSelecionados.value
+          itensUnicos
         )
         alert(`Pedido #${pedidoCriado.id} criado com sucesso!`)
         router.push('/pedidos')
@@ -356,13 +417,87 @@ export default {
       }
     }
 
-    const toggleItemSelecionado = (itemId) => {
-      const index = itensSelecionados.value.indexOf(itemId)
+    const toggleCotacaoSelecionada = (cotacaoId) => {
+      console.log('🔘 Toggle cotação:', cotacaoId)
+      const index = cotacoesSelecionadas.value.indexOf(cotacaoId)
       if (index === -1) {
-        itensSelecionados.value.push(itemId)
+        // Selecionar cotação
+        cotacoesSelecionadas.value.push(cotacaoId)
+        console.log('✅ Cotação selecionada. Total:', cotacoesSelecionadas.value)
+        // Inicializar array de itens vazio para esta cotação
+        if (!itensPorCotacao.value[cotacaoId]) {
+          itensPorCotacao.value[cotacaoId] = []
+        }
       } else {
-        itensSelecionados.value.splice(index, 1)
+        // Desselecionar cotação
+        cotacoesSelecionadas.value.splice(index, 1)
+        console.log('❌ Cotação desmarcada. Total:', cotacoesSelecionadas.value)
+        // Remover itens selecionados desta cotação
+        delete itensPorCotacao.value[cotacaoId]
       }
+      console.log('📊 Estado atual - Cotações:', cotacoesSelecionadas.value, 'Itens:', itensPorCotacao.value)
+    }
+
+    const toggleItemNaCotacao = (cotacaoId, itemId) => {
+      console.log(`🔘 Toggle item ${itemId} na cotação ${cotacaoId}`)
+
+      // Garantir que a cotação está selecionada
+      if (!cotacoesSelecionadas.value.includes(cotacaoId)) {
+        console.log('⚠️ Cotação não está selecionada')
+        return
+      }
+
+      // Garantir que existe array para esta cotação
+      if (!itensPorCotacao.value[cotacaoId]) {
+        itensPorCotacao.value[cotacaoId] = []
+      }
+
+      const itens = itensPorCotacao.value[cotacaoId]
+      const index = itens.indexOf(itemId)
+
+      if (index === -1) {
+        console.log('➕ Tentando adicionar item...')
+        // VERIFICAR se item já está em outra cotação
+        for (const [outraCotacaoId, outrosItens] of Object.entries(itensPorCotacao.value)) {
+          // Converter ambos para Number para comparação correta
+          if (Number(outraCotacaoId) !== Number(cotacaoId) && outrosItens.includes(itemId)) {
+            console.log(`❌ BLOQUEADO! Item ${itemId} já está na cotação ${outraCotacaoId}`)
+            alert('Este item já está selecionado em outra cotação. Um item só pode estar em uma cotação por vez.')
+            return
+          }
+        }
+        // Adicionar item
+        console.log(`✅ Item ${itemId} adicionado à cotação ${cotacaoId}`)
+        itens.push(itemId)
+      } else {
+        // Remover item
+        console.log(`➖ Item ${itemId} removido da cotação ${cotacaoId}`)
+        itens.splice(index, 1)
+      }
+      console.log('📊 Estado atual:', JSON.parse(JSON.stringify(itensPorCotacao.value)))
+    }
+
+    const isCotacaoSelecionada = (cotacaoId) => {
+      const selecionada = cotacoesSelecionadas.value.includes(cotacaoId)
+      console.log(`🔍 Verificando cotação ${cotacaoId}:`, selecionada ? 'SELECIONADA' : 'NÃO SELECIONADA')
+      return selecionada
+    }
+
+    const isItemSelecionadoNaCotacao = (cotacaoId, itemId) => {
+      return itensPorCotacao.value[cotacaoId]?.includes(itemId) || false
+    }
+
+    const getNomeItem = (itemId) => {
+      const item = wizardData.value.rascunho.itens.find(i => i.id === itemId)
+      return item ? item.nome : `Item #${itemId}`
+    }
+
+    const formatarPreco = (preco) => {
+      if (!preco && preco !== 0) return '0,00'
+      return Number(preco).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
     }
 
     const cancelar = () => {
@@ -438,9 +573,10 @@ export default {
       carregandoFornecedores,
       todasCotacoes,
       carregandoCotacoes,
-      itensSelecionados,
-      temItensCotados,
-      itensCotados,
+      cotacoesSelecionadas,
+      itensPorCotacao,
+      temCotacoes,
+      totalItensSelecionados,
       getTitulo,
       getSubtitulo,
       finalizarRascunho,
@@ -448,7 +584,12 @@ export default {
       gerarPedidoFinal,
       salvarCotacao,
       deletarCotacao,
-      toggleItemSelecionado,
+      toggleCotacaoSelecionada,
+      toggleItemNaCotacao,
+      isCotacaoSelecionada,
+      isItemSelecionadoNaCotacao,
+      getNomeItem,
+      formatarPreco,
       cancelar,
       voltar,
       onRascunhoCreated
@@ -632,13 +773,13 @@ export default {
   box-shadow: none;
 }
 
-/* Step Seleção de Itens */
-.step-selecao-itens {
+/* Step Seleção de Cotações */
+.step-selecao-cotacoes {
   padding: 0;
   margin-top: 24px;
 }
 
-.step-selecao-itens .info-box {
+.step-selecao-cotacoes .info-box {
   background: #f0f4ff;
   border: 1px solid #c7d2fe;
   border-radius: 8px;
@@ -646,32 +787,154 @@ export default {
   margin-bottom: 20px;
 }
 
-.step-selecao-itens .info-box h4 {
+.step-selecao-cotacoes .info-box h4 {
   margin: 0 0 4px 0;
   color: #1F285F;
   font-size: 1rem;
 }
 
-.step-selecao-itens .info-box p {
+.step-selecao-cotacoes .info-box p {
   margin: 0;
   color: #6b7280;
   font-size: 0.875rem;
 }
 
-.itens-lista {
+/* Lista de Cotações para Seleção */
+.cotacoes-lista-selecao {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cotacao-selecao-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.cotacao-selecao-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.cotacao-selecao-card.cotacao-selecionada {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+/* Header da Cotação */
+.cotacao-selecao-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.cotacao-selecao-header:hover {
+  background: #f9fafb;
+}
+
+.cotacao-selecionada .cotacao-selecao-header {
+  background: #ecfdf5;
+}
+
+.cotacao-checkbox {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cotacao-checkbox input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.cotacao-info-principal {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.cotacao-fornecedor-nome {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cotacao-fornecedor-nome strong {
+  font-size: 1.0625rem;
+  color: #1F285F;
+}
+
+.cotacao-badge {
+  padding: 4px 10px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cotacao-detalhes {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cotacao-preco {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.cotacao-prazo {
+  font-size: 0.875rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Lista de Itens da Cotação */
+.cotacao-itens-lista {
+  padding: 0 16px 16px 16px;
+  background: white;
+}
+
+.cotacao-selecionada .cotacao-itens-lista {
+  background: #f0fdf4;
+}
+
+.itens-header {
+  padding: 12px 0 12px 0;
+  border-top: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.itens-header span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
 }
 
 .item-selecao {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 12px;
   background: #f9fafb;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
+  margin-bottom: 6px;
   transition: all 0.2s;
   cursor: pointer;
   user-select: none;
@@ -682,8 +945,8 @@ export default {
   border-color: #d1d5db;
 }
 
-.item-selecao.selecionado {
-  background: #e8f5e9;
+.item-selecao.item-selecionado {
+  background: #dcfce7;
   border-color: #10b981;
 }
 
@@ -697,7 +960,6 @@ export default {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  pointer-events: none;
 }
 
 .item-info {
@@ -711,11 +973,37 @@ export default {
 .item-nome {
   font-weight: 500;
   color: #374151;
+  font-size: 0.9375rem;
 }
 
-.item-quantidade {
-  font-size: 0.75rem;
-  color: #6b7280;
+/* Resumo da Seleção */
+.resumo-selecao {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.resumo-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.resumo-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.resumo-valor {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #059669;
 }
 
 .empty-state {

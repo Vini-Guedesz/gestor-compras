@@ -210,14 +210,20 @@ export default {
     const formData = ref({ ...props.modelValue })
     const hasUnsavedChanges = ref(false)
     const salvandoTodos = ref(false)
+    const suspenderWatcher = ref(false) // Flag para evitar loop infinito
 
     // Observar mudanças no modelValue (quando rascunho é carregado)
     watch(() => props.modelValue, (newValue, oldValue) => {
-      // Só atualizar se o ID mudou ou se é um carregamento inicial
+      // Ignorar atualizações durante salvamento em lote
+      if (suspenderWatcher.value) {
+        return
+      }
+
+      // Só atualizar se o ID mudou (novo rascunho carregado)
       const newId = newValue?.id
       const oldId = oldValue?.id
 
-      if (newValue && (newId !== oldId || (newId && newId === formData.value.id && newValue.itens?.length !== formData.value.itens?.filter(i => i.id).length))) {
+      if (newValue && newId && newId !== oldId) {
         formData.value = {
           ...newValue,
           itens: (newValue.itens || []).map(item => ({
@@ -310,7 +316,8 @@ export default {
       const item = formData.value.itens[index]
       if (!itemValido(item)) return
 
-      item._saving = true
+      // Marcar como salvando
+      formData.value.itens[index]._saving = true
 
       try {
         const itemData = {
@@ -320,10 +327,10 @@ export default {
           observacao: item.observacao || ''
         }
 
-        // Guardar os itens não salvos antes de atualizar (exceto o item sendo salvo)
-        const itensNaoSalvos = formData.value.itens.filter((i, idx) =>
-          !i.id && i._unsaved && idx !== index
-        )
+        // Guardar referência aos itens locais não salvos (exceto o atual)
+        const itensLocaisNaoSalvos = formData.value.itens
+          .filter((i, idx) => idx !== index && !i.id && i._unsaved)
+          .map(i => ({ ...i })) // Clone para evitar perda de referência
 
         let rascunhoAtualizado
 
@@ -339,49 +346,66 @@ export default {
           )
         } else {
           // Adicionar novo item ao rascunho existente
+          console.log('Adicionando item ao rascunho:', itemData)
           rascunhoAtualizado = await rascunhoService.adicionarItem(
             formData.value.id,
             itemData
           )
+          console.log('Resposta do servidor:', rascunhoAtualizado)
         }
 
-        // Mesclar itens do servidor com itens não salvos
+        // Atualizar com itens do servidor (todos marcados como salvos)
         const itensDoServidor = rascunhoAtualizado.itens.map(serverItem => ({
           ...serverItem,
           _unsaved: false,
           _saving: false
         }))
 
-        // Adicionar de volta os itens que não estavam salvos
-        formData.value.itens = [...itensDoServidor, ...itensNaoSalvos]
+        // Mesclar: itens do servidor + itens locais não salvos
+        formData.value.itens = [...itensDoServidor, ...itensLocaisNaoSalvos]
+
+        console.log('Array após salvar:', formData.value.itens.map(i => ({ nome: i.nome, id: i.id, _unsaved: i._unsaved })))
 
         hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
 
       } catch (error) {
         console.error('Erro ao salvar item:', error)
         alert(error.message || 'Erro ao salvar item')
-      } finally {
-        item._saving = false
+        // Desmarcar salvando em caso de erro
+        if (formData.value.itens[index]) {
+          formData.value.itens[index]._saving = false
+        }
+        throw error // Re-throw para que salvarTodosItens saiba que falhou
       }
     }
 
     const salvarTodosItens = async () => {
       // Verificar se há itens não salvos válidos
-      const itensNaoSalvos = formData.value.itens.filter(item => item._unsaved && itemValido(item))
-      if (itensNaoSalvos.length === 0) {
+      const totalItensParaSalvar = formData.value.itens.filter(item => item._unsaved && itemValido(item)).length
+      if (totalItensParaSalvar === 0) {
         alert('Todos os itens já estão salvos ou não são válidos.')
         return
       }
 
       salvandoTodos.value = true
+      suspenderWatcher.value = true // Suspender watcher durante salvamento
+      let itensSalvosComSucesso = 0
 
       try {
         // Salvar cada item não salvo sequencialmente
-        for (let i = 0; i < formData.value.itens.length; i++) {
-          const item = formData.value.itens[i]
-          if (item._unsaved && itemValido(item)) {
-            await salvarItem(i)
+        // Sempre buscar o próximo item não salvo no array atual (não usar referências)
+        while (formData.value.itens.some(i => i._unsaved && itemValido(i))) {
+          // Encontrar o índice do PRÓXIMO item não salvo
+          const indexDoProximoItem = formData.value.itens.findIndex(i => i._unsaved && itemValido(i))
+
+          if (indexDoProximoItem === -1) {
+            // Não há mais itens para salvar
+            break
           }
+
+          console.log(`Salvando item ${itensSalvosComSucesso + 1} de ${totalItensParaSalvar}:`, formData.value.itens[indexDoProximoItem].nome)
+          await salvarItem(indexDoProximoItem)
+          itensSalvosComSucesso++
         }
 
         // Atualizar observação se houver rascunho
@@ -392,12 +416,14 @@ export default {
         }
 
         hasUnsavedChanges.value = false
-        alert('Todos os itens foram salvos com sucesso!')
+
+        alert(`Todos os ${itensSalvosComSucesso} itens foram salvos com sucesso!`)
       } catch (error) {
         console.error('Erro ao salvar itens:', error)
-        alert(error.message || 'Erro ao salvar alguns itens')
+        alert(`${itensSalvosComSucesso} de ${totalItensParaSalvar} itens foram salvos. Erro: ${error.message || 'Erro desconhecido'}`)
       } finally {
         salvandoTodos.value = false
+        suspenderWatcher.value = false // Reativar watcher
       }
     }
 
@@ -446,7 +472,10 @@ export default {
 
     // Watchers
     watch(formData, (newVal) => {
-      emit('update:modelValue', newVal)
+      // Não emitir durante salvamento em lote para evitar loop infinito
+      if (!suspenderWatcher.value) {
+        emit('update:modelValue', newVal)
+      }
     }, { deep: true })
 
     watch(isValid, (newVal) => {

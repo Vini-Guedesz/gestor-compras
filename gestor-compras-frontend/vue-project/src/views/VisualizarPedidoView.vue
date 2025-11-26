@@ -592,10 +592,7 @@ export default {
     }
 
     const getItensIdsDaCotacao = (cotacao) => {
-      // Para rascunhos
-      if (cotacao.itensRascunhoIds && cotacao.itensRascunhoIds.length > 0) {
-        return cotacao.itensRascunhoIds
-      }
+      // ORDEM CORRIGIDA: Verificar pedidos PRIMEIRO (itens selecionados)
       // Para pedidos - array de IDs
       if (cotacao.itensPedidoIds && cotacao.itensPedidoIds.length > 0) {
         return cotacao.itensPedidoIds
@@ -603,6 +600,10 @@ export default {
       // Para pedidos - ID único (compatibilidade)
       if (cotacao.itemPedidoId) {
         return [cotacao.itemPedidoId]
+      }
+      // Para rascunhos - SOMENTE se não houver itensPedidoIds
+      if (cotacao.itensRascunhoIds && cotacao.itensRascunhoIds.length > 0) {
+        return cotacao.itensRascunhoIds
       }
       return []
     }
