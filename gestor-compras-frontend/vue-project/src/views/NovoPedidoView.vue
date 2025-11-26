@@ -65,7 +65,7 @@
                         <input
                           type="checkbox"
                           :checked="itensSelecionados.includes(item.id)"
-                          @change.stop="toggleItemSelecionado(item.id)"
+                          @click.stop
                         />
                       </div>
                       <div class="item-info">
@@ -672,8 +672,9 @@ export default {
   background: #f9fafb;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  cursor: pointer;
   transition: all 0.2s;
+  cursor: pointer;
+  user-select: none;
 }
 
 .item-selecao:hover {
@@ -686,16 +687,25 @@ export default {
   border-color: #10b981;
 }
 
+.item-checkbox {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .item-checkbox input {
   width: 18px;
   height: 18px;
   cursor: pointer;
+  pointer-events: none;
 }
 
 .item-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .item-nome {
