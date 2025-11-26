@@ -30,7 +30,7 @@
               <!-- Estado de Edição do Rascunho -->
               <div v-if="editState === 'EDITANDO_RASCUNHO'">
                 <PedidoFormPage1
-                  v-model="wizardData.pedido"
+                  v-model="wizardData.rascunho"
                   @validation-change="page1Valid = $event"
                   @rascunho-created="onRascunhoCreated"
                 />
@@ -57,7 +57,7 @@
                   <div v-if="todasCotacoes.length > 0" class="cotacoes-lista-selecao">
                     <div
                       v-for="cotacao in todasCotacoes"
-                      :key="cotacao.id"
+                      :key="`cotacao-${cotacao.id}-${cotacao.fornecedorId}-${cotacao.tipoFornecedor}`"
                       class="cotacao-selecao-card"
                       :class="{ 'cotacao-selecionada': isCotacaoSelecionada(cotacao.id) }"
                     >
@@ -74,6 +74,13 @@
                           <div class="cotacao-fornecedor-nome">
                             <strong>{{ cotacao.nomeFornecedor || 'Fornecedor' }}</strong>
                             <span class="cotacao-badge">{{ cotacao.tipoFornecedor }}</span>
+                            <!-- Badge de aviso se cotação selecionada sem itens -->
+                            <span
+                              v-if="isCotacaoSelecionada(cotacao.id) && !temItensSelecionados(cotacao.id)"
+                              class="badge-warning"
+                            >
+                              ⚠️ Nenhum item selecionado
+                            </span>
                           </div>
                           <div class="cotacao-detalhes">
                             <span class="cotacao-preco">R$ {{ formatarPreco(cotacao.preco) }}</span>
@@ -94,13 +101,14 @@
                           :key="itemId"
                           class="item-selecao"
                           :class="{ 'item-selecionado': isItemSelecionadoNaCotacao(cotacao.id, itemId) }"
-                          @click="toggleItemNaCotacao(cotacao.id, itemId)"
+                          @click="handleItemClick(cotacao.id, itemId)"
                         >
                           <div class="item-checkbox">
                             <input
                               type="checkbox"
                               :checked="isItemSelecionadoNaCotacao(cotacao.id, itemId)"
-                              @click.stop="toggleItemNaCotacao(cotacao.id, itemId)"
+                              @click.stop
+                              @change="handleItemCheckboxChange($event, cotacao.id, itemId)"
                             />
                           </div>
                           <div class="item-info">
@@ -172,7 +180,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import rascunhoService from '@/services/rascunhoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
@@ -201,8 +209,7 @@ export default {
     const page1Valid = ref(false)
 
     const wizardData = ref({
-      rascunho: { id: null, observacao: '', itens: [], dataCriacao: null },
-      pedido: { id: null, observacao: '', itens: [] } // Mantém compatibilidade com PedidoFormPage1
+      rascunho: { id: null, observacao: '', itens: [], dataCriacao: null }
     })
 
     const fornecedores = ref([])
@@ -242,9 +249,7 @@ export default {
     const closeSidebar = () => { isSidebarOpen.value = false }
 
     const onRascunhoCreated = (rascunhoCriado) => {
-      wizardData.value.rascunho = { ...rascunhoCriado, itens: rascunhoCriado.itens || [] };
-      wizardData.value.pedido.id = rascunhoCriado.id;
-      wizardData.value.pedido.itens = rascunhoCriado.itens || [];
+      wizardData.value.rascunho = { ...rascunhoCriado, itens: rascunhoCriado.itens || [] }
       router.replace({ path: `/pedidos/novo/${rascunhoCriado.id}` })
     }
 
@@ -275,8 +280,7 @@ export default {
         await rascunhoService.atualizarStatus(wizardData.value.rascunho.id, 'EM_COTACAO')
 
         const rascunhoSalvo = await rascunhoService.obterPorId(wizardData.value.rascunho.id);
-        wizardData.value.rascunho = rascunhoSalvo;
-        wizardData.value.pedido = { ...rascunhoSalvo, id: rascunhoSalvo.id };
+        wizardData.value.rascunho = rascunhoSalvo
 
         await carregarDadosParaCotacao()
         editState.value = 'GERENCIANDO_COTACOES'
@@ -289,7 +293,7 @@ export default {
         isLoading.value = false
       }
     }
-    
+
     const editarRascunho = async () => {
         try {
             isLoading.value = true
@@ -297,12 +301,6 @@ export default {
             if (wizardData.value.rascunho.id) {
                 const rascunho = await rascunhoService.obterPorId(wizardData.value.rascunho.id)
                 wizardData.value.rascunho = { ...rascunho, itens: rascunho.itens || [] }
-                wizardData.value.pedido = {
-                    id: rascunho.id,
-                    observacao: rascunho.observacao,
-                    itens: rascunho.itens || [],
-                    dataCriacao: rascunho.dataCriacao
-                }
             }
             editState.value = 'EDITANDO_RASCUNHO'
             router.replace({ query: { state: 'edit' } })
@@ -327,6 +325,26 @@ export default {
         return
       }
 
+      // 🔥 NOVA VALIDAÇÃO: Verificar se todas as cotações selecionadas têm itens
+      const cotacoesSemItens = cotacoesSelecionadas.value.filter(cotacaoId => {
+        const itens = itensPorCotacao.value[cotacaoId]
+        return !itens || itens.length === 0
+      })
+
+      if (cotacoesSemItens.length > 0) {
+        const nomeCotacoes = cotacoesSemItens.map(id => {
+          const cotacao = todasCotacoes.value.find(c => c.id === id)
+          return cotacao ? `${cotacao.nomeFornecedor}` : `Cotação ${id}`
+        }).join(', ')
+
+        alert(
+          `As seguintes cotações estão marcadas mas não têm itens selecionados:\n\n` +
+          `${nomeCotacoes}\n\n` +
+          `Por favor, selecione pelo menos um item em cada cotação ou desmarque as cotações vazias.`
+        )
+        return
+      }
+
       // Verificar se o usuário está autenticado
       const token = localStorage.getItem('authToken')
       if (!token) {
@@ -346,11 +364,6 @@ export default {
 
         // Remover duplicatas (caso um item esteja em múltiplas cotações)
         const itensUnicos = [...new Set(todosItensSelecionados)]
-
-        console.log('🔍 Dados sendo enviados para gerar pedido:')
-        console.log('  - Cotações selecionadas:', cotacoesSelecionadas.value)
-        console.log('  - Itens por cotação:', itensPorCotacao.value)
-        console.log('  - Itens únicos enviados:', itensUnicos)
 
         const pedidoCriado = await rascunhoService.converterParaPedido(
           wizardData.value.rascunho.id,
@@ -376,12 +389,26 @@ export default {
         await carregarFornecedores();
         await carregarCotacoesDoRascunho();
     }
-    
+
     const carregarCotacoesDoRascunho = async () => {
       if (!wizardData.value.rascunho.id) return
       try {
         carregandoCotacoes.value = true
-        todasCotacoes.value = await cotacaoRascunhoService.listarPorRascunho(wizardData.value.rascunho.id)
+
+        // Limpar array completamente para forçar re-renderização do Vue
+        todasCotacoes.value = []
+
+        // Aguardar o Vue processar a limpeza
+        await nextTick()
+
+        // Buscar novas cotações do backend
+        const cotacoes = await cotacaoRascunhoService.listarPorRascunho(wizardData.value.rascunho.id)
+
+        // Criar novo array com objetos completamente novos para garantir reatividade
+        todasCotacoes.value = cotacoes.map(c => ({ ...c }))
+
+        // Aguardar o Vue processar a atualização
+        await nextTick()
       } catch (error) {
         console.error('Erro ao carregar cotações:', error)
       } finally {
@@ -393,6 +420,10 @@ export default {
       try {
         isLoading.value = true
         await cotacaoRascunhoService.criar(wizardData.value.rascunho.id, dadosCotacao)
+
+        // Pequeno delay para garantir que o backend persistiu completamente
+        await new Promise(resolve => setTimeout(resolve, 100))
+
         await carregarCotacoesDoRascunho()
       } catch (error) {
         console.error('Erro ao salvar cotação:', error)
@@ -408,6 +439,10 @@ export default {
       try {
         isLoading.value = true
         await cotacaoRascunhoService.deletar(wizardData.value.rascunho.id, cotacaoId)
+
+        // Pequeno delay para garantir que o backend processou a exclusão
+        await new Promise(resolve => setTimeout(resolve, 100))
+
         await carregarCotacoesDoRascunho()
       } catch (error) {
         console.error('Erro ao deletar cotação:', error)
@@ -418,32 +453,27 @@ export default {
     }
 
     const toggleCotacaoSelecionada = (cotacaoId) => {
-      console.log('🔘 Toggle cotação:', cotacaoId)
       const index = cotacoesSelecionadas.value.indexOf(cotacaoId)
       if (index === -1) {
         // Selecionar cotação
         cotacoesSelecionadas.value.push(cotacaoId)
-        console.log('✅ Cotação selecionada. Total:', cotacoesSelecionadas.value)
         // Inicializar array de itens vazio para esta cotação
         if (!itensPorCotacao.value[cotacaoId]) {
           itensPorCotacao.value[cotacaoId] = []
         }
       } else {
-        // Desselecionar cotação
+        // Desselecionar cotação e remover itens
         cotacoesSelecionadas.value.splice(index, 1)
-        console.log('❌ Cotação desmarcada. Total:', cotacoesSelecionadas.value)
-        // Remover itens selecionados desta cotação
         delete itensPorCotacao.value[cotacaoId]
       }
-      console.log('📊 Estado atual - Cotações:', cotacoesSelecionadas.value, 'Itens:', itensPorCotacao.value)
     }
 
-    const toggleItemNaCotacao = (cotacaoId, itemId) => {
-      console.log(`🔘 Toggle item ${itemId} na cotação ${cotacaoId}`)
+    const handleItemCheckboxChange = (event, cotacaoId, itemId) => {
+      // Prevenir comportamento padrão do checkbox
+      event.preventDefault()
 
       // Garantir que a cotação está selecionada
       if (!cotacoesSelecionadas.value.includes(cotacaoId)) {
-        console.log('⚠️ Cotação não está selecionada')
         return
       }
 
@@ -456,35 +486,42 @@ export default {
       const index = itens.indexOf(itemId)
 
       if (index === -1) {
-        console.log('➕ Tentando adicionar item...')
         // VERIFICAR se item já está em outra cotação
         for (const [outraCotacaoId, outrosItens] of Object.entries(itensPorCotacao.value)) {
-          // Converter ambos para Number para comparação correta
           if (Number(outraCotacaoId) !== Number(cotacaoId) && outrosItens.includes(itemId)) {
-            console.log(`❌ BLOQUEADO! Item ${itemId} já está na cotação ${outraCotacaoId}`)
             alert('Este item já está selecionado em outra cotação. Um item só pode estar em uma cotação por vez.')
             return
           }
         }
         // Adicionar item
-        console.log(`✅ Item ${itemId} adicionado à cotação ${cotacaoId}`)
         itens.push(itemId)
       } else {
         // Remover item
-        console.log(`➖ Item ${itemId} removido da cotação ${cotacaoId}`)
         itens.splice(index, 1)
       }
-      console.log('📊 Estado atual:', JSON.parse(JSON.stringify(itensPorCotacao.value)))
+    }
+
+    const handleItemClick = (cotacaoId, itemId) => {
+      // Quando clica no card (não no checkbox), simula o evento
+      handleItemCheckboxChange({ preventDefault: () => {} }, cotacaoId, itemId)
+    }
+
+    const toggleItemNaCotacao = (cotacaoId, itemId) => {
+      // Manter para compatibilidade
+      handleItemCheckboxChange({ preventDefault: () => {} }, cotacaoId, itemId)
     }
 
     const isCotacaoSelecionada = (cotacaoId) => {
-      const selecionada = cotacoesSelecionadas.value.includes(cotacaoId)
-      console.log(`🔍 Verificando cotação ${cotacaoId}:`, selecionada ? 'SELECIONADA' : 'NÃO SELECIONADA')
-      return selecionada
+      return cotacoesSelecionadas.value.includes(cotacaoId)
     }
 
     const isItemSelecionadoNaCotacao = (cotacaoId, itemId) => {
       return itensPorCotacao.value[cotacaoId]?.includes(itemId) || false
+    }
+
+    const temItensSelecionados = (cotacaoId) => {
+      const itens = itensPorCotacao.value[cotacaoId]
+      return itens && itens.length > 0
     }
 
     const getNomeItem = (itemId) => {
@@ -501,6 +538,17 @@ export default {
     }
 
     const cancelar = () => {
+      // Verificar se há seleções feitas
+      const temSelecoes = cotacoesSelecionadas.value.length > 0 || totalItensSelecionados.value > 0
+
+      if (temSelecoes) {
+        const confirmacao = confirm(
+          'Você tem seleções não salvas. Tem certeza que deseja cancelar?\n\n' +
+          'Todas as seleções serão perdidas.'
+        )
+        if (!confirmacao) return
+      }
+
       router.push('/pedidos')
     }
 
@@ -532,13 +580,7 @@ export default {
         wizardData.value.rascunho = {
           ...rascunho,
           itens: rascunho.itens || []
-        };
-        wizardData.value.pedido = {
-          id: rascunho.id,
-          observacao: rascunho.observacao,
-          itens: rascunho.itens || [],
-          dataCriacao: rascunho.dataCriacao
-        };
+        }
       } catch (error) {
         console.error('Erro ao carregar rascunho:', error)
         alert('Erro ao carregar rascunho. Redirecionando...')
@@ -586,8 +628,11 @@ export default {
       deletarCotacao,
       toggleCotacaoSelecionada,
       toggleItemNaCotacao,
+      handleItemCheckboxChange,
+      handleItemClick,
       isCotacaoSelecionada,
       isItemSelecionadoNaCotacao,
+      temItensSelecionados,
       getNomeItem,
       formatarPreco,
       cancelar,
@@ -881,6 +926,26 @@ export default {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+.badge-warning {
+  padding: 4px 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .cotacao-detalhes {
