@@ -310,19 +310,20 @@
             <div class="checkbox-lista-styled">
               <div
                 v-for="item in rascunho.itens"
-                :key="item.id"
+                :key="`cotacao-item-${item.id}`"
                 class="checkbox-item-styled"
                 :class="{ 'selected': novaCotacao.itensRascunhoIds.includes(item.id) }"
                 @click="toggleItemCheckbox(item.id)"
               >
-                <input
-                  type="checkbox"
-                  :value="item.id"
-                  v-model="novaCotacao.itensRascunhoIds"
-                  class="checkbox-hidden"
-                  :id="`item-checkbox-${item.id}`"
-                  @click.stop
-                >
+                <div class="checkbox-container" @click.stop>
+                  <input
+                    type="checkbox"
+                    :checked="novaCotacao.itensRascunhoIds.includes(item.id)"
+                    class="checkbox-hidden"
+                    :id="`item-checkbox-${item.id}`"
+                    @change="toggleItemCheckbox(item.id)"
+                  >
+                </div>
                 <div class="checkbox-custom">
                   <svg v-if="novaCotacao.itensRascunhoIds.includes(item.id)" viewBox="0 0 24 24" width="14" height="14">
                     <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
@@ -1352,10 +1353,19 @@ export default {
   background: #ecfdf5;
 }
 
+.checkbox-container {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .checkbox-hidden {
   position: absolute;
   opacity: 0;
   cursor: pointer;
+  width: 100%;
+  height: 100%;
 }
 
 .checkbox-custom {
