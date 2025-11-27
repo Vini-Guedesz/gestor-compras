@@ -98,16 +98,16 @@
                         </div>
                         <div
                           v-for="itemId in cotacao.itensRascunhoIds"
-                          :key="itemId"
+                          :key="`item-${cotacao.id}-${itemId}`"
                           class="item-selecao"
                           :class="{ 'item-selecionado': isItemSelecionadoNaCotacao(cotacao.id, itemId) }"
                           @click="handleItemClick(cotacao.id, itemId)"
                         >
-                          <div class="item-checkbox">
+                          <div class="item-checkbox" @click.stop>
                             <input
                               type="checkbox"
+                              :id="`checkbox-${cotacao.id}-${itemId}`"
                               :checked="isItemSelecionadoNaCotacao(cotacao.id, itemId)"
-                              @click.stop
                               @change="handleItemCheckboxChange($event, cotacao.id, itemId)"
                             />
                           </div>
@@ -469,11 +469,12 @@ export default {
     }
 
     const handleItemCheckboxChange = (event, cotacaoId, itemId) => {
-      // Prevenir comportamento padrão do checkbox
-      event.preventDefault()
-
       // Garantir que a cotação está selecionada
       if (!cotacoesSelecionadas.value.includes(cotacaoId)) {
+        // Reverter checkbox
+        if (event && event.target) {
+          event.target.checked = false
+        }
         return
       }
 
@@ -489,7 +490,14 @@ export default {
         // VERIFICAR se item já está em outra cotação
         for (const [outraCotacaoId, outrosItens] of Object.entries(itensPorCotacao.value)) {
           if (Number(outraCotacaoId) !== Number(cotacaoId) && outrosItens.includes(itemId)) {
-            alert('Este item já está selecionado em outra cotação. Um item só pode estar em uma cotação por vez.')
+            // Reverter o checkbox ANTES de mostrar o alerta
+            if (event && event.target) {
+              event.target.checked = false
+            }
+            // Usar nextTick para garantir que a reversão seja aplicada
+            nextTick(() => {
+              alert('Este item já está selecionado em outra cotação. Um item só pode estar em uma cotação por vez.')
+            })
             return
           }
         }
@@ -502,13 +510,13 @@ export default {
     }
 
     const handleItemClick = (cotacaoId, itemId) => {
-      // Quando clica no card (não no checkbox), simula o evento
-      handleItemCheckboxChange({ preventDefault: () => {} }, cotacaoId, itemId)
+      // Quando clica no card (não no checkbox), chama a função diretamente
+      handleItemCheckboxChange(null, cotacaoId, itemId)
     }
 
     const toggleItemNaCotacao = (cotacaoId, itemId) => {
       // Manter para compatibilidade
-      handleItemCheckboxChange({ preventDefault: () => {} }, cotacaoId, itemId)
+      handleItemCheckboxChange(null, cotacaoId, itemId)
     }
 
     const isCotacaoSelecionada = (cotacaoId) => {
