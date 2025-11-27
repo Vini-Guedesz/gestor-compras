@@ -356,18 +356,22 @@ export default {
       try {
         isLoading.value = true
 
-        // Preparar dados para envio: extrair todos os itens selecionados
-        const todosItensSelecionados = []
-        Object.values(itensPorCotacao.value).forEach(itens => {
-          todosItensSelecionados.push(...itens)
-        })
+        // Preparar dados para envio: criar mapeamento de cotação → itens
+        // IMPORTANTE: Enviar APENAS as cotações que foram SELECIONADAS
+        const cotacaoParaItens = {}
 
-        // Remover duplicatas (caso um item esteja em múltiplas cotações)
-        const itensUnicos = [...new Set(todosItensSelecionados)]
+        // Iterar apenas sobre as cotações SELECIONADAS
+        cotacoesSelecionadas.value.forEach(cotacaoId => {
+          const itens = itensPorCotacao.value[cotacaoId]
+          if (itens && itens.length > 0) {
+            cotacaoParaItens[cotacaoId] = itens
+          }
+        })
 
         const pedidoCriado = await rascunhoService.converterParaPedido(
           wizardData.value.rascunho.id,
-          itensUnicos
+          null,  // itemRascunhoIds (legado) = null
+          cotacaoParaItens  // Novo formato: mapeamento cotação → itens
         )
         alert(`Pedido #${pedidoCriado.id} criado com sucesso!`)
         router.push('/pedidos')

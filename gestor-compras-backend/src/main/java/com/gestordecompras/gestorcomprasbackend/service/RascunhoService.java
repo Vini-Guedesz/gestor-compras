@@ -271,7 +271,8 @@ public class RascunhoService {
                 .map(ItemRascunho::getId)
                 .collect(Collectors.toList());
 
-        for (Long itemId : dto.itemRascunhoIds()) {
+        List<Long> todosItensSelecionados = dto.getTodosItens();
+        for (Long itemId : todosItensSelecionados) {
             if (!idsItensRascunho.contains(itemId)) {
                 throw new IllegalArgumentException("Item ID " + itemId + " não pertence ao rascunho " + rascunhoId);
             }
@@ -288,7 +289,7 @@ public class RascunhoService {
             }
         }
 
-        List<Long> itensSemCotacao = dto.itemRascunhoIds().stream()
+        List<Long> itensSemCotacao = todosItensSelecionados.stream()
                 .filter(itemId -> !itensCotados.contains(itemId))
                 .collect(Collectors.toList());
 
@@ -305,7 +306,7 @@ public class RascunhoService {
         // Converter itens selecionados do rascunho para itens do pedido
         Map<Long, ItemPedido> mapaItens = new HashMap<>();
         List<ItemRascunho> itensSelecionados = rascunho.getItens().stream()
-                .filter(item -> dto.itemRascunhoIds().contains(item.getId()))
+                .filter(item -> todosItensSelecionados.contains(item.getId()))
                 .collect(Collectors.toList());
 
         for (ItemRascunho itemRascunho : itensSelecionados) {
@@ -326,9 +327,21 @@ public class RascunhoService {
         int cotacoesConvertidas = 0;
         for (CotacaoRascunho cotacaoRascunho : cotacoesRascunho) {
             Set<ItemPedido> itensPedidoCotacao = new HashSet<>();
-            for (ItemRascunho itemRascunho : cotacaoRascunho.getItensRascunho()) {
-                if (mapaItens.containsKey(itemRascunho.getId())) {
-                    itensPedidoCotacao.add(mapaItens.get(itemRascunho.getId()));
+
+            // NOVO: Usar mapeamento específico se disponível
+            if (dto.usaNovoPadrao() && dto.cotacaoParaItens().containsKey(cotacaoRascunho.getId())) {
+                List<Long> itensDestaCotacao = dto.cotacaoParaItens().get(cotacaoRascunho.getId());
+                for (Long itemId : itensDestaCotacao) {
+                    if (mapaItens.containsKey(itemId)) {
+                        itensPedidoCotacao.add(mapaItens.get(itemId));
+                    }
+                }
+            } else {
+                // LEGADO: Compatibilidade - adicionar todos os itens selecionados que estão na cotação
+                for (ItemRascunho itemRascunho : cotacaoRascunho.getItensRascunho()) {
+                    if (mapaItens.containsKey(itemRascunho.getId())) {
+                        itensPedidoCotacao.add(mapaItens.get(itemRascunho.getId()));
+                    }
                 }
             }
 

@@ -94,14 +94,25 @@ const rascunhoService = {
     }
   },
 
-  async converterParaPedido(rascunhoId, itemIds) {
+  async converterParaPedido(rascunhoId, itemIds = null, cotacaoParaItens = null) {
     try {
       console.log(`Convertendo rascunho ${rascunhoId} para pedido...`)
-      console.log('Itens selecionados:', itemIds)
 
-      const data = await api.post(`/api/rascunhos/${rascunhoId}/converter-para-pedido`, {
-        itemRascunhoIds: itemIds
-      })
+      const payload = {}
+
+      // Usar novo formato se disponível
+      if (cotacaoParaItens && Object.keys(cotacaoParaItens).length > 0) {
+        console.log('Usando novo formato: mapeamento cotação→itens', cotacaoParaItens)
+        payload.cotacaoParaItens = cotacaoParaItens
+      } else if (itemIds) {
+        // Fallback para formato legado
+        console.log('Usando formato legado: itens selecionados', itemIds)
+        payload.itemRascunhoIds = itemIds
+      } else {
+        throw new Error('Deve fornecer itemIds ou cotacaoParaItens')
+      }
+
+      const data = await api.post(`/api/rascunhos/${rascunhoId}/converter-para-pedido`, payload)
 
       console.log('Pedido criado a partir do rascunho:', data.id)
       return data
