@@ -16,6 +16,7 @@ import router from './router'
 
 // Importar estilos globais
 import './assets/css/layout.css'
+import './assets/css/accessibility.css'
 
 // Cria a instância principal da aplicação Vue
 const app = createApp(App)

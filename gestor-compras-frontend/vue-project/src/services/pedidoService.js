@@ -6,13 +6,21 @@
 
 import api from './api.js'
 
+/**
+ * Helper para extrair dados de respostas paginadas do Spring Data
+ */
+const extractContent = (response) => {
+  if (response && typeof response === 'object' && 'content' in response) {
+    return response.content || []
+  }
+  return Array.isArray(response) ? response : []
+}
+
 const pedidoService = {
   async listar() {
     try {
-      console.log('🔄 Buscando pedidos no backend...')
-      const data = await api.get('/api/solicitacoes-pedido')
-      console.log('✅ Pedidos carregados do backend:', data.length, 'pedidos')
-      return data
+      const data = await api.get(`/api/v1/solicitacoes-pedido`)
+      return extractContent(data)
     } catch (error) {
       console.error('❌ Erro ao listar pedidos no backend:', error.message)
       throw error
@@ -29,9 +37,7 @@ const pedidoService = {
 
   async obterPorId(id) {
     try {
-      console.log(`🔄 Buscando pedido ID ${id} no backend...`)
-      const data = await api.get(`/api/solicitacoes-pedido/${id}`)
-      console.log('✅ Pedido carregado do backend')
+      const data = await api.get(`/api/v1/solicitacoes-pedido/${id}`)
       return data
     } catch (error) {
       console.error(`❌ Erro ao obter pedido ID ${id} no backend:`, error.message)
@@ -45,8 +51,6 @@ const pedidoService = {
 
   async criar(pedido) {
     try {
-      console.log('🔄 Criando pedido no backend...')
-      console.log('📋 Dados do pedido recebidos:', JSON.stringify(pedido, null, 2))
 
       // Validar estrutura de dados
       if (!pedido.itens || pedido.itens.length === 0) {
@@ -78,8 +82,7 @@ const pedidoService = {
       }
 
       // Usar API real do backend
-      const data = await api.post('/api/solicitacoes-pedido', pedido)
-      console.log('✅ Pedido criado no backend:', data.id)
+      const data = await api.post(`/api/v1/solicitacoes-pedido`, pedido)
       return { data: data }
     } catch (error) {
       console.error('❌ Erro ao criar pedido:', error.message)
@@ -93,9 +96,7 @@ const pedidoService = {
 
   async atualizar(id, pedido) {
     try {
-      console.log(`🔄 Atualizando pedido ID ${id} no backend...`)
-      const data = await api.put(`/api/solicitacoes-pedido/${id}`, pedido)
-      console.log('✅ Pedido atualizado no backend')
+      const data = await api.put(`/api/v1/solicitacoes-pedido/${id}`, pedido)
       return data
     } catch (error) {
       console.error(`❌ Erro ao atualizar pedido ID ${id} no backend:`, error.message)
@@ -109,11 +110,9 @@ const pedidoService = {
 
   async _updatePedido(id, updates) {
     try {
-      console.log(`🔄 Atualizando dados do pedido ID ${id}...`, updates)
       const pedidoAtual = await this.obterPorId(id)
       const pedidoAtualizado = { ...pedidoAtual, ...updates }
-      const data = await api.put(`/api/solicitacoes-pedido/${id}`, pedidoAtualizado)
-      console.log(`✅ Pedido ID ${id} atualizado com sucesso.`)
+      const data = await api.put(`/api/v1/solicitacoes-pedido/${id}`, pedidoAtualizado)
       return data
     } catch (error) {
       console.error(`❌ Erro ao atualizar o pedido ID ${id}:`, error.message)
@@ -122,15 +121,12 @@ const pedidoService = {
   },
 
   async alterarStatus(id, novoStatus) {
-    console.log(`🔄 Alterando status do pedido ID ${id} para ${novoStatus}...`)
     return this._updatePedido(id, { status: novoStatus })
   },
 
   async remover(id) {
     try {
-      console.log(`🔄 Removendo pedido ID ${id} no backend...`)
-      await api.delete(`/api/solicitacoes-pedido/${id}`)
-      console.log('✅ Pedido removido do backend')
+      await api.delete(`/api/v1/solicitacoes-pedido/${id}`)
       return true
     } catch (error) {
       console.error(`❌ Erro ao remover pedido ID ${id} no backend:`, error.message)
@@ -151,7 +147,6 @@ const pedidoService = {
   },
 
   async aprovar(id) {
-    console.log(`🔄 Aprovando pedido ID ${id} no backend...`)
     return this.alterarStatus(id, 'APROVADO')
   },
 
@@ -160,7 +155,6 @@ const pedidoService = {
   },
 
   async rejeitar(id, motivo = '') {
-    console.log(`🔄 Rejeitando pedido ID ${id} no backend...`)
     return this._updatePedido(id, { status: 'REJEITADO', observacao: motivo })
   },
 
@@ -175,7 +169,6 @@ const pedidoService = {
   // Método unificado para salvar (criar ou atualizar)
   async salvar(pedido) {
     try {
-      console.log('💾 Salvando pedido...', pedido.id ? `(ID: ${pedido.id})` : '(novo)')
 
       if (pedido.id) {
         // Atualizar pedido existente

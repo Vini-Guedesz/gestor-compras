@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.contato.ContatoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.contato.ContatoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.contato.ContatoUpdateDTO;
@@ -18,8 +19,8 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/contatos")
-@Tag(name = "Contatos", description = "API para gerenciamento de contatos")
+@RequestMapping(ApiVersionConfig.API_V1 + "/contatos")
+@Tag(name = "Contatos", description = "API para gerenciamento de contatos (v1)")
 @SecurityRequirement(name = "bearerAuth")
 public class ContatoController {
 
@@ -56,7 +57,7 @@ public class ContatoController {
     })
     public ResponseEntity<ContatoDTO> create(@RequestBody @Valid ContatoCreateDTO dto, UriComponentsBuilder uriBuilder) {
         ContatoDTO createdContato = service.createContato(dto);
-        URI uri = uriBuilder.path("/api/contatos/{id}").buildAndExpand(createdContato.id()).toUri();
+        URI uri = uriBuilder.path(ApiVersionConfig.API_V1 + "/contatos/{id}").buildAndExpand(createdContato.id()).toUri();
         return ResponseEntity.created(uri).body(createdContato);
     }
 

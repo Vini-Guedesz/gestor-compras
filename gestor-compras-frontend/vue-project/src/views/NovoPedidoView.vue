@@ -14,6 +14,12 @@
             </svg>
             Voltar
           </button>
+          <span class="breadcrumb-separator">|</span>
+          <router-link to="/pedidos" class="breadcrumb-link">
+            Pedidos de Compra
+          </router-link>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-current">{{ isEditando ? 'Editar Rascunho' : 'Novo Pedido' }}</span>
         </div>
 
         <!-- Conteúdo da Página -->
@@ -60,9 +66,10 @@
                       :key="`cotacao-${cotacao.id}-${cotacao.fornecedorId}-${cotacao.tipoFornecedor}`"
                       class="cotacao-selecao-card"
                       :class="{ 'cotacao-selecionada': isCotacaoSelecionada(cotacao.id) }"
+                      @click="toggleCotacaoSelecionada(cotacao.id)"
                     >
                       <!-- Header da Cotação -->
-                      <div class="cotacao-selecao-header" @click="toggleCotacaoSelecionada(cotacao.id)">
+                      <div class="cotacao-selecao-header">
                         <div class="cotacao-checkbox">
                           <input
                             type="checkbox"
@@ -80,6 +87,13 @@
                               class="badge-warning"
                             >
                               ⚠️ Nenhum item selecionado
+                            </span>
+                            <!-- Contador de itens selecionados -->
+                            <span
+                              v-else-if="isCotacaoSelecionada(cotacao.id) && temItensSelecionados(cotacao.id)"
+                              class="badge-success"
+                            >
+                              ✓ {{ contarItensSelecionados(cotacao.id) }} {{ contarItensSelecionados(cotacao.id) === 1 ? 'item' : 'itens' }}
                             </span>
                           </div>
                           <div class="cotacao-detalhes">
@@ -100,19 +114,22 @@
                           v-for="itemId in cotacao.itensRascunhoIds"
                           :key="`item-${cotacao.id}-${itemId}`"
                           class="item-selecao"
-                          :class="{ 'item-selecionado': isItemSelecionadoNaCotacao(cotacao.id, itemId) }"
-                          @click="handleItemClick(cotacao.id, itemId)"
+                          :class="{
+                            'item-selecionado': isItemSelecionadoNaCotacao(cotacao.id, itemId),
+                            'item-erro': itemComErro.cotacaoId === cotacao.id && itemComErro.itemId === itemId
+                          }"
+                          @click.stop="handleItemClick(cotacao.id, itemId)"
                         >
-                          <div class="item-checkbox" @click.stop>
-                            <input
-                              type="checkbox"
-                              :id="`checkbox-${cotacao.id}-${itemId}`"
-                              :checked="isItemSelecionadoNaCotacao(cotacao.id, itemId)"
-                              @change="handleItemCheckboxChange($event, cotacao.id, itemId)"
-                            />
+                          <div class="item-checkbox-visual" :class="{ 'checked': isItemSelecionadoNaCotacao(cotacao.id, itemId) }">
+                            <svg v-if="isItemSelecionadoNaCotacao(cotacao.id, itemId)" viewBox="0 0 24 24" width="14" height="14">
+                              <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                            </svg>
                           </div>
                           <div class="item-info">
                             <span class="item-nome">{{ getNomeItem(itemId) }}</span>
+                            <span v-if="itemComErro.cotacaoId === cotacao.id && itemComErro.itemId === itemId" class="item-erro-msg">
+                              ⚠️ Item já selecionado em outra cotação
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -127,10 +144,16 @@
                   <!-- Resumo da Seleção -->
                   <div v-if="cotacoesSelecionadas.length > 0" class="resumo-selecao">
                     <div class="resumo-item">
+                      <svg viewBox="0 0 24 24" width="20" height="20" class="resumo-icon">
+                        <path fill="currentColor" d="M9 11H7v2h2v-2m4 0h-2v2h2v-2m4 0h-2v2h2v-2m2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 16H5V9h14v11z"/>
+                      </svg>
                       <span class="resumo-label">Cotações selecionadas:</span>
                       <span class="resumo-valor">{{ cotacoesSelecionadas.length }}</span>
                     </div>
                     <div class="resumo-item">
+                      <svg viewBox="0 0 24 24" width="20" height="20" class="resumo-icon">
+                        <path fill="currentColor" d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3M7,7H17V5H19V19H5V5H7V7M12,17V15H17V17H12M12,11V9H17V11H12M8,12V9H10V12H8M8,17V14H10V17H8Z"/>
+                      </svg>
                       <span class="resumo-label">Itens selecionados:</span>
                       <span class="resumo-valor">{{ totalItensSelecionados }}</span>
                     </div>
@@ -182,6 +205,7 @@
 <script>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useToast } from '@/composables/useToast'
 import rascunhoService from '@/services/rascunhoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
@@ -201,6 +225,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const { success, warning, error: toastError } = useToast()
 
     // State
     const isSidebarOpen = ref(false)
@@ -211,6 +236,9 @@ export default {
     const wizardData = ref({
       rascunho: { id: null, observacao: '', itens: [], dataCriacao: null }
     })
+
+    // Para mostrar aviso de item já selecionado (cotacaoId + itemId)
+    const itemComErro = ref({ cotacaoId: null, itemId: null })
 
     const fornecedores = ref([])
     const carregandoFornecedores = ref(false)
@@ -244,6 +272,10 @@ export default {
       return 'Adicione cotações e selecione os itens para o pedido final'
     }
 
+    const isEditando = computed(() => {
+      return wizardData.value.rascunho.id !== null
+    })
+
     // Methods
     const toggleSidebar = () => { isSidebarOpen.value = !isSidebarOpen.value }
     const closeSidebar = () => { isSidebarOpen.value = false }
@@ -255,12 +287,12 @@ export default {
 
     const finalizarRascunho = async () => {
       if (!page1Valid.value) {
-        alert('Por favor, preencha todos os campos obrigatórios e adicione ao menos um item.')
+        warning('Por favor, preencha todos os campos obrigatórios e adicione ao menos um item.')
         return
       }
 
       if (!wizardData.value.rascunho.id) {
-        alert('Por favor, salve pelo menos um item antes de finalizar o rascunho.');
+        warning('Por favor, salve pelo menos um item antes de finalizar o rascunho.');
         return;
       }
 
@@ -288,7 +320,7 @@ export default {
       } catch (error) {
         console.error('Erro ao finalizar rascunho:', error)
         const mensagem = error.message || 'Erro ao salvar. Tente novamente.'
-        alert(`Erro ao finalizar rascunho:\n\n${mensagem}`)
+        toastError(`Erro ao finalizar rascunho: ${mensagem}`, { duration: 7000 })
       } finally {
         isLoading.value = false
       }
@@ -306,7 +338,7 @@ export default {
             router.replace({ query: { state: 'edit' } })
         } catch (error) {
             console.error('Erro ao carregar rascunho para edição:', error)
-            alert('Erro ao carregar rascunho para edição. Tente novamente.')
+            toastError('Erro ao carregar rascunho para edição. Tente novamente.')
         } finally {
             isLoading.value = false
         }
@@ -315,13 +347,13 @@ export default {
     const gerarPedidoFinal = async () => {
       // Validar seleção de cotações
       if (cotacoesSelecionadas.value.length === 0) {
-        alert('Selecione pelo menos uma cotação para gerar o pedido.')
+        warning('Selecione pelo menos uma cotação para gerar o pedido.')
         return
       }
 
       // Validar seleção de itens
       if (totalItensSelecionados.value === 0) {
-        alert('Selecione pelo menos um item nas cotações para gerar o pedido.')
+        warning('Selecione pelo menos um item nas cotações para gerar o pedido.')
         return
       }
 
@@ -337,18 +369,18 @@ export default {
           return cotacao ? `${cotacao.nomeFornecedor}` : `Cotação ${id}`
         }).join(', ')
 
-        alert(
-          `As seguintes cotações estão marcadas mas não têm itens selecionados:\n\n` +
-          `${nomeCotacoes}\n\n` +
-          `Por favor, selecione pelo menos um item em cada cotação ou desmarque as cotações vazias.`
+        warning(
+          `As seguintes cotações estão marcadas mas não têm itens selecionados: ${nomeCotacoes}. ` +
+          `Por favor, selecione pelo menos um item em cada cotação ou desmarque as cotações vazias.`,
+          { duration: 8000 }
         )
         return
       }
 
       // Verificar se o usuário está autenticado
-      const token = localStorage.getItem('authToken')
+      const token = sessionStorage.getItem('authToken')
       if (!token) {
-        alert('Sua sessão expirou. Por favor, faça login novamente.')
+        toastError('Sua sessão expirou. Por favor, faça login novamente.')
         router.push('/login')
         return
       }
@@ -373,17 +405,17 @@ export default {
           null,  // itemRascunhoIds (legado) = null
           cotacaoParaItens  // Novo formato: mapeamento cotação → itens
         )
-        alert(`Pedido #${pedidoCriado.id} criado com sucesso!`)
+        success(`Pedido #${pedidoCriado.id} criado com sucesso!`)
         router.push('/pedidos')
       } catch (error) {
         console.error('Erro ao gerar pedido:', error)
         // Verificar se é erro de autenticação
         if (error.message && (error.message.includes('401') || error.message.includes('não autenticado') || error.message.includes('Sessão expirada'))) {
-          alert('Sua sessão expirou. Por favor, faça login novamente.')
+          toastError('Sua sessão expirou. Por favor, faça login novamente.')
           router.push('/login')
           return
         }
-        alert(error.message || 'Erro ao gerar pedido. Tente novamente.')
+        toastError(error.message || 'Erro ao gerar pedido. Tente novamente.', { duration: 7000 })
       } finally {
         isLoading.value = false
       }
@@ -432,7 +464,7 @@ export default {
       } catch (error) {
         console.error('Erro ao salvar cotação:', error)
         const mensagem = error.message || 'Erro ao salvar cotação. Tente novamente.'
-        alert(`Erro ao salvar cotação:\n\n${mensagem}`)
+        toastError(`Erro ao salvar cotação: ${mensagem}`, { duration: 7000 })
         throw error
       } finally {
         isLoading.value = false
@@ -450,7 +482,7 @@ export default {
         await carregarCotacoesDoRascunho()
       } catch (error) {
         console.error('Erro ao deletar cotação:', error)
-        alert('Erro ao deletar cotação. Tente novamente.')
+        toastError('Erro ao deletar cotação. Tente novamente.')
       } finally {
         isLoading.value = false
       }
@@ -500,7 +532,7 @@ export default {
             }
             // Usar nextTick para garantir que a reversão seja aplicada
             nextTick(() => {
-              alert('Este item já está selecionado em outra cotação. Um item só pode estar em uma cotação por vez.')
+              warning('Este item já está selecionado em outra cotação. Um item só pode estar em uma cotação por vez.')
             })
             return
           }
@@ -514,8 +546,51 @@ export default {
     }
 
     const handleItemClick = (cotacaoId, itemId) => {
-      // Quando clica no card (não no checkbox), chama a função diretamente
-      handleItemCheckboxChange(null, cotacaoId, itemId)
+      // Garantir que a cotação está selecionada
+      if (!cotacoesSelecionadas.value.includes(cotacaoId)) {
+        return
+      }
+
+      // Criar cópia do objeto inteiro para forçar reatividade
+      const novoItensPorCotacao = { ...itensPorCotacao.value }
+
+      // Garantir que existe array para esta cotação
+      if (!novoItensPorCotacao[cotacaoId]) {
+        novoItensPorCotacao[cotacaoId] = []
+      }
+
+      const itens = [...novoItensPorCotacao[cotacaoId]]
+      const index = itens.indexOf(itemId)
+
+      if (index === -1) {
+        // Verificar se item já está em outra cotação
+        for (const [cotId, items] of Object.entries(novoItensPorCotacao)) {
+          if (Number(cotId) !== cotacaoId && items.includes(itemId)) {
+            // Mostrar aviso visual inline apenas na cotação atual
+            itemComErro.value = { cotacaoId, itemId }
+            setTimeout(() => {
+              itemComErro.value = { cotacaoId: null, itemId: null }
+            }, 3000)
+
+            // Também tentar mostrar toast (caso funcione)
+            warning('⚠️ Este item já está selecionado em outra cotação. Um item só pode estar em uma cotação por vez.', {
+              duration: 6000
+            })
+            return
+          }
+        }
+        // Adicionar item
+        itens.push(itemId)
+      } else {
+        // Remover item
+        itens.splice(index, 1)
+      }
+
+      // Atualizar array
+      novoItensPorCotacao[cotacaoId] = itens
+
+      // Substituir objeto inteiro para forçar reatividade
+      itensPorCotacao.value = novoItensPorCotacao
     }
 
     const toggleItemNaCotacao = (cotacaoId, itemId) => {
@@ -534,6 +609,11 @@ export default {
     const temItensSelecionados = (cotacaoId) => {
       const itens = itensPorCotacao.value[cotacaoId]
       return itens && itens.length > 0
+    }
+
+    const contarItensSelecionados = (cotacaoId) => {
+      const itens = itensPorCotacao.value[cotacaoId]
+      return itens ? itens.length : 0
     }
 
     const getNomeItem = (itemId) => {
@@ -587,7 +667,6 @@ export default {
       try {
         isLoading.value = true
         const rascunho = await rascunhoService.obterPorId(rascunhoId);
-        console.log('Rascunho carregado:', rascunho)
 
         wizardData.value.rascunho = {
           ...rascunho,
@@ -595,9 +674,9 @@ export default {
         }
       } catch (error) {
         console.error('Erro ao carregar rascunho:', error)
-        alert('Erro ao carregar rascunho. Redirecionando...')
+        toastError('Erro ao carregar rascunho. Redirecionando...')
         router.push('/pedidos')
-      } finally {
+      } finally{
         isLoading.value = false
       }
     }
@@ -629,10 +708,12 @@ export default {
       carregandoCotacoes,
       cotacoesSelecionadas,
       itensPorCotacao,
+      itemComErro,
       temCotacoes,
       totalItensSelecionados,
       getTitulo,
       getSubtitulo,
+      isEditando,
       finalizarRascunho,
       editarRascunho,
       gerarPedidoFinal,
@@ -645,6 +726,7 @@ export default {
       isCotacaoSelecionada,
       isItemSelecionadoNaCotacao,
       temItensSelecionados,
+      contarItensSelecionados,
       getNomeItem,
       formatarPreco,
       cancelar,
@@ -675,10 +757,12 @@ export default {
 /* Breadcrumb */
 .breadcrumb {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 12px;
   margin-bottom: 24px;
   font-size: 0.875rem;
+  white-space: nowrap;
+  overflow-x: auto;
 }
 
 .btn-voltar {
@@ -693,17 +777,47 @@ export default {
   cursor: pointer;
   font-weight: 500;
   font-size: 0.875rem;
+  line-height: 1;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-voltar:hover {
   background: #e5e7eb;
-  border-color: #9ca3af;
+}
+
+.breadcrumb-link {
+  color: #1F285F;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  color: #d1d5db;
+  user-select: none;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.breadcrumb-current {
+  color: #6b7280;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 /* Wizard Container */
 .wizard-container {
   max-width: 1000px;
+  margin: 0 auto; /* Centraliza horizontalmente */
 }
 
 .wizard-card {
@@ -837,30 +951,38 @@ export default {
 }
 
 .step-selecao-cotacoes .info-box {
-  background: #f0f4ff;
-  border: 1px solid #c7d2fe;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  border: 2px solid #93c5fd;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
+  border-left: 4px solid #1F285F;
 }
 
 .step-selecao-cotacoes .info-box h4 {
-  margin: 0 0 4px 0;
-  color: #1F285F;
-  font-size: 1rem;
+  margin: 0 0 8px 0;
+  color: #1e40af;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .step-selecao-cotacoes .info-box p {
   margin: 0;
-  color: #6b7280;
+  color: #475569;
   font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 /* Lista de Cotações para Seleção */
 .cotacoes-lista-selecao {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+  position: relative;
 }
 
 .cotacao-selecao-card {
@@ -869,6 +991,19 @@ export default {
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.2s;
+  position: relative;
+  cursor: pointer;
+}
+
+.cotacao-selecao-card:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #cbd5e1, transparent);
 }
 
 .cotacao-selecao-card:hover {
@@ -877,15 +1012,18 @@ export default {
 
 .cotacao-selecao-card.cotacao-selecionada {
   border-color: #10b981;
-  background: #f0fdf4;
+  border-width: 2px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  transform: scale(1.01);
 }
 
 /* Header da Cotação */
 .cotacao-selecao-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px;
   cursor: pointer;
   user-select: none;
   transition: background 0.2s;
@@ -906,8 +1044,12 @@ export default {
 }
 
 .cotacao-checkbox input {
-  width: 20px;
-  height: 20px;
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px;
+  max-height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   cursor: pointer;
 }
 
@@ -949,6 +1091,19 @@ export default {
   font-size: 0.75rem;
   font-weight: 600;
   animation: pulse 2s ease-in-out infinite;
+}
+
+.badge-success {
+  padding: 4px 10px;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 @keyframes pulse {
@@ -1006,8 +1161,8 @@ export default {
 .item-selecao {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 8px 10px;
   background: #f9fafb;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
@@ -1027,16 +1182,47 @@ export default {
   border-color: #10b981;
 }
 
-.item-checkbox {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
+.item-selecao.item-erro {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  animation: shake 0.5s;
 }
 
-.item-checkbox input {
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.item-erro-msg {
+  font-size: 0.75rem;
+  color: #92400e;
+  font-weight: 600;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.item-checkbox-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
-  cursor: pointer;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  transition: all 0.2s;
+  color: white;
+}
+
+.item-checkbox-visual.checked {
+  background: #10b981;
+  border-color: #10b981;
 }
 
 .item-info {
@@ -1055,20 +1241,30 @@ export default {
 
 /* Resumo da Seleção */
 .resumo-selecao {
-  margin-top: 20px;
-  padding: 16px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #86efac;
+  border-radius: 12px;
   display: flex;
-  gap: 24px;
+  gap: 32px;
   flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
 }
 
 .resumo-item {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
+  padding: 8px 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.resumo-icon {
+  color: #059669;
+  flex-shrink: 0;
 }
 
 .resumo-label {
@@ -1078,9 +1274,11 @@ export default {
 }
 
 .resumo-valor {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #059669;
+  min-width: 24px;
+  text-align: center;
 }
 
 .empty-state {

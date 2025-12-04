@@ -22,6 +22,9 @@ import axios from 'axios'
 // Se VITE_API_BASE_URL não estiver definida, usa localhost:8081 (porta do backend)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
 
+// Flag para evitar múltiplos redirects para login
+let isRedirecting = false
+
 /**
  * Instância configurada do Axios
  *
@@ -47,8 +50,8 @@ const apiClient = axios.create({
  */
 apiClient.interceptors.request.use(
   (config) => {
-    // Recupera o token do localStorage
-    const token = localStorage.getItem('authToken')
+    // Recupera o token do sessionStorage (consistente com authService.js)
+    const token = sessionStorage.getItem('authToken')
     if (token) {
       // Adiciona o token no header de autorização
       config.headers.Authorization = `Bearer ${token}`
@@ -56,18 +59,9 @@ apiClient.interceptors.request.use(
 
     // DEBUG: Log do body sendo enviado
     if (config.data && config.url.includes('fornecedores')) {
-      console.log('🚀 AXIOS INTERCEPTOR - Request being sent:')
-      console.log('  URL:', config.url)
-      console.log('  Method:', config.method)
-      console.log('  Data (stringified):', JSON.stringify(config.data, null, 2))
       if (config.data.contato) {
-        console.log('  ⚠️ contato tem numero?', 'numero' in config.data.contato)
-        console.log('  ⚠️ Chaves do contato:', Object.keys(config.data.contato))
       }
       if (config.data.endereco) {
-        console.log('  ✅ endereco tem numero?', 'numero' in config.data.endereco)
-        console.log('  ✅ Chaves do endereco:', Object.keys(config.data.endereco))
-        console.log('  ✅ endereco.numero =', config.data.endereco.numero)
       }
     }
 
@@ -94,27 +88,47 @@ apiClient.interceptors.response.use(
     // Tratamento específico para erro 401 (Não Autorizado) ou JWT expirado
     if (error.response?.status === 401 ||
         (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('JWT expired'))) {
-      // Token provavelmente expirado: limpa dados de autenticação
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('user')
-      // Redireciona para login
-      window.location.href = '/login'
+
+      // Evitar múltiplos redirects simultâneos
+      if (isRedirecting) {
+        return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
+      }
+
+      isRedirecting = true
+
+      // Token provavelmente expirado: limpa dados de autenticação do sessionStorage
+      sessionStorage.removeItem('authToken')
+
+      // Emite evento customizado para notificar a aplicação sobre logout
+      // O router guard irá detectar a falta de autenticação e redirecionar suavemente
+      window.dispatchEvent(new CustomEvent('auth:logout', {
+        detail: { reason: 'token_expired' }
+      }))
+
+      // Reseta a flag após um pequeno delay
+      setTimeout(() => {
+        isRedirecting = false
+      }, 1000)
+
       return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
     }
 
     // Tratamento de outros erros HTTP
     if (error.response) {
       // Erro retornado pela API (4xx, 5xx)
-      console.log('📛 Erro da API completo:', error.response)
-      console.log('📛 Status:', error.response.status)
-      console.log('📛 Data:', JSON.stringify(error.response.data, null, 2))
-      console.log('📛 Headers:', error.response.headers)
 
-      // Verifica se é um erro de JWT expirado
+      // Verifica se é um erro de JWT expirado (verificação adicional)
       if (typeof error.response.data === 'string' && error.response.data.includes('JWT expired')) {
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
+        if (!isRedirecting) {
+          isRedirecting = true
+          sessionStorage.removeItem('authToken')
+          window.dispatchEvent(new CustomEvent('auth:logout', {
+            detail: { reason: 'token_expired' }
+          }))
+          setTimeout(() => {
+            isRedirecting = false
+          }, 1000)
+        }
         return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
       }
 
@@ -124,13 +138,11 @@ apiClient.interceptors.response.use(
 
       // Formato do nosso RestExceptionHandler: campo "messages" com array de strings
       if (error.response.data?.messages && Array.isArray(error.response.data.messages)) {
-        console.log('📛 Encontrou messages:', error.response.data.messages)
         detailedErrors = error.response.data.messages
       }
 
       // Formato Spring Boot Validation Error (MethodArgumentNotValidException)
       if (error.response.data?.errors) {
-        console.log('📛 Encontrou errors:', error.response.data.errors)
         if (Array.isArray(error.response.data.errors)) {
           // Array de erros
           detailedErrors = error.response.data.errors.map(err => {
@@ -151,7 +163,6 @@ apiClient.interceptors.response.use(
 
       // Formato com fieldErrors (Spring Boot)
       if (error.response.data?.fieldErrors && Array.isArray(error.response.data.fieldErrors)) {
-        console.log('📛 Encontrou fieldErrors:', error.response.data.fieldErrors)
         detailedErrors = error.response.data.fieldErrors.map(err =>
           `${err.field}: ${err.message || err.defaultMessage}`
         )

@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.dto.solicitacaodepedido.SolicitacaoDePedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.HistoricoRascunho;
@@ -9,6 +10,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/rascunhos")
+@RequestMapping(ApiVersionConfig.API_V1 + "/rascunhos")
 @RequiredArgsConstructor
-@Tag(name = "Rascunhos", description = "Gerenciamento de rascunhos de pedidos")
+@Tag(name = "Rascunhos", description = "Gerenciamento de rascunhos de pedidos (v1)")
 public class RascunhoController {
 
     private final RascunhoService rascunhoService;
@@ -26,8 +30,8 @@ public class RascunhoController {
 
     @GetMapping
     @Operation(summary = "Listar todos os rascunhos")
-    public ResponseEntity<List<RascunhoDTO>> getAllRascunhos() {
-        return ResponseEntity.ok(rascunhoService.getAllRascunhos());
+    public ResponseEntity<Page<RascunhoDTO>> getAllRascunhos(@PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(rascunhoService.getAllRascunhos(pageable));
     }
 
     @GetMapping("/usuario/{userId}")

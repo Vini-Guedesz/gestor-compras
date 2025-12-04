@@ -538,6 +538,7 @@
 <script setup>
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
+import { useToast } from '@/composables/useToast'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componente pesado
@@ -548,6 +549,7 @@ import itemPedidoService from '../services/itemPedidoService.js'
 
 // Router
 const route = useRoute()
+const { success, warning, error: toastError } = useToast()
 
 // Estado reativo
 const gerandoRelatorio = ref(false)
@@ -724,7 +726,6 @@ const paginasVisiveis = computed(() => {
 // Métodos
 const carregarFornecedores = async () => {
   try {
-    console.log('🔄 Carregando fornecedores...')
     const [produtoResponse, servicoResponse] = await Promise.all([
       fornecedorService.listarFornecedoresProduto(),
       fornecedorService.listarFornecedoresServico()
@@ -734,7 +735,6 @@ const carregarFornecedores = async () => {
     const fornecedoresServico = (servicoResponse || []).map(f => ({ ...f, tipo: 'servico' }))
 
     fornecedores.value = [...fornecedoresProduto, ...fornecedoresServico]
-    console.log('✅ Fornecedores carregados:', fornecedores.value.length)
   } catch (error) {
     console.error('❌ Erro ao carregar fornecedores:', error)
     fornecedores.value = []
@@ -744,7 +744,6 @@ const carregarFornecedores = async () => {
 const carregarCotacoes = async () => {
   try {
     carregandoCotacoes.value = true
-    console.log('🔄 Carregando cotações...')
 
     // Chamar o serviço real de cotações
     const response = await cotacaoService.listar()
@@ -759,7 +758,6 @@ const carregarCotacoes = async () => {
       cotacoes.value = []
     }
 
-    console.log('✅ Cotações carregadas:', cotacoes.value.length)
   } catch (error) {
     console.error('❌ Erro ao carregar cotações:', error)
     cotacoes.value = []
@@ -851,19 +849,16 @@ const buscarItemPedidoComCache = async (itemPedidoId) => {
 
   // Verificar se já está no cache
   if (cacheItensPedido.value.has(itemPedidoId)) {
-    console.log(`✅ Item ${itemPedidoId} encontrado no cache`)
     return cacheItensPedido.value.get(itemPedidoId)
   }
 
   // Buscar do backend se não estiver no cache
   try {
-    console.log(`🔄 Buscando item ${itemPedidoId} do backend...`)
     const item = await itemPedidoService.buscarPorId(itemPedidoId)
 
     // Adicionar ao cache
     if (item) {
       cacheItensPedido.value.set(itemPedidoId, item)
-      console.log(`✅ Item ${itemPedidoId} adicionado ao cache`)
     }
 
     return item
@@ -928,23 +923,19 @@ const getNomeFornecedor = (fornecedorId, tipoFornecedor) => {
 const salvarCotacao = async (dadosCotacao) => {
   try {
     operacaoEmAndamento.value = true
-    console.log('🔄 CotacoesView: Salvando cotação recebida do formulário:', dadosCotacao)
 
     let response
     if (cotacaoSelecionada.value && cotacaoSelecionada.value.id) {
       // Editar cotação existente
       response = await cotacaoService.atualizar(cotacaoSelecionada.value.id, dadosCotacao)
-      console.log('✅ Cotação atualizada com sucesso')
     } else {
       // Criar nova cotação
       response = await cotacaoService.criar(dadosCotacao)
-      console.log('✅ Cotação criada com sucesso')
     }
 
     // Recarregar a lista de cotações
     await carregarCotacoes()
 
-    console.log('Cotação salva:', response)
   } catch (error) {
     console.error('❌ Erro ao salvar cotação:', error)
     // O erro já é tratado no formulário, então não precisamos fazer nada aqui
@@ -956,7 +947,6 @@ const salvarCotacao = async (dadosCotacao) => {
 
 const visualizarCotacao = async (id) => {
   try {
-    console.log('🔍 Visualizando cotação ID:', id)
 
     // Buscar a cotação na lista local primeiro
     const cotacao = cotacoes.value.find(c => c.id === id)
@@ -996,14 +986,14 @@ const visualizarCotacao = async (id) => {
     }
   } catch (error) {
     console.error('❌ Erro ao buscar detalhes da cotação:', error)
-    alert('Erro ao carregar detalhes da cotação.')
+    toastError('Erro ao carregar detalhes da cotação.')
   }
 }
 
 const deletarCotacao = async (id) => {
   // Evitar múltiplas operações simultâneas
   if (operacaoEmAndamento.value) {
-    alert('Aguarde a operação anterior ser concluída.')
+    warning('Aguarde a operação anterior ser concluída.')
     return
   }
 
@@ -1016,7 +1006,6 @@ const deletarCotacao = async (id) => {
   if (confirmacao) {
     try {
       operacaoEmAndamento.value = true
-      console.log('🔄 Excluindo cotação ID:', id)
 
       // Validar se o ID é válido
       if (!id || isNaN(id)) {
@@ -1024,12 +1013,11 @@ const deletarCotacao = async (id) => {
       }
 
       await cotacaoService.deletar(id)
-      console.log('✅ Cotação excluída com sucesso')
 
       // Recarregar lista após exclusão
       await carregarCotacoes()
 
-      alert('Cotação excluída com sucesso!')
+      success('Cotação excluída com sucesso!')
     } catch (error) {
       console.error('❌ Erro ao excluir cotação:', error)
 
@@ -1055,7 +1043,7 @@ const deletarCotacao = async (id) => {
         mensagemErro = error.message
       }
 
-      alert(mensagemErro)
+      toastError(mensagemErro, { duration: 7000 })
     } finally {
       operacaoEmAndamento.value = false
     }
@@ -1065,18 +1053,16 @@ const deletarCotacao = async (id) => {
 const exportarRelatorio = async () => {
   try {
     gerandoRelatorio.value = true
-    console.log('🔄 Iniciando geração de relatório de cotações...')
 
     // Verificar se há cotações para gerar relatório
     if (cotacoes.value.length === 0) {
-      alert('Não há cotações para gerar relatório.')
+      warning('Não há cotações para gerar relatório.')
       return
     }
 
     // Gerar relatório geral (dashboard executivo)
     await cotacaoService.gerarRelatorioCotacoes()
 
-    console.log('✅ Relatório de cotações gerado com sucesso!')
 
   } catch (error) {
     console.error('❌ Erro ao gerar relatório:', error)
@@ -1090,7 +1076,7 @@ const exportarRelatorio = async () => {
       mensagemErro = `Erro: ${error.message}`
     }
 
-    alert(mensagemErro)
+    toastError(mensagemErro, { duration: 7000 })
   } finally {
     gerandoRelatorio.value = false
   }
@@ -1099,17 +1085,16 @@ const exportarRelatorio = async () => {
 const gerarRelatorioComparativo = async (itemPedidoId) => {
   try {
     gerandoRelatorio.value = true
-    console.log('🔄 Gerando relatório comparativo para item:', itemPedidoId)
 
     if (!itemPedidoId) {
-      alert('ID do item não encontrado para gerar relatório comparativo.')
+      warning('ID do item não encontrado para gerar relatório comparativo.')
       return
     }
 
     // Gerar relatório comparativo de cotações por item
     await cotacaoService.gerarRelatorioComparativo(itemPedidoId)
 
-    console.log('✅ Relatório comparativo gerado com sucesso!')
+    success('Relatório comparativo gerado com sucesso!')
 
   } catch (error) {
     console.error('❌ Erro ao gerar relatório comparativo:', error)
@@ -1123,7 +1108,7 @@ const gerarRelatorioComparativo = async (itemPedidoId) => {
       mensagemErro = `Erro: ${error.message}`
     }
 
-    alert(mensagemErro)
+    toastError(mensagemErro, { duration: 7000 })
   } finally {
     gerandoRelatorio.value = false
   }
@@ -1710,7 +1695,7 @@ onMounted(async () => {
 .cotacao-card {
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   border: 1px solid #e5e7eb;
   transition: all 0.2s;
 }

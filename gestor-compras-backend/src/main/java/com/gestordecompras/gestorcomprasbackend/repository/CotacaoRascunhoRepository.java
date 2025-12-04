@@ -11,12 +11,28 @@ import java.util.List;
 @Repository
 public interface CotacaoRascunhoRepository extends JpaRepository<CotacaoRascunho, Long> {
 
-    // Buscar cotações com itens (primeiro passo)
-    @Query("SELECT DISTINCT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itensRascunho WHERE c.rascunho.id = :rascunhoId")
+    // Buscar cotações com itens e fornecedores (otimizado para evitar N+1)
+    @Query("SELECT DISTINCT c FROM CotacaoRascunho c " +
+           "LEFT JOIN FETCH c.itensRascunho " +
+           "LEFT JOIN FETCH c.fornecedorProduto fp " +
+           "LEFT JOIN FETCH fp.endereco " +
+           "LEFT JOIN FETCH fp.contato " +
+           "LEFT JOIN FETCH c.fornecedorServico fs " +
+           "LEFT JOIN FETCH fs.endereco " +
+           "LEFT JOIN FETCH fs.contato " +
+           "WHERE c.rascunho.id = :rascunhoId")
     List<CotacaoRascunho> findByRascunhoIdWithItens(@Param("rascunhoId") Long rascunhoId);
 
-    // Buscar cotação específica com itens e anexos (usar em duas queries para evitar produto cartesiano)
-    @Query("SELECT DISTINCT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itensRascunho WHERE c.id = :id")
+    // Buscar cotação específica com itens, fornecedores e relacionamentos (otimizado)
+    @Query("SELECT DISTINCT c FROM CotacaoRascunho c " +
+           "LEFT JOIN FETCH c.itensRascunho " +
+           "LEFT JOIN FETCH c.fornecedorProduto fp " +
+           "LEFT JOIN FETCH fp.endereco " +
+           "LEFT JOIN FETCH fp.contato " +
+           "LEFT JOIN FETCH c.fornecedorServico fs " +
+           "LEFT JOIN FETCH fs.endereco " +
+           "LEFT JOIN FETCH fs.contato " +
+           "WHERE c.id = :id")
     CotacaoRascunho findByIdWithItens(@Param("id") Long id);
 
     // Query auxiliar para carregar anexos separadamente

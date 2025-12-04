@@ -24,12 +24,18 @@
       <h2 class="login-title">Login</h2>
 
       <!-- Exibição condicional de mensagens de erro -->
-      <div v-if="errorMessage" class="error-message">
+      <div
+        v-if="errorMessage"
+        class="error-message"
+        role="alert"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {{ errorMessage }}
       </div>
 
       <!-- Formulário de login com prevenção de submit padrão -->
-      <form @submit.prevent="handleLogin" class="login-form">
+      <form @submit.prevent="handleLogin" class="login-form" aria-label="Formulário de login">
         <!-- Campo de email -->
         <div class="form-group">
           <label for="email">Email:</label>
@@ -41,7 +47,11 @@
             class="form-input"
             placeholder="Digite seu email"
             :disabled="isLoading"
+            :aria-invalid="!!errorMessage"
+            aria-describedby="email-hint"
+            autocomplete="email"
           />
+          <span id="email-hint" class="sr-only">Digite seu endereço de email para fazer login</span>
         </div>
 
         <!-- Campo de senha -->
@@ -55,18 +65,35 @@
             class="form-input"
             placeholder="Digite sua senha"
             :disabled="isLoading"
+            :aria-invalid="!!errorMessage"
+            aria-describedby="password-hint"
+            autocomplete="current-password"
           />
+          <span id="password-hint" class="sr-only">Digite sua senha para fazer login</span>
         </div>
 
         <!-- Botão de submit com estado de loading -->
-        <button type="submit" class="login-button" :disabled="isLoading">
+        <button
+          type="submit"
+          class="login-button"
+          :disabled="isLoading"
+          :aria-busy="isLoading"
+          aria-label="Entrar no sistema"
+        >
           <span v-if="isLoading">Entrando...</span>
           <span v-else>Acessar</span>
         </button>
 
         <!-- Link para recuperação de senha -->
         <div class="forgot-password">
-          <a href="#" @click.prevent="handleForgotPassword" class="forgot-link" :class="{ disabled: isLoading }">
+          <a
+            href="#"
+            @click.prevent="handleForgotPassword"
+            class="forgot-link"
+            :class="{ disabled: isLoading }"
+            :tabindex="isLoading ? -1 : 0"
+            aria-label="Recuperar senha esquecida"
+          >
             Esqueceu sua senha?
           </a>
         </div>
@@ -86,11 +113,13 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useToast } from '@/composables/useToast'
 import LoadingSpinner from '@/components/ui/feedback/LoadingSpinner.vue'
 
 // Instâncias dos serviços necessários
 const router = useRouter()       // Para navegação entre páginas
 const authStore = useAuthStore() // Para gerenciamento do estado de autenticação
+const { success, warning, error: toastError } = useToast()
 
 // Estados reativos do componente
 const loginForm = ref({
@@ -151,7 +180,7 @@ const handleLogin = async () => {
 const handleForgotPassword = async () => {
   // Verifica se o email foi preenchido
   if (!loginForm.value.email) {
-    alert('Por favor, digite seu e-mail no campo acima primeiro.')
+    warning('Por favor, digite seu e-mail no campo acima primeiro.')
     return
   }
 
@@ -160,9 +189,9 @@ const handleForgotPassword = async () => {
 
   // Exibe o resultado ao usuário
   if (result.success) {
-    alert(result.message)
+    success(result.message)
   } else {
-    alert(result.error)
+    toastError(result.error)
   }
 }
 </script>
@@ -324,6 +353,19 @@ const handleForgotPassword = async () => {
   color: #6c757d;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* Classe para leitores de tela (oculta visualmente mas acessível) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* Responsividade para telas menores */

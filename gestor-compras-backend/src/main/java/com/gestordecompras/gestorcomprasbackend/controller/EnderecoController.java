@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.endereco.EnderecoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.endereco.EnderecoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.endereco.EnderecoUpdateDTO;
@@ -18,8 +19,8 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/enderecos")
-@Tag(name = "Endereços", description = "API para gerenciamento de endereços")
+@RequestMapping(ApiVersionConfig.API_V1 + "/enderecos")
+@Tag(name = "Endereços", description = "API para gerenciamento de endereços (v1)")
 @SecurityRequirement(name = "bearerAuth")
 public class EnderecoController {
 
@@ -56,7 +57,7 @@ public class EnderecoController {
     })
     public ResponseEntity<EnderecoDTO> create(@RequestBody @Valid EnderecoCreateDTO dto, UriComponentsBuilder uriBuilder) {
         EnderecoDTO createdEndereco = service.createEndereco(dto);
-        URI uri = uriBuilder.path("/api/enderecos/{id}").buildAndExpand(createdEndereco.id()).toUri();
+        URI uri = uriBuilder.path(ApiVersionConfig.API_V1 + "/enderecos/{id}").buildAndExpand(createdEndereco.id()).toUri();
         return ResponseEntity.created(uri).body(createdEndereco);
     }
 

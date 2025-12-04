@@ -15,6 +15,8 @@ import com.gestordecompras.gestorcomprasbackend.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -41,10 +43,8 @@ public class RascunhoService {
     private final NumeroItemDisponivelRepository numeroItemDisponivelRepository;
 
     @Transactional(readOnly = true)
-    public List<RascunhoDTO> getAllRascunhos() {
-        return rascunhoRepository.findAll().stream()
-                .map(rascunhoMapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<RascunhoDTO> getAllRascunhos(Pageable pageable) {
+        return rascunhoRepository.findAll(pageable).map(rascunhoMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
@@ -266,12 +266,28 @@ public class RascunhoService {
             throw new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId);
         }
 
+        // Validação de ownership: Verificar se o rascunho pertence ao usuário autenticado
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String emailUsuarioAutenticado = authentication.getName();
+            String emailCriadorRascunho = rascunho.getCriador() != null ? rascunho.getCriador().getEmail() : null;
+
+            if (emailCriadorRascunho == null || !emailCriadorRascunho.equals(emailUsuarioAutenticado)) {
+                throw new SecurityException("Você não tem permissão para converter este rascunho. Apenas o criador pode converter.");
+            }
+        }
+
+        // Validação: Deve ter pelo menos um item selecionado
+        List<Long> todosItensSelecionados = dto.getTodosItens();
+        if (todosItensSelecionados == null || todosItensSelecionados.isEmpty()) {
+            throw new IllegalArgumentException("Não é possível converter rascunho para pedido sem selecionar itens");
+        }
+
         // Validar que os IDs dos itens pertencem ao rascunho
         List<Long> idsItensRascunho = rascunho.getItens().stream()
                 .map(ItemRascunho::getId)
                 .collect(Collectors.toList());
 
-        List<Long> todosItensSelecionados = dto.getTodosItens();
         for (Long itemId : todosItensSelecionados) {
             if (!idsItensRascunho.contains(itemId)) {
                 throw new IllegalArgumentException("Item ID " + itemId + " não pertence ao rascunho " + rascunhoId);
@@ -350,12 +366,30 @@ public class RascunhoService {
                 cotacao.setSolicitacaoDePedido(pedidoSalvo);
                 cotacao.setFornecedorProduto(cotacaoRascunho.getFornecedorProduto());
                 cotacao.setFornecedorServico(cotacaoRascunho.getFornecedorServico());
-                cotacao.setPreco(cotacaoRascunho.getPreco());
+                cotacao.setPreco(cotacaoRascunho.getPreco()); // Legacy - será ignorado, calculado dos itens
                 cotacao.setPrazoEmDiasUteis(cotacaoRascunho.getPrazoEmDiasUteis());
                 cotacao.setDataLimite(cotacaoRascunho.getDataLimite());
                 cotacao.setAnexoPdf(cotacaoRascunho.getAnexoPdf());
                 cotacao.setCaminhoAnexo(cotacaoRascunho.getCaminhoAnexo());
-                cotacao.setItensPedido(itensPedidoCotacao);
+
+                // Criar CotacaoItem para cada ItemPedido (nova estrutura Bug #5)
+                int totalItens = itensPedidoCotacao.size();
+                java.math.BigDecimal precoTotal = cotacaoRascunho.getPreco();
+                java.math.BigDecimal precoUnitario = precoTotal.divide(
+                        java.math.BigDecimal.valueOf(totalItens),
+                        2,
+                        java.math.RoundingMode.HALF_UP
+                );
+
+                for (ItemPedido itemPedido : itensPedidoCotacao) {
+                    com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem cotacaoItem =
+                            new com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem();
+                    cotacaoItem.setItemPedido(itemPedido);
+                    cotacaoItem.setPrecoUnitario(precoUnitario);
+                    cotacaoItem.setQuantidade(itemPedido.getQuantidade());
+                    cotacaoItem.setObservacao("Convertido de rascunho - preço dividido igualmente");
+                    cotacao.addItem(cotacaoItem);
+                }
 
                 // Copiar anexos múltiplos
                 if (cotacaoRascunho.getAnexos() != null && !cotacaoRascunho.getAnexos().isEmpty()) {

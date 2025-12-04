@@ -293,6 +293,7 @@
 
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
+import { useToast } from '@/composables/useToast.js'
 
 const props = defineProps({
   isVisible: {
@@ -306,6 +307,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save'])
+
+const { success, error: showError, warning } = useToast()
 
 // Prevenir scroll do body quando modal está aberto
 watch(() => props.isVisible, (newValue) => {
@@ -756,9 +759,6 @@ const loadFornecedorData = (fornecedor) => {
 // Prepara os dados no formato esperado pelo backend
 // ============================================
 const handleSubmit = () => {
-  console.log('='.repeat(60))
-  console.log('📝 INICIANDO ENVIO DO FORMULÁRIO')
-  console.log('='.repeat(60))
 
   // ===== VALIDAÇÃO: VERIFICAR MUDANÇA DE TIPO =====
   if (props.fornecedor && props.fornecedor.tipo !== formData.value.tipo) {
@@ -769,7 +769,7 @@ const handleSubmit = () => {
     const tipoOriginal = props.fornecedor.tipo === 'produto' ? 'Produto' : 'Serviço'
     const tipoNovo = formData.value.tipo === 'produto' ? 'Produto' : 'Serviço'
 
-    alert(
+    showError(
       `❌ Não é possível alterar o tipo do fornecedor!\n\n` +
       `Tipo atual: Fornecedor de ${tipoOriginal}\n` +
       `Tipo selecionado: Fornecedor de ${tipoNovo}\n\n` +
@@ -799,12 +799,11 @@ const handleSubmit = () => {
       console.warn('Primeiro erro encontrado em:', firstErrorField, ':', fieldErrors.value[firstErrorField])
     }
 
-    alert('Por favor, corrija os erros destacados no formulário antes de continuar.')
+    warning('Por favor, corrija os erros destacados no formulário antes de continuar.')
     return
   }
 
   // ===== ETAPA 1: LIMPAR DADOS =====
-  console.log('\n📋 ETAPA 1: Limpando dados...')
 
   const cnpj = formData.value.cnpj.replace(/\D/g, '')
   const telefoneFixo = formData.value.contato.telefoneFixo.replace(/\D/g, '')
@@ -812,7 +811,6 @@ const handleSubmit = () => {
   const cep = formData.value.endereco.cep.replace(/\D/g, '')
 
   // ===== ETAPA 2: MONTAR OBJETO CONTATO =====
-  console.log('\n📞 ETAPA 2: Montando objeto CONTATO...')
 
   const contato = {
     email: formData.value.contato.email.trim(),
@@ -823,16 +821,11 @@ const handleSubmit = () => {
   // Se for edição (fornecedor existente), incluir o ID do contato
   if (props.fornecedor && formData.value.contato.id) {
     contato.id = formData.value.contato.id
-    console.log('   ✅ Modo EDIÇÃO: ID do contato incluído:', contato.id)
   } else {
-    console.log('   ✅ Modo CRIAÇÃO: Contato sem ID')
   }
 
-  console.log('   Contato criado:', contato)
-  console.log('   ⚠️ contato tem "numero"?', 'numero' in contato, '(deve ser false)')
 
   // ===== ETAPA 3: MONTAR OBJETO ENDERECO =====
-  console.log('\n🏠 ETAPA 3: Montando objeto ENDERECO...')
 
   const endereco = {
     cep: cep,
@@ -847,17 +840,11 @@ const handleSubmit = () => {
   // Se for edição (fornecedor existente), incluir o ID do endereco
   if (props.fornecedor && formData.value.endereco.id) {
     endereco.id = formData.value.endereco.id
-    console.log('   ✅ Modo EDIÇÃO: ID do endereco incluído:', endereco.id)
   } else {
-    console.log('   ✅ Modo CRIAÇÃO: Endereco sem ID')
   }
 
-  console.log('   Endereco criado:', endereco)
-  console.log('   ✅ endereco tem "numero"?', 'numero' in endereco, '(deve ser true)')
-  console.log('   ✅ endereco.numero =', endereco.numero)
 
   // ===== ETAPA 4: MONTAR OBJETO FINAL =====
-  console.log('\n📦 ETAPA 4: Montando objeto FINAL para envio...')
 
   const dadosParaEnvio = {
     razaoSocial: formData.value.razaoSocial.trim(),
@@ -874,11 +861,8 @@ const handleSubmit = () => {
     dadosParaEnvio.inscricaoMunicipal = formData.value.inscricao.trim() || null
   }
 
-  console.log(`   ${formData.value.tipo === 'produto' ? 'inscricaoEstadual' : 'inscricaoMunicipal'}:`,
-              formData.value.inscricao.trim() || null)
 
   // ===== ETAPA 5: VALIDAÇÕES FINAIS =====
-  console.log('\n✅ ETAPA 5: Validações finais...')
 
   if ('numero' in dadosParaEnvio.contato) {
     console.error('   ❌ ERRO: contato tem campo "numero"!')
@@ -896,10 +880,6 @@ const handleSubmit = () => {
   }
 
   // ===== ETAPA 6: LOG FINAL E ENVIO =====
-  console.log('\n🚀 ETAPA 6: Enviando dados...')
-  console.log('\n📤 PAYLOAD FINAL:')
-  console.log(JSON.stringify(dadosParaEnvio, null, 2))
-  console.log('\n' + '='.repeat(60))
 
   emit('save', dadosParaEnvio)
 }

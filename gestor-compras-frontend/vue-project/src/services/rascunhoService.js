@@ -6,13 +6,21 @@
 
 import api from './api.js'
 
+/**
+ * Helper para extrair dados de respostas paginadas do Spring Data
+ */
+const extractContent = (response) => {
+  if (response && typeof response === 'object' && 'content' in response) {
+    return response.content || []
+  }
+  return Array.isArray(response) ? response : []
+}
+
 const rascunhoService = {
   async listar() {
     try {
-      console.log('Buscando rascunhos no backend...')
-      const data = await api.get('/api/rascunhos')
-      console.log('Rascunhos carregados:', data.length)
-      return data
+      const data = await api.get('/api/v1/rascunhos')
+      return extractContent(data)
     } catch (error) {
       console.error('Erro ao listar rascunhos:', error.message)
       throw error
@@ -21,10 +29,8 @@ const rascunhoService = {
 
   async listarPorUsuario(userId) {
     try {
-      console.log(`Buscando rascunhos do usuário ${userId}...`)
-      const data = await api.get(`/api/rascunhos/usuario/${userId}`)
-      console.log('Rascunhos do usuário carregados:', data.length)
-      return data
+      const data = await api.get(`/api/v1/rascunhos/usuario/${userId}`)
+      return extractContent(data)
     } catch (error) {
       console.error('Erro ao listar rascunhos do usuário:', error.message)
       throw error
@@ -33,9 +39,7 @@ const rascunhoService = {
 
   async obterPorId(id) {
     try {
-      console.log(`Buscando rascunho ID ${id}...`)
-      const data = await api.get(`/api/rascunhos/${id}`)
-      console.log('Rascunho carregado')
+      const data = await api.get(`/api/v1/rascunhos/${id}`)
       return data
     } catch (error) {
       console.error(`Erro ao obter rascunho ID ${id}:`, error.message)
@@ -45,7 +49,6 @@ const rascunhoService = {
 
   async criar(rascunho) {
     try {
-      console.log('Criando rascunho no backend...')
 
       // Validar estrutura de dados
       if (!rascunho.itens || rascunho.itens.length === 0) {
@@ -61,8 +64,7 @@ const rascunhoService = {
         }
       })
 
-      const data = await api.post('/api/rascunhos', rascunho)
-      console.log('Rascunho criado:', data.id)
+      const data = await api.post('/api/v1/rascunhos', rascunho)
       return data
     } catch (error) {
       console.error('Erro ao criar rascunho:', error.message)
@@ -72,9 +74,7 @@ const rascunhoService = {
 
   async atualizar(id, rascunho) {
     try {
-      console.log(`Atualizando rascunho ID ${id}...`)
-      const data = await api.put(`/api/rascunhos/${id}`, rascunho)
-      console.log('Rascunho atualizado')
+      const data = await api.put(`/api/v1/rascunhos/${id}`, rascunho)
       return data
     } catch (error) {
       console.error(`Erro ao atualizar rascunho ID ${id}:`, error.message)
@@ -84,9 +84,7 @@ const rascunhoService = {
 
   async remover(id) {
     try {
-      console.log(`Removendo rascunho ID ${id}...`)
-      await api.delete(`/api/rascunhos/${id}`)
-      console.log('Rascunho removido')
+      await api.delete(`/api/v1/rascunhos/${id}`)
       return true
     } catch (error) {
       console.error(`Erro ao remover rascunho ID ${id}:`, error.message)
@@ -96,25 +94,21 @@ const rascunhoService = {
 
   async converterParaPedido(rascunhoId, itemIds = null, cotacaoParaItens = null) {
     try {
-      console.log(`Convertendo rascunho ${rascunhoId} para pedido...`)
 
       const payload = {}
 
       // Usar novo formato se disponível
       if (cotacaoParaItens && Object.keys(cotacaoParaItens).length > 0) {
-        console.log('Usando novo formato: mapeamento cotação→itens', cotacaoParaItens)
         payload.cotacaoParaItens = cotacaoParaItens
       } else if (itemIds) {
         // Fallback para formato legado
-        console.log('Usando formato legado: itens selecionados', itemIds)
         payload.itemRascunhoIds = itemIds
       } else {
         throw new Error('Deve fornecer itemIds ou cotacaoParaItens')
       }
 
-      const data = await api.post(`/api/rascunhos/${rascunhoId}/converter-para-pedido`, payload)
+      const data = await api.post(`/api/v1/rascunhos/${rascunhoId}/converter-para-pedido`, payload)
 
-      console.log('Pedido criado a partir do rascunho:', data.id)
       return data
     } catch (error) {
       console.error('Erro ao converter rascunho para pedido:', error.message)
@@ -125,7 +119,6 @@ const rascunhoService = {
   // Método unificado para salvar (criar ou atualizar)
   async salvar(rascunho) {
     try {
-      console.log('Salvando rascunho...', rascunho.id ? `(ID: ${rascunho.id})` : '(novo)')
 
       if (rascunho.id) {
         return await this.atualizar(rascunho.id, rascunho)
@@ -142,9 +135,7 @@ const rascunhoService = {
 
   async adicionarItem(rascunhoId, item) {
     try {
-      console.log(`Adicionando item ao rascunho ${rascunhoId}...`)
-      const data = await api.post(`/api/rascunhos/${rascunhoId}/itens`, item)
-      console.log('Item adicionado')
+      const data = await api.post(`/api/v1/rascunhos/${rascunhoId}/itens`, item)
       return data
     } catch (error) {
       console.error('Erro ao adicionar item:', error.message)
@@ -154,9 +145,7 @@ const rascunhoService = {
 
   async atualizarItem(rascunhoId, itemId, item) {
     try {
-      console.log(`Atualizando item ${itemId} do rascunho ${rascunhoId}...`)
-      const data = await api.put(`/api/rascunhos/${rascunhoId}/itens/${itemId}`, item)
-      console.log('Item atualizado')
+      const data = await api.put(`/api/v1/rascunhos/${rascunhoId}/itens/${itemId}`, item)
       return data
     } catch (error) {
       console.error('Erro ao atualizar item:', error.message)
@@ -166,9 +155,7 @@ const rascunhoService = {
 
   async removerItem(rascunhoId, itemId) {
     try {
-      console.log(`Removendo item ${itemId} do rascunho ${rascunhoId}...`)
-      const data = await api.delete(`/api/rascunhos/${rascunhoId}/itens/${itemId}`)
-      console.log('Item removido')
+      const data = await api.delete(`/api/v1/rascunhos/${rascunhoId}/itens/${itemId}`)
       return data
     } catch (error) {
       console.error('Erro ao remover item:', error.message)
@@ -178,9 +165,7 @@ const rascunhoService = {
 
   async listarHistorico(rascunhoId) {
     try {
-      console.log(`Buscando histórico do rascunho ${rascunhoId}...`)
-      const data = await api.get(`/api/rascunhos/${rascunhoId}/historico`)
-      console.log('Histórico carregado:', data.length, 'registros')
+      const data = await api.get(`/api/v1/rascunhos/${rascunhoId}/historico`)
       return data
     } catch (error) {
       console.error('Erro ao listar histórico:', error.message)
@@ -190,9 +175,7 @@ const rascunhoService = {
 
   async atualizarStatus(rascunhoId, status) {
     try {
-      console.log(`Atualizando status do rascunho ${rascunhoId} para ${status}...`)
-      const data = await api.patch(`/api/rascunhos/${rascunhoId}/status?status=${status}`)
-      console.log('Status atualizado')
+      const data = await api.patch(`/api/v1/rascunhos/${rascunhoId}/status?status=${status}`)
       return data
     } catch (error) {
       console.error('Erro ao atualizar status:', error.message)

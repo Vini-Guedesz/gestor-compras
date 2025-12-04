@@ -9,19 +9,18 @@ export const authService = {
    */
   async login(email, senha) {
     try {
-      console.log('🔄 Tentando login no backend:', { email, backend: 'http://localhost:8081' })
 
       const response = await api.post('/auth/login', {
         email,
         senha // Backend espera 'senha', não 'password'
       })
 
-      console.log('✅ Login realizado com sucesso no backend')
 
       // Verifica se o backend retornou o token
       if (response && response.token) {
-        // Armazena o token no localStorage para futuras requisições
-        localStorage.setItem('authToken', response.token)
+        // Armazena o token no sessionStorage (mais seguro que localStorage)
+        // sessionStorage é limpo ao fechar a aba e não persiste entre abas
+        sessionStorage.setItem('authToken', response.token)
 
         return {
           success: true,
@@ -31,10 +30,9 @@ export const authService = {
         throw new Error('Resposta inválida do servidor - token não encontrado')
       }
     } catch (error) {
-      console.log('❌ Erro no login do backend:', error.message)
 
       // Remove token inválido se existir
-      localStorage.removeItem('authToken')
+      sessionStorage.removeItem('authToken')
 
       let errorMessage = 'Erro ao fazer login'
 
@@ -141,15 +139,15 @@ export const authService = {
    * Realiza o logout do usuário
    */
   logout() {
-    localStorage.removeItem('authToken')
+    sessionStorage.removeItem('authToken')
   },
 
   /**
-   * Obtém o token do localStorage
+   * Obtém o token do sessionStorage
    * @returns {string|null} Token JWT ou null se não existir
    */
   getToken() {
-    return localStorage.getItem('authToken')
+    return sessionStorage.getItem('authToken')
   },
 
   /**

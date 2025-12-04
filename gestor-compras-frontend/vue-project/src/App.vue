@@ -8,8 +8,34 @@
   - O ponto de montagem para as diferentes páginas/rotas
 -->
 <script setup>
-// Este componente não possui lógica JavaScript específica,
-// serve apenas como container principal
+import { onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from './stores/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+// Handler para o evento de logout emitido pelo interceptor da API
+const handleAuthLogout = () => {
+  // Limpa o estado de autenticação
+  authStore.logout()
+
+  // Redireciona para login apenas se não estiver já na página de login
+  // Usa replace em vez de push para não adicionar ao histórico
+  if (router.currentRoute.value.path !== '/login') {
+    router.replace('/login')
+  }
+}
+
+// Adiciona listener quando o componente é montado
+onMounted(() => {
+  window.addEventListener('auth:logout', handleAuthLogout)
+})
+
+// Remove listener quando o componente é desmontado
+onUnmounted(() => {
+  window.removeEventListener('auth:logout', handleAuthLogout)
+})
 </script>
 
 <template>

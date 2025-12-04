@@ -5,7 +5,7 @@
  *
  * Funcionalidades principais:
  * - Login/logout de usuários
- * - Persistência da sessão no localStorage
+ * - Persistência da sessão no sessionStorage (mais seguro que localStorage)
  * - Validação automática de tokens
  * - Recuperação de senha
  *
@@ -24,6 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)  // Indica se o usuário está autenticado
   const user = ref(null)              // Dados do usuário logado
   const token = ref(null)             // Token JWT para autorização
+  const authCheckInProgress = ref(false) // Flag para evitar checkAuth simultâneos
 
   /**
    * Realiza o login do usuário
@@ -67,7 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
    * Realiza o logout do usuário
    *
    * - Limpa todos os estados de autenticação
-   * - Remove dados do localStorage
+   * - Remove dados do sessionStorage
    */
   const logout = () => {
     // Limpa o estado da aplicação
@@ -88,7 +89,14 @@ export const useAuthStore = defineStore('auth', () => {
    * @returns {boolean} True se encontrou e validou uma sessão ativa
    */
   const checkAuth = async () => {
+    // Evita chamadas simultâneas ou duplicadas
+    if (authCheckInProgress.value) {
+      return isAuthenticated.value
+    }
+
     try {
+      authCheckInProgress.value = true
+
       // Verifica se existe token e se é válido usando o authService
       if (authService.isAuthenticated()) {
         const savedToken = authService.getToken()
@@ -112,6 +120,8 @@ export const useAuthStore = defineStore('auth', () => {
       console.error('Erro ao verificar autenticação:', error)
       logout()
       return false
+    } finally {
+      authCheckInProgress.value = false
     }
   }
 

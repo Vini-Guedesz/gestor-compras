@@ -6,6 +6,8 @@ import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.repository.SolicitacaoDePedidoRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,10 +28,9 @@ public class SolicitacaoDePedidoService {
         this.itemPedidoRepository = itemPedidoRepository;
     }
 
-    public List<SolicitacaoDePedidoDTO> getAllSolicitacoes() {
-        return solicitacaoDePedidoRepository.findAll().stream()
-                .map(solicitacaoDePedidoMapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<SolicitacaoDePedidoDTO> getAllSolicitacoes(Pageable pageable) {
+        return solicitacaoDePedidoRepository.findAll(pageable)
+                .map(solicitacaoDePedidoMapper::toDTO);
     }
 
     public SolicitacaoDePedidoDTO getSolicitacaoById(Long id) {
@@ -50,6 +51,11 @@ public class SolicitacaoDePedidoService {
 
     public SolicitacaoDePedidoDTO createSolicitacao(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
         SolicitacaoDePedido solicitacaoDePedido = solicitacaoDePedidoMapper.toEntity(solicitacaoDePedidoDTO);
+
+        // Validação: Pedido deve ter pelo menos um item
+        if (solicitacaoDePedido.getItens() == null || solicitacaoDePedido.getItens().isEmpty()) {
+            throw new IllegalArgumentException("Não é possível criar um pedido sem itens");
+        }
 
         // Associar os itens ao pedido antes de salvar
         if (solicitacaoDePedido.getItens() != null && !solicitacaoDePedido.getItens().isEmpty()) {

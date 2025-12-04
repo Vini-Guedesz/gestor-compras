@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.solicitacaodepedido.SolicitacaoDePedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.service.SolicitacaoDePedidoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,6 +9,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +19,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/solicitacoes-pedido")
-@Tag(name = "Solicitações de Pedido", description = "API para gerenciamento de solicitações de pedido")
+@RequestMapping(ApiVersionConfig.API_V1 + "/solicitacoes-pedido")
+@Tag(name = "Solicitações de Pedido", description = "API para gerenciamento de solicitações de pedido (v1)")
 @SecurityRequirement(name = "bearerAuth")
 public class SolicitacaoDePedidoController {
 
@@ -27,10 +31,11 @@ public class SolicitacaoDePedidoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar todas as solicitações de pedido", description = "Retorna uma lista com todas as solicitações de pedido cadastradas")
-    @ApiResponse(responseCode = "200", description = "Lista de solicitações retornada com sucesso")
-    public ResponseEntity<List<SolicitacaoDePedidoDTO>> getAllSolicitacoes() {
-        return ResponseEntity.ok(solicitacaoDePedidoService.getAllSolicitacoes());
+    @Operation(summary = "Listar todas as solicitações de pedido", description = "Retorna uma página com as solicitações de pedido cadastradas")
+    @ApiResponse(responseCode = "200", description = "Página de solicitações retornada com sucesso")
+    public ResponseEntity<Page<SolicitacaoDePedidoDTO>> getAllSolicitacoes(
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(solicitacaoDePedidoService.getAllSolicitacoes(pageable));
     }
 
     @GetMapping("/{id}")

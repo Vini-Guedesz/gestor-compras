@@ -13,21 +13,35 @@
 -->
 <template>
   <!-- Overlay do modal -->
-  <div v-if="show" class="modal-overlay" @click="handleCancel">
-    <div class="modal-container" @click.stop>
+  <div
+    v-if="show"
+    class="modal-overlay"
+    @click.self="handleCancel"
+    @keydown.esc="handleCancel"
+  >
+    <div
+      ref="modalRef"
+      class="modal-container"
+      @click.stop
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="titleId"
+      :aria-describedby="messageId"
+      tabindex="-1"
+    >
       <div class="modal-header">
-        <h3 class="modal-title">Confirmar Logout</h3>
+        <h3 :id="titleId" class="modal-title">Confirmar Logout</h3>
       </div>
 
       <div class="modal-body">
-        <div class="modal-icon">
+        <div class="modal-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="48" height="48">
             <path fill="#f59e0b" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-8h2v6h-2V9z"/>
           </svg>
         </div>
 
         <div class="modal-content">
-          <p class="modal-message">
+          <p :id="messageId" class="modal-message">
             Tem certeza que deseja sair da aplicação?
           </p>
           <p class="modal-submessage">
@@ -37,10 +51,20 @@
       </div>
 
       <div class="modal-footer">
-        <button class="modal-button cancel-button" @click="handleCancel">
+        <button
+          ref="cancelButtonRef"
+          class="modal-button cancel-button"
+          @click="handleCancel"
+          aria-label="Cancelar e permanecer logado"
+        >
           Cancelar
         </button>
-        <button class="modal-button confirm-button" @click="handleConfirm">
+        <button
+          ref="confirmButtonRef"
+          class="modal-button confirm-button"
+          @click="handleConfirm"
+          aria-label="Confirmar logout e sair do sistema"
+        >
           Sim, Sair
         </button>
       </div>
@@ -53,10 +77,19 @@
  * Modal de confirmação de logout
  *
  * Proporciona uma experiência mais profissional que o alert() nativo
+ *
+ * Acessibilidade:
+ * - role="dialog" e aria-modal="true" para identificar como modal
+ * - Focus trap para manter foco dentro do modal
+ * - ESC para fechar
+ * - Foco automático ao abrir
+ * - Retorno do foco ao elemento que abriu quando fecha
  */
+import { computed, ref, watch, nextTick } from 'vue'
+import { useModal } from '@/composables/useModal'
 
 // Props do componente
-defineProps({
+const props = defineProps({
   show: {
     type: Boolean,
     default: false,
@@ -66,6 +99,78 @@ defineProps({
 
 // Events emitidos pelo componente
 const emit = defineEmits(['confirm', 'cancel'])
+
+// Refs para elementos do modal
+const modalRef = ref(null)
+const confirmButtonRef = ref(null)
+const cancelButtonRef = ref(null)
+
+// IDs únicos para acessibilidade
+let idCounter = 0
+const titleId = `logout-modal-title-${++idCounter}`
+const messageId = `logout-modal-message-${idCounter}`
+
+// Elemento que tinha foco antes do modal abrir
+let previousActiveElement = null
+
+// Calcula se o modal está aberto
+const isOpen = computed(() => props.show)
+
+// Usa o composable para gerenciar o scroll
+useModal(isOpen)
+
+// Gerencia foco quando modal abre/fecha
+watch(isOpen, async (newValue) => {
+  if (newValue) {
+    // Guarda elemento que tinha foco
+    previousActiveElement = document.activeElement
+
+    // Aguarda próximo tick para garantir que modal foi renderizado
+    await nextTick()
+
+    // Foca no modal
+    if (modalRef.value) {
+      modalRef.value.focus()
+    }
+
+    // Adiciona listener para focus trap
+    document.addEventListener('keydown', handleFocusTrap)
+  } else {
+    // Remove listener
+    document.removeEventListener('keydown', handleFocusTrap)
+
+    // Retorna foco ao elemento anterior
+    if (previousActiveElement && previousActiveElement.focus) {
+      previousActiveElement.focus()
+    }
+  }
+})
+
+// Focus trap: mantém foco dentro do modal
+const handleFocusTrap = (e) => {
+  if (e.key !== 'Tab' || !modalRef.value) return
+
+  const focusableElements = modalRef.value.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )
+
+  const firstElement = focusableElements[0]
+  const lastElement = focusableElements[focusableElements.length - 1]
+
+  if (e.shiftKey) {
+    // Shift + Tab: se estiver no primeiro, vai para o último
+    if (document.activeElement === firstElement) {
+      e.preventDefault()
+      lastElement.focus()
+    }
+  } else {
+    // Tab: se estiver no último, vai para o primeiro
+    if (document.activeElement === lastElement) {
+      e.preventDefault()
+      firstElement.focus()
+    }
+  }
+}
 
 /**
  * Manipula a confirmação do logout
@@ -102,6 +207,8 @@ const handleCancel = () => {
   justify-content: center;
   z-index: 10000;
   animation: fadeIn 0.15s ease-out;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes fadeIn {
@@ -120,9 +227,10 @@ const handleCancel = () => {
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
   max-width: 400px;
   width: 90%;
-  max-height: 90vh;
-  overflow: hidden;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   animation: slideIn 0.2s ease-out;
+  margin: 20px;
 }
 
 @keyframes slideIn {

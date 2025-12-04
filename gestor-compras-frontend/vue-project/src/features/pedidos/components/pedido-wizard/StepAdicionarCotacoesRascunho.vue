@@ -111,6 +111,9 @@
               class="btn-pdf"
               :class="{ 'btn-pdf-active': pdfAberto === `${cotacao.id}-0` }"
             >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
               {{ pdfAberto === `${cotacao.id}-0` ? 'Fechar PDF' : 'Ver PDF' }}
             </button>
             <button
@@ -118,6 +121,9 @@
               class="btn-delete"
               :aria-label="`Remover cotação de ${cotacao.nomeFornecedor || 'Fornecedor'}`"
             >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+              </svg>
               Remover
             </button>
           </div>
@@ -176,6 +182,9 @@
               Cotado
             </span>
             <span v-else class="status-pendente">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
               Sem cotação
             </span>
           </div>
@@ -184,15 +193,16 @@
     </div>
 
     <!-- Modal de Nova Cotação -->
-    <div
-      v-if="showFormulario"
-      class="modal-overlay"
-      @click.self="fecharFormulario"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-titulo"
-    >
-      <div class="modal-cotacao" role="document">
+    <Teleport to="body">
+      <div
+        v-if="showFormulario"
+        class="modal-overlay"
+        @click.self="fecharFormulario"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-titulo"
+      >
+        <div class="modal-cotacao" role="document">
         <div class="modal-header">
           <h3 id="modal-titulo">Nova Cotação</h3>
           <button
@@ -212,6 +222,7 @@
                   <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                 </svg>
                 <input
+                  ref="fornecedorInput"
                   type="text"
                   v-model="buscaFornecedor"
                   @focus="showFornecedorDropdown = true"
@@ -223,11 +234,11 @@
                 <button
                   v-if="fornecedorSelecionado"
                   type="button"
-                  @click="limparFornecedor"
+                  @click.stop="limparFornecedor"
                   class="clear-selection-btn"
                   title="Limpar seleção"
                 >
-                  <svg viewBox="0 0 24 24" width="14" height="14">
+                  <svg viewBox="0 0 24 24" width="12" height="12">
                     <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
                   </svg>
                 </button>
@@ -325,7 +336,7 @@
                   >
                 </div>
                 <div class="checkbox-custom">
-                  <svg v-if="novaCotacao.itensRascunhoIds.includes(item.id)" viewBox="0 0 24 24" width="14" height="14">
+                  <svg v-if="novaCotacao.itensRascunhoIds.includes(item.id)" viewBox="0 0 24 24" width="16" height="16">
                     <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                   </svg>
                 </div>
@@ -445,12 +456,15 @@
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script>
-import { ref, computed, onBeforeUnmount } from 'vue'
+import { ref, computed, onBeforeUnmount, nextTick } from 'vue'
+import { useToast } from '@/composables/useToast.js'
+import { useModal } from '@/composables/useModal.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import relatorioService from '@/services/relatorioService.js'
 
@@ -476,13 +490,19 @@ export default {
   },
   emits: ['save-cotacao', 'delete-cotacao', 'view-pdf'],
   setup(props, { emit }) {
+    const { success, error: showError, warning } = useToast()
     const showFormulario = ref(false)
+
+    // Bloqueia scroll do body quando modal está aberto
+    useModal(showFormulario)
+
     const salvando = ref(false)
     const gerandoRelatorio = ref(false)
     const fornecedorSelecionado = ref('')
     const arquivosPdf = ref([])
     const precoFormatado = ref('')
     const fileInput = ref(null)
+    const fornecedorInput = ref(null)
     const buscaFornecedor = ref('')
     const showFornecedorDropdown = ref(false)
     const fornecedorSelecionadoNome = ref('')
@@ -587,6 +607,14 @@ export default {
       novaCotacao.value.tipoFornecedor = ''
       novaCotacao.value.fornecedorId = null
       buscaFornecedor.value = ''
+      showFornecedorDropdown.value = false
+
+      // Remove foco do input para atualizar o placeholder
+      nextTick(() => {
+        if (fornecedorInput.value) {
+          fornecedorInput.value.blur()
+        }
+      })
     }
 
     const fornecedoresProduto = computed(() =>
@@ -654,13 +682,12 @@ export default {
 
     const gerarRelatorio = async () => {
       if (!props.rascunho?.id) {
-        alert('Erro: Rascunho não encontrado')
+        showError('Erro: Rascunho não encontrado')
         return
       }
 
       try {
         gerandoRelatorio.value = true
-        console.log('📄 Gerando relatório para o rascunho:', props.rascunho.id)
 
         // Gera relatório com todos os itens do rascunho
         await relatorioService.visualizarRelatorioItensParaCotacaoRascunho(
@@ -668,10 +695,9 @@ export default {
           [] // Array vazio = todos os itens
         )
 
-        console.log('✅ Relatório gerado com sucesso!')
       } catch (error) {
         console.error('❌ Erro ao gerar relatório:', error)
-        alert('Erro ao gerar relatório. Tente novamente.')
+        showError('Erro ao gerar relatório. Tente novamente.')
       } finally {
         gerandoRelatorio.value = false
       }
@@ -723,19 +749,19 @@ export default {
         Array.from(files).forEach(file => {
           // Validar tipo de arquivo
           if (file.type !== 'application/pdf') {
-            alert(`Arquivo "${file.name}" não é um PDF válido. Apenas arquivos PDF são permitidos.`)
+            warning(`Arquivo "${file.name}" não é um PDF válido. Apenas arquivos PDF são permitidos.`)
             return
           }
 
           // Validar tamanho individual
           if (file.size > MAX_FILE_SIZE) {
-            alert(`Arquivo "${file.name}" excede o limite de 5MB. Tamanho: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+            warning(`Arquivo "${file.name}" excede o limite de 5MB. Tamanho: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
             return
           }
 
           // Validar tamanho total
           if (tamanhoAtual + file.size > MAX_TOTAL_SIZE) {
-            alert(`Limite total de 20MB excedido. Remova alguns arquivos antes de adicionar novos.`)
+            warning(`Limite total de 20MB excedido. Remova alguns arquivos antes de adicionar novos.`)
             return
           }
 
@@ -827,7 +853,16 @@ export default {
         }
       } catch (error) {
         console.error('Erro ao carregar PDF:', error)
-        erroPdf.value = error.message || 'Erro ao carregar PDF'
+
+        // Mensagem mais amigável para erro 404
+        if (error.message.includes('404')) {
+          erroPdf.value = 'PDF não encontrado. A cotação pode não ter um anexo salvo.'
+        } else {
+          erroPdf.value = error.message || 'Erro ao carregar PDF'
+        }
+
+        // Fechar o visualizador em caso de erro
+        pdfAberto.value = null
       } finally {
         carregandoPdf.value = false
       }
@@ -881,6 +916,7 @@ export default {
       removerPdfIndividual,
       limparTodosPdfs,
       fileInput,
+      fornecedorInput,
       // Busca e seleção de fornecedor
       buscaFornecedor,
       showFornecedorDropdown,
@@ -908,18 +944,20 @@ export default {
 
 /* Info Box */
 .rascunho-info-box {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .info-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e40af;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #1F285F;
   margin: 0 0 12px 0;
+  letter-spacing: -0.01em;
 }
 
 .info-grid {
@@ -958,10 +996,11 @@ export default {
 }
 
 .section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
 }
 
 .btn-relatorio {
@@ -1046,8 +1085,10 @@ export default {
 
 .cotacao-fornecedor strong {
   display: block;
-  font-size: 0.875rem;
-  color: #1e293b;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
 }
 
 .cotacao-tipo {
@@ -1108,23 +1149,40 @@ export default {
 }
 
 .btn-pdf, .btn-delete {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.75rem;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
   cursor: pointer;
-  border: 1px solid;
+  border: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn-pdf {
-  background: #f0f9ff;
-  color: #0369a1;
-  border-color: #bae6fd;
+  background: #1F285F;
+  color: white;
+  box-shadow: 0 1px 3px rgba(31, 40, 95, 0.3);
+}
+
+.btn-pdf:hover {
+  background: #2d3a7f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(31, 40, 95, 0.4);
 }
 
 .btn-delete {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fecaca;
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
 }
 
 /* Empty State */
@@ -1169,9 +1227,11 @@ export default {
 /* Itens Resumo */
 .itens-resumo {
   background: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .itens-lista {
@@ -1186,9 +1246,15 @@ export default {
   justify-content: space-between;
   align-items: center;
   background: white;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.item-resumo:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .item-resumo.item-cotado {
@@ -1216,15 +1282,25 @@ export default {
 .status-cotado {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   color: #059669;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
+  padding: 4px 10px;
+  background: #d1fae5;
+  border-radius: 12px;
 }
 
 .status-pendente {
-  color: #f59e0b;
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #d97706;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  background: #fed7aa;
+  border-radius: 12px;
 }
 
 /* Modal */
@@ -1234,11 +1310,15 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1200;
+  z-index: 9998; /* Aumentado para cobrir toda a tela, mas abaixo dos toasts (9999) */
+  overflow-y: auto; /* Permite scroll no modal se necessário */
 }
 
 .modal-cotacao {
@@ -1270,6 +1350,26 @@ export default {
   font-size: 1.5rem;
   color: #6b7280;
   cursor: pointer;
+  outline: none;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-close:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #e5e7eb;
 }
 
 .modal-body {
@@ -1329,8 +1429,8 @@ export default {
 .checkbox-item-styled {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 8px 10px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: normal;
@@ -1345,7 +1445,7 @@ export default {
 }
 
 .checkbox-item-styled:hover {
-  border-color: #3b82f6;
+  border-color: #1F285F;
 }
 
 .checkbox-item-styled.selected {
@@ -1369,8 +1469,10 @@ export default {
 }
 
 .checkbox-custom {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
   border: 2px solid #d1d5db;
   border-radius: 4px;
   display: flex;
@@ -1477,9 +1579,9 @@ export default {
 }
 
 .pdf-upload-label:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  color: #3b82f6;
+  border-color: #1F285F;
+  background: #f9fafb;
+  color: #1F285F;
 }
 
 .arquivo-selecionado {
@@ -1625,8 +1727,8 @@ export default {
 
 .autocomplete-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #1F285F;
+  box-shadow: 0 0 0 3px rgba(31, 40, 95, 0.1);
 }
 
 .autocomplete-input.has-selection {
@@ -1641,22 +1743,23 @@ export default {
 .clear-selection-btn {
   position: absolute;
   right: 36px;
-  width: 24px;
-  height: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
   border: none;
-  border-radius: 50%;
-  background: #fee2e2;
-  color: #dc2626;
+  color: #9ca3af;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
+  padding: 4px;
+  line-height: 0;
+  transition: color 0.2s;
 }
 
 .clear-selection-btn:hover {
-  background: #dc2626;
-  color: white;
+  color: #dc2626;
+}
+
+.clear-selection-btn:focus {
+  outline: none;
 }
 
 .dropdown-toggle-btn {

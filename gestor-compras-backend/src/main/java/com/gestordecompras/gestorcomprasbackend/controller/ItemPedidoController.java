@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.itempedido.ItemPedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.service.ItemPedidoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,8 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/itens-pedido")
-@Tag(name = "Itens de Pedido", description = "API para gerenciamento de itens de pedido")
+@RequestMapping(ApiVersionConfig.API_V1 + "/itens-pedido")
+@Tag(name = "Itens de Pedido", description = "API para gerenciamento de itens de pedido (v1)")
 @SecurityRequirement(name = "bearerAuth")
 public class ItemPedidoController {
 

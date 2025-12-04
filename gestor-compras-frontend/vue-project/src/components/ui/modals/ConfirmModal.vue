@@ -1,12 +1,26 @@
 <template>
-  <div v-if="show || isVisible" class="modal-overlay">
-    <div class="modal-container" :class="type">
+  <div
+    v-if="show || isVisible"
+    class="modal-overlay"
+    @click.self="handleCancel"
+    @keydown.esc="handleCancel"
+  >
+    <div
+      ref="modalRef"
+      class="modal-container"
+      :class="type"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="titleId"
+      :aria-describedby="messageId"
+      tabindex="-1"
+    >
       <div class="modal-header">
-        <h3 class="modal-title">{{ title }}</h3>
+        <h3 :id="titleId" class="modal-title">{{ title }}</h3>
       </div>
 
       <div class="modal-body">
-        <div class="modal-icon">
+        <div class="modal-icon" aria-hidden="true">
           <svg v-if="type === 'danger'" viewBox="0 0 24 24" width="48" height="48">
             <path fill="#f59e0b" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-8h2v6h-2V9z"/>
           </svg>
@@ -16,16 +30,27 @@
         </div>
 
         <div class="modal-content">
-          <p class="modal-message">{{ message }}</p>
+          <p :id="messageId" class="modal-message">{{ message }}</p>
           <p v-if="details" class="modal-details">{{ details }}</p>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="modal-button cancel-button" @click="handleCancel">
+        <button
+          ref="cancelButtonRef"
+          class="modal-button cancel-button"
+          @click="handleCancel"
+          aria-label="Cancelar ação"
+        >
           {{ cancelText || 'Cancelar' }}
         </button>
-        <button class="modal-button confirm-button" :class="type" @click="handleConfirm">
+        <button
+          ref="confirmButtonRef"
+          class="modal-button confirm-button"
+          :class="type"
+          @click="handleConfirm"
+          :aria-label="`Confirmar: ${message}`"
+        >
           {{ confirmText || 'Confirmar' }}
         </button>
       </div>
@@ -39,9 +64,18 @@
  *
  * Usado para confirmação de ações importantes como exclusão,
  * cancelamento, etc.
+ *
+ * Acessibilidade:
+ * - role="dialog" e aria-modal="true" para identificar como modal
+ * - Focus trap para manter foco dentro do modal
+ * - ESC para fechar
+ * - Foco automático ao abrir
+ * - Retorno do foco ao elemento que abriu quando fecha
  */
+import { computed, ref, watch, nextTick, onMounted } from 'vue'
+import { useModal } from '@/composables/useModal'
 
-defineProps({
+const props = defineProps({
   // Controla a visibilidade do modal (duas formas de controlar)
   show: {
     type: Boolean,
@@ -85,6 +119,78 @@ defineProps({
 
 const emit = defineEmits(['confirm', 'cancel'])
 
+// Refs para elementos do modal
+const modalRef = ref(null)
+const confirmButtonRef = ref(null)
+const cancelButtonRef = ref(null)
+
+// IDs únicos para acessibilidade
+let idCounter = 0
+const titleId = `modal-title-${++idCounter}`
+const messageId = `modal-message-${idCounter}`
+
+// Elemento que tinha foco antes do modal abrir
+let previousActiveElement = null
+
+// Calcula se o modal está aberto
+const isOpen = computed(() => props.show || props.isVisible)
+
+// Usa o composable para gerenciar o scroll
+useModal(isOpen)
+
+// Gerencia foco quando modal abre/fecha
+watch(isOpen, async (newValue) => {
+  if (newValue) {
+    // Guarda elemento que tinha foco
+    previousActiveElement = document.activeElement
+
+    // Aguarda próximo tick para garantir que modal foi renderizado
+    await nextTick()
+
+    // Foca no modal
+    if (modalRef.value) {
+      modalRef.value.focus()
+    }
+
+    // Adiciona listener para focus trap
+    document.addEventListener('keydown', handleFocusTrap)
+  } else {
+    // Remove listener
+    document.removeEventListener('keydown', handleFocusTrap)
+
+    // Retorna foco ao elemento anterior
+    if (previousActiveElement && previousActiveElement.focus) {
+      previousActiveElement.focus()
+    }
+  }
+})
+
+// Focus trap: mantém foco dentro do modal
+const handleFocusTrap = (e) => {
+  if (e.key !== 'Tab' || !modalRef.value) return
+
+  const focusableElements = modalRef.value.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )
+
+  const firstElement = focusableElements[0]
+  const lastElement = focusableElements[focusableElements.length - 1]
+
+  if (e.shiftKey) {
+    // Shift + Tab: se estiver no primeiro, vai para o último
+    if (document.activeElement === firstElement) {
+      e.preventDefault()
+      lastElement.focus()
+    }
+  } else {
+    // Tab: se estiver no último, vai para o primeiro
+    if (document.activeElement === lastElement) {
+      e.preventDefault()
+      firstElement.focus()
+    }
+  }
+}
+
 // Manipula a ação de confirmar
 const handleConfirm = () => {
   emit('confirm')
@@ -108,6 +214,8 @@ const handleCancel = () => {
   align-items: center;
   justify-content: center;
   z-index: 1500;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-container {
@@ -119,6 +227,9 @@ const handleCancel = () => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  margin: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
 /* Cabeçalho do modal */

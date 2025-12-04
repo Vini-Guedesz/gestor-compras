@@ -8,16 +8,26 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <button @click="voltarParaLista" class="btn-voltar">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+          Voltar
+        </button>
+        <span class="breadcrumb-separator">|</span>
+        <router-link to="/cotacoes" class="breadcrumb-link">
+          Cotações
+        </router-link>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">{{ modoEdicao ? 'Editar Cotação' : 'Nova Cotação' }}</span>
+      </div>
+
       <!-- Header do formulário -->
       <div class="welcome-section">
         <div class="welcome-header">
           <div class="welcome-content">
-            <button @click="voltarParaLista" class="btn-voltar">
-              <svg class="icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M15 18l-6-6 6-6"/>
-              </svg>
-              Voltar
-            </button>
             <div class="titulo-form">
               <h1 class="welcome-title">{{ modoEdicao ? 'Editar Cotação' : 'Nova Cotação' }} 📋</h1>
               <p class="welcome-subtitle" v-if="modoEdicao">
@@ -348,6 +358,66 @@ onMounted(() => {
 /* Importar layout global */
 @import '../assets/css/layout.css';
 
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.btn-voltar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-voltar:hover {
+  background: #e5e7eb;
+}
+
+.breadcrumb-link {
+  color: #1F285F;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  color: #d1d5db;
+  user-select: none;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.breadcrumb-current {
+  color: #6b7280;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 /* Welcome Section personalizada para formulário */
 .welcome-section {
   margin-bottom: 32px;
@@ -379,27 +449,6 @@ onMounted(() => {
   color: #6b7280;
   margin: 0;
   line-height: 1.5;
-}
-
-.btn-voltar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  padding: 12px 16px;
-  border-radius: 8px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-
-.btn-voltar:hover {
-  background: #f9fafb;
-  color: #374151;
-  border-color: #9ca3af;
 }
 
 /* Seção de progresso */
@@ -456,9 +505,9 @@ onMounted(() => {
 }
 
 .step.active .step-number {
-  background: #3b82f6;
+  background: #1F285F;
   color: white;
-  border: 2px solid #3b82f6;
+  border: 2px solid #1F285F;
 }
 
 .step.completed .step-number {
@@ -493,7 +542,7 @@ onMounted(() => {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #10b981);
+  background: linear-gradient(90deg, #1F285F, #10b981);
   border-radius: 2px;
   transition: width 0.3s ease;
 }
@@ -569,8 +618,8 @@ onMounted(() => {
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #1F285F;
+  box-shadow: 0 0 0 3px rgba(31, 40, 95, 0.1);
 }
 
 .form-input.error,
@@ -630,13 +679,13 @@ onMounted(() => {
 
 .btn-proximo,
 .btn-salvar {
-  background: #3b82f6;
+  background: #1F285F;
   color: white;
 }
 
 .btn-proximo:hover,
 .btn-salvar:hover {
-  background: #2563eb;
+  background: #2d3a7f;
 }
 
 .btn-anterior:disabled,
@@ -668,7 +717,7 @@ onMounted(() => {
   width: 48px;
   height: 48px;
   border: 4px solid #e5e7eb;
-  border-top: 4px solid #3b82f6;
+  border-top: 4px solid #1F285F;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 16px;

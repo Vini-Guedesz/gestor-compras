@@ -124,8 +124,9 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // Verificar se há dados de autenticação salvos no localStorage
+  // Verificar se há dados de autenticação salvos no sessionStorage
   // Importante fazer isso antes de verificar as proteções de rota
+  // O próprio checkAuth() agora previne chamadas duplicadas com sua flag interna
   if (!authStore.isAuthenticated) {
     await authStore.checkAuth()
   }
@@ -133,12 +134,22 @@ router.beforeEach(async (to, from, next) => {
   // Proteção para rotas que requerem autenticação
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     // Usuário não autenticado tentando acessar rota protegida
-    next('/login')
+    // Evita loop: só redireciona se não estiver indo para login
+    if (to.path !== '/login') {
+      next('/login')
+    } else {
+      next()
+    }
   }
   // Proteção para rotas que são apenas para visitantes (ex: login)
   else if (to.meta.requiresGuest && authStore.isAuthenticated) {
     // Usuário já autenticado tentando acessar página de login
-    next('/dashboard')
+    // Evita loop: só redireciona se não estiver indo para dashboard
+    if (to.path !== '/dashboard') {
+      next('/dashboard')
+    } else {
+      next()
+    }
   }
   // Caso contrário, permite a navegação
   else {

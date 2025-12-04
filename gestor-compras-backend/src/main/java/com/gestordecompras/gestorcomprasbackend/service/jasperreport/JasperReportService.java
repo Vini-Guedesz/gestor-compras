@@ -28,10 +28,14 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 public class JasperReportService {
+
+    // Cache para templates compilados (melhoria de performance)
+    private final Map<String, JasperReport> templateCache = new ConcurrentHashMap<>();
 
     private final FornecedorDeProdutoService fornecedorDeProdutoService;
     private final ItemPedidoService itemPedidoService;
@@ -60,15 +64,39 @@ public class JasperReportService {
         this.rascunhoRepository = rascunhoRepository;
     }
 
+    /**
+     * Obtém um JasperReport compilado do cache ou compila e cacheia se necessário
+     *
+     * @param templatePath Caminho do template .jrxml no classpath
+     * @return JasperReport compilado
+     * @throws JRException Se houver erro na compilação
+     */
+    private JasperReport getOrCompileTemplate(String templatePath) throws JRException {
+        return templateCache.computeIfAbsent(templatePath, path -> {
+            try {
+                InputStream inputStream = getClass().getResourceAsStream(path);
+                if (inputStream == null) {
+                    throw new JRException("Arquivo de relatório não encontrado em " + path);
+                }
+                return JasperCompileManager.compileReport(inputStream);
+            } catch (JRException e) {
+                throw new RuntimeException("Erro ao compilar template: " + path, e);
+            }
+        });
+    }
+
+    /**
+     * Limpa o cache de templates compilados
+     * Útil para recarregar templates após atualizações
+     */
+    public void clearTemplateCache() {
+        templateCache.clear();
+    }
+
     public byte[] gerarRelatorioFornecedores() throws JRException {
         List<FornecedorDeProduto> fornecedores = fornecedorDeProdutoService.getAllFornecedoresDeProdutoEntities();
 
-        InputStream inputStream = getClass().getResourceAsStream("/relatorios/fornecedores.jrxml");
-        if (inputStream == null) {
-            throw new JRException("Arquivo de relatório não encontrado em /relatorios/fornecedores.jrxml");
-        }
-
-        JasperReport jasperReport = JasperCompileManager.compileReport(inputStream);
+        JasperReport jasperReport = getOrCompileTemplate("/relatorios/fornecedores.jrxml");
         JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(fornecedores);
 
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(), dataSource);
@@ -82,12 +110,7 @@ public class JasperReportService {
     public byte[] gerarRelatorioItensPedido() throws JRException {
         List<ItemPedido> itens = itemPedidoService.getAllItensEntities();
 
-        InputStream inputStream = getClass().getResourceAsStream("/relatorios/items_produtos.jrxml");
-        if (inputStream == null) {
-            throw new JRException("Arquivo de relatório não encontrado em /relatorios/items_produtos.jrxml");
-        }
-
-        JasperReport jasperReport = JasperCompileManager.compileReport(inputStream);
+        JasperReport jasperReport = getOrCompileTemplate("/relatorios/items_produtos.jrxml");
         JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(itens);
 
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, new HashMap<>(), dataSource);
@@ -243,10 +266,10 @@ public class JasperReportService {
 
         long totalCotacoes = cotacaoRepository.count();
 
-        BigDecimal valorTotalEstimado = cotacaoRepository.sumTotalPreco();
-        if (valorTotalEstimado == null) {
-            valorTotalEstimado = BigDecimal.ZERO;
-        }
+        // Após refatoração Bug #5: calcular soma dos preços manualmente
+        BigDecimal valorTotalEstimado = cotacaoRepository.findAll().stream()
+                .map(Cotacao::getPreco)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // NOTA: Este cálculo divide o valor total de TODAS as cotações pelo número de solicitações.
         // Se uma solicitação tiver múltiplas cotações para o mesmo item, isso pode gerar valores incorretos.
@@ -313,8 +336,9 @@ public class JasperReportService {
             String itemNome = "";
             String itemDescricao = "";
 
-            if (cotacao.getItensPedido() != null && !cotacao.getItensPedido().isEmpty()) {
-                var primeiroItem = cotacao.getItensPedido().iterator().next();
+            if (cotacao.getItens() != null && !cotacao.getItens().isEmpty()) {
+                var primeiroCotacaoItem = cotacao.getItens().get(0);
+                var primeiroItem = primeiroCotacaoItem.getItemPedido();
                 itemId = primeiroItem.getId();
                 itemNome = primeiroItem.getNome();
                 itemDescricao = primeiroItem.getDescricao();

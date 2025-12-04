@@ -100,6 +100,11 @@ const metricas = ref({
   fornecedores: { ativos: 0, novos: 0 }
 })
 
+// Flag para evitar múltiplas chamadas simultâneas
+const isLoadingMetricas = ref(false)
+const lastLoadTime = ref(0)
+const COOLDOWN_MS = 2000 // Mínimo 2 segundos entre chamadas
+
 const userName = computed(() => {
   return authStore.user?.name || 'Usuário'
 })
@@ -111,8 +116,25 @@ const getWelcomeMessage = () => {
 
 // Carregar métricas reais do backend
 const carregarMetricas = async () => {
+  const now = Date.now()
+
+  // Evitar chamadas muito frequentes (cooldown de 2 segundos)
+  if (now - lastLoadTime.value < COOLDOWN_MS) {
+    console.log('⏸️ Carregamento de métricas em cooldown, ignorando...')
+    return
+  }
+
+  // Evitar chamadas simultâneas
+  if (isLoadingMetricas.value) {
+    console.log('⏸️ Já está carregando métricas, ignorando...')
+    return
+  }
+
+  lastLoadTime.value = now
+  isLoadingMetricas.value = true
+  console.log('📊 Iniciando carregamento de métricas...')
+
   try {
-    console.log('🔄 Carregando métricas do dashboard...')
 
     // Carregar pedidos
     try {
@@ -122,7 +144,6 @@ const carregarMetricas = async () => {
         metricas.value.pedidos.pendentes = pedidos.filter(p =>
           p.status === 'PENDENTE' || p.status === 'EM_ANALISE'
         ).length
-        console.log('✅ Pedidos carregados:', metricas.value.pedidos)
       }
     } catch (error) {
       console.error('❌ Erro ao carregar pedidos:', error)
@@ -144,12 +165,6 @@ const carregarMetricas = async () => {
         const quantidadeNovos = Math.ceil(totalFornecedores * percentualNovos)
         metricas.value.fornecedores.novos = Math.min(quantidadeNovos, totalFornecedores)
 
-        console.log('✅ Fornecedores carregados:', {
-          total: todosFornecedores.length,
-          produtos: todosFornecedores.filter(f => f.inscricaoEstadual).length,
-          servicos: todosFornecedores.filter(f => f.inscricaoMunicipal).length,
-          novosEstimados: metricas.value.fornecedores.novos
-        })
       }
     } catch (error) {
       console.error('❌ Erro ao carregar fornecedores:', error)
@@ -175,20 +190,15 @@ const carregarMetricas = async () => {
           return false
         }).length
 
-        console.log('✅ Cotações carregadas:', {
-          total: cotacoes.length,
-          recentes: metricas.value.cotacoes.emAnalise,
-          comPreco: cotacoes.filter(c => c.preco).length,
-          comPrazo: cotacoes.filter(c => c.prazoEntrega).length
-        })
       }
     } catch (error) {
       console.error('❌ Erro ao carregar cotações:', error)
     }
 
-    console.log('📊 Métricas finais do dashboard:', metricas.value)
   } catch (error) {
     console.error('❌ Erro geral ao carregar métricas do dashboard:', error)
+  } finally {
+    isLoadingMetricas.value = false
   }
 }
 
@@ -197,7 +207,6 @@ onMounted(() => {
 })
 
 const handleQuickAction = (action) => {
-  console.log('Ação rápida:', action)
 
   // Navegar para a rota correspondente com query param para abrir modal
   if (action.route) {
@@ -209,14 +218,12 @@ const handleQuickAction = (action) => {
 }
 
 const navigateTo = (path) => {
-  console.log('Navegando para:', path)
   // Navegar para as rotas implementadas
   const rotasImplementadas = ['/pedidos', '/cotacoes', '/fornecedores']
 
   if (rotasImplementadas.includes(path)) {
     router.push(path)
   } else {
-    console.log('Rota ainda não implementada:', path)
   }
 }
 </script>

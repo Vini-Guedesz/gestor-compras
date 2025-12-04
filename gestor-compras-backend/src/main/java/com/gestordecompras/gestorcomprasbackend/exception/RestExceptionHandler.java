@@ -1,10 +1,14 @@
 package com.gestordecompras.gestorcomprasbackend.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.ConstraintViolationException;
 import net.sf.jasperreports.engine.JRException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -25,6 +29,8 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(RestExceptionHandler.class);
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
@@ -198,6 +204,34 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         body.put("path", request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Object> handleSecurityException(SecurityException ex, WebRequest request) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.FORBIDDEN.value());
+        body.put("error", "Acesso Negado");
+        body.put("message", ex.getMessage());
+        body.put("path", request.getDescription(false).replace("uri=", ""));
+
+        logger.warn("Tentativa de acesso não autorizado: {}", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler({OptimisticLockingFailureException.class, OptimisticLockException.class})
+    public ResponseEntity<Object> handleOptimisticLocking(Exception ex, WebRequest request) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", "Conflito de Atualização");
+        body.put("message", "Este registro foi modificado por outro usuário. Por favor, recarregue e tente novamente.");
+        body.put("path", request.getDescription(false).replace("uri=", ""));
+
+        logger.warn("Conflito de concorrência otimista: {}", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)

@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeServicoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeServicoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeServicoUpdateDTO;
@@ -10,6 +11,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -18,8 +22,8 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/fornecedores-de-servico")
-@Tag(name = "Fornecedores de Serviço", description = "API para gerenciamento de fornecedores de serviço")
+@RequestMapping(ApiVersionConfig.API_V1 + "/fornecedores-de-servico")
+@Tag(name = "Fornecedores de Serviço", description = "API para gerenciamento de fornecedores de serviço (v1)")
 @SecurityRequirement(name = "bearerAuth")
 public class FornecedorDeServicoController {
 
@@ -32,8 +36,8 @@ public class FornecedorDeServicoController {
     @GetMapping
     @Operation(summary = "Listar todos os fornecedores de serviço", description = "Retorna uma lista com todos os fornecedores de serviço cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de fornecedores de serviço retornada com sucesso")
-    public ResponseEntity<List<FornecedorDeServicoDTO>> findAll() {
-        List<FornecedorDeServicoDTO> fornecedores = service.getAllFornecedoresDeServico();
+    public ResponseEntity<Page<FornecedorDeServicoDTO>> findAll(@PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        Page<FornecedorDeServicoDTO> fornecedores = service.getAllFornecedoresDeServico(pageable);
         return ResponseEntity.ok(fornecedores);
     }
 
@@ -56,7 +60,7 @@ public class FornecedorDeServicoController {
     })
     public ResponseEntity<FornecedorDeServicoDTO> create(@RequestBody @Valid FornecedorDeServicoCreateDTO dto, UriComponentsBuilder uriBuilder) {
         FornecedorDeServicoDTO createdFornecedor = service.createFornecedorDeServico(dto);
-        URI uri = uriBuilder.path("/api/fornecedores-de-servico/{id}").buildAndExpand(createdFornecedor.id()).toUri();
+        URI uri = uriBuilder.path(ApiVersionConfig.API_V1 + "/fornecedores-de-servico/{id}").buildAndExpand(createdFornecedor.id()).toUri();
         return ResponseEntity.created(uri).body(createdFornecedor);
     }
 

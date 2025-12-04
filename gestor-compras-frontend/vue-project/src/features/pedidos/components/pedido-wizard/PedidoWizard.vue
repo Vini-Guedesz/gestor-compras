@@ -114,6 +114,7 @@
 
 <script>
 import { ref, watch } from 'vue'
+import { useToast } from '@/composables/useToast.js'
 import pedidoService from '@/services/pedidoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoService from '@/services/cotacaoService.js'
@@ -144,6 +145,7 @@ export default {
   },
   emits: ['close', 'save'],
   setup(props, { emit }) {
+    const { success, error: showError, warning } = useToast()
     const currentPage = ref(1)
     const isLoading = ref(false)
     const hasUnsavedChanges = ref(false)
@@ -213,7 +215,7 @@ export default {
 
     const irParaPagina2 = async () => {
       if (!page1Valid.value) {
-        alert('Por favor, preencha todos os campos obrigatórios.')
+        warning('Por favor, preencha todos os campos obrigatórios.')
         return
       }
 
@@ -246,7 +248,7 @@ export default {
         proximaPagina()
       } catch (error) {
         console.error('Erro ao salvar pedido:', error)
-        alert('Erro ao salvar pedido. Tente novamente.')
+        showError('Erro ao salvar pedido. Tente novamente.')
       } finally {
         isLoading.value = false
       }
@@ -261,7 +263,7 @@ export default {
 
     const salvarCotacoes = async () => {
       if (!page3Valid.value) {
-        alert('Por favor, preencha todas as cotações corretamente.')
+        warning('Por favor, preencha todas as cotações corretamente.')
         return
       }
 
@@ -280,14 +282,14 @@ export default {
           await cotacaoService.salvar(dadosCotacao)
         }
 
-        alert('Cotações salvas com sucesso!')
+        success('Cotações salvas com sucesso!')
         await carregarCotacoesDoPedido()
         wizardData.value.cotacoes = []
         wizardData.value.itemAtual = null
         voltarPagina()
       } catch (error) {
         console.error('Erro ao salvar cotações:', error)
-        alert('Erro ao salvar cotações. Tente novamente.')
+        showError('Erro ao salvar cotações. Tente novamente.')
       } finally {
         isLoading.value = false
       }
@@ -412,7 +414,6 @@ export default {
     }
 
     const visualizarPdf = (cotacao) => {
-      console.log('Visualizar PDF da cotação:', cotacao)
     }
 
     watch(() => props.isVisible, (newVal) => {

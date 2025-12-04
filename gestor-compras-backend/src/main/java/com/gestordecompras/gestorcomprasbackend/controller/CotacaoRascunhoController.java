@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.rascunho.CotacaoRascunhoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.rascunho.CotacaoRascunhoDTO;
 import com.gestordecompras.gestorcomprasbackend.service.CotacaoRascunhoService;
@@ -22,8 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/rascunhos/{rascunhoId}/cotacoes")
-@Tag(name = "Cotações de Rascunho", description = "API para gerenciamento de cotações em rascunhos de pedidos")
+@RequestMapping(ApiVersionConfig.API_V1 + "/rascunhos/{rascunhoId}/cotacoes")
+@Tag(name = "Cotações de Rascunho", description = "API para gerenciamento de cotações em rascunhos de pedidos (v1)")
 @SecurityRequirement(name = "bearerAuth")
 public class CotacaoRascunhoController {
 

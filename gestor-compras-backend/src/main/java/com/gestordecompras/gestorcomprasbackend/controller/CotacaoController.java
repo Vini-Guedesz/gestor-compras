@@ -1,8 +1,11 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoDTO;
+import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoEditDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoUpdateDTO;
+import com.gestordecompras.gestorcomprasbackend.dto.cotacao.HistoricoCotacaoDTO;
 import com.gestordecompras.gestorcomprasbackend.service.CotacaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,6 +13,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,8 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cotacoes")
-@Tag(name = "Cotações", description = "API para gerenciamento de cotações de fornecedores")
+@RequestMapping(ApiVersionConfig.API_V1 + "/cotacoes")
+@Tag(name = "Cotações", description = "API para gerenciamento de cotações de fornecedores (v1)")
 @SecurityRequirement(name = "bearerAuth")
 public class CotacaoController {
 
@@ -33,8 +39,8 @@ public class CotacaoController {
     @GetMapping
     @Operation(summary = "Listar todas as cotações", description = "Retorna uma lista com todas as cotações cadastradas")
     @ApiResponse(responseCode = "200", description = "Lista de cotações retornada com sucesso")
-    public ResponseEntity<List<CotacaoDTO>> getAllCotacoes() {
-        return ResponseEntity.ok(cotacaoService.getAllCotacoes());
+    public ResponseEntity<Page<CotacaoDTO>> getAllCotacoes(@PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(cotacaoService.getAllCotacoes(pageable));
     }
 
     @GetMapping("/{id}")
@@ -121,5 +127,78 @@ public class CotacaoController {
             @PathVariable Long cotacaoId,
             @RequestBody List<Long> itensPedidoIds) {
         return ResponseEntity.ok(cotacaoService.vincularItens(cotacaoId, itensPedidoIds));
+    }
+
+    @PutMapping("/{id}/editar")
+    @Operation(
+            summary = "Editar cotação com auditoria",
+            description = "Edita uma cotação existente criando um registro de histórico para auditoria. " +
+                    "Requer motivo da edição e registra quem editou."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cotação editada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos"),
+            @ApiResponse(responseCode = "404", description = "Cotação não encontrada")
+    })
+    public ResponseEntity<CotacaoDTO> editarCotacao(@PathVariable Long id, @Valid @RequestBody CotacaoEditDTO cotacaoEditDTO) {
+        return ResponseEntity.ok(cotacaoService.editarCotacao(cotacaoEditDTO));
+    }
+
+    @GetMapping("/{id}/historico")
+    @Operation(
+            summary = "Buscar histórico de edições",
+            description = "Retorna todas as edições realizadas em uma cotação, incluindo preços anteriores, " +
+                    "prazos, PDFs e motivos das alterações"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Histórico retornado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Cotação não encontrada")
+    })
+    public ResponseEntity<List<HistoricoCotacaoDTO>> buscarHistoricoCotacao(@PathVariable Long id) {
+        return ResponseEntity.ok(cotacaoService.buscarHistoricoCotacao(id));
+    }
+
+    @GetMapping("/historico/{historicoId}/pdf/anterior")
+    @Operation(
+            summary = "Obter PDF anterior do histórico",
+            description = "Retorna o PDF da versão anterior armazenado no histórico de edições"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "PDF retornado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Histórico ou PDF não encontrado")
+    })
+    public ResponseEntity<byte[]> obterPdfAnteriorHistorico(@PathVariable Long historicoId) {
+        byte[] pdf = cotacaoService.obterPdfAnteriorHistorico(historicoId);
+        if (pdf == null || pdf.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "historico-" + historicoId + "-anterior.pdf");
+
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/historico/{historicoId}/pdf/novo")
+    @Operation(
+            summary = "Obter PDF novo do histórico",
+            description = "Retorna o PDF da versão nova armazenado no histórico de edições"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "PDF retornado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Histórico ou PDF não encontrado")
+    })
+    public ResponseEntity<byte[]> obterPdfNovoHistorico(@PathVariable Long historicoId) {
+        byte[] pdf = cotacaoService.obterPdfNovoHistorico(historicoId);
+        if (pdf == null || pdf.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "historico-" + historicoId + "-novo.pdf");
+
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 }

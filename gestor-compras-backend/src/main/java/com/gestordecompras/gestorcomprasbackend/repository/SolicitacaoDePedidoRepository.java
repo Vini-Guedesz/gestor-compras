@@ -36,9 +36,9 @@ public interface SolicitacaoDePedidoRepository extends JpaRepository<Solicitacao
            "WHERE s.id = :id")
     Optional<SolicitacaoDePedido> findByIdWithCotacoes(@Param("id") Long id);
 
-    // Query para carregar itens das cotações
+    // Query para carregar itens das cotações (atualizada após refatoração Bug #5)
     @Query("SELECT DISTINCT c FROM Cotacao c " +
-           "LEFT JOIN FETCH c.itensPedido " +
+           "LEFT JOIN FETCH c.itens " +
            "WHERE c.solicitacaoDePedido.id = :pedidoId")
     List<Cotacao> findCotacoesWithItensByPedidoId(@Param("pedidoId") Long pedidoId);
 

@@ -18,6 +18,9 @@ public class SolicitacaoDePedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @OneToMany(mappedBy = "solicitacaoDePedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemPedido> itens;
 

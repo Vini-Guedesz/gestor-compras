@@ -419,6 +419,7 @@
 <script setup>
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
+import { useToast } from '@/composables/useToast'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
@@ -432,6 +433,7 @@ import pedidoService from '@/services/pedidoService.js'
 
 // Router
 const route = useRoute()
+const { success, error: toastError } = useToast()
 
 // Estados reativo
 const isLoading = ref(true)
@@ -619,11 +621,6 @@ const fecharFormulario = () => {
 
 const salvarFornecedor = async (dadosFornecedor) => {
   try {
-    console.log('🔄 Salvando fornecedor:', dadosFornecedor)
-    console.log('🔍 FornecedoresView - Dados recebidos do formulário:', JSON.stringify(dadosFornecedor, null, 2))
-    console.log('🔍 FornecedoresView - contato tem numero?', 'numero' in (dadosFornecedor.contato || {}))
-    console.log('🔍 FornecedoresView - endereco tem numero?', 'numero' in (dadosFornecedor.endereco || {}))
-    console.log('🔍 FornecedoresView - endereco.numero =', dadosFornecedor.endereco?.numero)
 
     if (fornecedorEditando.value) {
       // Atualizar fornecedor existente
@@ -632,7 +629,6 @@ const salvarFornecedor = async (dadosFornecedor) => {
       } else {
         await fornecedorService.atualizarFornecedorServico(fornecedorEditando.value.id, dadosFornecedor)
       }
-      console.log('✅ Fornecedor atualizado com sucesso!')
     } else {
       // Criar novo fornecedor
       let resultado
@@ -641,14 +637,13 @@ const salvarFornecedor = async (dadosFornecedor) => {
       } else {
         resultado = await fornecedorService.criarFornecedorServico(dadosFornecedor)
       }
-      console.log('✅ Fornecedor criado com sucesso!', resultado)
     }
 
     await carregarFornecedores()
     fecharFormulario()
 
     // Mostrar mensagem de sucesso
-    alert(fornecedorEditando.value ? 'Fornecedor atualizado com sucesso!' : 'Fornecedor cadastrado com sucesso!')
+    success(fornecedorEditando.value ? 'Fornecedor atualizado com sucesso!' : 'Fornecedor cadastrado com sucesso!')
 
   } catch (error) {
     console.error('❌ Erro ao salvar fornecedor:', error)
@@ -658,8 +653,8 @@ const salvarFornecedor = async (dadosFornecedor) => {
 
     // Tratamento especial para erros de validação
     if (error.type === 'VALIDATION_ERROR') {
-      mensagemErro = `Erro de validação:\n\n${error.message}`
-      alert(mensagemErro)
+      mensagemErro = `Erro de validação: ${error.message}`
+      toastError(mensagemErro, { duration: 7000 })
       return // Não fechar o formulário para permitir correções
     }
 
@@ -680,7 +675,7 @@ const salvarFornecedor = async (dadosFornecedor) => {
       mensagemErro = error.message
     }
 
-    alert(mensagemErro)
+    toastError(mensagemErro, { duration: 7000 })
   }
 }
 
@@ -740,18 +735,15 @@ const buscarItemPedidoComCache = async (itemPedidoId) => {
 
   // Verificar cache primeiro
   if (cacheItensPedido.value.has(itemPedidoId)) {
-    console.log(`✅ Item ${itemPedidoId} encontrado no cache`)
     return cacheItensPedido.value.get(itemPedidoId)
   }
 
   // Buscar do backend
   try {
-    console.log(`🔄 Buscando item ${itemPedidoId} do backend...`)
     const item = await itemPedidoService.buscarPorId(itemPedidoId)
 
     if (item) {
       cacheItensPedido.value.set(itemPedidoId, item)
-      console.log(`✅ Item ${itemPedidoId} adicionado ao cache`)
     }
 
     return item
@@ -766,18 +758,15 @@ const buscarPedidoComCache = async (pedidoId) => {
 
   // Verificar cache primeiro
   if (cachePedidos.value.has(pedidoId)) {
-    console.log(`✅ Pedido ${pedidoId} encontrado no cache`)
     return cachePedidos.value.get(pedidoId)
   }
 
   // Buscar do backend
   try {
-    console.log(`🔄 Buscando pedido ${pedidoId} do backend...`)
     const pedido = await pedidoService.buscarPorId(pedidoId)
 
     if (pedido) {
       cachePedidos.value.set(pedidoId, pedido)
-      console.log(`✅ Pedido ${pedidoId} adicionado ao cache`)
     }
 
     return pedido
@@ -901,9 +890,10 @@ const gerarRelatorioFornecedores = async () => {
   try {
     gerandoRelatorio.value = true
     await relatorioService.gerarRelatorioFornecedores()
+    success('Relatório gerado com sucesso!')
   } catch (error) {
     console.error('Erro ao gerar relatório:', error)
-    alert('Erro ao gerar relatório. Tente novamente.')
+    toastError('Erro ao gerar relatório. Tente novamente.')
   } finally {
     gerandoRelatorio.value = false
   }

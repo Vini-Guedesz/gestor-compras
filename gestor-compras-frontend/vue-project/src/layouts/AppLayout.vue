@@ -1,36 +1,79 @@
 <template>
   <div class="layout-container">
-    <header class="layout-header">
+    <!-- Skip to main content link (acessibilidade) -->
+    <a href="#main-content" class="skip-to-main">Pular para o conteúdo principal</a>
+
+    <ToastContainer />
+    <header class="layout-header" :class="{ 'header-collapsed': isNavCollapsed }" role="banner">
       <div class="header-content">
-        <h1 class="app-title">
-          <router-link to="/dashboard" class="title-link">
-            Gestor de Compras
-          </router-link>
-        </h1>
-        <nav class="main-nav">
+        <div class="header-left">
+          <button
+            @click="toggleNav"
+            class="nav-toggle-button"
+            :title="isNavCollapsed ? 'Expandir menu' : 'Retrair menu'"
+            :aria-label="isNavCollapsed ? 'Expandir menu de navegação' : 'Retrair menu de navegação'"
+            :aria-expanded="!isNavCollapsed"
+          >
+            <svg v-if="isNavCollapsed" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path fill="currentColor" d="M3 18h13v-2H3v2zm0-5h10v-2H3v2zm0-7v2h13V6H3zm18 9.59L17.42 12 21 8.41 19.59 7l-5 5 5 5L21 15.59z"/>
+            </svg>
+          </button>
+          <h1 class="app-title">
+            <router-link to="/dashboard" class="title-link" aria-label="Ir para dashboard">
+              <span v-if="!isNavCollapsed">Gestor de Compras</span>
+              <span v-else class="title-short">GC</span>
+            </router-link>
+          </h1>
+        </div>
+        <nav
+          class="main-nav"
+          v-if="!isNavCollapsed"
+          role="navigation"
+          aria-label="Menu principal"
+        >
           <router-link to="/dashboard" class="nav-link">Dashboard</router-link>
           <div class="nav-dropdown">
-            <button @click="toggleRelatoriosMenu" class="nav-link dropdown-button">
+            <button
+              @click="toggleRelatoriosMenu"
+              class="nav-link dropdown-button"
+              :aria-expanded="relatoriosMenuOpen"
+              aria-haspopup="true"
+              aria-label="Menu de relatórios"
+            >
               Relatórios
-              <span class="dropdown-arrow" :class="{ 'rotated': relatoriosMenuOpen }">▼</span>
+              <span class="dropdown-arrow expand-icon" :class="{ 'rotated': relatoriosMenuOpen }" aria-hidden="true">▼</span>
             </button>
-            <div v-if="relatoriosMenuOpen" class="dropdown-menu">
-              <button @click="gerarRelatorioFornecedores" class="dropdown-item" :disabled="gerandoRelatorio">
-                <span v-if="gerandoRelatorio" class="loading-spinner"></span>
+            <div
+              v-if="relatoriosMenuOpen"
+              class="dropdown-menu"
+              role="menu"
+              aria-label="Opções de relatórios"
+            >
+              <button
+                @click="gerarRelatorioFornecedores"
+                class="dropdown-item"
+                :disabled="gerandoRelatorio"
+                :aria-busy="gerandoRelatorio"
+                role="menuitem"
+                aria-label="Gerar relatório de fornecedores em PDF"
+              >
+                <span v-if="gerandoRelatorio" class="loading-spinner" aria-hidden="true"></span>
                 {{ gerandoRelatorio ? 'Gerando...' : 'Relatório de Fornecedores' }}
-        x       </button>
+              </button>
             </div>
           </div>
-          <!-- Adicione mais links de navegação aqui conforme necessário -->
         </nav>
-        <div class="user-actions">
-          <span class="welcome-text">{{ getWelcomeMessage() }}, {{ username }}!</span>
-          <button @click="logout" class="logout-button">Sair</button>
+        <div class="user-actions" role="region" aria-label="Informações do usuário">
+          <span class="welcome-text" aria-live="polite">{{ getWelcomeMessage() }}, {{ username }}!</span>
+          <button @click="logout" class="logout-button" aria-label="Sair do sistema">Sair</button>
         </div>
       </div>
     </header>
 
-    <main class="layout-main">
+    <main id="main-content" class="layout-main" role="main" aria-label="Conteúdo principal">
       <div class="main-content">
         <slot />
       </div>
@@ -44,13 +87,33 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { getWelcomeMessage as getWelcomeMessageUtil } from '../utils/genderUtils'
 import relatorioService from '../services/relatorioService'
+import { useToast } from '../composables/useToast'
+import ToastContainer from '../components/ui/ToastContainer.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { error: toastError } = useToast()
 
 // Estados para o menu de relatórios
 const relatoriosMenuOpen = ref(false)
 const gerandoRelatorio = ref(false)
+
+// Estado para controlar se o menu está colapsado
+const isNavCollapsed = ref(false)
+
+// Recupera estado do localStorage ao montar
+const loadNavState = () => {
+  const saved = localStorage.getItem('navCollapsed')
+  if (saved !== null) {
+    isNavCollapsed.value = saved === 'true'
+  }
+}
+
+// Alterna estado do menu
+const toggleNav = () => {
+  isNavCollapsed.value = !isNavCollapsed.value
+  localStorage.setItem('navCollapsed', isNavCollapsed.value.toString())
+}
 
 const username = computed(() => {
   return authStore.user?.name || authStore.user?.username || 'Usuário'
@@ -81,7 +144,7 @@ const gerarRelatorioFornecedores = async () => {
     relatoriosMenuOpen.value = false // Fecha o menu após gerar
   } catch (error) {
     console.error('Erro ao gerar relatório:', error)
-    alert('Erro ao gerar relatório. Tente novamente.')
+    toastError('Erro ao gerar relatório. Tente novamente.')
   } finally {
     gerandoRelatorio.value = false
   }
@@ -98,6 +161,7 @@ const handleClickOutside = (event) => {
 // Adiciona listener para fechar menu ao clicar fora
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  loadNavState()
 })
 
 onUnmounted(() => {
@@ -127,12 +191,51 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 15px 0;
+  transition: all 0.3s ease;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-toggle-button {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.nav-toggle-button:hover {
+  background-color: #f3f4f6;
+  color: #007bff;
+}
+
+.header-collapsed .header-content {
+  max-width: 100%;
+}
+
+.header-collapsed .main-nav {
+  display: none;
 }
 
 .app-title {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.title-short {
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .title-link {

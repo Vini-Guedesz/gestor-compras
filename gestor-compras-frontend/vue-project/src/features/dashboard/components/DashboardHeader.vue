@@ -99,12 +99,14 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 import { getUserRole } from '@/utils/genderUtils'
 import { useMobileSidebar } from '@/composables/useMobileSidebar'
 import LogoutModal from '@/components/ui/modals/LogoutModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { error: toastError } = useToast()
 const searchQuery = ref('')
 const isUserMenuOpen = ref(false)
 const showLogoutModal = ref(false)
@@ -132,7 +134,6 @@ const userAvatar = computed(() => {
  * Manipula a busca quando o usuário pressiona Enter
  */
 const handleSearch = () => {
-  console.log('Pesquisando:', searchQuery.value)
   // TODO: Implementar lógica de busca
 }
 
@@ -190,10 +191,9 @@ const confirmLogout = async () => {
     // Redireciona para a página de login
     router.push('/login')
 
-    console.log('Logout realizado com sucesso')
   } catch (error) {
     console.error('Erro ao fazer logout:', error)
-    alert('Erro ao sair da aplicação. Tente novamente.')
+    toastError('Erro ao sair da aplicação. Tente novamente.')
   }
 }
 

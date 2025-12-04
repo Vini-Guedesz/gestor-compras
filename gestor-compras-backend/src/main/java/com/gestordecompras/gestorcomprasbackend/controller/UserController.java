@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserUpdateDTO;
@@ -19,8 +20,8 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users")
-@Tag(name = "Usuários", description = "API para gerenciamento de usuários")
+@RequestMapping(ApiVersionConfig.API_V1 + "/users")
+@Tag(name = "Usuários", description = "API para gerenciamento de usuários (v1)")
 @SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
@@ -57,7 +58,7 @@ public class UserController {
     })
     public ResponseEntity<UserDTO> create(@RequestBody @Valid UserCreateDTO dto, UriComponentsBuilder uriBuilder) {
         UserDTO createdUser = service.createUser(dto);
-        URI uri = uriBuilder.path("/api/users/{id}").buildAndExpand(createdUser.id()).toUri();
+        URI uri = uriBuilder.path(ApiVersionConfig.API_V1 + "/users/{id}").buildAndExpand(createdUser.id()).toUri();
         return ResponseEntity.created(uri).body(createdUser);
     }
 

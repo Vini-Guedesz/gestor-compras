@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
 import com.gestordecompras.gestorcomprasbackend.dto.pedido.HistoricoPedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.service.HistoricoPedidoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/historico-pedidos")
+@RequestMapping(ApiVersionConfig.API_V1 + "/historico-pedidos")
 @RequiredArgsConstructor
-@Tag(name = "Histórico de Pedidos", description = "Consulta histórico de modificações em pedidos")
+@Tag(name = "Histórico de Pedidos", description = "Consulta histórico de modificações em pedidos (v1)")
 public class HistoricoPedidoController {
 
     private final HistoricoPedidoService historicoPedidoService;

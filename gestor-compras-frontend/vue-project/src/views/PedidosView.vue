@@ -83,7 +83,9 @@
             <div class="metric-growth positive">Aprovados</div>
           </div>
 
-          <!-- Valor Total -->
+          <!-- Valor Total - REMOVIDO (valor simulado/mockado) -->
+          <!-- TODO: Implementar cálculo real baseado nos valores dos itens dos pedidos -->
+          <!--
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon value">
@@ -96,6 +98,7 @@
             <div class="metric-value">R$ {{ valorTotalFormatado }}</div>
             <div class="metric-growth positive">Este mês</div>
           </div>
+          -->
         </div>
       </div>
 
@@ -441,6 +444,7 @@
 <script>
 import { ref, onMounted, computed, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from '@/composables/useToast'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
@@ -467,6 +471,7 @@ export default {
     // Router
     const route = useRoute()
     const router = useRouter()
+    const { success, warning, error: toastError } = useToast()
 
     // Estados reativos
     const pedidos = ref([])
@@ -518,11 +523,14 @@ export default {
       return Math.round((pedidosPendentes.value / totalPedidos.value) * 100)
     })
 
+    // REMOVIDO: Valor simulado/mockado - implementar cálculo real baseado nos itens
+    /*
     const valorTotalFormatado = computed(() => {
       // Simulação de valor total - seria calculado baseado nos itens
       const valorSimulado = pedidos.value.length * 1500
       return valorSimulado.toLocaleString('pt-BR')
     })
+    */
 
     // Pedidos filtrados
     const pedidosFiltrados = computed(() => {
@@ -583,7 +591,6 @@ export default {
     const carregarPedidos = async () => {
       try {
         isLoading.value = true
-        console.log('📄 Carregando pedidos e rascunhos...')
 
         // Buscar pedidos, itens e rascunhos em paralelo
         const [response, todosItens, rascunhos] = await Promise.all([
@@ -592,8 +599,6 @@ export default {
           rascunhoService.listar()
         ])
 
-        console.log('Itens carregados:', todosItens.length)
-        console.log('Rascunhos carregados:', rascunhos.length)
 
         let listaPedidos = []
 
@@ -655,7 +660,6 @@ export default {
 
         // Combinar pedidos e rascunhos
         pedidos.value = [...listaPedidos, ...rascunhosFormatados]
-        console.log('DEBUG - Total de itens na lista:', pedidos.value.length)
 
       } catch (error) {
         console.error('❌ Erro ao carregar pedidos do backend:', error)
@@ -751,11 +755,10 @@ export default {
 
     const editarPedido = async (pedido) => {
       try {
-        console.log('Editando pedido:', pedido)
 
         // Verificar se é um rascunho finalizado - não permitir edição
         if (pedido.isRascunho && pedido.isFinalizado) {
-          alert('Este rascunho já foi convertido em pedido e não pode ser editado.')
+          warning('Este rascunho já foi convertido em pedido e não pode ser editado.')
           return
         }
 
@@ -772,12 +775,11 @@ export default {
         router.push(`/pedidos/visualizar/${pedido.id}?mode=edit`)
       } catch (error) {
         console.error('Erro ao redirecionar para edição:', error)
-        alert('Erro ao abrir pedido para edição.')
+        toastError('Erro ao abrir pedido para edição.')
       }
     }
 
     const visualizarPedido = (pedido) => {
-      console.log('Visualizando pedido:', pedido)
 
       // Verificar se é um rascunho
       if (pedido.isRascunho) {
@@ -814,7 +816,6 @@ export default {
       }
 
       // Abrir novo PDF
-      console.log('Visualizando PDF da cotação:', cotacaoId)
       pdfAberto.value = cotacaoId
       carregandoPdf.value = true
       erroPdf.value = null
@@ -824,7 +825,6 @@ export default {
         // Buscar o PDF do backend - verificar se é rascunho ou pedido
         let response
         if (pedidoSelecionado.value?.isRascunho) {
-          console.log('Buscando PDF de cotação de rascunho...')
           response = await cotacaoRascunhoService.obterPorId(
             pedidoSelecionado.value.rascunhoId,
             cotacaoId
@@ -832,33 +832,19 @@ export default {
         } else {
           response = await cotacaoService.buscarPorId(cotacaoId)
         }
-        console.log('📄 Cotação recebida completa:', response)
-        console.log('📄 Tipo da resposta:', typeof response)
-        console.log('📄 Chaves da resposta:', response ? Object.keys(response) : 'null')
 
         if (response && response.anexoPdf) {
-          console.log('📦 anexoPdf existe!')
-          console.log('📦 Tipo de anexoPdf:', typeof response.anexoPdf)
-          console.log('📦 É Array?', Array.isArray(response.anexoPdf))
-          console.log('📦 É Uint8Array?', response.anexoPdf instanceof Uint8Array)
-          console.log('📦 Constructor:', response.anexoPdf.constructor.name)
-          console.log('📦 Tamanho/length:', response.anexoPdf.length)
-          console.log('📦 Primeiros 10 bytes:', response.anexoPdf.slice ? response.anexoPdf.slice(0, 10) : 'não tem slice')
 
           // Tentar diferentes conversões
           let byteArray
 
           if (Array.isArray(response.anexoPdf)) {
-            console.log('✓ Convertendo de Array para Uint8Array')
             byteArray = new Uint8Array(response.anexoPdf)
           } else if (response.anexoPdf instanceof Uint8Array) {
-            console.log('✓ Já é Uint8Array')
             byteArray = response.anexoPdf
           } else if (response.anexoPdf instanceof ArrayBuffer) {
-            console.log('✓ Convertendo de ArrayBuffer para Uint8Array')
             byteArray = new Uint8Array(response.anexoPdf)
           } else if (typeof response.anexoPdf === 'string') {
-            console.log('✓ Convertendo de String base64 para Uint8Array')
             // Pode ser base64
             try {
               const binaryString = atob(response.anexoPdf)
@@ -871,7 +857,6 @@ export default {
               throw new Error('Formato de PDF inválido (string não base64)')
             }
           } else if (typeof response.anexoPdf === 'object') {
-            console.log('✓ Tentando converter objeto para array')
             // Pode ser um objeto com propriedades numéricas
             const keys = Object.keys(response.anexoPdf)
             byteArray = new Uint8Array(keys.length)
@@ -883,12 +868,9 @@ export default {
             throw new Error(`Formato de PDF inválido (tipo: ${typeof response.anexoPdf})`)
           }
 
-          console.log('📄 ByteArray criado:', byteArray.length, 'bytes')
-          console.log('📄 Primeiros bytes:', Array.from(byteArray.slice(0, 10)))
 
           // Verificar se parece um PDF válido (começa com %PDF)
           const pdfHeader = String.fromCharCode(byteArray[0], byteArray[1], byteArray[2], byteArray[3])
-          console.log('📄 Header do arquivo:', pdfHeader)
 
           if (!pdfHeader.includes('%PDF') && byteArray.length > 0) {
             console.warn('⚠️ Arquivo não parece ser um PDF válido!')
@@ -896,20 +878,15 @@ export default {
 
           // Criar Blob com tipo MIME correto
           const blob = new Blob([byteArray], { type: 'application/pdf' })
-          console.log('📄 Blob criado:', blob.size, 'bytes, tipo:', blob.type)
 
           // Criar URL do blob para o iframe
           const url = URL.createObjectURL(blob)
           pdfUrl.value = url
-          console.log('✅ PDF carregado com sucesso:', url)
         } else if (response && response.caminhoAnexo) {
           // Se houver caminho de anexo, usar URL direta
           pdfUrl.value = response.caminhoAnexo
-          console.log('✅ PDF carregado via caminho:', response.caminhoAnexo)
         } else {
           console.error('❌ Nenhum PDF encontrado')
-          console.log('anexoPdf:', response?.anexoPdf)
-          console.log('caminhoAnexo:', response?.caminhoAnexo)
           throw new Error('Nenhum PDF encontrado para esta cotação')
         }
       } catch (error) {
@@ -931,21 +908,16 @@ export default {
       carregandoPdf.value = false
       erroPdf.value = null
       pdfUrl.value = null
-      console.log('📄 Visualizador de PDF fechado')
     }
 
     const carregarDetalhesPedido = async (pedido) => {
-      console.log('carregarDetalhesPedido - Pedido recebido:', pedido)
-      console.log('Itens do pedido:', pedido?.itens)
 
       if (!pedido || !pedido.itens || pedido.itens.length === 0) {
-        console.log('Pedido sem itens ou inválido')
         return
       }
 
       try {
         carregandoItens.value = true
-        console.log('🔄 Carregando cotações para os itens do pedido...')
 
         // IDs dos itens deste pedido - validação antecipada
         const idsItens = pedido.itens
@@ -961,7 +933,6 @@ export default {
           return
         }
 
-        console.log('📋 IDs dos itens:', idsItens)
 
         // Buscar dados em paralelo para otimização
         const [todasCotacoes, fornecedoresProduto, fornecedoresServico] = await Promise.all([
@@ -979,7 +950,6 @@ export default {
           })
         ])
 
-        console.log('✅ Cotações carregadas:', todasCotacoes.length)
 
         // Criar mapa de fornecedores por ID
         const todosFornecedores = [...fornecedoresProduto, ...fornecedoresServico]
@@ -989,13 +959,11 @@ export default {
             fornecedoresMap[f.id] = f.razaoSocial || 'Fornecedor desconhecido'
           }
         })
-        console.log('✅ Fornecedores mapeados:', Object.keys(fornecedoresMap).length)
 
         // Filtrar apenas cotações relacionadas aos itens deste pedido (otimização)
         const cotacoesRelacionadas = todasCotacoes.filter(cot =>
           cot?.itemPedidoId && idsItens.includes(cot.itemPedidoId)
         )
-        console.log('💰 Cotações relacionadas a este pedido:', cotacoesRelacionadas.length)
 
         // Enriquecer cotações com nome do fornecedor
         const cotacoesComFornecedor = cotacoesRelacionadas.map(cot => ({
@@ -1011,7 +979,6 @@ export default {
               cot.itemPedidoId === item.id
             )
             item.cotacoes = cotacoesDoItem
-            console.log(`📦 Item ${item.id} - ${item.nome}: ${cotacoesDoItem.length} cotação(ões)`)
           } else {
             // Garantir array vazio para itens sem ID
             item.cotacoes = []
@@ -1019,7 +986,6 @@ export default {
           }
         })
 
-        console.log('✅ Detalhes do pedido carregados com sucesso!')
 
       } catch (error) {
         console.error('❌ Erro ao carregar detalhes do pedido:', error)
@@ -1062,7 +1028,7 @@ export default {
         }
       } catch (error) {
         console.error('Erro ao excluir:', error)
-        alert('Erro ao excluir. Tente novamente.')
+        toastError('Erro ao excluir. Tente novamente.')
       } finally {
         showConfirmModal.value = false
         pedidoParaExcluir.value = null
@@ -1084,10 +1050,10 @@ export default {
           pedidos.value[index].status = 'APROVADO'
         }
 
-        alert('Pedido aprovado com sucesso!')
+        success('Pedido aprovado com sucesso!')
       } catch (error) {
         console.error('Erro ao aprovar pedido:', error)
-        alert('Erro ao aprovar pedido. Tente novamente.')
+        toastError('Erro ao aprovar pedido. Tente novamente.')
       } finally {
         isLoading.value = false
       }
@@ -1166,10 +1132,10 @@ export default {
           pedidos.value[index].status = novoStatus
         }
 
-        alert(`Status do pedido alterado para "${getStatusLabel(novoStatus)}" com sucesso!`)
+        success(`Status do pedido alterado para "${getStatusLabel(novoStatus)}" com sucesso!`)
       } catch (error) {
         console.error('Erro ao alterar status do pedido:', error)
-        alert('Erro ao alterar status do pedido. Tente novamente.')
+        toastError('Erro ao alterar status do pedido. Tente novamente.')
       } finally {
         isLoading.value = false
       }
@@ -1182,10 +1148,11 @@ export default {
       try {
         gerandoRelatorio.value = true
         await relatorioService.gerarRelatorioItensPedido()
+        success('Relatório gerado com sucesso!')
       } catch (error) {
         console.error('Erro ao gerar relatório:', error)
-        alert('Erro ao gerar relatório. Tente novamente.')
-      } finally {
+        toastError('Erro ao gerar relatório. Tente novamente.')
+      } finally{
         gerandoRelatorio.value = false
       }
     }
@@ -1232,7 +1199,7 @@ export default {
       pedidosPendentes,
       pedidosAprovados,
       percentualPendentes,
-      valorTotalFormatado,
+      // valorTotalFormatado, // REMOVIDO - valor simulado
       pedidosFiltrados,
 
       // Métodos

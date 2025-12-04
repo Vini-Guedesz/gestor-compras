@@ -7,6 +7,8 @@ import com.gestordecompras.gestorcomprasbackend.mapper.FornecedorDeServicoMapper
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeServico;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeServicoRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,14 +26,18 @@ public class FornecedorDeServicoService {
         this.mapper = mapper;
     }
 
+    public Page<FornecedorDeServicoDTO> getAllFornecedoresDeServico(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
+    }
+
     public List<FornecedorDeServicoDTO> getAllFornecedoresDeServico() {
-        return repository.findAll().stream()
+        return repository.findAllWithRelationships().stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     public FornecedorDeServicoDTO getFornecedorDeServicoById(Integer id) {
-        return repository.findById(id)
+        return repository.findByIdWithRelationships(id)
                 .map(mapper::toDTO)
                 .orElseThrow(() -> new EntityNotFoundException("Fornecedor de serviço não encontrado com ID: " + id));
     }

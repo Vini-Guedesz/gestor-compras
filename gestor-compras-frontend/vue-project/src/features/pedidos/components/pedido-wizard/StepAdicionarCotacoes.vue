@@ -126,6 +126,7 @@
 
 <script>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useToast } from '@/composables/useToast.js'
 import CotacaoFormItem from './CotacaoInlineForm.vue'
 import relatorioService from '@/services/relatorioService.js'
 
@@ -158,6 +159,7 @@ export default {
   },
   emits: ['update:modelValue', 'validation-change'],
   setup(props, { emit }) {
+    const { success, error: showError, warning } = useToast()
     // Estado local
     const cotacoes = ref([...props.modelValue])
     const gerandoRelatorio = ref(false)
@@ -220,13 +222,12 @@ export default {
     // Métodos
     const gerarRelatorio = async () => {
       if (!props.pedido?.id) {
-        alert('Erro: Pedido não encontrado')
+        showError('Erro: Pedido não encontrado')
         return
       }
 
       try {
         gerandoRelatorio.value = true
-        console.log('📄 Gerando relatório para o pedido:', props.pedido.id)
 
         // Se houver item selecionado, incluir apenas ele, senão incluir todos
         const itensIds = props.item?.id ? [props.item.id] : []
@@ -236,10 +237,9 @@ export default {
           itensIds
         )
 
-        console.log('✅ Relatório gerado com sucesso!')
       } catch (error) {
         console.error('❌ Erro ao gerar relatório:', error)
-        alert('Erro ao gerar relatório. Tente novamente.')
+        showError('Erro ao gerar relatório. Tente novamente.')
       } finally {
         gerandoRelatorio.value = false
       }
@@ -316,7 +316,7 @@ export default {
 }
 
 .pedido-context {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #1F285F;
 }
 
 .item-context {
@@ -371,8 +371,8 @@ export default {
 
 .status-rascunho { background: #f3f4f6; color: #374151; }
 .status-pendente { background: #fef3c7; color: #d97706; }
-.status-em_analise { background: #dbeafe; color: #2563eb; }
-.status-em_andamento { background: #dbeafe; color: #2563eb; }
+.status-em_analise { background: #e0e7ff; color: #1F285F; }
+.status-em_andamento { background: #e0e7ff; color: #1F285F; }
 .status-aprovado { background: #d1fae5; color: #059669; }
 .status-cancelado { background: #fee2e2; color: #dc2626; }
 
@@ -514,7 +514,7 @@ export default {
   width: 32px;
   height: 32px;
   border: 3px solid #e5e7eb;
-  border-top-color: #3b82f6;
+  border-top-color: #1F285F;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

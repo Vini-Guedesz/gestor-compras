@@ -71,13 +71,13 @@
             Valor (R$) <span class="required">*</span>
           </label>
           <input
-            type="number"
-            :value="localCotacao.preco"
-            @input="updateField('preco', parseFloat($event.target.value))"
+            type="text"
+            :value="precoFormatado"
+            @input="handlePrecoInput"
+            @blur="formatarPrecoFinal"
             class="form-input"
             placeholder="0,00"
-            step="0.01"
-            min="0"
+            inputmode="decimal"
             required
           />
         </div>
@@ -112,10 +112,10 @@
         />
       </div>
 
-      <!-- Upload PDF -->
+      <!-- Upload PDFs -->
       <div class="form-group">
         <label class="form-label">
-          Anexo PDF (Opcional)
+          Anexos PDF (Opcional)
         </label>
         <div class="upload-container">
           <input
@@ -125,27 +125,40 @@
             accept=".pdf,application/pdf"
             class="file-input"
             :id="`file-upload-${numero}`"
+            multiple
           />
           <label :for="`file-upload-${numero}`" class="upload-label">
             <svg viewBox="0 0 24 24" width="20" height="20">
               <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,15H9V10H15V15L13,19H10Z"/>
             </svg>
-            <span v-if="!localCotacao.pdfFile">Escolher arquivo PDF</span>
-            <span v-else class="file-name">{{ localCotacao.pdfFile.name }}</span>
+            <span>{{ localCotacao.pdfFiles?.length > 0 ? `${localCotacao.pdfFiles.length} arquivo(s) selecionado(s)` : 'Escolher arquivos PDF' }}</span>
           </label>
-          <button
-            v-if="localCotacao.pdfFile"
-            type="button"
-            @click="removerPdf"
-            class="btn-remove-file"
-            title="Remover arquivo"
-          >
-            ✕
-          </button>
         </div>
-        <span v-if="localCotacao.pdfFile" class="file-info">
-          {{ formatarTamanho(localCotacao.pdfFile.size) }}
-        </span>
+
+        <!-- Lista de arquivos selecionados -->
+        <div v-if="localCotacao.pdfFiles?.length > 0" class="files-list">
+          <div
+            v-for="(file, index) in localCotacao.pdfFiles"
+            :key="index"
+            class="file-item"
+          >
+            <div class="file-item-info">
+              <svg viewBox="0 0 24 24" width="16" height="16" class="file-icon">
+                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+              <span class="file-item-name">{{ file.name }}</span>
+              <span class="file-item-size">{{ formatarTamanho(file.size) }}</span>
+            </div>
+            <button
+              type="button"
+              @click="removerPdf(index)"
+              class="btn-remove-file-small"
+              title="Remover arquivo"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -153,6 +166,7 @@
 
 <script>
 import { ref, computed } from 'vue'
+import { useToast } from '@/composables/useToast.js'
 
 export default {
   name: 'CotacaoFormItem',
@@ -172,14 +186,55 @@ export default {
   },
   emits: ['update', 'remove'],
   setup(props, { emit }) {
+    const { success, error: showError, warning } = useToast()
     const fileInput = ref(null)
-    const localCotacao = ref({ ...props.cotacao })
+    const localCotacao = ref({
+      ...props.cotacao,
+      pdfFiles: props.cotacao.pdfFiles || []
+    })
+    const precoFormatado = ref('')
 
     // Computed
     const dataMinima = computed(() => {
       const hoje = new Date()
       return hoje.toISOString().split('T')[0]
     })
+
+    // Inicializar preço formatado
+    if (props.cotacao.preco) {
+      precoFormatado.value = props.cotacao.preco.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    }
+
+    // Funções de formatação de preço
+    const formatarPrecoInput = (valor) => {
+      let numero = valor.replace(/\D/g, '')
+      if (!numero) return ''
+      const numeroDecimal = parseFloat(numero) / 100
+      return numeroDecimal.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    }
+
+    const handlePrecoInput = (event) => {
+      const valor = event.target.value
+      precoFormatado.value = formatarPrecoInput(valor)
+      const numero = valor.replace(/\D/g, '')
+      localCotacao.value.preco = numero ? parseFloat(numero) / 100 : null
+      emit('update', localCotacao.value)
+    }
+
+    const formatarPrecoFinal = () => {
+      if (localCotacao.value.preco !== null && localCotacao.value.preco !== undefined) {
+        precoFormatado.value = localCotacao.value.preco.toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })
+      }
+    }
 
     // Métodos
     const updateField = (field, value) => {
@@ -188,45 +243,67 @@ export default {
     }
 
     const handleFileUpload = async (event) => {
-      const file = event.target.files[0]
-      if (!file) return
+      const files = Array.from(event.target.files || [])
 
-      // Validar tipo
-      if (file.type !== 'application/pdf') {
-        alert('Por favor, selecione apenas arquivos PDF')
-        event.target.value = ''
-        return
+      if (files.length === 0) return
+
+      const arquivosValidos = []
+
+      for (const file of files) {
+        // Validar tipo
+        if (file.type !== 'application/pdf') {
+          warning(`${file.name} não é um arquivo PDF válido`)
+          continue
+        }
+
+        // Validar tamanho (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          warning(`${file.name} excede o tamanho máximo de 10MB`)
+          continue
+        }
+
+        arquivosValidos.push(file)
       }
 
-      // Validar tamanho (max 10MB)
-      const maxSize = 10 * 1024 * 1024 // 10MB
-      if (file.size > maxSize) {
-        alert('O arquivo deve ter no máximo 10MB')
-        event.target.value = ''
-        return
+      // Inicializar array se não existir
+      if (!localCotacao.value.pdfFiles) {
+        localCotacao.value.pdfFiles = []
       }
 
-      // Converter para byte array
+      // Adicionar arquivos válidos à lista
+      localCotacao.value.pdfFiles = [...localCotacao.value.pdfFiles, ...arquivosValidos]
+
+      // Converter para byte arrays (manter compatibilidade)
       try {
-        const arrayBuffer = await file.arrayBuffer()
-        const byteArray = new Uint8Array(arrayBuffer)
-
-        localCotacao.value.pdfFile = file
-        localCotacao.value.anexoPdf = Array.from(byteArray)
-
-        emit('update', localCotacao.value)
+        const anexosPromises = localCotacao.value.pdfFiles.map(async (file) => {
+          const arrayBuffer = await file.arrayBuffer()
+          return Array.from(new Uint8Array(arrayBuffer))
+        })
+        const anexos = await Promise.all(anexosPromises)
+        localCotacao.value.anexoPdf = anexos[0] // Manter primeiro para compatibilidade
       } catch (error) {
-        console.error('Erro ao processar PDF:', error)
-        alert('Erro ao processar o arquivo PDF')
+        console.error('Erro ao processar PDFs:', error)
+        showError('Erro ao processar os arquivos PDF')
       }
-    }
 
-    const removerPdf = () => {
-      localCotacao.value.pdfFile = null
-      localCotacao.value.anexoPdf = null
+      // Limpar input
       if (fileInput.value) {
         fileInput.value.value = ''
       }
+
+      emit('update', localCotacao.value)
+    }
+
+    const removerPdf = (index) => {
+      if (!localCotacao.value.pdfFiles) return
+
+      localCotacao.value.pdfFiles.splice(index, 1)
+
+      // Se removeu todos, limpar anexoPdf também
+      if (localCotacao.value.pdfFiles.length === 0) {
+        localCotacao.value.anexoPdf = null
+      }
+
       emit('update', localCotacao.value)
     }
 
@@ -242,6 +319,9 @@ export default {
       fileInput,
       localCotacao,
       dataMinima,
+      precoFormatado,
+      handlePrecoInput,
+      formatarPrecoFinal,
       updateField,
       handleFileUpload,
       removerPdf,
@@ -302,6 +382,7 @@ export default {
 
 .form-group {
   margin-bottom: 16px;
+  width: 100%;
 }
 
 .form-label {
@@ -365,6 +446,7 @@ export default {
   display: flex;
   gap: 8px;
   align-items: center;
+  width: 100%;
 }
 
 .file-input {
@@ -384,12 +466,23 @@ export default {
   transition: all 0.2s;
   font-size: 0.875rem;
   color: #6b7280;
+  min-width: 0;
 }
 
 .upload-label:hover {
   border-color: #10b981;
   background: #f0fdf4;
   color: #10b981;
+}
+
+.upload-label svg {
+  flex-shrink: 0;
+}
+
+.upload-label span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .file-name {
@@ -424,6 +517,89 @@ export default {
   font-style: italic;
 }
 
+/* Lista de arquivos */
+.files-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.file-item:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.file-item-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.file-icon {
+  flex-shrink: 0;
+  color: #10b981;
+}
+
+.file-item-name {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.file-item-size {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-left: auto;
+  padding-left: 8px;
+}
+
+.btn-remove-file-small {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.btn-remove-file-small:hover {
+  background: #fecaca;
+  border-color: #fca5a5;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .form-grid {
@@ -435,7 +611,18 @@ export default {
     align-items: stretch;
   }
 
-  .btn-remove-file {
+  .btn-remove-file,
+  .btn-remove-file-small {
+    width: 100%;
+  }
+
+  .file-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .file-item-info {
     width: 100%;
   }
 }

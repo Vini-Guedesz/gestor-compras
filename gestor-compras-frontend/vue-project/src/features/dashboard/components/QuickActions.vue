@@ -66,7 +66,6 @@ const emit = defineEmits(['action-click'])
 
 const handleAction = (action) => {
   emit('action-click', action)
-  console.log('Ação clicada:', action)
 }
 
 const getIconPath = (iconName) => {

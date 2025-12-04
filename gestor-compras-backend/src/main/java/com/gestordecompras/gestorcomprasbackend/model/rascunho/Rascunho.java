@@ -23,6 +23,9 @@ public class Rascunho {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @OneToMany(mappedBy = "rascunho", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemRascunho> itens = new ArrayList<>();
 

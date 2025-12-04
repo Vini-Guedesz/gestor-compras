@@ -1,0 +1,255 @@
+/**
+ * Estilos Globais de Acessibilidade
+ *
+ * Classes e estilos para melhorar a acessibilidade (WCAG 2.1 AA)
+ * em toda a aplicação.
+ */
+
+/* Screen Reader Only - oculta visualmente mas mantém acessível */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Screen Reader Only - versão focável (útil para skip links) */
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Estilos de foco melhorados */
+*:focus {
+  outline: 2px solid #1F285F;
+  outline-offset: 2px;
+}
+
+/* Foco visível apenas para navegação por teclado */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #1F285F;
+  outline-offset: 2px;
+}
+
+/* Indicador de campo inválido para acessibilidade */
+[aria-invalid="true"] {
+  border-color: #ef4444 !important;
+  border-width: 2px !important;
+}
+
+[aria-invalid="true"]:focus {
+  outline-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* Estilos para elementos desabilitados */
+[disabled],
+[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Alto contraste para textos de erro */
+.error-message,
+[role="alert"] {
+  color: #991b1b;
+  font-weight: 500;
+}
+
+/* Indicador de loading/busy */
+[aria-busy="true"] {
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #1F285F;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100;
+  border-radius: 0 0 4px 0;
+}
+
+.skip-to-main:focus {
+  top: 0;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Indicadores visuais para estados de ARIA */
+[aria-expanded="true"] > .expand-icon {
+  transform: rotate(180deg);
+}
+
+[aria-pressed="true"] {
+  background-color: #1F285F;
+  color: white;
+}
+
+[aria-current="page"] {
+  font-weight: 600;
+  border-left: 3px solid #1F285F;
+}
+
+/* Melhorias de contraste para links */
+a {
+  text-decoration-skip-ink: auto;
+}
+
+a:focus {
+  outline: 2px solid #1F285F;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Estilos para modais (role="dialog") */
+[role="dialog"] {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Reduzir movimento para usuários com preferência */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Aumentar tamanho de alvos de toque (mínimo 44x44px - WCAG 2.5.5) */
+button,
+a,
+input[type="checkbox"],
+input[type="radio"],
+select {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  margin: 12px;
+}
+
+/* Indicadores de estado para checkboxes e radios */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  accent-color: #1F285F;
+}
+
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+  outline: 2px solid #1F285F;
+  outline-offset: 2px;
+}
+
+/* Tooltips acessíveis */
+[role="tooltip"] {
+  position: absolute;
+  z-index: 1000;
+  padding: 4px 8px;
+  background: #1f2937;
+  color: white;
+  font-size: 14px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Landmarks visuais para debug (remover em produção) */
+/*
+[role="main"],
+[role="navigation"],
+[role="search"],
+[role="banner"],
+[role="contentinfo"] {
+  outline: 2px dashed blue;
+}
+*/
+
+/* Anúncios ao vivo (screen readers) */
+[aria-live="polite"],
+[aria-live="assertive"] {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Quando o anúncio tem conteúdo visível */
+[aria-live="polite"]:not(:empty),
+[aria-live="assertive"]:not(:empty) {
+  position: static;
+  width: auto;
+  height: auto;
+}
+
+/* Estilos para tabelas acessíveis */
+table {
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* Highlight de linha ao hover para melhor leitura */
+tr:hover {
+  background-color: rgba(31, 40, 95, 0.05);
+}
+
+/* Modo de alto contraste (Windows High Contrast Mode) */
+@media (prefers-contrast: high) {
+  * {
+    border-color: currentColor !important;
+  }
+
+  button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --focus-color: #60a5fa;
+    --error-color: #f87171;
+  }
+
+  *:focus-visible {
+    outline-color: var(--focus-color);
+  }
+
+  [aria-invalid="true"]:focus {
+    outline-color: var(--error-color);
+  }
+}

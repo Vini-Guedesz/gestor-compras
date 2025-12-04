@@ -366,7 +366,6 @@ const itensFiltradosPorPedido = computed(() => {
 
   // Retornar os itens do pedido
   const itens = pedido.itens || []
-  console.log(`📦 Itens do pedido #${pedido.id}:`, itens.length, itens)
 
   return itens
 })
@@ -452,7 +451,6 @@ const handleFileUpload = (event) => {
 
     arquivoPdf.value = file
     formData.value.arquivoPdf = file
-    console.log('📄 Arquivo PDF selecionado:', file.name, `(${formatarTamanhoArquivo(file.size)})`)
   }
 }
 
@@ -462,7 +460,6 @@ const removerArquivo = () => {
   if (fileInput.value) {
     fileInput.value.value = ''
   }
-  console.log('🗑️ Arquivo PDF removido')
 }
 
 const formatarTamanhoArquivo = (bytes) => {
@@ -518,8 +515,6 @@ const selecionarFornecedor = (fornecedor) => {
 }
 
 const selecionarPedido = (pedido) => {
-  console.log('🔍 Pedido selecionado:', pedido)
-  console.log('📦 Itens do pedido:', pedido.itens?.length || 0, pedido.itens)
 
   pedidoSelecionado.value = pedido.id
   pedidoSelecionadoLabel.value = `Pedido #${pedido.id} - ${getStatusLabel(pedido.status)}`
@@ -534,7 +529,6 @@ const selecionarPedido = (pedido) => {
 
   // Log para verificar os itens filtrados
   setTimeout(() => {
-    console.log('📋 Itens disponíveis após seleção:', itensFiltradosPorPedido.value)
   }, 100)
 }
 
@@ -568,7 +562,6 @@ const gerarRelatorio = async () => {
 
   try {
     gerandoRelatorio.value = true
-    console.log('📄 Gerando relatório para o pedido:', pedidoSelecionado.value)
 
     // Se houver um item selecionado, incluir apenas ele, senão incluir todos
     const itensIds = formData.value.itemPedidoId ? [formData.value.itemPedidoId] : []
@@ -589,7 +582,6 @@ const gerarRelatorio = async () => {
 
 const handleSubmit = async () => {
   if (carregando.value) {
-    console.log('⚠️ Já está processando uma cotação, aguarde...')
     return
   }
 
@@ -608,8 +600,6 @@ const handleSubmit = async () => {
       return
     }
 
-    console.log('🚀 Iniciando envio de cotação...')
-    console.log('📋 Dados do formulário:', formData.value)
 
     const dadosParaSalvar = {
       fornecedorId: parseInt(formData.value.fornecedorId),
@@ -622,7 +612,6 @@ const handleSubmit = async () => {
     }
 
     if (dadosParaSalvar.arquivoPdf) {
-      console.log('📄 Incluindo arquivo PDF:', dadosParaSalvar.arquivoPdf.name)
     }
 
     // Validar conversões
@@ -641,7 +630,6 @@ const handleSubmit = async () => {
       return
     }
 
-    console.log(' Enviando dados para a view pai:', dadosParaSalvar)
 
     // Emitir os dados para a view pai processar
     emit('save', dadosParaSalvar)
@@ -664,10 +652,8 @@ const handleSubmit = async () => {
 // Carregar dados
 const carregarFornecedores = async () => {
   try {
-    console.log('🔄 Carregando fornecedores para cotação...')
     const fornecedores = await fornecedorService.listarParaCotacao()
     fornecedoresDisponiveis.value = fornecedores || []
-    console.log('✅ Fornecedores carregados:', fornecedores?.length || 0)
 
     if (!fornecedores || fornecedores.length === 0) {
       mostrarAlerta('Nenhum fornecedor encontrado no sistema', 'warning')
@@ -681,10 +667,8 @@ const carregarFornecedores = async () => {
 
 const carregarItens = async () => {
   try {
-    console.log('🔄 Carregando itens de pedido...')
     const itens = await itemPedidoService.listarTodos()
     itensDisponiveis.value = itens || []
-    console.log('✅ Itens carregados:', itens?.length || 0)
 
     if (!itens || itens.length === 0) {
       mostrarAlerta('Nenhum item de pedido encontrado', 'warning')
@@ -698,25 +682,20 @@ const carregarItens = async () => {
 
 const carregarPedidos = async () => {
   try {
-    console.log('🔄 Carregando pedidos...')
     const response = await pedidoService.listarTodos()
 
     // Processar pedidos - pode vir como array direto ou dentro de response.data
     const pedidos = Array.isArray(response) ? response : (response?.data || [])
-    console.log('📋 Pedidos recebidos:', pedidos.length)
 
     // Verificar se os pedidos já vêm com itens
     if (pedidos.length > 0 && pedidos[0].itens) {
-      console.log('✅ Pedidos já contêm itens')
       pedidosDisponiveis.value = pedidos
     } else {
       // Caso contrário, carregar itens separadamente e associar
-      console.log('🔄 Carregando itens para associar aos pedidos...')
       const todosItens = itensDisponiveis.value.length > 0
         ? itensDisponiveis.value
         : await itemPedidoService.listarTodos()
 
-      console.log('📦 Total de itens carregados:', todosItens.length)
 
       // Associar itens aos pedidos
       pedidosDisponiveis.value = pedidos.map(pedido => {
@@ -725,12 +704,10 @@ const carregarPedidos = async () => {
           const pedidoId = item.solicitacaoDePedido?.id || item.solicitacaoDePedidoId || item.pedidoId
           const match = pedidoId === pedido.id
           if (match) {
-            console.log(`  ✓ Item #${item.id} pertence ao pedido #${pedido.id}`)
           }
           return match
         })
 
-        console.log(`📦 Pedido #${pedido.id}: ${itensDoPedido.length} itens associados`)
 
         return {
           ...pedido,
@@ -739,11 +716,6 @@ const carregarPedidos = async () => {
       })
     }
 
-    console.log('✅ Pedidos processados:', pedidosDisponiveis.value.length)
-    console.log('📊 Estrutura dos pedidos:', pedidosDisponiveis.value.map(p => ({
-      id: p.id,
-      itens: p.itens?.length || 0
-    })))
 
     if (pedidosDisponiveis.value.length === 0) {
       mostrarAlerta('Nenhum pedido encontrado', 'warning')
@@ -758,7 +730,6 @@ const carregarPedidos = async () => {
 const inicializarFormulario = async () => {
   if (props.cotacao) {
     // Editando cotação existente
-    console.log('📝 Editando cotação:', props.cotacao)
 
     formData.value = {
       fornecedorId: props.cotacao.fornecedorId,
@@ -831,7 +802,6 @@ const inicializarFormulario = async () => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('🔄 Inicializando formulário de cotação...')
   await Promise.all([carregarFornecedores(), carregarItens(), carregarPedidos()])
   inicializarFormulario()
 
@@ -911,11 +881,23 @@ watch(() => props.cotacao, () => {
   padding: 4px;
   border-radius: 4px;
   transition: all 0.2s;
+  outline: none;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-button:hover {
   background: #f3f4f6;
   color: #374151;
+}
+
+.close-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #e5e7eb;
 }
 
 .modal-body {

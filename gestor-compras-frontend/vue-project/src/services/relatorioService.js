@@ -29,7 +29,7 @@ const relatorioClient = axios.create({
  */
 relatorioClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken')
+    const token = sessionStorage.getItem('authToken')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -47,8 +47,7 @@ relatorioClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('user')
+      sessionStorage.removeItem('authToken')
       window.location.href = '/login'
       return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
     }

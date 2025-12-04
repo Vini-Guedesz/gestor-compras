@@ -27,6 +27,9 @@ public class Cotacao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fornecedor_produto_id")
     private FornecedorDeProduto fornecedorProduto;
@@ -40,30 +43,25 @@ public class Cotacao {
     private SolicitacaoDePedido solicitacaoDePedido;
 
     /**
-     * Bug #5 - Limitação de Design: Relacionamento N:N direto
+     * Itens desta cotação com preços individuais (Bug #5 corrigido)
      *
-     * ATENÇÃO: Este relacionamento N:N direto tem limitações arquiteturais.
-     * Ele não permite armazenar informações específicas do par cotação-item, como:
-     * - Preço unitário do item nesta cotação específica
-     * - Quantidade cotada (que pode diferir da quantidade solicitada)
-     * - Observações específicas sobre o item nesta cotação
+     * Relacionamento através da entidade intermediária CotacaoItem, que permite:
+     * - Preço unitário específico por item
+     * - Quantidade cotada (pode diferir da quantidade solicitada)
+     * - Observações específicas sobre cada item
      *
-     * QUANDO REFATORAR: Se o sistema precisar de qualquer das funcionalidades acima,
-     * este relacionamento deve ser convertido em uma entidade intermediária:
-     * CotacaoItem { cotacao_id, item_pedido_id, preco_unitario, quantidade_cotada, observacao }
-     *
-     * Por enquanto, este design é suficiente pois o preço é armazenado no nível da cotação
-     * inteira, não por item individual.
+     * Substituiu o relacionamento N:N direto anterior que tinha limitações.
      */
-    @ManyToMany
-    @JoinTable(
-        name = "cotacao_item_pedido",
-        joinColumns = @JoinColumn(name = "cotacao_id"),
-        inverseJoinColumns = @JoinColumn(name = "item_pedido_id")
-    )
-    private Set<ItemPedido> itensPedido = new HashSet<>();
+    @OneToMany(mappedBy = "cotacao", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CotacaoItem> itens = new ArrayList<>();
 
-    private BigDecimal preco;
+    /**
+     * @deprecated Removido. Use itens e calcule o preço total a partir dos itens individuais.
+     * Mantido temporariamente para compatibilidade durante migração.
+     */
+    @Deprecated
+    @Column(name = "preco")
+    private BigDecimal precoLegacy;
 
     private Integer prazoEmDiasUteis;
 
@@ -77,6 +75,24 @@ public class Cotacao {
     @OneToMany(mappedBy = "cotacao", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordem ASC")
     private List<AnexoCotacao> anexos = new ArrayList<>();
+
+    /**
+     * Campos de auditoria para rastreamento de edições
+     */
+    @Column(name = "numero_versao")
+    private Integer numeroVersao = 1;
+
+    @Column(name = "foi_editada")
+    private Boolean foiEditada = false;
+
+    @Column(name = "data_ultima_edicao")
+    private java.time.LocalDateTime dataUltimaEdicao;
+
+    @Column(name = "motivo_ultima_edicao", length = 500)
+    private String motivoUltimaEdicao;
+
+    @Column(name = "editado_por", length = 100)
+    private String editadoPor;
 
     @PrePersist
     public void prePersist() {
@@ -107,5 +123,48 @@ public class Cotacao {
             return fornecedorServico.getId();
         }
         return null;
+    }
+
+    /**
+     * Adiciona um item à cotação com relacionamento bidirecional
+     */
+    public void addItem(CotacaoItem item) {
+        itens.add(item);
+        item.setCotacao(this);
+    }
+
+    /**
+     * Remove um item da cotação
+     */
+    public void removeItem(CotacaoItem item) {
+        itens.remove(item);
+        item.setCotacao(null);
+    }
+
+    /**
+     * Calcula o preço total da cotação somando todos os itens
+     */
+    public BigDecimal calcularPrecoTotal() {
+        if (itens == null || itens.isEmpty()) {
+            return precoLegacy != null ? precoLegacy : BigDecimal.ZERO;
+        }
+        return itens.stream()
+                .map(CotacaoItem::calcularPrecoTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Retorna o preço total (calculado ou legacy)
+     */
+    public BigDecimal getPreco() {
+        return calcularPrecoTotal();
+    }
+
+    /**
+     * @deprecated Use addItem(CotacaoItem) para adicionar itens com preços individuais
+     */
+    @Deprecated
+    public void setPreco(BigDecimal preco) {
+        this.precoLegacy = preco;
     }
 }

@@ -1,5 +1,7 @@
 package com.gestordecompras.gestorcomprasbackend.security;
 
+import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,6 +32,9 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
 
+    @Value("${cors.allowed-origins:http://localhost:5173}")
+    private String[] allowedOrigins;
+
     public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtFilter jwtFilter, CustomAuthenticationEntryPoint authenticationEntryPoint, CustomAccessDeniedHandler accessDeniedHandler) {
         this.userDetailsService = userDetailsService;
         this.jwtFilter = jwtFilter;
@@ -42,29 +47,22 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            "/api/itens-pedido/**",
-            "/api/solicitacoes-pedido/**",
-            "/api/cotacoes/**",
-            "/api/rascunhos/**",
-            "/relatorios/**",
-            "/api/relatorios/**",
             "/error",
-            "/api/fornecedores-de-produto/**",
-            "/api/fornecedores-de-servico/**",
-            "/api/historico-pedidos/**"
+            ApiVersionConfig.API_V1 + "/fornecedores-de-produto/**",
+            ApiVersionConfig.API_V1 + "/fornecedores-de-servico/**"
     };
 
     private static final String[] USER_ENDPOINTS = {
     };
 
     private static final String[] ADMIN_ENDPOINTS = {
-            "/api/users/**",
-            "/api/enderecos/**",
-            "/api/contatos/**"
+            ApiVersionConfig.API_V1 + "/users/**",
+            ApiVersionConfig.API_V1 + "/enderecos/**",
+            ApiVersionConfig.API_V1 + "/contatos/**"
     };
 
     private static final String[] PUBLIC_POST_ENDPOINTS = {
-            "/api/users"
+            ApiVersionConfig.API_V1 + "/users"
     };
 
     @Bean
@@ -83,7 +81,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Permitir preflight CORS
                         .requestMatchers("/relatorios/**").permitAll()
-                        .requestMatchers("/api/relatorios/**").permitAll()
+                        .requestMatchers(ApiVersionConfig.API_V1 + "/relatorios/**").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(USER_ENDPOINTS).hasAnyRole("USER", "ADMIN")
@@ -108,10 +106,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L); // Cache preflight por 1 hora
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

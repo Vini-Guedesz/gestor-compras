@@ -176,7 +176,10 @@ public class CotacaoRascunhoService {
         // Calcular quantidade de anexos
         int quantidadeAnexos = 0;
         if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
-            quantidadeAnexos = cotacao.getAnexos().size();
+            // Contar apenas anexos que têm conteúdo
+            quantidadeAnexos = (int) cotacao.getAnexos().stream()
+                .filter(anexo -> anexo.getConteudo() != null && anexo.getConteudo().length > 0)
+                .count();
         } else if (cotacao.getAnexoPdf() != null && cotacao.getAnexoPdf().length > 0) {
             quantidadeAnexos = 1;
         }
