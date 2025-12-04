@@ -35,6 +35,29 @@
             <div class="header-content">
               <h2 class="view-title">{{ getTitulo() }}</h2>
               <p class="view-subtitle">Detalhes completos do {{ isRascunho ? 'rascunho' : 'pedido' }}</p>
+              <!-- Resumo Rápido -->
+              <div class="header-resumo">
+                <div class="resumo-item">
+                  <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
+                    <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                  </svg>
+                  <span>{{ pedido?.itens?.length || 0 }} {{ pedido?.itens?.length === 1 ? 'item' : 'itens' }}</span>
+                </div>
+                <span class="resumo-separator">•</span>
+                <div class="resumo-item">
+                  <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
+                    <path fill="currentColor" d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 1.99 2H19c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+                  </svg>
+                  <span>{{ cotacoes.length }} {{ cotacoes.length === 1 ? 'cotação' : 'cotações' }}</span>
+                </div>
+                <span class="resumo-separator" v-if="getTotalCotacoes() > 0">•</span>
+                <div class="resumo-item resumo-total" v-if="getTotalCotacoes() > 0">
+                  <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
+                    <path fill="currentColor" d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                  </svg>
+                  <span class="total-valor">Total: R$ {{ formatarPreco(getTotalCotacoes()) }}</span>
+                </div>
+              </div>
             </div>
             <div class="header-actions">
               <span class="status-badge" :class="getStatusClass()">
@@ -43,28 +66,55 @@
               <button v-if="isRascunho && !isFinalizado" @click="editarRascunho" class="btn-success">
                 Editar Rascunho
               </button>
-              <button v-if="!isRascunho && podeEditarPedido" @click="editarPedido" class="btn-primary">
-                Editar Pedido
-              </button>
             </div>
           </div>
 
           <!-- Seção: Informações Gerais -->
           <div class="section-card">
             <h3 class="section-title">Informações Gerais</h3>
-            <div class="info-grid">
-              <div class="info-item">
-                <span class="info-label">ID:</span>
-                <span class="info-value">#{{ isRascunho ? pedido?.rascunhoId : pedido?.id }}</span>
+            <div class="info-grid-enhanced">
+              <div class="info-card">
+                <div class="info-card-icon" style="background: #dbeafe;">
+                  <svg viewBox="0 0 20 20" fill="#2563eb">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <span class="info-card-label">ID do Pedido</span>
+                  <span class="info-card-value">#{{ isRascunho ? pedido?.rascunhoId : pedido?.id }}</span>
+                </div>
               </div>
-              <div class="info-item">
-                <span class="info-label">Data de Criação:</span>
-                <span class="info-value">{{ formatarData(pedido?.dataCriacao) }}</span>
+              <div class="info-card">
+                <div class="info-card-icon" style="background: #fef3c7;">
+                  <svg viewBox="0 0 20 20" fill="#d97706">
+                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <span class="info-card-label">Data de Criação</span>
+                  <span class="info-card-value">{{ formatarData(pedido?.dataCriacao) }}</span>
+                </div>
               </div>
-              <div class="info-item" v-if="pedido?.observacao">
-                <span class="info-label">Observação:</span>
-                <span class="info-value">{{ pedido.observacao }}</span>
+              <div class="info-card" v-if="pedido?.status">
+                <div class="info-card-icon" style="background: #e0e7ff;">
+                  <svg viewBox="0 0 20 20" fill="#6366f1">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <span class="info-card-label">Status</span>
+                  <span class="info-card-value">{{ pedido.status }}</span>
+                </div>
               </div>
+            </div>
+            <div v-if="pedido?.observacao" class="observacao-box">
+              <div class="observacao-header">
+                <svg class="observacao-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+                <span>Observação</span>
+              </div>
+              <p class="observacao-text">{{ pedido.observacao }}</p>
             </div>
           </div>
 
@@ -76,6 +126,9 @@
                 <div class="item-header">
                   <span class="item-numero">Item {{ index + 1 }}</span>
                   <span class="item-status" :class="{ 'cotado': itemTemCotacao(item) }">
+                    <svg v-if="itemTemCotacao(item)" class="status-icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
                     {{ itemTemCotacao(item) ? 'Cotado' : 'Sem cotação' }}
                   </span>
                 </div>
@@ -98,33 +151,96 @@
             <h3 class="section-title">Cotações</h3>
             <div v-if="cotacoes.length > 0" class="cotacoes-lista">
               <div v-for="cotacao in cotacoes" :key="cotacao.id" class="cotacao-card">
-                <div class="cotacao-header">
-                  <div class="cotacao-fornecedor">
-                    <strong>{{ cotacao.nomeFornecedor || cotacao.fornecedorNome || 'Fornecedor' }}</strong>
-                    <span class="cotacao-tipo">{{ cotacao.tipoFornecedor }}</span>
+                <!-- Header padronizado -->
+                <div class="cotacao-header-padrao">
+                  <div class="cotacao-info-principal">
+                    <div class="fornecedor-linha">
+                      <strong class="fornecedor-nome">{{ cotacao.nomeFornecedor || cotacao.fornecedorNome || 'Fornecedor' }}</strong>
+                      <span class="tipo-tag">{{ cotacao.tipoFornecedor }}</span>
+                      <span v-if="cotacao.foiEditada" class="badge-editada" title="Esta cotação foi editada">
+                        <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                        </svg>
+                        EDITADA
+                      </span>
+                    </div>
                   </div>
-                  <div class="cotacao-preco">
-                    R$ {{ formatarPreco(cotacao.preco) }}
+                  <div class="preco-destaque-box">
+                    <span class="preco-label-small">VALOR TOTAL</span>
+                    <span class="preco-valor-grande">R$ {{ formatarPreco(cotacao.preco) }}</span>
                   </div>
                 </div>
 
                 <div class="cotacao-body">
-                  <div class="cotacao-info">
-                    <span v-if="cotacao.prazoEmDiasUteis">
-                      Prazo: {{ cotacao.prazoEmDiasUteis }} dias úteis
-                    </span>
-                    <span v-if="cotacao.dataLimite">
-                      Validade: {{ formatarData(cotacao.dataLimite) }}
-                    </span>
+                  <!-- Grid de informações: Prazo e Validade -->
+                  <div class="cotacao-info-grid">
+                    <div v-if="cotacao.prazoEmDiasUteis" class="info-box">
+                      <svg class="info-box-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                      </svg>
+                      <div class="info-box-content">
+                        <span class="info-box-label">Prazo</span>
+                        <span class="info-box-value">{{ cotacao.prazoEmDiasUteis }} dias úteis</span>
+                      </div>
+                    </div>
+                    <div v-if="cotacao.dataLimite" class="info-box">
+                      <svg class="info-box-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                      </svg>
+                      <div class="info-box-content">
+                        <span class="info-box-label">Validade</span>
+                        <span class="info-box-value">{{ formatarData(cotacao.dataLimite) }}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div class="cotacao-itens">
-                    <span class="itens-label">Itens contemplados:</span>
-                    <div class="itens-tags">
+                  <!-- Seção de Contato -->
+                  <div v-if="cotacao.fornecedorCompleto?.contato" class="cotacao-contato-section">
+                    <h5 class="contato-section-title">Contato</h5>
+                    <div class="contato-grid">
+                      <a
+                        v-if="cotacao.fornecedorCompleto.contato.telefone"
+                        :href="`tel:${cotacao.fornecedorCompleto.contato.telefone}`"
+                        class="contato-item-new"
+                      >
+                        <svg class="contato-item-icon" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                        </svg>
+                        <span>{{ formatarTelefone(cotacao.fornecedorCompleto.contato.telefone) }}</span>
+                      </a>
+                      <a
+                        v-if="cotacao.fornecedorCompleto.contato.celular"
+                        :href="`tel:${cotacao.fornecedorCompleto.contato.celular}`"
+                        class="contato-item-new"
+                      >
+                        <svg class="contato-item-icon" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                        </svg>
+                        <span>{{ formatarTelefone(cotacao.fornecedorCompleto.contato.celular) }}</span>
+                      </a>
+                      <a
+                        v-if="cotacao.fornecedorCompleto.contato.email"
+                        :href="`mailto:${cotacao.fornecedorCompleto.contato.email}`"
+                        class="contato-item-new contato-email"
+                        :title="cotacao.fornecedorCompleto.contato.email"
+                      >
+                        <svg class="contato-item-icon" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                        </svg>
+                        <span class="email-text">{{ cotacao.fornecedorCompleto.contato.email }}</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  <!-- Itens -->
+                  <div class="cotacao-itens-section">
+                    <h5 class="itens-section-title">Itens Contemplados</h5>
+                    <div class="itens-chips">
                       <span
                         v-for="itemId in getItensIdsDaCotacao(cotacao)"
                         :key="itemId"
-                        class="item-tag"
+                        class="item-chip"
                       >
                         {{ getNomeItem(itemId) }}
                       </span>
@@ -133,28 +249,43 @@
                 </div>
 
                 <div class="cotacao-actions">
-                  <!-- Botões de PDF -->
+                  <!-- Botão de PDF (apenas o mais recente) -->
                   <div class="pdf-buttons" v-if="cotacao.temAnexoPdf || cotacao.quantidadeAnexos > 0">
-                    <!-- Múltiplos PDFs -->
-                    <template v-if="cotacao.quantidadeAnexos > 1">
-                      <button
-                        v-for="index in cotacao.quantidadeAnexos"
-                        :key="index"
-                        @click="togglePdfViewer(cotacao, index - 1)"
-                        class="btn-pdf"
-                        :class="{ 'btn-pdf-active': pdfAberto === `${cotacao.id}-${index - 1}` }"
-                      >
-                        {{ pdfAberto === `${cotacao.id}-${index - 1}` ? 'Fechar' : `PDF ${index}` }}
-                      </button>
-                    </template>
-                    <!-- PDF único -->
                     <button
-                      v-else
                       @click="togglePdfViewer(cotacao, 0)"
-                      class="btn-pdf"
-                      :class="{ 'btn-pdf-active': pdfAberto === `${cotacao.id}-0` }"
+                      class="btn-pdf-primary"
+                      :class="{ 'btn-pdf-primary-active': pdfAberto === `${cotacao.id}-0`, 'novo-anexo': cotacao.foiEditada }"
                     >
-                      {{ pdfAberto === `${cotacao.id}-0` ? 'Fechar PDF' : 'Ver PDF' }}
+                      <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                      </svg>
+                      {{ pdfAberto === `${cotacao.id}-0` ? 'Fechar PDF' : 'Visualizar PDF' }}
+                      <span v-if="cotacao.foiEditada" class="badge-atualizado">Atualizado</span>
+                    </button>
+                  </div>
+
+                  <!-- Botões de Edição e Histórico (apenas para pedidos) -->
+                  <div v-if="!isRascunho" class="cotacao-edit-buttons">
+                    <button
+                      @click="abrirModalEditarCotacao(cotacao)"
+                      class="btn-edit-cotacao"
+                      title="Editar cotação"
+                    >
+                      <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                      </svg>
+                      Editar
+                    </button>
+                    <button
+                      v-if="cotacao.foiEditada"
+                      @click="abrirModalHistorico(cotacao)"
+                      class="btn-history-cotacao"
+                      title="Ver histórico de edições"
+                    >
+                      <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                      </svg>
+                      Histórico
                     </button>
                   </div>
 
@@ -193,29 +324,70 @@
 
           <!-- Seção: Histórico -->
           <div class="section-card">
-            <h3 class="section-title">Histórico de Modificações</h3>
-            <div v-if="historico.length > 0" class="historico-lista">
-              <div v-for="registro in historico" :key="registro.id" class="historico-item">
-                <div class="historico-icon" :style="{ background: getTipoModificacaoColor(registro.tipoAcao || registro.tipoModificacao) }">
-                  <svg viewBox="0 0 24 24" width="16" height="16">
+            <div class="section-header-with-badge">
+              <h3 class="section-title">📜 Histórico de Modificações</h3>
+              <span v-if="historico.length > 0" class="count-badge">{{ historico.length }}</span>
+            </div>
+            <div v-if="historico.length > 0" class="historico-lista-melhorada">
+              <div v-for="(registro, index) in historico" :key="registro.id" class="historico-item-melhorado">
+                <!-- Timeline connector -->
+                <div class="timeline-connector" v-if="index < historico.length - 1"></div>
+
+                <div class="historico-icon-melhorado" :style="{ background: getTipoModificacaoColor(registro.tipoAcao || registro.tipoModificacao) }">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
                     <path fill="white" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                   </svg>
                 </div>
-                <div class="historico-content">
-                  <div class="historico-header">
-                    <span class="historico-tipo">{{ getTipoModificacaoLabel(registro.tipoAcao || registro.tipoModificacao) }}</span>
-                    <span class="historico-data">{{ formatarDataHora(registro.dataModificacao) }}</span>
-                  </div>
-                  <div class="historico-usuario" v-if="registro.nomeUsuario">
-                    Por: {{ registro.nomeUsuario }}
-                  </div>
-                  <div class="historico-descricao" v-if="registro.descricao">
-                    {{ registro.descricao }}
+
+                <div class="historico-content-melhorado">
+                  <div class="historico-card">
+                    <div class="historico-header-melhorado">
+                      <div class="tipo-badge" :style="{
+                        background: getTipoModificacaoColor(registro.tipoAcao || registro.tipoModificacao) + '20',
+                        color: getTipoModificacaoColor(registro.tipoAcao || registro.tipoModificacao),
+                        border: '1px solid ' + getTipoModificacaoColor(registro.tipoAcao || registro.tipoModificacao)
+                      }">
+                        {{ getTipoModificacaoLabel(registro.tipoAcao || registro.tipoModificacao) }}
+                      </div>
+                      <span class="historico-data-melhorada">{{ formatarDataHora(registro.dataModificacao) }}</span>
+                    </div>
+
+                    <div class="historico-usuario-melhorado" v-if="registro.nomeUsuario">
+                      <svg class="usuario-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                      </svg>
+                      <span>{{ registro.nomeUsuario }}</span>
+                    </div>
+
+                    <div class="historico-descricao-melhorada" v-if="registro.descricao">
+                      <div class="descricao-icon">
+                        <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                      </div>
+                      <span>{{ registro.descricao }}</span>
+                    </div>
+
+                    <!-- Informações adicionais para itens -->
+                    <div v-if="registro.nomeItem" class="historico-detalhes">
+                      <div class="detalhe-item">
+                        <strong>Item:</strong> {{ registro.nomeItem }}
+                        <span v-if="registro.numeroItem" class="numero-item-badge">#{{ registro.numeroItem }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Detalhes extras se houver -->
+                    <div v-if="registro.detalhes" class="historico-detalhes-extras">
+                      {{ registro.detalhes }}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             <div v-else class="empty-state-small">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
               <p>Nenhum registro de histórico</p>
             </div>
           </div>
@@ -223,277 +395,26 @@
       </div>
     </div>
 
-    <!-- Modal de Edição de Pedido -->
-    <div v-if="modalEdicaoAberto" class="modal-overlay" @click.self="fecharModalEdicao">
-      <div class="modal-container">
-        <div class="modal-header">
-          <h3>Editar Pedido #{{ pedido?.id }}</h3>
-          <button @click="fecharModalEdicao" class="btn-close">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-            </svg>
-          </button>
-        </div>
+    <!-- Modais de Cotação -->
+    <EditCotacaoModal
+      :show="modalEditarCotacaoAberto"
+      :cotacao="cotacaoSelecionadaParaEdicao || {}"
+      @close="fecharModalEditarCotacao"
+      @save="salvarEdicaoCotacao"
+    />
 
-        <div class="modal-body">
-          <!-- Seleção de Item -->
-          <div v-if="!itemSendoEditado" class="form-section">
-            <h4>Selecione o item para editar:</h4>
-            <div class="itens-selecao">
-              <div
-                v-for="(item, index) in pedido?.itens"
-                :key="item.id"
-                @click="abrirEdicaoItem(item)"
-                class="item-selecao-card"
-              >
-                <div class="item-selecao-numero">Item {{ index + 1 }}</div>
-                <div class="item-selecao-nome">{{ item.nome }}</div>
-                <div class="item-selecao-qtd">Qtd: {{ item.quantidade }}</div>
-                <div class="item-selecao-status" :class="{ 'tem-cotacao': itemTemCotacao(item) }">
-                  {{ itemTemCotacao(item) ? 'Com cotação' : 'Sem cotação' }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Edição do Item -->
-          <div v-else class="form-section">
-            <button @click="itemSendoEditado = null" class="btn-voltar-item">
-              <svg viewBox="0 0 24 24" width="16" height="16">
-                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-              </svg>
-              Voltar para lista de itens
-            </button>
-
-            <div class="item-selecionado">
-              <h4>Editando: {{ itemSendoEditado.nome }}</h4>
-              <p>Quantidade: {{ itemSendoEditado.quantidade }}</p>
-            </div>
-
-            <!-- Cotações do Item -->
-            <div class="cotacoes-section">
-              <div class="section-header-inline">
-                <h5>Cotações para este item:</h5>
-                <button @click="abrirFormularioNovaCotacao" class="btn-add-small" type="button">
-                  + Nova Cotação
-                </button>
-              </div>
-
-              <!-- Formulário Nova Cotação (inline, similar ao rascunho) -->
-              <div v-if="modoNovaCotacao" class="form-nova-cotacao-inline">
-                <div class="form-row-2">
-                  <div class="form-group">
-                    <label>Tipo de Fornecedor *</label>
-                    <div class="radio-group-inline">
-                      <label class="radio-label-inline">
-                        <input
-                          type="radio"
-                          v-model="novaCotacao.tipoFornecedor"
-                          value="PRODUTO"
-                          @change="carregarFornecedoresPorTipo"
-                        />
-                        <span>Produto</span>
-                      </label>
-                      <label class="radio-label-inline">
-                        <input
-                          type="radio"
-                          v-model="novaCotacao.tipoFornecedor"
-                          value="SERVICO"
-                          @change="carregarFornecedoresPorTipo"
-                        />
-                        <span>Serviço</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div class="form-group">
-                    <label>Fornecedor *</label>
-                    <div class="autocomplete-wrapper">
-                      <input
-                        v-model="buscaFornecedor"
-                        @input="filtrarFornecedores"
-                        @focus="mostrarListaFornecedores = true"
-                        type="text"
-                        class="form-input-inline"
-                        placeholder="Digite para buscar..."
-                        :disabled="carregandoFornecedores"
-                      />
-                      <div v-if="mostrarListaFornecedores && fornecedoresFiltrados.length > 0" class="autocomplete-dropdown">
-                        <div
-                          v-for="f in fornecedoresFiltrados"
-                          :key="f.id"
-                          @click="selecionarFornecedor(f)"
-                          class="autocomplete-item"
-                        >
-                          {{ f.razaoSocial }}
-                        </div>
-                      </div>
-                      <div v-if="mostrarListaFornecedores && buscaFornecedor && fornecedoresFiltrados.length === 0" class="autocomplete-empty">
-                        Nenhum fornecedor encontrado
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="form-row-3">
-                  <div class="form-group">
-                    <label>Valor (R$) *</label>
-                    <input
-                      v-model="precoFormatado"
-                      @input="formatarPrecoInput"
-                      @blur="formatarPrecoCompleto"
-                      type="text"
-                      class="form-input-inline"
-                      placeholder="0,00"
-                    />
-                  </div>
-
-                  <div class="form-group">
-                    <label>Prazo (dias úteis)</label>
-                    <input v-model="novaCotacao.prazoEmDiasUteis" type="number" class="form-input-inline" placeholder="15">
-                  </div>
-
-                  <div class="form-group">
-                    <label>Data Validade *</label>
-                    <input v-model="novaCotacao.dataLimite" type="date" class="form-input-inline">
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label>Anexo PDF (opcional)</label>
-                  <div class="file-upload-container">
-                    <input
-                      @change="handleFileUpload"
-                      type="file"
-                      accept="application/pdf"
-                      id="file-upload-cotacao"
-                      class="file-input-hidden"
-                    />
-                    <label for="file-upload-cotacao" class="file-upload-label">
-                      <svg viewBox="0 0 24 24" width="20" height="20" class="file-icon">
-                        <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,15H9V10H15V15L13,19H10Z"/>
-                      </svg>
-                      <span v-if="!novaCotacao.arquivo" class="file-upload-text">
-                        Escolher arquivo PDF
-                      </span>
-                      <span v-else class="file-upload-text selected">
-                        {{ novaCotacao.arquivo.name }}
-                      </span>
-                    </label>
-                    <button
-                      v-if="novaCotacao.arquivo"
-                      @click="removerArquivo"
-                      type="button"
-                      class="btn-remove-file"
-                      title="Remover arquivo"
-                    >
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div v-if="novaCotacao.arquivo" class="file-info">
-                    <svg viewBox="0 0 24 24" width="14" height="14" class="file-info-icon">
-                      <path fill="currentColor" d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
-                    </svg>
-                    <span class="file-size">{{ formatarTamanhoArquivo(novaCotacao.arquivo.size) }}</span>
-                  </div>
-                </div>
-
-                <div class="form-actions-inline">
-                  <button @click="cancelarNovaCotacao" class="btn-cancel-inline" type="button">
-                    Cancelar
-                  </button>
-                  <button
-                    @click="criarNovaCotacao"
-                    class="btn-save-inline"
-                    type="button"
-                    :disabled="!novaCotacao.fornecedorId || !novaCotacao.preco || !novaCotacao.dataLimite"
-                  >
-                    Criar Cotação
-                  </button>
-                </div>
-              </div>
-
-              <!-- Lista de Cotações Existentes -->
-              <div v-if="carregandoCotacoes" class="loading-container-small">
-                <div class="loading-spinner-small"></div>
-                <span>Carregando...</span>
-              </div>
-
-              <div v-else-if="cotacoesDisponiveis.length === 0 && !modoNovaCotacao" class="empty-state-inline">
-                <p>Nenhuma cotação disponível. Crie uma nova!</p>
-              </div>
-
-              <div v-else-if="!modoNovaCotacao" class="cotacoes-lista-inline">
-                <div
-                  v-for="cotacao in cotacoesDisponiveis"
-                  :key="cotacao.id"
-                  @click="selecionarCotacao(cotacao)"
-                  class="cotacao-card-inline"
-                  :class="{
-                    'selecionada': cotacaoSelecionada?.id === cotacao.id,
-                    'vinculada': cotacao.vinculadaAoItem
-                  }"
-                >
-                  <div class="cotacao-badge-container">
-                    <span v-if="cotacao.vinculadaAoItem" class="badge-vinculada">Atual</span>
-                    <span v-if="cotacaoSelecionada?.id === cotacao.id" class="badge-selecionada">✓ Selecionada</span>
-                  </div>
-
-                  <div class="cotacao-info-inline">
-                    <div class="fornecedor-info">
-                      <strong>{{ cotacao.nomeFornecedor }}</strong>
-                      <span class="tipo-badge">{{ cotacao.tipoFornecedor }}</span>
-                    </div>
-                    <div class="preco-info">R$ {{ formatarPreco(cotacao.preco) }}</div>
-                  </div>
-
-                  <div class="cotacao-detalhes-inline">
-                    <span v-if="cotacao.prazoEmDiasUteis">Prazo: {{ cotacao.prazoEmDiasUteis }} dias</span>
-                    <span v-if="cotacao.dataLimite">Validade: {{ formatarData(cotacao.dataLimite) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Justificativa -->
-            <div class="form-group" style="margin-top: 24px;">
-              <label for="observacaoEdicao">Justificativa da alteração: *</label>
-              <textarea
-                id="observacaoEdicao"
-                v-model="observacaoEdicao"
-                placeholder="Informe o motivo da alteração..."
-                rows="3"
-                class="form-textarea-inline"
-                maxlength="1000"
-              ></textarea>
-              <div class="char-count-inline">{{ observacaoEdicao.length }}/1000</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button @click="fecharModalEdicao" class="btn-secondary" :disabled="salvandoEdicao">
-            Cancelar
-          </button>
-          <button
-            v-if="itemSendoEditado"
-            @click="salvarEdicao"
-            class="btn-primary"
-            :disabled="salvandoEdicao || !cotacaoSelecionada || !observacaoEdicao.trim()"
-          >
-            {{ salvandoEdicao ? 'Salvando...' : 'Vincular Cotação' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <HistoricoCotacaoModal
+      :show="modalHistoricoAberto"
+      :cotacao="cotacaoSelecionadaParaEdicao || {}"
+      @close="fecharModalHistorico"
+    />
   </div>
 </template>
 
 <script>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useToast } from '@/composables/useToast.js'
 import pedidoService from '@/services/pedidoService.js'
 import rascunhoService from '@/services/rascunhoService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
@@ -502,16 +423,21 @@ import fornecedorService from '@/services/fornecedorService.js'
 import historicoPedidoService, { tipoModificacaoConfig } from '@/services/historicoPedidoService.js'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
+import EditCotacaoModal from '@/features/pedidos/components/EditCotacaoModal.vue'
+import HistoricoCotacaoModal from '@/features/pedidos/components/HistoricoCotacaoModal.vue'
 
 export default {
   name: 'VisualizarPedidoView',
   components: {
     DashboardHeader,
-    DashboardSidebar
+    DashboardSidebar,
+    EditCotacaoModal,
+    HistoricoCotacaoModal
   },
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const { success, error: showError, warning } = useToast()
 
     // Sidebar
     const isSidebarOpen = ref(false)
@@ -527,11 +453,10 @@ export default {
     const isFinalizado = ref(false)
     const isEditMode = ref(false)
 
-    // Computed
-    const podeEditarPedido = computed(() => {
-      if (!pedido.value) return false
-      return ['PENDENTE'].includes(pedido.value.status)
-    })
+    // Modais de cotação
+    const modalEditarCotacaoAberto = ref(false)
+    const modalHistoricoAberto = ref(false)
+    const cotacaoSelecionadaParaEdicao = ref(null)
 
     // PDF Viewer
     const pdfAberto = ref(null)
@@ -571,6 +496,28 @@ export default {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       })
+    }
+
+    const formatarTelefone = (telefone) => {
+      if (!telefone) return ''
+      // Remove caracteres não numéricos
+      const numeros = telefone.replace(/\D/g, '')
+
+      // Formata conforme tamanho
+      if (numeros.length === 11) {
+        // (XX) XXXXX-XXXX
+        return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`
+      } else if (numeros.length === 10) {
+        // (XX) XXXX-XXXX
+        return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 6)}-${numeros.slice(6)}`
+      }
+      return telefone
+    }
+
+    const getTotalCotacoes = () => {
+      return cotacoes.value.reduce((total, cotacao) => {
+        return total + (parseFloat(cotacao.preco) || 0)
+      }, 0)
     }
 
     const itemTemCotacao = (item) => {
@@ -639,6 +586,7 @@ export default {
       carregandoPdf.value = true
 
       try {
+        console.log(`📄 Carregando PDF da cotação ${cotacao.id}, índice ${pdfIndex}`)
         let blob
         // Usar o serviço correto baseado no tipo
         if (isRascunho.value) {
@@ -652,11 +600,15 @@ export default {
           blob = await cotacaoService.obterAnexoPdf(cotacao.id, pdfIndex)
         }
 
+        console.log(`📄 PDF recebido, tamanho: ${blob?.size || 0} bytes`)
         if (blob && blob.size > 0) {
           pdfUrl.value = URL.createObjectURL(blob)
+          console.log(`✅ PDF carregado com sucesso para visualização`)
+        } else {
+          console.warn('⚠️ PDF vazio ou não encontrado')
         }
       } catch (error) {
-        console.error('Erro ao carregar PDF:', error)
+        console.error('❌ Erro ao carregar PDF:', error)
       } finally {
         carregandoPdf.value = false
       }
@@ -671,6 +623,7 @@ export default {
     }
 
     const carregarPedido = async () => {
+      console.log('🔄 Recarregando pedido...')
       const id = route.params.id
       const tipo = route.query.tipo || 'pedido'
 
@@ -698,14 +651,18 @@ export default {
           const todosFornecedores = [...fornecedoresProduto, ...fornecedoresServico]
           const fornecedoresMap = {}
           todosFornecedores.forEach(f => {
-            if (f?.id) fornecedoresMap[f.id] = f.razaoSocial || 'Fornecedor'
+            if (f?.id) fornecedoresMap[f.id] = f
           })
 
-          // Mapear nomes dos fornecedores nas cotações
-          cotacoes.value = cotacoesRascunho.map(c => ({
-            ...c,
-            nomeFornecedor: fornecedoresMap[c.fornecedorId] || `Fornecedor #${c.fornecedorId}`
-          }))
+          // Mapear dados completos dos fornecedores nas cotações
+          cotacoes.value = cotacoesRascunho.map(c => {
+            const fornecedor = fornecedoresMap[c.fornecedorId]
+            return {
+              ...c,
+              nomeFornecedor: fornecedor?.razaoSocial || `Fornecedor #${c.fornecedorId}`,
+              fornecedorCompleto: fornecedor
+            }
+          })
 
           pedido.value = {
             ...rascunhoCompleto,
@@ -728,17 +685,45 @@ export default {
           const historicoPedido = await historicoPedidoService.listarPorPedido(id)
           historico.value = historicoPedido || []
 
-          // Cotações agora vêm diretamente do objeto do pedido
-          cotacoes.value = pedidoCompleto.cotacoes || []
+          // Carregar fornecedores para informações de contato
+          const [fornecedoresProduto, fornecedoresServico] = await Promise.all([
+            fornecedorService.listarProdutos().catch(() => []),
+            fornecedorService.listarServicos().catch(() => [])
+          ])
 
-          console.log('=== DEBUG: Pedido carregado ===')
-          console.log('Pedido completo:', pedidoCompleto)
-          console.log('Itens do pedido:', pedidoCompleto.itens)
-          console.log('Cotações do pedido:', pedidoCompleto.cotacoes)
+          const todosFornecedores = [...fornecedoresProduto, ...fornecedoresServico]
+          const fornecedoresMap = {}
+          todosFornecedores.forEach(f => {
+            if (f?.id) fornecedoresMap[f.id] = f
+          })
+
+          // Cotações vêm do objeto do pedido, enriquecer com dados completos do fornecedor
+          cotacoes.value = (pedidoCompleto.cotacoes || []).map(c => {
+            const fornecedorId = c.fornecedorProdutoId || c.fornecedorServicoId || c.fornecedorId
+            const fornecedor = fornecedoresMap[fornecedorId]
+            return {
+              ...c,
+              fornecedorCompleto: fornecedor
+            }
+          })
+
+          console.log('✅ Pedido recarregado. Cotações:', cotacoes.value)
+          console.log('🔍 Detalhes das cotações (foiEditada, numeroVersao):')
+          cotacoes.value.forEach((c, index) => {
+            console.log(`  Cotação ${index + 1}:`, {
+              id: c.id,
+              preco: c.preco,
+              foiEditada: c.foiEditada,
+              numeroVersao: c.numeroVersao,
+              dataUltimaEdicao: c.dataUltimaEdicao,
+              temAnexoPdf: c.temAnexoPdf,
+              quantidadeAnexos: c.quantidadeAnexos
+            })
+          })
         }
       } catch (error) {
         console.error('Erro ao carregar:', error)
-        alert('Erro ao carregar dados. Redirecionando...')
+        showError('Erro ao carregar dados. Redirecionando...')
         router.push('/pedidos')
       } finally {
         isLoading.value = false
@@ -753,300 +738,10 @@ export default {
       router.push(`/pedidos/novo/${pedido.value.rascunhoId}?step=1`)
     }
 
-    // Estado do modal de edição
-    const modalEdicaoAberto = ref(false)
-    const itemSendoEditado = ref(null)
-    const cotacaoSelecionada = ref(null)
-    const observacaoEdicao = ref('')
-    const cotacoesDisponiveis = ref([])
-    const carregandoCotacoes = ref(false)
-    const salvandoEdicao = ref(false)
-    const modoNovaCotacao = ref(false)
-
     // PDF no modal
     const pdfModalAberto = ref(null)
     const pdfModalUrl = ref(null)
     const carregandoPdfModal = ref(false)
-
-    // Estado da nova cotação
-    const novaCotacao = ref({
-      fornecedorId: null,
-      tipoFornecedor: 'PRODUTO',
-      preco: '',
-      prazoEmDiasUteis: '',
-      dataLimite: '',
-      arquivo: null
-    })
-    const fornecedoresDisponiveis = ref([])
-    const carregandoFornecedores = ref(false)
-
-    // Autocomplete de fornecedor
-    const buscaFornecedor = ref('')
-    const fornecedoresFiltrados = ref([])
-    const mostrarListaFornecedores = ref(false)
-    const precoFormatado = ref('')
-
-    const editarPedido = () => {
-      // Abrir modal de edição
-      modalEdicaoAberto.value = true
-    }
-
-    const abrirEdicaoItem = async (item) => {
-      itemSendoEditado.value = item
-      cotacaoSelecionada.value = null
-      observacaoEdicao.value = ''
-
-      await carregarCotacoesItem(item)
-    }
-
-    const carregarCotacoesItem = async (item) => {
-      try {
-        carregandoCotacoes.value = true
-
-        console.log('=== DEBUG: Carregando cotações ===')
-        console.log('Item selecionado:', item)
-        console.log('Total de cotações no pedido:', cotacoes.value?.length || 0)
-        console.log('Cotações já carregadas no pedido:', cotacoes.value)
-
-        // SIMPLIFICAÇÃO: Sempre mostrar TODAS as cotações do pedido
-        // O usuário pode escolher qualquer cotação para vincular ao item
-        const todasCotacoes = cotacoes.value || []
-
-        cotacoesDisponiveis.value = todasCotacoes.map(c => {
-          console.log('Processando cotação:', c)
-          return {
-            ...c,
-            nomeFornecedor: c.nomeFornecedor || c.fornecedorNome || `Fornecedor #${c.fornecedorId || 'desconhecido'}`,
-            // Marcar se esta cotação já está vinculada a este item
-            vinculadaAoItem: c.itensPedidoIds?.includes(item.id) || false
-          }
-        })
-
-        console.log('Total de cotações disponíveis:', cotacoesDisponiveis.value.length)
-        console.log('Cotações disponíveis:', cotacoesDisponiveis.value)
-      } catch (error) {
-        console.error('Erro ao carregar cotações:', error)
-        alert('Erro ao carregar cotações disponíveis')
-      } finally {
-        carregandoCotacoes.value = false
-      }
-    }
-
-    const carregarFornecedoresPorTipo = async () => {
-      try {
-        carregandoFornecedores.value = true
-        novaCotacao.value.fornecedorId = null
-        buscaFornecedor.value = ''
-        fornecedoresFiltrados.value = []
-
-        if (novaCotacao.value.tipoFornecedor === 'PRODUTO') {
-          fornecedoresDisponiveis.value = await fornecedorService.listarProdutos()
-        } else {
-          fornecedoresDisponiveis.value = await fornecedorService.listarServicos()
-        }
-
-        fornecedoresFiltrados.value = fornecedoresDisponiveis.value
-      } catch (error) {
-        console.error('Erro ao carregar fornecedores:', error)
-        alert('Erro ao carregar fornecedores')
-      } finally {
-        carregandoFornecedores.value = false
-      }
-    }
-
-    const filtrarFornecedores = () => {
-      const busca = buscaFornecedor.value.toLowerCase()
-      if (!busca) {
-        fornecedoresFiltrados.value = fornecedoresDisponiveis.value
-      } else {
-        fornecedoresFiltrados.value = fornecedoresDisponiveis.value.filter(f =>
-          f.razaoSocial?.toLowerCase().includes(busca)
-        )
-      }
-    }
-
-    const selecionarFornecedor = (fornecedor) => {
-      novaCotacao.value.fornecedorId = fornecedor.id
-      buscaFornecedor.value = fornecedor.razaoSocial
-      mostrarListaFornecedores.value = false
-    }
-
-    const formatarPrecoInput = (event) => {
-      let valor = event.target.value
-
-      // Remover tudo que não é número
-      valor = valor.replace(/\D/g, '')
-
-      // Converter para número e dividir por 100 para ter centavos
-      const numero = parseFloat(valor) / 100
-
-      // Atualizar o valor interno
-      novaCotacao.value.preco = numero
-
-      // Formatar para exibição
-      if (numero > 0) {
-        precoFormatado.value = numero.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })
-      } else {
-        precoFormatado.value = ''
-      }
-    }
-
-    const formatarPrecoCompleto = () => {
-      const numero = parseFloat(novaCotacao.value.preco) || 0
-      precoFormatado.value = numero.toLocaleString('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    }
-
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0]
-      if (file) {
-        if (file.type !== 'application/pdf') {
-          alert('Apenas arquivos PDF são permitidos')
-          event.target.value = ''
-          return
-        }
-        if (file.size > 10 * 1024 * 1024) {
-          alert('Arquivo muito grande. Máximo: 10MB')
-          event.target.value = ''
-          return
-        }
-        novaCotacao.value.arquivo = file
-      }
-    }
-
-    const removerArquivo = () => {
-      novaCotacao.value.arquivo = null
-      const fileInput = document.getElementById('file-upload-cotacao')
-      if (fileInput) {
-        fileInput.value = ''
-      }
-    }
-
-    const excluirCotacao = async (cotacao) => {
-      if (!confirm(`Tem certeza que deseja excluir a cotação de ${cotacao.nomeFornecedor}?`)) {
-        return
-      }
-
-      try {
-        const rascunhoId = pedido.value.rascunhoId || route.params.id
-
-        if (isRascunho.value) {
-          await cotacaoRascunhoService.deletar(rascunhoId, cotacao.id)
-        } else {
-          await cotacaoService.deleteCotacao(cotacao.id)
-        }
-
-        // Recarregar a página para atualizar as cotações
-        await carregarPedido()
-        alert('Cotação excluída com sucesso!')
-      } catch (error) {
-        console.error('Erro ao excluir cotação:', error)
-        alert('Erro ao excluir cotação. Tente novamente.')
-      }
-    }
-
-    const formatarTamanhoArquivo = (bytes) => {
-      if (bytes === 0) return '0 Bytes'
-      const k = 1024
-      const sizes = ['Bytes', 'KB', 'MB', 'GB']
-      const i = Math.floor(Math.log(bytes) / Math.log(k))
-      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
-    }
-
-    const abrirFormularioNovaCotacao = async () => {
-      modoNovaCotacao.value = true
-      cotacaoSelecionada.value = null
-      // Carregar fornecedores do tipo padrão
-      await carregarFornecedoresPorTipo()
-    }
-
-    const cancelarNovaCotacao = () => {
-      modoNovaCotacao.value = false
-      novaCotacao.value = {
-        fornecedorId: null,
-        tipoFornecedor: 'PRODUTO',
-        preco: '',
-        prazoEmDiasUteis: '',
-        dataLimite: '',
-        arquivo: null
-      }
-      buscaFornecedor.value = ''
-      precoFormatado.value = ''
-      fornecedoresFiltrados.value = fornecedoresDisponiveis.value
-      mostrarListaFornecedores.value = false
-    }
-
-    const selecionarCotacao = (cotacao) => {
-      cotacaoSelecionada.value = cotacao
-    }
-
-    const criarNovaCotacao = async () => {
-      if (!novaCotacao.value.fornecedorId || !novaCotacao.value.preco || !novaCotacao.value.dataLimite) {
-        alert('Preencha todos os campos obrigatórios')
-        return
-      }
-
-      if (!pedido.value || !pedido.value.id) {
-        alert('Erro: ID do pedido não encontrado')
-        return
-      }
-
-      if (!itemSendoEditado.value || !itemSendoEditado.value.id) {
-        alert('Erro: Item não selecionado')
-        return
-      }
-
-      try {
-        salvandoEdicao.value = true
-
-        // Criar dados da nova cotação - FORMATO CORRETO CONFORME BACKEND
-        const dadosCotacao = {
-          fornecedorId: novaCotacao.value.fornecedorId,
-          tipoFornecedor: novaCotacao.value.tipoFornecedor,
-          solicitacaoDePedidoId: pedido.value.id,
-          itensPedidoIds: [itemSendoEditado.value.id],
-          preco: parseFloat(novaCotacao.value.preco),
-          prazoEmDiasUteis: novaCotacao.value.prazoEmDiasUteis ? parseInt(novaCotacao.value.prazoEmDiasUteis) : null,
-          dataLimite: novaCotacao.value.dataLimite,
-          anexoPdf: null
-        }
-
-        // Se houver arquivo PDF, converter para bytes
-        if (novaCotacao.value.arquivo) {
-          console.log('📄 Convertendo arquivo PDF para bytes...')
-          const bytesArray = await cotacaoService.arquivoParaBytes(novaCotacao.value.arquivo)
-          dadosCotacao.anexoPdf = bytesArray
-        }
-
-        console.log('📤 Criando nova cotação:', dadosCotacao)
-
-        // Criar a cotação no backend
-        const cotacaoCriada = await cotacaoService.criar(dadosCotacao)
-
-        console.log('✅ Cotação criada:', cotacaoCriada)
-
-        // Limpar formulário e fechar
-        cancelarNovaCotacao()
-
-        // Recarregar cotações do item para mostrar a nova
-        await carregarCotacoesItem(itemSendoEditado.value)
-
-        // Selecionar automaticamente a nova cotação
-        cotacaoSelecionada.value = cotacaoCriada
-
-        alert('Cotação criada com sucesso!')
-      } catch (error) {
-        console.error('❌ Erro ao criar cotação:', error)
-        alert('Erro ao criar cotação: ' + (error.message || 'Erro desconhecido'))
-      } finally {
-        salvandoEdicao.value = false
-      }
-    }
 
     const togglePdfModal = async (cotacao, pdfIndex = 0) => {
       const pdfKey = `${cotacao.id}-${pdfIndex}`
@@ -1075,7 +770,7 @@ export default {
         }
       } catch (error) {
         console.error('Erro ao carregar PDF:', error)
-        alert('Erro ao carregar PDF')
+        showError('Erro ao carregar PDF')
       } finally {
         carregandoPdfModal.value = false
       }
@@ -1089,119 +784,105 @@ export default {
       pdfModalUrl.value = null
     }
 
-    const fecharModalEdicao = () => {
-      fecharPdfModal() // Fechar PDF se estiver aberto
-      modalEdicaoAberto.value = false
-      itemSendoEditado.value = null
-      cotacaoSelecionada.value = null
-      observacaoEdicao.value = ''
-      cotacoesDisponiveis.value = []
-      modoNovaCotacao.value = false
-      novaCotacao.value = {
-        fornecedorId: null,
-        tipoFornecedor: 'PRODUTO',
-        preco: '',
-        prazoEmDiasUteis: '',
-        dataLimite: '',
-        arquivo: null
-      }
-    }
-
-    const salvarEdicao = async () => {
-      if (!itemSendoEditado.value || !cotacaoSelecionada.value) {
-        alert('Por favor, selecione uma cotação')
-        return
-      }
-
-      if (!observacaoEdicao.value || observacaoEdicao.value.trim() === '') {
-        alert('Por favor, informe uma justificativa para a edição')
+    const excluirCotacao = async (cotacao) => {
+      if (!confirm(`Tem certeza que deseja excluir a cotação de ${cotacao.nomeFornecedor}?`)) {
         return
       }
 
       try {
-        salvandoEdicao.value = true
+        const rascunhoId = pedido.value.rascunhoId || route.params.id
 
-        console.log('💾 Salvando edição...')
-        console.log('Item sendo editado:', itemSendoEditado.value)
-        console.log('Cotação selecionada:', cotacaoSelecionada.value)
-
-        // Verificar se o item já tem uma cotação vinculada
-        const cotacaoAtualDoItem = pedido.value.cotacoes?.find(c =>
-          c.itensPedidoIds?.includes(itemSendoEditado.value.id)
-        )
-
-        console.log('Cotação atual do item:', cotacaoAtualDoItem)
-
-        // Se está selecionando a mesma cotação que já está vinculada, não fazer nada
-        if (cotacaoAtualDoItem && cotacaoAtualDoItem.id === cotacaoSelecionada.value.id) {
-          console.log('⚠️ Cotação selecionada já está vinculada ao item')
-          alert('Esta cotação já está vinculada ao item.')
-          return
+        if (isRascunho.value) {
+          await cotacaoRascunhoService.deletar(rascunhoId, cotacao.id)
+        } else {
+          await cotacaoService.deleteCotacao(cotacao.id)
         }
 
-        // Obter os IDs dos itens já vinculados à cotação selecionada
-        const itensJaVinculados = cotacaoSelecionada.value.itensPedidoIds || []
+        // Recarregar a página para atualizar as cotações
+        await carregarPedido()
+        success('Cotação excluída com sucesso!')
+      } catch (error) {
+        console.error('Erro ao excluir cotação:', error)
+        showError('Erro ao excluir cotação. Tente novamente.')
+      }
+    }
 
-        // Adicionar o item sendo editado se ainda não estiver vinculado
-        let novosItensVinculados = [...itensJaVinculados]
-        if (!novosItensVinculados.includes(itemSendoEditado.value.id)) {
-          novosItensVinculados.push(itemSendoEditado.value.id)
+    // Métodos para edição de cotação (nova funcionalidade)
+    const abrirModalEditarCotacao = (cotacao) => {
+      cotacaoSelecionadaParaEdicao.value = cotacao
+      modalEditarCotacaoAberto.value = true
+    }
+
+    const fecharModalEditarCotacao = () => {
+      modalEditarCotacaoAberto.value = false
+      cotacaoSelecionadaParaEdicao.value = null
+    }
+
+    const abrirModalHistorico = (cotacao) => {
+      cotacaoSelecionadaParaEdicao.value = cotacao
+      modalHistoricoAberto.value = true
+    }
+
+    const fecharModalHistorico = () => {
+      modalHistoricoAberto.value = false
+      cotacaoSelecionadaParaEdicao.value = null
+    }
+
+    const salvarEdicaoCotacao = async (dadosEdicao) => {
+      try {
+        console.log('📝 Dados recebidos do modal:', dadosEdicao)
+
+        // Converter o primeiro arquivo PDF para bytes se existir
+        let anexoPdfBytes = null
+        if (dadosEdicao.pdfFiles && dadosEdicao.pdfFiles.length > 0) {
+          // Por enquanto, usar apenas o primeiro PDF
+          const arrayBuffer = await dadosEdicao.pdfFiles[0].arrayBuffer()
+          anexoPdfBytes = Array.from(new Uint8Array(arrayBuffer))
+          console.log('📎 PDF convertido para bytes:', anexoPdfBytes.length, 'bytes')
         }
 
-        console.log('📤 Vinculando itens à cotação:', cotacaoSelecionada.value.id, novosItensVinculados)
-
-        // Vincular os itens à cotação usando o novo endpoint
-        await cotacaoService.vincularItens(cotacaoSelecionada.value.id, novosItensVinculados)
-
-        // Se havia uma cotação anterior vinculada ao item, remover o item dela
-        if (cotacaoAtualDoItem && cotacaoAtualDoItem.id !== cotacaoSelecionada.value.id) {
-          const itensRestantes = cotacaoAtualDoItem.itensPedidoIds?.filter(
-            id => id !== itemSendoEditado.value.id
-          ) || []
-
-          // Se ainda há itens vinculados, atualizar a cotação antiga
-          // Se não há mais itens, deixar a cotação sem itens (será vazio)
-          if (itensRestantes.length > 0) {
-            console.log('📤 Removendo item da cotação antiga:', cotacaoAtualDoItem.id, itensRestantes)
-            await cotacaoService.vincularItens(cotacaoAtualDoItem.id, itensRestantes)
-          } else {
-            console.log('⚠️ Cotação antiga ficará sem itens vinculados')
-            await cotacaoService.vincularItens(cotacaoAtualDoItem.id, [])
-          }
+        // Preparar DTO para o backend
+        const editDTO = {
+          id: dadosEdicao.id,
+          motivoEdicao: dadosEdicao.motivoEdicao,
+          editadoPor: dadosEdicao.editadoPor,
+          itens: null, // Não editar itens, apenas preço total
+          precoNovo: dadosEdicao.preco,
+          prazoEmDiasUteis: dadosEdicao.prazoEmDiasUteis,
+          dataLimite: dadosEdicao.dataLimite,
+          anexoPdf: anexoPdfBytes
         }
 
-        // Atualizar a observação do pedido para registrar a mudança
-        const pedidoAtualizado = {
-          ...pedido.value,
-          observacao: observacaoEdicao.value.trim()
-        }
+        console.log('📤 DTO enviado para o backend:', editDTO)
 
-        console.log('📤 Atualizando observação do pedido')
-        await pedidoService.atualizar(pedido.value.id, pedidoAtualizado)
+        // Chamar o serviço
+        const resultado = await cotacaoService.editarCotacao(dadosEdicao.id, editDTO)
 
-        alert('Cotação vinculada ao item com sucesso!')
+        console.log('✅ Resposta do backend:', resultado)
+        console.log('🔍 Campos de auditoria na resposta:', {
+          foiEditada: resultado?.foiEditada,
+          numeroVersao: resultado?.numeroVersao,
+          dataUltimaEdicao: resultado?.dataUltimaEdicao,
+          motivoUltimaEdicao: resultado?.motivoUltimaEdicao,
+          editadoPor: resultado?.editadoPor
+        })
 
-        // Recarregar dados do pedido
+        success('Cotação editada com sucesso!')
+
+        // Recarregar o pedido para mostrar as mudanças
         await carregarPedido()
 
-        fecharModalEdicao()
+        // Fechar modal
+        fecharModalEditarCotacao()
       } catch (error) {
-        console.error('❌ Erro ao salvar edição:', error)
-        alert('Erro ao salvar edição: ' + (error.message || 'Erro desconhecido'))
-      } finally {
-        salvandoEdicao.value = false
+        console.error('❌ Erro ao editar cotação:', error)
+        console.error('❌ Detalhes do erro:', error.response?.data || error.message)
+        showError('Erro ao editar cotação: ' + (error.response?.data?.message || error.message || 'Erro desconhecido'))
       }
     }
 
     onMounted(() => {
       carregarPedido()
-
-      // Fechar dropdown ao clicar fora
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.autocomplete-wrapper')) {
-          mostrarListaFornecedores.value = false
-        }
-      })
     })
 
     onBeforeUnmount(() => {
@@ -1221,47 +902,21 @@ export default {
       historico,
       isRascunho,
       isFinalizado,
-      podeEditarPedido,
 
       // PDF
       pdfAberto,
       carregandoPdf,
       pdfUrl,
 
-      // Modal de edição
-      modalEdicaoAberto,
-      itemSendoEditado,
-      cotacaoSelecionada,
-      observacaoEdicao,
-      cotacoesDisponiveis,
-      carregandoCotacoes,
-      salvandoEdicao,
-      modoNovaCotacao,
-      novaCotacao,
-      fornecedoresDisponiveis,
-      carregandoFornecedores,
-      buscaFornecedor,
-      fornecedoresFiltrados,
-      mostrarListaFornecedores,
-      precoFormatado,
-      carregarFornecedoresPorTipo,
-      filtrarFornecedores,
-      selecionarFornecedor,
-      formatarPrecoInput,
-      formatarPrecoCompleto,
-      handleFileUpload,
-      removerArquivo,
-      formatarTamanhoArquivo,
-      excluirCotacao,
-      criarNovaCotacao,
-      abrirFormularioNovaCotacao,
-      cancelarNovaCotacao,
-      selecionarCotacao,
+      // PDF Modal
       pdfModalAberto,
       pdfModalUrl,
       carregandoPdfModal,
       togglePdfModal,
       fecharPdfModal,
+
+      // Gerenciar cotações
+      excluirCotacao,
 
       // Methods
       getTitulo,
@@ -1270,6 +925,8 @@ export default {
       formatarDataHora,
       getItensIdsDaCotacao,
       formatarPreco,
+      formatarTelefone,
+      getTotalCotacoes,
       itemTemCotacao,
       getNomeItem,
       getTipoModificacaoLabel,
@@ -1277,10 +934,16 @@ export default {
       togglePdfViewer,
       voltar,
       editarRascunho,
-      editarPedido,
-      abrirEdicaoItem,
-      fecharModalEdicao,
-      salvarEdicao
+
+      // Edição de cotação (nova funcionalidade)
+      abrirModalEditarCotacao,
+      abrirModalHistorico,
+      fecharModalEditarCotacao,
+      fecharModalHistorico,
+      salvarEdicaoCotacao,
+      modalEditarCotacaoAberto,
+      modalHistoricoAberto,
+      cotacaoSelecionadaParaEdicao
     }
   }
 }
@@ -1330,10 +993,12 @@ export default {
 /* Breadcrumb */
 .breadcrumb {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 12px;
   margin-bottom: 24px;
   font-size: 0.875rem;
+  white-space: nowrap;
+  overflow-x: auto;
 }
 
 .btn-voltar {
@@ -1348,7 +1013,10 @@ export default {
   cursor: pointer;
   font-weight: 500;
   font-size: 0.875rem;
+  line-height: 1;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-voltar:hover {
@@ -1359,14 +1027,27 @@ export default {
   color: #1F285F;
   text-decoration: none;
   font-weight: 500;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.breadcrumb-link:hover {
+  text-decoration: underline;
 }
 
 .breadcrumb-separator {
   color: #d1d5db;
+  user-select: none;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .breadcrumb-current {
   color: #6b7280;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 /* View Container */
@@ -1395,6 +1076,41 @@ export default {
   font-size: 0.875rem;
   opacity: 0.9;
   margin: 0;
+}
+
+.header-resumo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  flex-wrap: wrap;
+}
+
+.resumo-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  opacity: 0.95;
+}
+
+.resumo-icon {
+  flex-shrink: 0;
+}
+
+.resumo-separator {
+  opacity: 0.5;
+  font-size: 0.875rem;
+}
+
+.resumo-total {
+  font-weight: 600;
+}
+
+.total-valor {
+  font-weight: 600;
 }
 
 .header-actions {
@@ -1434,14 +1150,30 @@ export default {
 /* Section Cards */
 .section-card {
   background: white;
-  padding: 24px 28px;
+  padding: 28px 32px;
   border-left: 1px solid #e5e7eb;
   border-right: 1px solid #e5e7eb;
   border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.section-card:not(:first-of-type)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 32px;
+  right: 32px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e5e7eb 10%, #e5e7eb 90%, transparent);
+}
+
+.section-card:nth-child(even) {
+  background: #fafafa;
 }
 
 .section-card:last-child {
   border-radius: 0 0 16px 16px;
+  padding-bottom: 32px;
 }
 
 /* Buttons */
@@ -1499,12 +1231,24 @@ export default {
 }
 
 .section-title {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
   color: #1e293b;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e5e7eb;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #e5e7eb;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 2px;
 }
 
 .info-grid {
@@ -1532,10 +1276,99 @@ export default {
   font-weight: 500;
 }
 
+/* Enhanced Info Grid */
+.info-grid-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.info-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.info-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.info-card-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.info-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.info-card-label {
+  font-size: 0.6875rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.info-card-value {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.observacao-box {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.observacao-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.observacao-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.observacao-text {
+  font-size: 0.875rem;
+  color: #78350f;
+  line-height: 1.5;
+  margin: 0;
+}
+
 .itens-lista {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .item-card {
@@ -1543,13 +1376,19 @@ export default {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.item-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .item-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 12px 20px;
   background: #f3f4f6;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -1561,11 +1400,21 @@ export default {
 }
 
 .item-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.75rem;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 4px;
   background: #fef3c7;
   color: #92400e;
+  font-weight: 500;
+}
+
+.item-status .status-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .item-status.cotado {
@@ -1574,7 +1423,7 @@ export default {
 }
 
 .item-body {
-  padding: 12px 16px;
+  padding: 16px 20px;
 }
 
 .item-nome {
@@ -1594,114 +1443,312 @@ export default {
 .cotacoes-lista {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
 }
 
 .cotacao-card {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.cotacao-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
+.cotacao-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
-.cotacao-fornecedor strong {
-  display: block;
-  font-size: 0.875rem;
-  color: #1e293b;
-}
-
-.cotacao-tipo {
-  font-size: 0.75rem;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-top: 4px;
-  display: inline-block;
-}
-
-.cotacao-preco {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #059669;
-}
-
-.cotacao-info {
-  display: flex;
-  gap: 16px;
-  font-size: 0.8125rem;
-  color: #64748b;
-  margin-bottom: 12px;
-}
-
-.cotacao-itens {
-  margin-bottom: 12px;
-}
-
-.itens-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  display: block;
-  margin-bottom: 6px;
-}
-
-.itens-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.item-tag {
-  background: #e0e7ff;
-  color: #3730a3;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.cotacao-actions {
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
+/* Header Padronizado */
+.cotacao-header-padrao {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  padding: 20px 24px;
+  border-bottom: 2px solid #e5e7eb;
+  gap: 20px;
+}
+
+.cotacao-info-principal {
+  flex: 1;
+}
+
+.fornecedor-linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
+}
+
+.fornecedor-nome {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+.tipo-tag {
+  font-size: 0.75rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.preco-destaque-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  padding: 12px 18px;
+  border-radius: 8px;
+  border: 1px solid #86efac;
+}
+
+.preco-label-small {
+  font-size: 0.65rem;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+.preco-valor-grande {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #059669;
+  line-height: 1;
+}
+
+/* Body */
+.cotacao-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Grid de Informações */
+.cotacao-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.info-box {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.info-box:hover {
+  background: #f3f4f6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.info-box-icon {
+  width: 20px;
+  height: 20px;
+  color: #6366f1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.info-box-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-box-label {
+  font-size: 0.6875rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.info-box-value {
+  font-size: 0.9375rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Seção de Contato */
+.cotacao-contato-section {
+  padding: 16px;
+  background: #fafbfc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.contato-section-title {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.contato-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.contato-item-new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: #475569;
+  text-decoration: none;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.contato-item-new:hover {
+  background: #f8fafc;
+  border-color: #6366f1;
+  color: #4f46e5;
+  transform: translateX(2px);
+}
+
+.contato-item-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.contato-email .email-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Seção de Itens */
+.cotacao-itens-section {
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.itens-section-title {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.itens-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.item-chip {
+  background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+  color: #4338ca;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border: 1px solid #c7d2fe;
+  transition: all 0.2s ease;
+}
+
+.item-chip:hover {
+  background: linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(67, 56, 202, 0.15);
+}
+
+.cotacao-actions {
+  padding: 20px 24px;
+  margin-top: 0;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #fafbfc;
 }
 
 .pdf-buttons {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
-.btn-pdf {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.75rem;
+/* Botão PDF Primário (Sólido) */
+.btn-pdf-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.875rem;
   cursor: pointer;
-  background: #f0f9ff;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-  transition: all 0.2s ease;
-}
-
-.btn-pdf:hover {
-  background: #e0f2fe;
-}
-
-.btn-pdf-active {
-  background: #0369a1;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
-  border-color: #0369a1;
+  border: none;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+.btn-pdf-primary .btn-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.btn-pdf-primary:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  transform: translateY(-2px);
+}
+
+.btn-pdf-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+}
+
+.btn-pdf-primary-active {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
+}
+
+.btn-pdf-primary-active:hover {
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+}
+
+.novo-anexo {
+  border: 2px solid gold !important;
 }
 
 .btn-delete-cotacao {
@@ -1732,6 +1779,97 @@ export default {
 .btn-delete-cotacao svg {
   width: 16px;
   height: 16px;
+}
+
+/* Badge de cotação editada */
+.badge-editada {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.badge-editada svg {
+  flex-shrink: 0;
+}
+
+/* Badge de PDF atualizado */
+.badge-atualizado {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: #10b981;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Botões de edição e histórico */
+.cotacao-edit-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-edit-cotacao {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #fff;
+  color: #1F285F;
+  border: 1px solid #1F285F;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.btn-edit-cotacao:hover {
+  background: #1F285F;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(31, 40, 95, 0.2);
+}
+
+.btn-edit-cotacao svg {
+  flex-shrink: 0;
+}
+
+.btn-history-cotacao {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.btn-history-cotacao:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  color: #1f2937;
+}
+
+.btn-history-cotacao svg {
+  flex-shrink: 0;
 }
 
 .pdf-viewer-container {
@@ -1811,14 +1949,195 @@ export default {
 }
 
 .historico-usuario {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.8125rem;
   color: #6b7280;
   margin-bottom: 4px;
 }
 
+.usuario-icon {
+  width: 14px;
+  height: 14px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
 .historico-descricao {
   font-size: 0.8125rem;
   color: #374151;
+}
+
+/* Histórico Melhorado - Nova Visualização */
+.section-header-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.count-badge {
+  background: #3b82f6;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.historico-lista-melhorada {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.historico-item-melhorado {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+
+.timeline-connector {
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  width: 2px;
+  height: calc(100% + 8px);
+  background: linear-gradient(to bottom, #e5e7eb 0%, #e5e7eb 100%);
+  z-index: 0;
+}
+
+.historico-icon-melhorado {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  position: relative;
+}
+
+.historico-content-melhorado {
+  flex: 1;
+  z-index: 1;
+}
+
+.historico-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.historico-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.historico-header-melhorado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.historico-data-melhorada {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.historico-usuario-melhorado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+}
+
+.historico-usuario-melhorado .usuario-icon {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+}
+
+.historico-descricao-melhorada {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: #fef3c7;
+  border-radius: 6px;
+  border-left: 3px solid #f59e0b;
+}
+
+.descricao-icon {
+  flex-shrink: 0;
+  color: #f59e0b;
+  margin-top: 2px;
+}
+
+.historico-detalhes {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.detalhe-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.numero-item-badge {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.historico-detalhes-extras {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-style: italic;
 }
 
 /* Empty State */
@@ -1947,7 +2266,7 @@ export default {
   background: #f9fafb;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -2712,6 +3031,16 @@ export default {
   .content-area {
     margin-left: 0;
   }
+
+  .cotacao-header-padrao {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .preco-destaque-box {
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2742,6 +3071,65 @@ export default {
 
   .itens-selecao {
     grid-template-columns: 1fr;
+  }
+
+  /* Cotações responsive */
+  .cotacao-header-padrao {
+    padding: 16px;
+  }
+
+  .fornecedor-nome {
+    font-size: 1rem;
+  }
+
+  .preco-valor-grande {
+    font-size: 1.375rem;
+  }
+
+  .cotacao-body {
+    padding: 16px;
+  }
+
+  .cotacao-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contato-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cotacao-actions {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pdf-buttons {
+    width: 100%;
+  }
+
+  .btn-pdf-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .fornecedor-nome {
+    font-size: 0.9375rem;
+  }
+
+  .preco-valor-grande {
+    font-size: 1.25rem;
+  }
+
+  .info-box {
+    padding: 10px 12px;
+  }
+
+  .contato-item-new {
+    font-size: 0.75rem;
+    padding: 6px 10px;
   }
 }
 </style>

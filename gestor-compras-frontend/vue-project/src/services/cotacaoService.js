@@ -1,10 +1,20 @@
 import api from './api.js'
 import axios from 'axios'
 
-const BASE_URL = '/api/cotacoes'
+const BASE_URL = '/api/v1/cotacoes'
 
 // Configuração da URL base da API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+
+/**
+ * Helper para extrair dados de respostas paginadas do Spring Data
+ */
+const extractContent = (response) => {
+  if (response && typeof response === 'object' && 'content' in response) {
+    return response.content || []
+  }
+  return Array.isArray(response) ? response : []
+}
 
 /**
  * Cria uma instância específica do Axios para relatórios
@@ -21,12 +31,10 @@ const relatorioClient = axios.create({
  */
 relatorioClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken')
-    console.log('🔑 Token para relatório:', token ? 'presente' : 'ausente')
+    const token = sessionStorage.getItem('authToken')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    console.log('📡 Fazendo requisição para relatório:', config.url)
     return config
   },
   (error) => {
@@ -42,8 +50,7 @@ relatorioClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('user')
+      sessionStorage.removeItem('authToken')
       window.location.href = '/login'
       return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
     }
@@ -66,7 +73,7 @@ export const cotacaoService = {
 
       const url = params.toString() ? `${BASE_URL}?${params}` : BASE_URL
       const response = await api.get(url)
-      return response
+      return extractContent(response)
     } catch (error) {
       console.error('Erro ao listar cotações:', error)
       throw error
@@ -90,7 +97,7 @@ export const cotacaoService = {
       const response = await api.get(`${BASE_URL}`, {
         params: { fornecedorId }
       })
-      return response
+      return extractContent(response)
     } catch (error) {
       console.error('Erro ao buscar cotações do fornecedor:', error)
       throw error
@@ -100,10 +107,8 @@ export const cotacaoService = {
   // Listar cotações por pedido
   async listarPorPedido(pedidoId) {
     try {
-      console.log('🔍 Buscando cotações do pedido:', pedidoId)
       const response = await api.get(`${BASE_URL}/pedido/${pedidoId}`)
-      console.log('✅ Cotações carregadas:', response.length)
-      return response
+      return extractContent(response)
     } catch (error) {
       console.error('❌ Erro ao buscar cotações do pedido:', error)
       // Bug Fix #12: Propagar erro ao invés de retornar array vazio silenciosamente
@@ -114,10 +119,8 @@ export const cotacaoService = {
   // Listar cotações por item
   async listarPorItem(itemPedidoId) {
     try {
-      console.log('🔍 Buscando cotações do item:', itemPedidoId)
       const response = await api.get(`${BASE_URL}/item/${itemPedidoId}`)
-      console.log('✅ Cotações do item carregadas:', response.length)
-      return response
+      return extractContent(response)
     } catch (error) {
       console.error('❌ Erro ao buscar cotações do item:', error)
       // Bug Fix #12: Propagar erro ao invés de retornar array vazio silenciosamente
@@ -149,7 +152,6 @@ export const cotacaoService = {
         throw new Error('Preço deve ser maior que zero')
       }
 
-      console.log('📤 Enviando cotação para backend:', dadosCotacao)
 
       // Preparar payload conforme CotacaoCreateDTO do backend
       const payload = {
@@ -165,12 +167,10 @@ export const cotacaoService = {
 
       // Se houver anexo PDF, incluir no payload
       if (dadosCotacao.anexoPdf) {
-        console.log('📄 Incluindo anexo PDF...')
 
         // Se já for um array de bytes, usar direto
         if (Array.isArray(dadosCotacao.anexoPdf)) {
           payload.anexoPdf = dadosCotacao.anexoPdf
-          console.log('✅ Anexo PDF incluído:', payload.anexoPdf.length, 'bytes')
         } else if (dadosCotacao.anexoPdf instanceof File) {
           // Validar arquivo PDF
           if (dadosCotacao.anexoPdf.type !== 'application/pdf') {
@@ -184,12 +184,10 @@ export const cotacaoService = {
 
           const bytesArray = await this.arquivoParaBytes(dadosCotacao.anexoPdf)
           payload.anexoPdf = bytesArray
-          console.log('✅ Arquivo PDF convertido:', payload.anexoPdf.length, 'bytes')
         }
       }
 
       const response = await api.post(BASE_URL, payload)
-      console.log('✅ Cotação criada no backend:', response)
       return response
 
     } catch (error) {
@@ -233,9 +231,7 @@ export const cotacaoService = {
         payload.anexoPdf = dadosCotacao.anexoPdf
       }
 
-      console.log('📤 Atualizando cotação no backend:', { id, payload })
       const response = await api.put(`${BASE_URL}/${id}`, payload)
-      console.log('✅ Cotação atualizada no backend:', response)
       return response
 
     } catch (error) {
@@ -251,9 +247,7 @@ export const cotacaoService = {
         throw new Error('ID da cotação é obrigatório')
       }
 
-      console.log('🗑️ Excluindo cotação:', id)
       await api.delete(`${BASE_URL}/${id}`)
-      console.log('✅ Cotação excluída com sucesso')
       return true
     } catch (error) {
       console.error('❌ Erro ao excluir cotação:', error)
@@ -427,19 +421,9 @@ export const cotacaoService = {
         throw new Error('ID do item do pedido é obrigatório para gerar o relatório')
       }
 
-      console.log('📊 Gerando relatório comparativo para item:', itemPedidoId)
 
       const response = await relatorioClient.get(`/relatorios/comparativo-cotacao/${itemPedidoId}`)
 
-      console.log('🔍 Debug - Resposta completa do relatório comparativo:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-        dataSize: response.data?.size || 'unknown',
-        dataType: response.data?.type || 'unknown',
-        dataExists: !!response.data,
-        fullResponse: response
-      })
 
       // Verificar se a resposta existe e tem conteúdo
       if (!response.data || response.data.size === 0) {
@@ -462,7 +446,6 @@ export const cotacaoService = {
       link.click()
       window.URL.revokeObjectURL(downloadUrl)
 
-      console.log('✅ Relatório comparativo gerado com sucesso')
       return true
     } catch (error) {
       console.error('❌ Erro ao gerar relatório comparativo:', error)
@@ -484,20 +467,9 @@ export const cotacaoService = {
   // Gerar relatório geral de cotações (usando dashboard executivo como base)
   async gerarRelatorioCotacoes() {
     try {
-      console.log('📊 Gerando relatório geral de cotações...')
 
       const response = await relatorioClient.get('/relatorios/dashboard-executivo')
 
-      console.log('🔍 Debug - Resposta completa do relatório:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-        dataSize: response.data?.size || 'unknown',
-        dataType: response.data?.type || 'unknown',
-        dataExists: !!response.data,
-        isBlob: response.data instanceof Blob,
-        constructor: response.data?.constructor?.name
-      })
 
       // Verificar se a resposta existe
       if (!response.data) {
@@ -511,7 +483,6 @@ export const cotacaoService = {
           console.error('❌ Blob está vazio (size = 0)')
           throw new Error('Não foi possível gerar o relatório - arquivo vazio')
         }
-        console.log('✅ Blob válido com size:', response.data.size)
       }
 
       // Verificar se o status da resposta é ok
@@ -537,7 +508,6 @@ export const cotacaoService = {
         window.URL.revokeObjectURL(downloadUrl)
       }, 100)
 
-      console.log('✅ Relatório de cotações gerado com sucesso')
       return true
     } catch (error) {
       console.error('❌ Erro ao gerar relatório de cotações:', error)
@@ -679,15 +649,12 @@ export const cotacaoService = {
         throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
       }
 
-      console.log('📤 Convertendo arquivo para bytes...')
       const bytesArray = await this.arquivoParaBytes(arquivo)
 
-      console.log('📤 Fazendo upload do PDF para cotação:', cotacaoId)
       const response = await api.put(`${BASE_URL}/${cotacaoId}`, {
         anexoPdf: bytesArray
       })
 
-      console.log('✅ Upload do PDF realizado com sucesso')
       return response
 
     } catch (error) {
@@ -699,16 +666,13 @@ export const cotacaoService = {
   // Obter anexo PDF da cotação
   async obterAnexoPdf(cotacaoId, pdfIndex = 0) {
     try {
-      console.log(`Buscando PDF ${pdfIndex} da cotação ${cotacaoId}...`)
 
       // Obter o token de autenticação
-      const token = localStorage.getItem('authToken')
+      const token = sessionStorage.getItem('authToken')
 
       // Usar o endpoint com índice para consistência
-      const url = `${API_BASE_URL}/api/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
+      const url = `${API_BASE_URL}/api/v1/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
 
-      console.log('URL do PDF:', url)
-      console.log('Token presente:', !!token)
 
       const response = await fetch(url, {
         method: 'GET',
@@ -799,15 +763,132 @@ export const cotacaoService = {
         throw new Error('Deve fornecer pelo menos um item para vincular')
       }
 
-      console.log(`📤 Vinculando itens à cotação ${cotacaoId}:`, itensPedidoIds)
 
       const response = await api.patch(`${BASE_URL}/${cotacaoId}/vincular-itens`, itensPedidoIds)
 
-      console.log('✅ Itens vinculados com sucesso')
       return response
 
     } catch (error) {
       console.error('❌ Erro ao vincular itens:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Edita uma cotação existente com auditoria
+   */
+  async editarCotacao(cotacaoId, editDTO) {
+    try {
+      if (!cotacaoId) {
+        throw new Error('ID da cotação é obrigatório')
+      }
+
+      if (!editDTO.motivoEdicao || editDTO.motivoEdicao.trim().length < 10) {
+        throw new Error('Motivo da edição deve ter no mínimo 10 caracteres')
+      }
+
+      if (!editDTO.editadoPor || editDTO.editadoPor.trim().length === 0) {
+        throw new Error('Responsável pela edição é obrigatório')
+      }
+
+      console.log('🔧 Chamando API PUT /editar...')
+      const response = await api.put(`${BASE_URL}/${cotacaoId}/editar`, editDTO)
+      console.log('🔧 Response completo:', response)
+      console.log('🔧 Response.data:', response.data)
+      return response.data
+    } catch (error) {
+      console.error('❌ Erro ao editar cotação:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Busca o histórico de edições de uma cotação
+   */
+  async buscarHistorico(cotacaoId) {
+    try {
+      if (!cotacaoId) {
+        throw new Error('ID da cotação é obrigatório')
+      }
+
+      const data = await api.get(`${BASE_URL}/${cotacaoId}/historico`)
+      return data
+    } catch (error) {
+      console.error('❌ Erro ao buscar histórico:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Obtém PDF anterior do histórico de cotação para visualização
+   */
+  async obterPdfAnteriorHistorico(historicoId) {
+    try {
+      if (!historicoId) {
+        throw new Error('ID do histórico é obrigatório')
+      }
+
+      const response = await relatorioClient.get(`${BASE_URL}/historico/${historicoId}/pdf/anterior`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Erro ao obter PDF anterior do histórico:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Obtém PDF novo do histórico de cotação para visualização
+   */
+  async obterPdfNovoHistorico(historicoId) {
+    try {
+      if (!historicoId) {
+        throw new Error('ID do histórico é obrigatório')
+      }
+
+      const response = await relatorioClient.get(`${BASE_URL}/historico/${historicoId}/pdf/novo`)
+      return response.data
+    } catch (error) {
+      console.error('❌ Erro ao obter PDF novo do histórico:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Baixa PDF anterior do histórico de cotação (download direto)
+   */
+  async baixarPdfAnteriorHistorico(historicoId) {
+    try {
+      const blob = await this.obterPdfAnteriorHistorico(historicoId)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `historico-${historicoId}-anterior.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('❌ Erro ao baixar PDF anterior do histórico:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Baixa PDF novo do histórico de cotação (download direto)
+   */
+  async baixarPdfNovoHistorico(historicoId) {
+    try {
+      const blob = await this.obterPdfNovoHistorico(historicoId)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `historico-${historicoId}-novo.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('❌ Erro ao baixar PDF novo do histórico:', error)
       throw error
     }
   }

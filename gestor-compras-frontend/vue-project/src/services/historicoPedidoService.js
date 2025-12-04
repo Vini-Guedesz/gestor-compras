@@ -9,9 +9,7 @@ import api from './api.js'
 const historicoPedidoService = {
   async listarPorPedido(pedidoId) {
     try {
-      console.log(`Buscando histórico do pedido ${pedidoId}...`)
-      const data = await api.get(`/api/historico-pedidos/pedido/${pedidoId}`)
-      console.log('Histórico carregado:', data.length, 'registros')
+      const data = await api.get(`/api/v1/historico-pedidos/pedido/${pedidoId}`)
       return data
     } catch (error) {
       console.error(`Erro ao buscar histórico do pedido ${pedidoId}:`, error.message)
@@ -21,9 +19,7 @@ const historicoPedidoService = {
 
   async listarPorUsuario(userId) {
     try {
-      console.log(`Buscando histórico do usuário ${userId}...`)
-      const data = await api.get(`/api/historico-pedidos/usuario/${userId}`)
-      console.log('Histórico do usuário carregado:', data.length, 'registros')
+      const data = await api.get(`/api/v1/historico-pedidos/usuario/${userId}`)
       return data
     } catch (error) {
       console.error(`Erro ao buscar histórico do usuário ${userId}:`, error.message)
@@ -43,6 +39,7 @@ export const tipoModificacaoConfig = {
   ATUALIZACAO_ITEM: { label: 'Item Atualizado', icon: 'edit', color: '#3b82f6' },
   ADICAO_COTACAO: { label: 'Cotação Adicionada', icon: 'document-add', color: '#8b5cf6' },
   REMOCAO_COTACAO: { label: 'Cotação Removida', icon: 'document-remove', color: '#ef4444' },
+  EDICAO_COTACAO: { label: 'Cotação Editada', icon: 'pencil', color: '#f59e0b' },
   CANCELAMENTO: { label: 'Cancelamento', icon: 'x-circle', color: '#ef4444' },
   APROVACAO: { label: 'Aprovação', icon: 'check-circle', color: '#10b981' },
   // Tipos de rascunho

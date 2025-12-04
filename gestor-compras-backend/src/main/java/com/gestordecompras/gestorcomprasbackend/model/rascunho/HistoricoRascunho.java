@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +17,8 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@SQLDelete(sql = "UPDATE historico_rascunho SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@Where(clause = "deleted_at IS NULL")
 public class HistoricoRascunho {
 
     @Id
@@ -48,6 +52,9 @@ public class HistoricoRascunho {
     @Column(name = "detalhes", columnDefinition = "TEXT")
     private String detalhes;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @PrePersist
     public void prePersist() {
         this.dataModificacao = LocalDateTime.now();
@@ -61,6 +68,7 @@ public class HistoricoRascunho {
         ATUALIZACAO_OBSERVACAO,
         ADICAO_COTACAO,
         REMOCAO_COTACAO,
+        EDICAO_COTACAO,
         CONVERSAO_PEDIDO
     }
 }

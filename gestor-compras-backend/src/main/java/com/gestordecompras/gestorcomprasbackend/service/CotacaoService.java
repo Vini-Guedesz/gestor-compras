@@ -1,22 +1,26 @@
 package com.gestordecompras.gestorcomprasbackend.service;
 
-import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoCreateDTO;
-import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoDTO;
-import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoUpdateDTO;
+import com.gestordecompras.gestorcomprasbackend.dto.cotacao.*;
+import com.gestordecompras.gestorcomprasbackend.mapper.CotacaoItemMapper;
 import com.gestordecompras.gestorcomprasbackend.mapper.CotacaoMapper;
+import com.gestordecompras.gestorcomprasbackend.mapper.HistoricoCotacaoMapper;
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.AnexoCotacao;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem;
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.HistoricoCotacao;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.model.user.User;
-import com.gestordecompras.gestorcomprasbackend.repository.CotacaoRepository;
-import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeProdutoRepository;
-import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeServicoRepository;
-import com.gestordecompras.gestorcomprasbackend.repository.ItemPedidoRepository;
-import com.gestordecompras.gestorcomprasbackend.repository.SolicitacaoDePedidoRepository;
-import com.gestordecompras.gestorcomprasbackend.repository.UserRepository;
+import com.gestordecompras.gestorcomprasbackend.repository.*;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.core.Authentication;
@@ -34,28 +38,37 @@ public class CotacaoService {
 
     private final CotacaoRepository cotacaoRepository;
     private final CotacaoMapper cotacaoMapper;
+    private final CotacaoItemMapper cotacaoItemMapper;
     private final FornecedorDeProdutoRepository fornecedorDeProdutoRepository;
     private final FornecedorDeServicoRepository fornecedorDeServicoRepository;
     private final ItemPedidoRepository itemPedidoRepository;
     private final SolicitacaoDePedidoRepository solicitacaoDePedidoRepository;
     private final HistoricoPedidoService historicoPedidoService;
     private final UserRepository userRepository;
+    private final HistoricoCotacaoRepository historicoCotacaoRepository;
+    private final HistoricoCotacaoMapper historicoCotacaoMapper;
 
     public CotacaoService(CotacaoRepository cotacaoRepository, CotacaoMapper cotacaoMapper,
+                         CotacaoItemMapper cotacaoItemMapper,
                          FornecedorDeProdutoRepository fornecedorDeProdutoRepository,
                          FornecedorDeServicoRepository fornecedorDeServicoRepository,
                          ItemPedidoRepository itemPedidoRepository,
                          SolicitacaoDePedidoRepository solicitacaoDePedidoRepository,
                          HistoricoPedidoService historicoPedidoService,
-                         UserRepository userRepository) {
+                         UserRepository userRepository,
+                         HistoricoCotacaoRepository historicoCotacaoRepository,
+                         HistoricoCotacaoMapper historicoCotacaoMapper) {
         this.cotacaoRepository = cotacaoRepository;
         this.cotacaoMapper = cotacaoMapper;
+        this.cotacaoItemMapper = cotacaoItemMapper;
         this.fornecedorDeProdutoRepository = fornecedorDeProdutoRepository;
         this.fornecedorDeServicoRepository = fornecedorDeServicoRepository;
         this.itemPedidoRepository = itemPedidoRepository;
         this.solicitacaoDePedidoRepository = solicitacaoDePedidoRepository;
         this.historicoPedidoService = historicoPedidoService;
         this.userRepository = userRepository;
+        this.historicoCotacaoRepository = historicoCotacaoRepository;
+        this.historicoCotacaoMapper = historicoCotacaoMapper;
     }
 
     private User getAuthenticatedUser() {
@@ -68,11 +81,9 @@ public class CotacaoService {
     }
 
     @Transactional(readOnly = true)
-    public List<CotacaoDTO> getAllCotacoes() {
+    public Page<CotacaoDTO> getAllCotacoes(Pageable pageable) {
         // Bug Fix #9: Usar query otimizada para evitar N+1
-        return cotacaoRepository.findAllWithRelationships().stream()
-                .map(cotacaoMapper::toDTO)
-                .collect(Collectors.toList());
+        return cotacaoRepository.findAll(pageable).map(cotacaoMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
@@ -84,10 +95,8 @@ public class CotacaoService {
 
     @Transactional
     public CotacaoDTO createCotacao(CotacaoCreateDTO cotacaoCreateDTO) {
-        // Bug Fix #6: Validar que a cotação tem itens
-        if (cotacaoCreateDTO.itensPedidoIds() == null || cotacaoCreateDTO.itensPedidoIds().isEmpty()) {
-            throw new IllegalArgumentException("Uma cotação deve ter pelo menos um item vinculado");
-        }
+        // Validar que foi fornecido pelo menos um formato (novo ou legacy)
+        cotacaoCreateDTO.validar();
 
         Cotacao cotacao = cotacaoMapper.toEntity(cotacaoCreateDTO);
 
@@ -124,22 +133,54 @@ public class CotacaoService {
             throw new IllegalArgumentException("Uma cotação deve ter um fornecedor (produto ou serviço)");
         }
 
-        // Buscar e associar múltiplos itens do pedido
-        Set<ItemPedido> itensPedido = new HashSet<>();
-        for (Long itemId : cotacaoCreateDTO.itensPedidoIds()) {
-            ItemPedido itemPedido = itemPedidoRepository.findById(itemId)
-                    .orElseThrow(() -> new EntityNotFoundException("ItemPedido não encontrado com ID: " + itemId));
+        // Associar itens: suporta formato novo (recomendado) e legacy
+        if (cotacaoCreateDTO.usaNovoFormato()) {
+            // NOVO FORMATO: Itens com preços individuais
+            for (CotacaoItemCreateDTO itemDTO : cotacaoCreateDTO.itens()) {
+                ItemPedido itemPedido = itemPedidoRepository.findById(itemDTO.itemPedidoId())
+                        .orElseThrow(() -> new EntityNotFoundException("ItemPedido não encontrado com ID: " + itemDTO.itemPedidoId()));
 
-            // Validar que o item pertence à solicitação de pedido informada
-            if (!itemPedido.getSolicitacaoDePedido().getId().equals(cotacaoCreateDTO.solicitacaoDePedidoId())) {
-                throw new IllegalArgumentException(
-                        "Item " + itemId + " não pertence à solicitação de pedido " + cotacaoCreateDTO.solicitacaoDePedidoId());
+                // Validar que o item pertence à solicitação
+                if (!itemPedido.getSolicitacaoDePedido().getId().equals(cotacaoCreateDTO.solicitacaoDePedidoId())) {
+                    throw new IllegalArgumentException(
+                            "Item " + itemDTO.itemPedidoId() + " não pertence à solicitação de pedido " + cotacaoCreateDTO.solicitacaoDePedidoId());
+                }
+
+                // Criar CotacaoItem com preço individual
+                CotacaoItem cotacaoItem = cotacaoItemMapper.toEntity(itemDTO);
+                cotacaoItem.setItemPedido(itemPedido);
+                cotacao.addItem(cotacaoItem);
             }
+        } else {
+            // LEGACY FORMATO: IDs dos itens + preço total (dividido igualmente)
+            List<Long> itensPedidoIds = cotacaoCreateDTO.itensPedidoIds();
+            int totalItens = itensPedidoIds.size();
+            java.math.BigDecimal precoTotalLegacy = cotacaoCreateDTO.preco();
+            java.math.BigDecimal precoUnitario = precoTotalLegacy.divide(
+                    java.math.BigDecimal.valueOf(totalItens),
+                    2,
+                    java.math.RoundingMode.HALF_UP
+            );
 
-            itensPedido.add(itemPedido);
+            for (Long itemId : itensPedidoIds) {
+                ItemPedido itemPedido = itemPedidoRepository.findById(itemId)
+                        .orElseThrow(() -> new EntityNotFoundException("ItemPedido não encontrado com ID: " + itemId));
+
+                // Validar que o item pertence à solicitação
+                if (!itemPedido.getSolicitacaoDePedido().getId().equals(cotacaoCreateDTO.solicitacaoDePedidoId())) {
+                    throw new IllegalArgumentException(
+                            "Item " + itemId + " não pertence à solicitação de pedido " + cotacaoCreateDTO.solicitacaoDePedidoId());
+                }
+
+                // Criar CotacaoItem com preço dividido
+                CotacaoItem cotacaoItem = new CotacaoItem();
+                cotacaoItem.setItemPedido(itemPedido);
+                cotacaoItem.setPrecoUnitario(precoUnitario);
+                cotacaoItem.setQuantidade(itemPedido.getQuantidade());
+                cotacaoItem.setObservacao("Migrado de formato legacy com preço dividido igualmente");
+                cotacao.addItem(cotacaoItem);
+            }
         }
-
-        cotacao.setItensPedido(itensPedido);
 
         Cotacao cotacaoSalva = cotacaoRepository.save(cotacao);
 
@@ -172,11 +213,7 @@ public class CotacaoService {
                     boolean houveAlteracao = false;
                     StringBuilder detalhes = new StringBuilder();
 
-                    if (cotacaoUpdateDTO.preco() != null && !cotacaoUpdateDTO.preco().equals(existingCotacao.getPreco())) {
-                        detalhes.append("Preço: ").append(existingCotacao.getPreco()).append(" → ").append(cotacaoUpdateDTO.preco());
-                        existingCotacao.setPreco(cotacaoUpdateDTO.preco());
-                        houveAlteracao = true;
-                    }
+
                     if (cotacaoUpdateDTO.prazoEmDiasUteis() != null && !cotacaoUpdateDTO.prazoEmDiasUteis().equals(existingCotacao.getPrazoEmDiasUteis())) {
                         if (detalhes.length() > 0) detalhes.append(", ");
                         detalhes.append("Prazo: ").append(existingCotacao.getPrazoEmDiasUteis()).append(" → ").append(cotacaoUpdateDTO.prazoEmDiasUteis());
@@ -293,20 +330,20 @@ public class CotacaoService {
         Cotacao cotacao = cotacaoRepository.findById(cotacaoId)
                 .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + cotacaoId));
 
-        // Bug Fix #4: Validar itens duplicados
+        // Validar itens duplicados
         if (itensPedidoIds.size() != new HashSet<>(itensPedidoIds).size()) {
             throw new IllegalArgumentException("A lista de IDs de itens contém duplicatas");
         }
 
-        // Bug Fix #2: Usar estratégia de diff ao invés de clear + add para evitar problemas de sincronização
-        Set<Long> idsAtuais = cotacao.getItensPedido().stream()
-                .map(ItemPedido::getId)
+        // Usar estratégia de diff com nova estrutura CotacaoItem
+        Set<Long> idsAtuais = cotacao.getItens().stream()
+                .map(ci -> ci.getItemPedido().getId())
                 .collect(java.util.stream.Collectors.toSet());
 
         Set<Long> idsNovos = new HashSet<>(itensPedidoIds);
 
-        // Remover apenas os itens que não estão mais vinculados
-        cotacao.getItensPedido().removeIf(item -> !idsNovos.contains(item.getId()));
+        // Remover apenas os CotacaoItem que não estão mais vinculados
+        cotacao.getItens().removeIf(cotacaoItem -> !idsNovos.contains(cotacaoItem.getItemPedido().getId()));
 
         // Adicionar apenas os itens novos que não existiam antes
         for (Long itemId : idsNovos) {
@@ -321,7 +358,13 @@ public class CotacaoService {
                             cotacao.getSolicitacaoDePedido().getId());
                 }
 
-                cotacao.getItensPedido().add(item);
+                // Criar CotacaoItem com preço padrão (será atualizado depois)
+                CotacaoItem cotacaoItem = new CotacaoItem();
+                cotacaoItem.setItemPedido(item);
+                cotacaoItem.setQuantidade(item.getQuantidade());
+                cotacaoItem.setPrecoUnitario(java.math.BigDecimal.ZERO); // Placeholder
+                cotacaoItem.setObservacao("Adicionado via vincularItens - atualizar preço");
+                cotacao.addItem(cotacaoItem);
             }
         }
 
@@ -331,5 +374,225 @@ public class CotacaoService {
         Cotacao cotacaoAtualizada = cotacaoRepository.save(cotacao);
 
         return cotacaoMapper.toDTO(cotacaoAtualizada);
+    }
+
+    /**
+     * Edita uma cotação existente com auditoria completa
+     * Cria registro no histórico antes de aplicar as mudanças
+     *
+     * @param editDTO Dados da edição com motivo obrigatório
+     * @return Cotação atualizada
+     */
+    @Transactional
+    @Retryable(
+        retryFor = {OptimisticLockingFailureException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100)
+    )
+    public CotacaoDTO editarCotacao(CotacaoEditDTO editDTO) {
+        // Busca cotação existente
+        Cotacao cotacao = cotacaoRepository.findById(editDTO.id())
+            .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada: " + editDTO.id()));
+
+        // Verifica se há mudanças reais
+        if (!editDTO.temMudancas()) {
+            throw new IllegalArgumentException("Nenhuma mudança foi especificada na edição");
+        }
+
+        // Cria registro de histórico ANTES de aplicar mudanças
+        criarHistoricoCotacao(cotacao, editDTO);
+
+        // Atualiza dados da cotação
+        if (editDTO.itens() != null && !editDTO.itens().isEmpty()) {
+            // Remove itens antigos
+            cotacao.getItens().clear();
+
+            // Adiciona novos itens
+            for (CotacaoItemCreateDTO itemDTO : editDTO.itens()) {
+                ItemPedido itemPedido = itemPedidoRepository.findById(itemDTO.itemPedidoId())
+                    .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado: " + itemDTO.itemPedidoId()));
+
+                CotacaoItem novoItem = new CotacaoItem();
+                novoItem.setItemPedido(itemPedido);
+                novoItem.setPrecoUnitario(itemDTO.precoUnitario());
+                novoItem.setQuantidade(itemDTO.quantidade());
+                novoItem.setObservacao(itemDTO.observacao());
+
+                cotacao.addItem(novoItem);
+            }
+            // Atualiza preço total baseado nos itens
+
+        } else if (editDTO.precoNovo() != null) {
+            // Atualiza apenas o preço total (sem modificar itens)
+            // Se a cotação tem itens, distribui o novo preço proporcionalmente
+            if (cotacao.getItens() != null && !cotacao.getItens().isEmpty()) {
+                BigDecimal precoAtual = cotacao.getPreco();
+                if (precoAtual.compareTo(BigDecimal.ZERO) > 0) {
+                    // Calcula fator de multiplicação
+                    BigDecimal fator = editDTO.precoNovo().divide(precoAtual, 10, RoundingMode.HALF_UP);
+
+                    // Atualiza preço unitário de cada item proporcionalmente
+                    for (CotacaoItem item : cotacao.getItens()) {
+                        BigDecimal novoPrecoUnitario = item.getPrecoUnitario().multiply(fator);
+                        item.setPrecoUnitario(novoPrecoUnitario);
+                    }
+                } else {
+                    // Se preço atual é zero, divide igualmente entre os itens
+                    int totalQuantidade = cotacao.getItens().stream()
+                        .mapToInt(CotacaoItem::getQuantidade)
+                        .sum();
+
+                    if (totalQuantidade > 0) {
+                        BigDecimal precoUnitario = editDTO.precoNovo()
+                            .divide(BigDecimal.valueOf(totalQuantidade), 2, RoundingMode.HALF_UP);
+
+                        for (CotacaoItem item : cotacao.getItens()) {
+                            item.setPrecoUnitario(precoUnitario);
+                        }
+                    }
+                }
+            } else {
+                // Se não tem itens, usa precoLegacy
+
+            }
+        }
+
+        if (editDTO.prazoEmDiasUteis() != null) {
+            cotacao.setPrazoEmDiasUteis(editDTO.prazoEmDiasUteis());
+        }
+
+        if (editDTO.dataLimite() != null) {
+            cotacao.setDataLimite(editDTO.dataLimite());
+        }
+
+        if (editDTO.anexoPdf() != null) {
+            cotacao.getAnexos().clear();
+            AnexoCotacao novoAnexo = new AnexoCotacao(cotacao, editDTO.anexoPdf(), cotacao.getAnexos().size());
+            cotacao.getAnexos().add(novoAnexo);
+        }
+
+        // Atualiza campos de auditoria
+        cotacao.setNumeroVersao((cotacao.getNumeroVersao() != null ? cotacao.getNumeroVersao() : 0) + 1);
+        cotacao.setFoiEditada(true);
+        cotacao.setDataUltimaEdicao(LocalDateTime.now());
+        cotacao.setMotivoUltimaEdicao(editDTO.motivoEdicao());
+        cotacao.setEditadoPor(editDTO.editadoPor());
+
+        // Salva cotação atualizada
+        Cotacao cotacaoAtualizada = cotacaoRepository.save(cotacao);
+
+        // Registra edição no histórico do pedido
+        if (cotacaoAtualizada.getSolicitacaoDePedido() != null) {
+            User usuario = getAuthenticatedUser();
+            if (usuario != null) {
+                String nomeFornecedor = cotacaoAtualizada.getFornecedorProduto() != null
+                    ? cotacaoAtualizada.getFornecedorProduto().getRazaoSocial()
+                    : (cotacaoAtualizada.getFornecedorServico() != null
+                        ? cotacaoAtualizada.getFornecedorServico().getRazaoSocial()
+                        : "Fornecedor não identificado");
+
+                // Constrói detalhes do que foi modificado
+                StringBuilder detalhes = new StringBuilder();
+                if (editDTO.precoNovo() != null) {
+                    detalhes.append("Preço alterado");
+                }
+                if (editDTO.prazoEmDiasUteis() != null) {
+                    if (detalhes.length() > 0) detalhes.append(", ");
+                    detalhes.append("Prazo alterado");
+                }
+                if (editDTO.dataLimite() != null) {
+                    if (detalhes.length() > 0) detalhes.append(", ");
+                    detalhes.append("Data limite alterada");
+                }
+                if (editDTO.anexoPdf() != null) {
+                    if (detalhes.length() > 0) detalhes.append(", ");
+                    detalhes.append("PDF anexado");
+                }
+
+                historicoPedidoService.registrarEdicaoCotacao(
+                    cotacaoAtualizada.getSolicitacaoDePedido(),
+                    usuario,
+                    nomeFornecedor,
+                    detalhes.length() > 0 ? detalhes.toString() : "Modificações diversas"
+                );
+            }
+        }
+
+        return cotacaoMapper.toDTO(cotacaoAtualizada);
+    }
+
+    /**
+     * Cria registro no histórico de cotações
+     */
+    private void criarHistoricoCotacao(Cotacao cotacaoAnterior, CotacaoEditDTO editDTO) {
+        HistoricoCotacao historico = new HistoricoCotacao();
+
+        historico.setCotacaoId(cotacaoAnterior.getId());
+        historico.setVersao(cotacaoAnterior.getNumeroVersao() != null ? cotacaoAnterior.getNumeroVersao() : 1);
+
+        // Dados anteriores (antes da edição)
+        historico.setPrecoAnterior(cotacaoAnterior.getPreco());
+        historico.setPrazoEmDiasUteisAnterior(cotacaoAnterior.getPrazoEmDiasUteis());
+        historico.setDataLimiteAnterior(cotacaoAnterior.getDataLimite());
+        historico.setAnexoPdfAnterior(cotacaoAnterior.getAnexoPdf());
+        historico.setCaminhoAnexoAnterior(cotacaoAnterior.getCaminhoAnexo());
+
+        // Dados novos (após edição)
+        // Determina o novo preço: usa precoNovo se fornecido, senão calcula dos itens, senão mantém o atual
+        BigDecimal novoPreco;
+        if (editDTO.precoNovo() != null) {
+            novoPreco = editDTO.precoNovo();
+        } else if (editDTO.itens() != null && !editDTO.itens().isEmpty()) {
+            novoPreco = editDTO.calcularPrecoTotal();
+        } else {
+            novoPreco = cotacaoAnterior.getPreco();
+        }
+        historico.setPrecoNovo(novoPreco);
+
+        historico.setPrazoEmDiasUteisNovo(
+            editDTO.prazoEmDiasUteis() != null ? editDTO.prazoEmDiasUteis() : cotacaoAnterior.getPrazoEmDiasUteis()
+        );
+        historico.setDataLimiteNovo(
+            editDTO.dataLimite() != null ? editDTO.dataLimite() : cotacaoAnterior.getDataLimite()
+        );
+        historico.setAnexoPdfNovo(editDTO.anexoPdf());
+
+        // Informações de auditoria
+        historico.setMotivoEdicao(editDTO.motivoEdicao());
+        historico.setEditadoPor(editDTO.editadoPor());
+        historico.setDataEdicao(LocalDateTime.now());
+
+        historicoCotacaoRepository.saveAndFlush(historico);
+    }
+
+
+
+    /**
+     * Busca o histórico completo de edições de uma cotação
+     */
+    @Transactional(readOnly = true)
+    public List<HistoricoCotacaoDTO> buscarHistoricoCotacao(Long cotacaoId) {
+        return historicoCotacaoRepository.findByCotacaoIdOrderByDataEdicaoDesc(cotacaoId)
+            .stream()
+            .map(historicoCotacaoMapper::toDTO)
+            .toList();
+    }
+
+    /**
+     * Obtém PDF anterior do histórico
+     */
+    public byte[] obterPdfAnteriorHistorico(Long historicoId) {
+        HistoricoCotacao historico = historicoCotacaoRepository.findById(historicoId)
+            .orElseThrow(() -> new EntityNotFoundException("Histórico não encontrado: " + historicoId));
+        return historico.getAnexoPdfAnterior();
+    }
+
+    /**
+     * Obtém PDF novo do histórico
+     */
+    public byte[] obterPdfNovoHistorico(Long historicoId) {
+        HistoricoCotacao historico = historicoCotacaoRepository.findById(historicoId)
+            .orElseThrow(() -> new EntityNotFoundException("Histórico não encontrado: " + historicoId));
+        return historico.getAnexoPdfNovo();
     }
 }

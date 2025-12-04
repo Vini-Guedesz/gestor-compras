@@ -57,12 +57,6 @@
             </svg>
             {{ salvandoTodos ? 'Salvando...' : 'Salvar Tudo' }}
           </button>
-          <button type="button" @click="adicionarNovoItem" class="btn-add-item">
-            <svg viewBox="0 0 24 24" width="16" height="16">
-              <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-            Adicionar Item
-          </button>
         </div>
       </div>
 
@@ -163,7 +157,23 @@
       </div>
 
       <div v-else class="empty-state">
-        <p>Nenhum item adicionado. Clique em "Adicionar Item" para começar.</p>
+        <p>Nenhum item adicionado ainda.</p>
+        <button type="button" @click="adicionarNovoItem" class="btn-add-item-empty">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Adicionar Primeiro Item
+        </button>
+      </div>
+
+      <!-- Botão Adicionar Item (abaixo da lista) -->
+      <div v-if="formData.itens.length > 0" class="add-item-bottom">
+        <button type="button" @click="adicionarNovoItem" class="btn-add-item-bottom">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Adicionar Novo Item
+        </button>
       </div>
 
       <!-- Resumo -->
@@ -195,6 +205,7 @@
 
 <script>
 import { ref, computed, watch } from 'vue'
+import { useToast } from '@/composables/useToast.js'
 import rascunhoService from '@/services/rascunhoService.js'
 
 export default {
@@ -207,6 +218,7 @@ export default {
   },
   emits: ['update:modelValue', 'validation-change', 'rascunho-created'],
   setup(props, { emit }) {
+    const { success, error: showError, warning } = useToast()
     const formData = ref({ ...props.modelValue })
     const hasUnsavedChanges = ref(false)
     const salvandoTodos = ref(false)
@@ -275,7 +287,20 @@ export default {
       return errors
     })
 
-    const isValid = computed(() => validationErrors.value.length === 0)
+    const isValid = computed(() => {
+      // Validação básica de campos
+      const temErros = validationErrors.value.length > 0
+
+      // Se não há itens, permite finalizar rascunho vazio
+      if (formData.value.itens.length === 0) {
+        return !temErros
+      }
+
+      // Se há itens, verificar se todos estão salvos
+      const todosItensSalvos = formData.value.itens.every(item => item.id && !item._unsaved)
+
+      return !temErros && todosItensSalvos
+    })
 
     const itemValido = (item) => {
       return item.nome?.trim() && item.quantidade > 0
@@ -346,12 +371,10 @@ export default {
           )
         } else {
           // Adicionar novo item ao rascunho existente
-          console.log('Adicionando item ao rascunho:', itemData)
           rascunhoAtualizado = await rascunhoService.adicionarItem(
             formData.value.id,
             itemData
           )
-          console.log('Resposta do servidor:', rascunhoAtualizado)
         }
 
         // Atualizar com itens do servidor (todos marcados como salvos)
@@ -364,13 +387,12 @@ export default {
         // Mesclar: itens do servidor + itens locais não salvos
         formData.value.itens = [...itensDoServidor, ...itensLocaisNaoSalvos]
 
-        console.log('Array após salvar:', formData.value.itens.map(i => ({ nome: i.nome, id: i.id, _unsaved: i._unsaved })))
 
         hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
 
       } catch (error) {
         console.error('Erro ao salvar item:', error)
-        alert(error.message || 'Erro ao salvar item')
+        showError(error.message || 'Erro ao salvar item')
         // Desmarcar salvando em caso de erro
         if (formData.value.itens[index]) {
           formData.value.itens[index]._saving = false
@@ -383,7 +405,7 @@ export default {
       // Verificar se há itens não salvos válidos
       const totalItensParaSalvar = formData.value.itens.filter(item => item._unsaved && itemValido(item)).length
       if (totalItensParaSalvar === 0) {
-        alert('Todos os itens já estão salvos ou não são válidos.')
+        warning('Todos os itens já estão salvos ou não são válidos.')
         return
       }
 
@@ -403,7 +425,6 @@ export default {
             break
           }
 
-          console.log(`Salvando item ${itensSalvosComSucesso + 1} de ${totalItensParaSalvar}:`, formData.value.itens[indexDoProximoItem].nome)
           await salvarItem(indexDoProximoItem)
           itensSalvosComSucesso++
         }
@@ -417,10 +438,10 @@ export default {
 
         hasUnsavedChanges.value = false
 
-        alert(`Todos os ${itensSalvosComSucesso} itens foram salvos com sucesso!`)
+        success(`Todos os ${itensSalvosComSucesso} itens foram salvos com sucesso!`)
       } catch (error) {
         console.error('Erro ao salvar itens:', error)
-        alert(`${itensSalvosComSucesso} de ${totalItensParaSalvar} itens foram salvos. Erro: ${error.message || 'Erro desconhecido'}`)
+        showError(`${itensSalvosComSucesso} de ${totalItensParaSalvar} itens foram salvos. Erro: ${error.message || 'Erro desconhecido'}`)
       } finally {
         salvandoTodos.value = false
         suspenderWatcher.value = false // Reativar watcher
@@ -459,7 +480,7 @@ export default {
 
         } catch (error) {
           console.error('Erro ao remover item:', error)
-          alert(error.message || 'Erro ao remover item')
+          showError(error.message || 'Erro ao remover item')
         }
       } else {
         // Item não salvo - remover localmente
@@ -657,6 +678,35 @@ export default {
   transform: translateY(-1px);
 }
 
+.add-item-bottom {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 16px;
+}
+
+.btn-add-item-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.btn-add-item-bottom:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
 .btn-save-item {
   padding: 6px 12px;
   background: #10b981;
@@ -798,10 +848,40 @@ export default {
   text-align: center;
   padding: 48px 24px;
   color: #6b7280;
-  font-style: italic;
   background: #f9fafb;
   border: 1px dashed #d1d5db;
   border-radius: 8px;
+}
+
+.empty-state p {
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+.btn-add-item-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.btn-add-item-empty:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.btn-add-item-empty:active {
+  transform: translateY(0);
 }
 
 /* Validation Errors */

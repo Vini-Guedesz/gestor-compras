@@ -167,7 +167,7 @@ public class HistoricoPedidoService {
         registrarHistorico(
                 pedido,
                 usuario,
-                HistoricoPedido.TipoModificacao.ATUALIZACAO,
+                HistoricoPedido.TipoModificacao.EDICAO_COTACAO,
                 "cotacao",
                 null,
                 nomeFornecedor,
