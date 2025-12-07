@@ -97,8 +97,8 @@ export const authService = {
       return {
         success: true,
         user: {
-          email: payload.sub,           // Subject é o email
-          username: payload.sub,         // Username também é o email no backend atual
+          email: payload.sub,           // Subject é o email (usado para login)
+          nome: payload.nome || payload.sub,  // Nome completo da pessoa (fallback para email se não existir)
           role: userRole                // ADMIN ou USER
         }
       }

@@ -74,30 +74,37 @@ public class HistoricoCotacao {
     private LocalDateTime dataEdicao;
 
     /**
-     * PDF completo da versão anterior (para auditoria)
-     * Armazena o documento original da cotação antes da edição
+     * Hash SHA-256 do PDF anterior (para auditoria sem duplicação)
+     * Armazena apenas 64 bytes ao invés de MB completos do PDF
+     * Permite verificar qual PDF estava anexado comparando com anexo_cotacao.hash_sha256
      */
-    @Column(name = "anexo_pdf_anterior", columnDefinition = "bytea")
-    private byte[] anexoPdfAnterior;
+    @Column(name = "hash_anexo_pdf_anterior", length = 64)
+    private String hashAnexoPdfAnterior;
 
     /**
-     * Caminho do anexo anterior (se houver)
+     * Hash SHA-256 do PDF novo (para auditoria sem duplicação)
+     * Armazena apenas 64 bytes ao invés de MB completos do PDF
+     * Permite verificar qual PDF foi anexado comparando com anexo_cotacao.hash_sha256
      */
-    @Column(name = "caminho_anexo_anterior")
-    private String caminhoAnexoAnterior;
+    @Column(name = "hash_anexo_pdf_novo", length = 64)
+    private String hashAnexoPdfNovo;
 
-    /**
-     * PDF completo da nova versão (para comparação)
-     * Armazena o novo documento anexado após a edição
-     */
-    @Column(name = "anexo_pdf_novo", columnDefinition = "bytea")
-    private byte[] anexoPdfNovo;
+    // Getters explícitos para garantir compatibilidade (Lombok pode não gerar para campos novos)
+    public String getHashAnexoPdfAnterior() {
+        return hashAnexoPdfAnterior;
+    }
 
-    /**
-     * Caminho do novo anexo (se houver)
-     */
-    @Column(name = "caminho_anexo_novo")
-    private String caminhoAnexoNovo;
+    public void setHashAnexoPdfAnterior(String hashAnexoPdfAnterior) {
+        this.hashAnexoPdfAnterior = hashAnexoPdfAnterior;
+    }
+
+    public String getHashAnexoPdfNovo() {
+        return hashAnexoPdfNovo;
+    }
+
+    public void setHashAnexoPdfNovo(String hashAnexoPdfNovo) {
+        this.hashAnexoPdfNovo = hashAnexoPdfNovo;
+    }
 
     @PrePersist
     protected void onCreate() {

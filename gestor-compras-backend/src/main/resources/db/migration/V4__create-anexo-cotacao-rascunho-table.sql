@@ -5,15 +5,14 @@ CREATE TABLE IF NOT EXISTS anexo_cotacao_rascunho (
     ordem INTEGER DEFAULT 0,
     conteudo BYTEA NOT NULL,
     nome_arquivo VARCHAR(255),
+    hash_sha256 VARCHAR(64), -- Hash SHA-256 para deduplificação
     CONSTRAINT fk_anexo_cotacao_rascunho FOREIGN KEY (cotacao_rascunho_id)
         REFERENCES cotacao_rascunho(id) ON DELETE CASCADE
 );
 
--- Criar índice para melhor performance nas buscas
+-- Criar índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_anexo_cotacao_rascunho_cotacao_id ON anexo_cotacao_rascunho(cotacao_rascunho_id);
+CREATE INDEX IF NOT EXISTS idx_anexo_cotacao_rascunho_hash ON anexo_cotacao_rascunho(hash_sha256);
 
--- Migrar dados existentes de anexo_pdf para a nova tabela
-INSERT INTO anexo_cotacao_rascunho (cotacao_rascunho_id, ordem, conteudo)
-SELECT id, 0, anexo_pdf
-FROM cotacao_rascunho
-WHERE anexo_pdf IS NOT NULL;
+-- Comentário sobre deduplificação
+COMMENT ON COLUMN anexo_cotacao_rascunho.hash_sha256 IS 'Hash SHA-256 do conteúdo do PDF para deduplificação. Permite verificar se o mesmo PDF já foi armazenado.';

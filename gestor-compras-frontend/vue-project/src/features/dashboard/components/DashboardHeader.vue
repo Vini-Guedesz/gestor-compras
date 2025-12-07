@@ -114,7 +114,7 @@ const showLogoutModal = ref(false)
 // Controle do sidebar mobile
 const { toggleSidebar } = useMobileSidebar()
 
-const userName = computed(() => authStore.user?.username || authStore.user?.email || 'Usuário')
+const userName = computed(() => authStore.user?.nome || authStore.user?.email || 'Usuário')
 
 const userRole = computed(() => {
   return getUserRole(authStore.user)

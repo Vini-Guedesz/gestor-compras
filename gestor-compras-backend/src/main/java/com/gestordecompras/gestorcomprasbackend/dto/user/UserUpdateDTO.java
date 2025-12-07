@@ -8,7 +8,7 @@ public record UserUpdateDTO(
         @NotNull(message = "O ID é obrigatório")
         Integer id,
 
-        String username,
+        String nome,  // Antes: username
 
         String senha,
 

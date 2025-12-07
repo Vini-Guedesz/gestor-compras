@@ -8,7 +8,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface HistoricoCotacaoMapper {
 
-    @Mapping(target = "temAnexoAnterior", expression = "java(historico.getAnexoPdfAnterior() != null)")
-    @Mapping(target = "temAnexoNovo", expression = "java(historico.getAnexoPdfNovo() != null)")
+    @Mapping(target = "temAnexoAnterior", expression = "java(historico.getHashAnexoPdfAnterior() != null)")
+    @Mapping(target = "temAnexoNovo", expression = "java(historico.getHashAnexoPdfNovo() != null)")
+    @Mapping(target = "caminhoAnexoAnterior", constant = "null") // deprecated - sempre null
+    @Mapping(target = "caminhoAnexoNovo", constant = "null") // deprecated - sempre null
     HistoricoCotacaoDTO toDTO(HistoricoCotacao historico);
 }

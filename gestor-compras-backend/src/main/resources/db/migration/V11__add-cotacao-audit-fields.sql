@@ -27,11 +27,9 @@ CREATE TABLE historico_cotacao (
     editado_por VARCHAR(100),
     data_edicao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- PDFs completos para auditoria (armazena ambas as versões)
-    anexo_pdf_anterior BYTEA,
-    caminho_anexo_anterior VARCHAR(500),
-    anexo_pdf_novo BYTEA,
-    caminho_anexo_novo VARCHAR(500),
+    -- Hashes SHA-256 dos PDFs para auditoria (economia de 99.9% vs PDFs completos)
+    hash_anexo_pdf_anterior VARCHAR(64),
+    hash_anexo_pdf_novo VARCHAR(64),
 
     -- Índices para consultas eficientes
     CONSTRAINT fk_historico_cotacao_cotacao FOREIGN KEY (cotacao_id)
@@ -42,10 +40,14 @@ CREATE TABLE historico_cotacao (
 CREATE INDEX idx_historico_cotacao_cotacao_id ON historico_cotacao(cotacao_id);
 CREATE INDEX idx_historico_cotacao_data_edicao ON historico_cotacao(data_edicao DESC);
 CREATE INDEX idx_cotacao_foi_editada ON cotacao(foi_editada) WHERE foi_editada = TRUE;
+CREATE INDEX idx_historico_cotacao_hash_anterior ON historico_cotacao(hash_anexo_pdf_anterior);
+CREATE INDEX idx_historico_cotacao_hash_novo ON historico_cotacao(hash_anexo_pdf_novo);
 
 -- Comentários para documentação
 COMMENT ON TABLE historico_cotacao IS 'Armazena o histórico completo de edições de cotações para fins de auditoria';
 COMMENT ON COLUMN historico_cotacao.versao IS 'Número da versão da cotação (1, 2, 3, etc.)';
 COMMENT ON COLUMN historico_cotacao.motivo_edicao IS 'Motivo da edição fornecido pelo comprador (obrigatório para auditoria)';
+COMMENT ON COLUMN historico_cotacao.hash_anexo_pdf_anterior IS 'Hash SHA-256 do PDF anterior (para auditoria sem duplicação). Reduz armazenamento de 10MB+ para 64 bytes.';
+COMMENT ON COLUMN historico_cotacao.hash_anexo_pdf_novo IS 'Hash SHA-256 do PDF novo (para auditoria sem duplicação). Reduz armazenamento de 10MB+ para 64 bytes.';
 COMMENT ON COLUMN cotacao.numero_versao IS 'Versão atual da cotação (incrementa a cada edição)';
 COMMENT ON COLUMN cotacao.foi_editada IS 'Indica se a cotação já foi editada alguma vez';

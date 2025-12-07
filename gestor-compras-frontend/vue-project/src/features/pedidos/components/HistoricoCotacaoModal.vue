@@ -289,7 +289,8 @@ export default {
 
     const houveMudancaPdf = (item) => {
       // Se foi anexado um novo PDF nesta edição, considera que houve mudança
-      return item.temAnexoNovo === true
+      // Também considera mudança se o motivo indica adição de anexos
+      return item.temAnexoNovo === true || (item.motivoEdicao && item.motivoEdicao.includes('Adicionado') && item.motivoEdicao.includes('anexo'))
     }
 
     const visualizarPdfHistorico = async (historicoId, tipo) => {

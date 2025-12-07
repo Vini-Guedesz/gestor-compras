@@ -49,7 +49,8 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/error",
             ApiVersionConfig.API_V1 + "/fornecedores-de-produto/**",
-            ApiVersionConfig.API_V1 + "/fornecedores-de-servico/**"
+            ApiVersionConfig.API_V1 + "/fornecedores-de-servico/**",
+            ApiVersionConfig.API_V1 + "/cotacoes/deduplication-report"
     };
 
     private static final String[] USER_ENDPOINTS = {

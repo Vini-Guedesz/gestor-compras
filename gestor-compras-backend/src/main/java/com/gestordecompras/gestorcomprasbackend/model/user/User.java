@@ -21,10 +21,21 @@ public class User implements UserDetails {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String username;
+    /**
+     * Nome completo do usuário (ex: "João Silva")
+     * NÃO é usado para autenticação - apenas informação de perfil
+     */
+    private String nome;  // Antes: username
+
     private String senha;
+
     @Enumerated(EnumType.STRING)
     private UserRole role;
+
+    /**
+     * Email do usuário (ex: "joao@email.com")
+     * Este campo É usado para autenticação via UserDetails.getUsername()
+     */
     private String email;
 
     @Override
@@ -37,9 +48,25 @@ public class User implements UserDetails {
         return senha;
     }
 
+    /**
+     * Retorna o identificador único para login (Spring Security UserDetails)
+     * IMPORTANTE: Retorna EMAIL, não o campo 'nome'
+     */
     @Override
     public String getUsername() {
-        return email;
+        return email;  // LOGIN: usa email como username
+    }
+
+    /**
+     * Getter para o nome completo do usuário
+     * Este é o campo 'nome' da tabela, não o username de login
+     */
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
     @Override public boolean isAccountNonExpired() { return true; }

@@ -41,6 +41,7 @@ public class RascunhoService {
     private final CotacaoRascunhoRepository cotacaoRascunhoRepository;
     private final CotacaoRepository cotacaoRepository;
     private final NumeroItemDisponivelRepository numeroItemDisponivelRepository;
+    private final PdfDeduplicationService pdfDeduplicationService;
 
     @Transactional(readOnly = true)
     public Page<RascunhoDTO> getAllRascunhos(Pageable pageable) {
@@ -369,8 +370,7 @@ public class RascunhoService {
                 cotacao.setPreco(cotacaoRascunho.getPreco()); // Legacy - será ignorado, calculado dos itens
                 cotacao.setPrazoEmDiasUteis(cotacaoRascunho.getPrazoEmDiasUteis());
                 cotacao.setDataLimite(cotacaoRascunho.getDataLimite());
-                cotacao.setAnexoPdf(cotacaoRascunho.getAnexoPdf());
-                cotacao.setCaminhoAnexo(cotacaoRascunho.getCaminhoAnexo());
+                // REMOVIDO: anexoPdf e caminhoAnexo (campos legados) - gerenciados via AnexoCotacao com deduplificação
 
                 // Criar CotacaoItem para cada ItemPedido (nova estrutura Bug #5)
                 int totalItens = itensPedidoCotacao.size();
@@ -391,15 +391,12 @@ public class RascunhoService {
                     cotacao.addItem(cotacaoItem);
                 }
 
-                // Copiar anexos múltiplos
+                // Copiar anexos múltiplos com deduplificação
                 if (cotacaoRascunho.getAnexos() != null && !cotacaoRascunho.getAnexos().isEmpty()) {
                     for (AnexoCotacaoRascunho anexoRascunho : cotacaoRascunho.getAnexos()) {
-                        AnexoCotacao anexoCotacao = new AnexoCotacao(
-                            cotacao,
-                            anexoRascunho.getConteudo(),
-                            anexoRascunho.getOrdem()
-                        );
-                        anexoCotacao.setNomeArquivo(anexoRascunho.getNomeArquivo());
+                        // Usa PdfDeduplicationService para evitar duplicação de PDFs idênticos
+                        AnexoCotacao anexoCotacao = pdfDeduplicationService
+                            .convertRascunhoAnexoWithDeduplication(cotacao, anexoRascunho);
                         cotacao.getAnexos().add(anexoCotacao);
                     }
                 }

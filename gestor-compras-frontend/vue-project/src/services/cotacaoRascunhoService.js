@@ -47,6 +47,53 @@ const cotacaoRascunhoService = {
         throw new Error('Tipo do fornecedor é obrigatório')
       }
 
+      // Validar e processar anexo PDF se fornecido
+      if (cotacao.anexoPdf) {
+        if (cotacao.anexoPdf instanceof File) {
+          // Validar tipo
+          if (cotacao.anexoPdf.type !== 'application/pdf') {
+            throw new Error('Apenas arquivos PDF são permitidos')
+          }
+
+          // Validar tamanho (10MB)
+          const maxSize = 10 * 1024 * 1024
+          if (cotacao.anexoPdf.size > maxSize) {
+            throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
+          }
+
+          // Converter para bytes
+          const bytesArray = await this.arquivoParaBytes(cotacao.anexoPdf)
+          cotacao.anexoPdf = bytesArray
+        }
+      }
+
+      // Validar e processar anexos múltiplos se fornecidos
+      if (cotacao.anexosPdf && Array.isArray(cotacao.anexosPdf)) {
+        const anexosProcessados = []
+        for (const anexo of cotacao.anexosPdf) {
+          if (anexo instanceof File) {
+            // Validar tipo
+            if (anexo.type !== 'application/pdf') {
+              throw new Error('Apenas arquivos PDF são permitidos')
+            }
+
+            // Validar tamanho (10MB)
+            const maxSize = 10 * 1024 * 1024
+            if (anexo.size > maxSize) {
+              throw new Error(`Arquivo ${anexo.name} muito grande. Máximo permitido: 10MB`)
+            }
+
+            // Converter para bytes
+            const bytesArray = await this.arquivoParaBytes(anexo)
+            anexosProcessados.push(bytesArray)
+          } else {
+            // Se já for array de bytes, usar direto
+            anexosProcessados.push(anexo)
+          }
+        }
+        cotacao.anexosPdf = anexosProcessados
+      }
+
       const data = await api.post(`/api/v1/rascunhos/${rascunhoId}/cotacoes`, cotacao)
       return data
     } catch (error) {
@@ -92,6 +139,20 @@ const cotacaoRascunhoService = {
       console.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
       throw error
     }
+  },
+
+  // Converter arquivo para array de bytes
+  async arquivoParaBytes(arquivo) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const arrayBuffer = reader.result
+        const uint8Array = new Uint8Array(arrayBuffer)
+        resolve(Array.from(uint8Array))
+      }
+      reader.onerror = () => reject(reader.error)
+      reader.readAsArrayBuffer(arquivo)
+    })
   }
 }
 

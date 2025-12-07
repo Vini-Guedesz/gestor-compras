@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public record UserCreateDTO(
-        @NotBlank(message = "O nome de usuário é obrigatório")
-        String username,
+        @NotBlank(message = "O nome é obrigatório")
+        String nome,  // Antes: username
 
         @NotBlank(message = "A senha é obrigatória")
         @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}", message = "A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, uma minúscula, um número e um caractere especial.")

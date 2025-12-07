@@ -40,11 +40,11 @@ public class UserService {
 
     @Transactional
     public UserDTO createUser(UserCreateDTO dto) {
-        if (repository.findByUsername(dto.username()) != null) {
-            throw new DataIntegrityConflictException("Nome de usuário já cadastrado");
+        if (repository.findByNome(dto.nome()) != null) {
+            throw new DataIntegrityConflictException("Nome já cadastrado");
         }
 
-        User user = new User(null, dto.username(), encoder.encode(dto.senha()), dto.role(), dto.email());
+        User user = new User(null, dto.nome(), encoder.encode(dto.senha()), dto.role(), dto.email());
         User savedUser = repository.save(user);
         return new UserDTO(savedUser);
     }
@@ -59,8 +59,8 @@ public class UserService {
     }
 
     private void updateUserData(User user, UserUpdateDTO dto) {
-        if (dto.username() != null) {
-            user.setUsername(dto.username());
+        if (dto.nome() != null) {
+            user.setNome(dto.nome());
         }
         if (dto.senha() != null && !dto.senha().isBlank()) {
             user.setSenha(encoder.encode(dto.senha()));

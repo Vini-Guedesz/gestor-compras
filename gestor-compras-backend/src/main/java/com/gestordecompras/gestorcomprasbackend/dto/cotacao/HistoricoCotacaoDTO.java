@@ -29,8 +29,18 @@ public record HistoricoCotacaoDTO(
 
         // PDFs (não enviamos os bytes, apenas indicamos se existem)
         Boolean temAnexoAnterior,
+
+        /**
+         * DEPRECATED: caminhoAnexoAnterior e caminhoAnexoNovo estão deprecated.
+         * PDFs são gerenciados via AnexoCotacao com deduplificação SHA-256.
+         * Sempre retornam null.
+         */
+        @Deprecated
         String caminhoAnexoAnterior,
+
         Boolean temAnexoNovo,
+
+        @Deprecated
         String caminhoAnexoNovo
 ) {
     /**

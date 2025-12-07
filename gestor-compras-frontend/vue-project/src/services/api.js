@@ -57,6 +57,11 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
 
+    // IMPORTANTE: Se for FormData, remover Content-Type para Axios configurar automaticamente
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+    }
+
     // DEBUG: Log do body sendo enviado
     if (config.data && config.url.includes('fornecedores')) {
       if (config.data.contato) {

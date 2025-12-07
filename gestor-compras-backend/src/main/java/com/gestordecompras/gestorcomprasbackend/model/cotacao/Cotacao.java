@@ -67,11 +67,10 @@ public class Cotacao {
 
     private LocalDate dataLimite;
 
-    @Column(columnDefinition = "bytea")
-    private byte[] anexoPdf;
-
-    private String caminhoAnexo;
-
+    /**
+     * Anexos PDF desta cotação com deduplificação via hash SHA-256
+     * Cada anexo é armazenado uma única vez mesmo se usado em múltiplas cotações
+     */
     @OneToMany(mappedBy = "cotacao", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordem ASC")
     private List<AnexoCotacao> anexos = new ArrayList<>();

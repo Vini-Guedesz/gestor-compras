@@ -37,7 +37,15 @@ public record CotacaoDTO(
 
         Integer prazoEmDiasUteis,
         LocalDate dataLimite,
+
+        /**
+         * DEPRECATED: caminhoAnexo está deprecated.
+         * Use AnexoCotacao com deduplificação SHA-256.
+         * Sempre retorna null.
+         */
+        @Deprecated
         String caminhoAnexo,
+
         boolean temAnexoPdf,
         int quantidadeAnexos,
 

@@ -137,7 +137,7 @@ const notificationMessage = ref('')
 
 // Dados do formulário - usar dados reais do usuário logado
 const formData = ref({
-    nome: authStore.user?.username || 'Usuário',
+    nome: authStore.user?.nome || 'Usuário',
     email: authStore.user?.email || '',
     telefone: '',  // Campo não existe no backend atual
     unidadeFuncional: '',  // Campo não existe no backend atual
@@ -202,7 +202,7 @@ const hideNotification = () => {
 onMounted(() => {
     // Carregar dados do usuário da store ou API
     if (authStore.user) {
-        formData.value.nome = authStore.user.username || 'Usuário'
+        formData.value.nome = authStore.user.nome || 'Usuário'
         formData.value.email = authStore.user.email || ''
         formData.value.funcao = authStore.user.role || 'USER'
     }

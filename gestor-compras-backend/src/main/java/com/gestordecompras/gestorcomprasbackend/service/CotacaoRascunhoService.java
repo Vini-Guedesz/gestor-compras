@@ -41,6 +41,9 @@ public class CotacaoRascunhoService {
     @Autowired
     private FornecedorDeServicoRepository fornecedorDeServicoRepository;
 
+    @Autowired
+    private PdfDeduplicationService pdfDeduplicationService;
+
     @Transactional(readOnly = true)
     public List<CotacaoRascunhoDTO> listarPorRascunho(Long rascunhoId) {
         // Carregar cotações com itens (primeira query)
@@ -105,18 +108,30 @@ public class CotacaoRascunhoService {
         }
         cotacao.setItensRascunho(itens);
 
-        // Processar múltiplos PDFs
+        // Processar múltiplos PDFs com deduplificação
         if (dto.anexosPdf() != null && !dto.anexosPdf().isEmpty()) {
             int ordem = 0;
             for (byte[] pdfBytes : dto.anexosPdf()) {
                 if (pdfBytes != null && pdfBytes.length > 0) {
-                    AnexoCotacaoRascunho anexo = new AnexoCotacaoRascunho(cotacao, pdfBytes, ordem++);
+                    // Usar PdfDeduplicationService para criar ou reutilizar anexo
+                    String nomeArquivo = String.format("anexo_%d.pdf", ordem);
+                    AnexoCotacaoRascunho anexo = pdfDeduplicationService.createOrReuseRascunhoAnexo(
+                        cotacao,
+                        pdfBytes,
+                        ordem++,
+                        nomeArquivo
+                    );
                     cotacao.getAnexos().add(anexo);
                 }
             }
         } else if (dto.anexoPdf() != null && dto.anexoPdf().length > 0) {
-            // Compatibilidade com PDF único
-            AnexoCotacaoRascunho anexo = new AnexoCotacaoRascunho(cotacao, dto.anexoPdf(), 0);
+            // Compatibilidade com PDF único usando deduplificação
+            AnexoCotacaoRascunho anexo = pdfDeduplicationService.createOrReuseRascunhoAnexo(
+                cotacao,
+                dto.anexoPdf(),
+                0,
+                "anexo_0.pdf"
+            );
             cotacao.getAnexos().add(anexo);
         }
 
@@ -145,17 +160,12 @@ public class CotacaoRascunhoService {
             throw new EntityNotFoundException("Cotação não encontrada com ID: " + id);
         }
 
-        // Primeiro verificar se há anexos na nova estrutura
+        // Verificar se há anexos
         if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
             if (index >= 0 && index < cotacao.getAnexos().size()) {
                 return cotacao.getAnexos().get(index).getConteudo();
             }
             throw new EntityNotFoundException("Anexo não encontrado no índice: " + index);
-        }
-
-        // Fallback para o campo antigo (compatibilidade)
-        if (index == 0 && cotacao.getAnexoPdf() != null) {
-            return cotacao.getAnexoPdf();
         }
 
         throw new EntityNotFoundException("Nenhum anexo encontrado para esta cotação");
@@ -180,8 +190,6 @@ public class CotacaoRascunhoService {
             quantidadeAnexos = (int) cotacao.getAnexos().stream()
                 .filter(anexo -> anexo.getConteudo() != null && anexo.getConteudo().length > 0)
                 .count();
-        } else if (cotacao.getAnexoPdf() != null && cotacao.getAnexoPdf().length > 0) {
-            quantidadeAnexos = 1;
         }
 
         boolean temAnexo = quantidadeAnexos > 0;

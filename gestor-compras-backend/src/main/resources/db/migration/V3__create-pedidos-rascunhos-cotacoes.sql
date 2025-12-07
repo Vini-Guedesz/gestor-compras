@@ -83,8 +83,7 @@ CREATE TABLE cotacao_rascunho (
     preco DECIMAL(19, 2) NOT NULL,
     prazo_em_dias_uteis INTEGER,
     data_limite DATE,
-    anexo_pdf BYTEA,
-    caminho_anexo VARCHAR(500),
+    -- REMOVIDO: anexo_pdf e caminho_anexo (gerenciados via anexo_cotacao_rascunho com deduplificação SHA-256)
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_cotacao_rascunho_rascunho FOREIGN KEY (rascunho_id) REFERENCES rascunho(id) ON DELETE CASCADE,
     CONSTRAINT fk_cotacao_rascunho_fornecedor_produto FOREIGN KEY (fornecedor_produto_id) REFERENCES fornecedor_de_produto(id),
@@ -148,8 +147,7 @@ CREATE TABLE cotacao (
     preco DECIMAL(19, 2) NOT NULL,
     prazo_em_dias_uteis INTEGER,
     data_limite DATE,
-    anexo_pdf BYTEA,
-    caminho_anexo VARCHAR(500),
+    -- REMOVIDO: anexo_pdf e caminho_anexo (gerenciados via anexo_cotacao com deduplificação SHA-256)
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (solicitacao_de_pedido_id) REFERENCES solicitacao_de_pedido(id) ON DELETE CASCADE,
     FOREIGN KEY (fornecedor_produto_id) REFERENCES fornecedor_de_produto(id),

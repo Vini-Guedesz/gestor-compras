@@ -228,7 +228,26 @@ export const cotacaoService = {
       }
 
       if (dadosCotacao.anexoPdf !== undefined) {
-        payload.anexoPdf = dadosCotacao.anexoPdf
+        // Se o anexoPdf for um arquivo, validar e converter
+        if (dadosCotacao.anexoPdf instanceof File) {
+          // Validar tipo
+          if (dadosCotacao.anexoPdf.type !== 'application/pdf') {
+            throw new Error('Apenas arquivos PDF são permitidos')
+          }
+
+          // Validar tamanho (10MB)
+          const maxSize = 10 * 1024 * 1024
+          if (dadosCotacao.anexoPdf.size > maxSize) {
+            throw new Error('Arquivo muito grande. Máximo permitido: 10MB')
+          }
+
+          // Converter para bytes
+          const bytesArray = await this.arquivoParaBytes(dadosCotacao.anexoPdf)
+          payload.anexoPdf = bytesArray
+        } else {
+          // Se já for array de bytes ou null, usar direto
+          payload.anexoPdf = dadosCotacao.anexoPdf
+        }
       }
 
       const response = await api.put(`${BASE_URL}/${id}`, payload)
@@ -389,13 +408,11 @@ export const cotacaoService = {
   async adicionarAnexo(cotacaoId, arquivo) {
     try {
       const formData = new FormData()
-      formData.append('arquivo', arquivo)
+      formData.append('files', arquivo)  // Backend espera 'files' não 'arquivo'
 
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/anexos`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      // IMPORTANTE: NÃO definir Content-Type manualmente!
+      // O Axios detecta FormData e configura automaticamente com o boundary correto
+      const response = await api.post(`${BASE_URL}/${cotacaoId}/anexos`, formData)
       return response.data
     } catch (error) {
       console.error('Erro ao adicionar anexo:', error)

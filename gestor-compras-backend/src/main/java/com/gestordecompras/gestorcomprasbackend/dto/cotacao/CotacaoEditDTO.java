@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.dto.cotacao;
 
+import com.gestordecompras.gestorcomprasbackend.validation.PdfSize;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
@@ -57,8 +58,14 @@ public record CotacaoEditDTO(
         LocalDate dataLimite,
 
         /**
-         * Novo anexo PDF (opcional - só atualiza se fornecido)
+         * DEPRECATED: Novo anexo PDF (opcional - só atualiza se fornecido)
+         * ATENÇÃO: Este campo está deprecated e será removido em versão futura.
+         * Use o endpoint POST /api/cotacoes/{id}/anexos com multipart/form-data
+         * que implementa deduplificação via PdfDeduplicationService.
+         * Por enquanto mantido para compatibilidade com código existente.
          */
+        @Deprecated
+        @PdfSize(maxBytes = 10485760L, message = "PDF deve ter no máximo 10MB")
         byte[] anexoPdf
 ) {
     /**
@@ -75,12 +82,12 @@ public record CotacaoEditDTO(
 
     /**
      * Verifica se há mudança real nos dados
+     * NOTA: anexoPdf foi removido da verificação pois deve ser gerenciado via endpoint separado
      */
     public boolean temMudancas() {
         return (itens != null && !itens.isEmpty()) ||
                precoNovo != null ||
                prazoEmDiasUteis != null ||
-               dataLimite != null ||
-               anexoPdf != null;
+               dataLimite != null;
     }
 }

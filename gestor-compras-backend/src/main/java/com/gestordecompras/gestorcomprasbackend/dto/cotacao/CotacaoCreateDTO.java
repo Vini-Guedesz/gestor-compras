@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.dto.cotacao;
 
+import com.gestordecompras.gestorcomprasbackend.validation.PdfSize;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -61,6 +62,14 @@ public record CotacaoCreateDTO(
         @FutureOrPresent(message = "A data limite não pode ser no passado")
         LocalDate dataLimite,
 
+        /**
+         * DEPRECATED: anexoPdf está deprecated.
+         * PDFs devem ser adicionados via endpoint POST /api/cotacoes/{id}/anexos
+         * após criar a cotação, para suportar múltiplos anexos e deduplificação SHA-256.
+         * Mantido para compatibilidade com código existente.
+         */
+        @Deprecated
+        @PdfSize(maxBytes = 10485760L, message = "PDF deve ter no máximo 10MB")
         byte[] anexoPdf
 ) {
     /**

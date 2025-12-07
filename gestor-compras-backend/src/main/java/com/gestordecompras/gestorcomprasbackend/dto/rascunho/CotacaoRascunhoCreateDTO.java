@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.dto.rascunho;
 
+import com.gestordecompras.gestorcomprasbackend.validation.PdfSize;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -33,6 +34,9 @@ public record CotacaoRascunhoCreateDTO(
     @FutureOrPresent(message = "A data limite não pode ser no passado")
     LocalDate dataLimite,
 
+    @PdfSize(maxBytes = 10485760L, message = "PDF deve ter no máximo 10MB")
     byte[] anexoPdf,
+
+    // Nota: Validação de tamanho para anexosPdf será feita no service
     List<byte[]> anexosPdf
 ) {}

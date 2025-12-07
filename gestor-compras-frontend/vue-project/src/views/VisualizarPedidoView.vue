@@ -249,18 +249,20 @@
                 </div>
 
                 <div class="cotacao-actions">
-                  <!-- Botão de PDF (apenas o mais recente) -->
+                  <!-- Botões de PDF (todos os anexos) -->
                   <div class="pdf-buttons" v-if="cotacao.temAnexoPdf || cotacao.quantidadeAnexos > 0">
                     <button
-                      @click="togglePdfViewer(cotacao, 0)"
+                      v-for="indexPdf in cotacao.quantidadeAnexos || 1"
+                      :key="`pdf-${cotacao.id}-${indexPdf - 1}`"
+                      @click="togglePdfViewer(cotacao, indexPdf - 1)"
                       class="btn-pdf-primary"
-                      :class="{ 'btn-pdf-primary-active': pdfAberto === `${cotacao.id}-0`, 'novo-anexo': cotacao.foiEditada }"
+                      :class="{ 'btn-pdf-primary-active': pdfAberto === `${cotacao.id}-${indexPdf - 1}`, 'novo-anexo': cotacao.foiEditada }"
                     >
                       <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
                       </svg>
-                      {{ pdfAberto === `${cotacao.id}-0` ? 'Fechar PDF' : 'Visualizar PDF' }}
-                      <span v-if="cotacao.foiEditada" class="badge-atualizado">Atualizado</span>
+                      {{ pdfAberto === `${cotacao.id}-${indexPdf - 1}` ? 'Fechar' : 'Ver' }} PDF {{ cotacao.quantidadeAnexos > 1 ? indexPdf : '' }}
+                      <span v-if="cotacao.foiEditada && indexPdf === cotacao.quantidadeAnexos" class="badge-atualizado">Atualizado</span>
                     </button>
                   </div>
 
@@ -832,16 +834,7 @@ export default {
       try {
         console.log('📝 Dados recebidos do modal:', dadosEdicao)
 
-        // Converter o primeiro arquivo PDF para bytes se existir
-        let anexoPdfBytes = null
-        if (dadosEdicao.pdfFiles && dadosEdicao.pdfFiles.length > 0) {
-          // Por enquanto, usar apenas o primeiro PDF
-          const arrayBuffer = await dadosEdicao.pdfFiles[0].arrayBuffer()
-          anexoPdfBytes = Array.from(new Uint8Array(arrayBuffer))
-          console.log('📎 PDF convertido para bytes:', anexoPdfBytes.length, 'bytes')
-        }
-
-        // Preparar DTO para o backend
+        // Preparar DTO para o backend (SEM PDFs - serão enviados separadamente)
         const editDTO = {
           id: dadosEdicao.id,
           motivoEdicao: dadosEdicao.motivoEdicao,
@@ -850,24 +843,34 @@ export default {
           precoNovo: dadosEdicao.preco,
           prazoEmDiasUteis: dadosEdicao.prazoEmDiasUteis,
           dataLimite: dadosEdicao.dataLimite,
-          anexoPdf: anexoPdfBytes
+          anexoPdf: null // Backend ignora este campo - usar endpoint /anexos
         }
 
         console.log('📤 DTO enviado para o backend:', editDTO)
 
-        // Chamar o serviço
+        // 1. Primeiro, editar os dados da cotação
         const resultado = await cotacaoService.editarCotacao(dadosEdicao.id, editDTO)
 
-        console.log('✅ Resposta do backend:', resultado)
-        console.log('🔍 Campos de auditoria na resposta:', {
-          foiEditada: resultado?.foiEditada,
-          numeroVersao: resultado?.numeroVersao,
-          dataUltimaEdicao: resultado?.dataUltimaEdicao,
-          motivoUltimaEdicao: resultado?.motivoUltimaEdicao,
-          editadoPor: resultado?.editadoPor
-        })
+        console.log('✅ Cotação editada:', resultado)
 
-        success('Cotação editada com sucesso!')
+        // 2. Se há novos PDFs, fazer upload usando endpoint correto
+        if (dadosEdicao.pdfFiles && dadosEdicao.pdfFiles.length > 0) {
+          console.log(`📎 Fazendo upload de ${dadosEdicao.pdfFiles.length} PDF(s)...`)
+
+          try {
+            // Upload de cada PDF individualmente
+            for (const pdfFile of dadosEdicao.pdfFiles) {
+              await cotacaoService.adicionarAnexo(dadosEdicao.id, pdfFile)
+            }
+            console.log('✅ PDFs enviados com sucesso')
+            success(`Cotação editada com sucesso! ${dadosEdicao.pdfFiles.length} PDF(s) adicionado(s).`)
+          } catch (pdfError) {
+            console.error('❌ Erro ao enviar PDFs:', pdfError)
+            showError('Cotação editada, mas erro ao adicionar PDFs: ' + (pdfError.message || 'Erro desconhecido'))
+          }
+        } else {
+          success('Cotação editada com sucesso!')
+        }
 
         // Recarregar o pedido para mostrar as mudanças
         await carregarPedido()

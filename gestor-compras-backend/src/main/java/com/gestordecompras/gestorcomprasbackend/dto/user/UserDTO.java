@@ -5,11 +5,11 @@ import com.gestordecompras.gestorcomprasbackend.model.user.UserRole;
 
 public record UserDTO(
         Integer id,
-        String username,
+        String nome,  // Antes: username
         UserRole role,
         String email
 ) {
     public UserDTO(User user) {
-        this(user.getId(), user.getUsername(), user.getRole(), user.getEmail());
+        this(user.getId(), user.getNome(), user.getRole(), user.getEmail());
     }
 }

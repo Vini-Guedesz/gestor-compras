@@ -49,14 +49,9 @@ public class CotacaoMapper {
                 .collect(Collectors.toList());
 
         // Calcular quantidade de anexos
-        // Priorizar a nova estrutura de anexos múltiplos, caso contrário usar o campo legado
         int quantidadeAnexos = 0;
         if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
-            // Nova estrutura: múltiplos anexos
             quantidadeAnexos = cotacao.getAnexos().size();
-        } else if (cotacao.getAnexoPdf() != null && cotacao.getAnexoPdf().length > 0) {
-            // Estrutura legada: apenas um anexo
-            quantidadeAnexos = 1;
         }
 
         boolean temAnexo = quantidadeAnexos > 0;
@@ -72,7 +67,7 @@ public class CotacaoMapper {
                 cotacao.getPreco(), // Calculado automaticamente a partir dos itens
                 cotacao.getPrazoEmDiasUteis(),
                 cotacao.getDataLimite(),
-                cotacao.getCaminhoAnexo(),
+                null, // caminhoAnexo deprecated - sempre null
                 temAnexo,
                 quantidadeAnexos,
                 // Campos de auditoria
@@ -94,11 +89,11 @@ public class CotacaoMapper {
         // Campos comuns
         cotacao.setPrazoEmDiasUteis(cotacaoCreateDTO.prazoEmDiasUteis());
         cotacao.setDataLimite(cotacaoCreateDTO.dataLimite());
-        cotacao.setAnexoPdf(cotacaoCreateDTO.anexoPdf());
+        // REMOVIDO: anexoPdf - gerenciado via AnexoCotacao com deduplificação
 
         // Legacy: setPreco só é usado se estiver no formato antigo
         if (!cotacaoCreateDTO.usaNovoFormato() && cotacaoCreateDTO.preco() != null) {
-
+            // Não faz nada - preço calculado automaticamente dos itens
         }
 
         // Nota: itens, fornecedor e solicitacaoDePedido são setados manualmente no service

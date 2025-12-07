@@ -47,6 +47,7 @@ public class CotacaoService {
     private final UserRepository userRepository;
     private final HistoricoCotacaoRepository historicoCotacaoRepository;
     private final HistoricoCotacaoMapper historicoCotacaoMapper;
+    private final PdfDeduplicationService pdfDeduplicationService;
 
     public CotacaoService(CotacaoRepository cotacaoRepository, CotacaoMapper cotacaoMapper,
                          CotacaoItemMapper cotacaoItemMapper,
@@ -57,7 +58,8 @@ public class CotacaoService {
                          HistoricoPedidoService historicoPedidoService,
                          UserRepository userRepository,
                          HistoricoCotacaoRepository historicoCotacaoRepository,
-                         HistoricoCotacaoMapper historicoCotacaoMapper) {
+                         HistoricoCotacaoMapper historicoCotacaoMapper,
+                         PdfDeduplicationService pdfDeduplicationService) {
         this.cotacaoRepository = cotacaoRepository;
         this.cotacaoMapper = cotacaoMapper;
         this.cotacaoItemMapper = cotacaoItemMapper;
@@ -69,13 +71,22 @@ public class CotacaoService {
         this.userRepository = userRepository;
         this.historicoCotacaoRepository = historicoCotacaoRepository;
         this.historicoCotacaoMapper = historicoCotacaoMapper;
+        this.pdfDeduplicationService = pdfDeduplicationService;
     }
 
+    /**
+     * Obtém o usuário autenticado a partir do contexto de segurança do Spring.
+     *
+     * @return User autenticado ou null se não autenticado
+     *
+     * IMPORTANTE: authentication.getName() retorna o EMAIL do usuário,
+     * pois User.getUsername() retorna o email (conforme interface UserDetails)
+     */
     private User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            return userRepository.findByUsername(username);
+            String email = authentication.getName();  // getAuthentication(). getName() retorna o email
+            return userRepository.findByEmail(email).orElse(null);
         }
         return null;
     }
@@ -226,15 +237,8 @@ public class CotacaoService {
                         existingCotacao.setDataLimite(cotacaoUpdateDTO.dataLimite());
                         houveAlteracao = true;
                     }
-                    if (cotacaoUpdateDTO.anexoPdf() != null) {
-                        if (detalhes.length() > 0) detalhes.append(", ");
-                        detalhes.append("Anexo PDF atualizado");
-                        existingCotacao.setAnexoPdf(cotacaoUpdateDTO.anexoPdf());
-                        houveAlteracao = true;
-                    }
-                    if (cotacaoUpdateDTO.caminhoAnexo() != null) {
-                        existingCotacao.setCaminhoAnexo(cotacaoUpdateDTO.caminhoAnexo());
-                    }
+                    // REMOVIDO: anexoPdf e caminhoAnexo (campos legados)
+                    // PDFs gerenciados via AnexoCotacao com deduplificação
 
                     Cotacao cotacaoSalva = cotacaoRepository.save(existingCotacao);
 
@@ -303,17 +307,12 @@ public class CotacaoService {
         Cotacao cotacao = cotacaoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
 
-        // Primeiro verificar se há anexos na nova estrutura
+        // Verificar se há anexos
         if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
             if (index >= 0 && index < cotacao.getAnexos().size()) {
                 return cotacao.getAnexos().get(index).getConteudo();
             }
             throw new EntityNotFoundException("Anexo não encontrado no índice: " + index);
-        }
-
-        // Fallback para o campo antigo (compatibilidade)
-        if (index == 0 && cotacao.getAnexoPdf() != null) {
-            return cotacao.getAnexoPdf();
         }
 
         throw new EntityNotFoundException("Nenhum anexo encontrado para esta cotação");
@@ -465,11 +464,10 @@ public class CotacaoService {
             cotacao.setDataLimite(editDTO.dataLimite());
         }
 
-        if (editDTO.anexoPdf() != null) {
-            cotacao.getAnexos().clear();
-            AnexoCotacao novoAnexo = new AnexoCotacao(cotacao, editDTO.anexoPdf(), cotacao.getAnexos().size());
-            cotacao.getAnexos().add(novoAnexo);
-        }
+        // NOTA: Adição de anexos deve ser feita através de endpoint específico
+        // usando PdfDeduplicationService para evitar duplicação
+        // Por enquanto, comentado para não quebrar compilação
+        // TODO: Criar endpoint POST /api/cotacoes/{id}/anexos com multipart/form-data
 
         // Atualiza campos de auditoria
         cotacao.setNumeroVersao((cotacao.getNumeroVersao() != null ? cotacao.getNumeroVersao() : 0) + 1);
@@ -504,10 +502,7 @@ public class CotacaoService {
                     if (detalhes.length() > 0) detalhes.append(", ");
                     detalhes.append("Data limite alterada");
                 }
-                if (editDTO.anexoPdf() != null) {
-                    if (detalhes.length() > 0) detalhes.append(", ");
-                    detalhes.append("PDF anexado");
-                }
+                // REMOVIDO: anexoPdf - gerenciado via endpoint separado com deduplificação
 
                 historicoPedidoService.registrarEdicaoCotacao(
                     cotacaoAtualizada.getSolicitacaoDePedido(),
@@ -534,8 +529,12 @@ public class CotacaoService {
         historico.setPrecoAnterior(cotacaoAnterior.getPreco());
         historico.setPrazoEmDiasUteisAnterior(cotacaoAnterior.getPrazoEmDiasUteis());
         historico.setDataLimiteAnterior(cotacaoAnterior.getDataLimite());
-        historico.setAnexoPdfAnterior(cotacaoAnterior.getAnexoPdf());
-        historico.setCaminhoAnexoAnterior(cotacaoAnterior.getCaminhoAnexo());
+
+        // Armazenar hash do PDF anterior (ao invés do PDF completo)
+        if (cotacaoAnterior.getAnexos() != null && !cotacaoAnterior.getAnexos().isEmpty()) {
+            // Pega o hash do primeiro anexo como referência
+            historico.setHashAnexoPdfAnterior(cotacaoAnterior.getAnexos().get(0).getHashSha256());
+        }
 
         // Dados novos (após edição)
         // Determina o novo preço: usa precoNovo se fornecido, senão calcula dos itens, senão mantém o atual
@@ -555,7 +554,14 @@ public class CotacaoService {
         historico.setDataLimiteNovo(
             editDTO.dataLimite() != null ? editDTO.dataLimite() : cotacaoAnterior.getDataLimite()
         );
-        historico.setAnexoPdfNovo(editDTO.anexoPdf());
+
+        // Armazenar hash do PDF novo (se fornecido no editDTO)
+        // NOTA: anexoPdf foi removido do DTO - gerenciamento via endpoint separado
+        // Se no futuro anexoPdf retornar ao DTO, descomentar:
+        // if (editDTO.anexoPdf() != null) {
+        //     String hashNovo = pdfHashService.calculateSHA256(editDTO.anexoPdf());
+        //     historico.setHashAnexoPdfNovo(hashNovo);
+        // }
 
         // Informações de auditoria
         historico.setMotivoEdicao(editDTO.motivoEdicao());
@@ -579,20 +585,169 @@ public class CotacaoService {
     }
 
     /**
-     * Obtém PDF anterior do histórico
+     * Obtém PDF anterior do histórico usando o hash armazenado
+     * Busca o PDF real na tabela anexo_cotacao através do hash
      */
     public byte[] obterPdfAnteriorHistorico(Long historicoId) {
         HistoricoCotacao historico = historicoCotacaoRepository.findById(historicoId)
             .orElseThrow(() -> new EntityNotFoundException("Histórico não encontrado: " + historicoId));
-        return historico.getAnexoPdfAnterior();
+
+        String hash = historico.getHashAnexoPdfAnterior();
+        if (hash == null) {
+            throw new EntityNotFoundException("Nenhum hash de PDF anterior encontrado neste histórico");
+        }
+
+        // Busca o anexo pelo hash (deduplificação permite múltiplas cotações compartilharem o mesmo PDF)
+        Cotacao cotacao = cotacaoRepository.findById(historico.getCotacaoId())
+            .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada: " + historico.getCotacaoId()));
+
+        // Busca no anexo da cotação pelo hash
+        return cotacao.getAnexos().stream()
+            .filter(anexo -> hash.equals(anexo.getHashSha256()))
+            .findFirst()
+            .map(AnexoCotacao::getConteudo)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "PDF não encontrado com hash: " + hash + " (pode ter sido removido)"));
     }
 
     /**
-     * Obtém PDF novo do histórico
+     * Obtém PDF novo do histórico usando o hash armazenado
+     * Busca o PDF real na tabela anexo_cotacao através do hash
      */
     public byte[] obterPdfNovoHistorico(Long historicoId) {
         HistoricoCotacao historico = historicoCotacaoRepository.findById(historicoId)
             .orElseThrow(() -> new EntityNotFoundException("Histórico não encontrado: " + historicoId));
-        return historico.getAnexoPdfNovo();
+
+        String hash = historico.getHashAnexoPdfNovo();
+        if (hash == null) {
+            throw new EntityNotFoundException("Nenhum hash de PDF novo encontrado neste histórico");
+        }
+
+        // Busca o anexo pelo hash
+        Cotacao cotacao = cotacaoRepository.findById(historico.getCotacaoId())
+            .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada: " + historico.getCotacaoId()));
+
+        return cotacao.getAnexos().stream()
+            .filter(anexo -> hash.equals(anexo.getHashSha256()))
+            .findFirst()
+            .map(AnexoCotacao::getConteudo)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "PDF não encontrado com hash: " + hash + " (pode ter sido removido)"));
+    }
+
+    /**
+     * Upload de múltiplos anexos PDF com deduplificação automática
+     * Valida tipo MIME, tamanho, e usa PdfDeduplicationService para economia de storage
+     *
+     * @param cotacaoId ID da cotação
+     * @param files Array de arquivos MultipartFile
+     * @return CotacaoDTO atualizada
+     */
+    @Transactional
+    public CotacaoDTO uploadAnexos(Long cotacaoId, org.springframework.web.multipart.MultipartFile[] files) {
+        Cotacao cotacao = cotacaoRepository.findById(cotacaoId)
+            .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + cotacaoId));
+
+        if (files == null || files.length == 0) {
+            throw new IllegalArgumentException("Nenhum arquivo foi enviado");
+        }
+
+        // Capturar estado anterior para histórico
+        int quantidadeAnexosAnterior = cotacao.getAnexos() != null ? cotacao.getAnexos().size() : 0;
+
+        int ordem = cotacao.getAnexos() != null ? cotacao.getAnexos().size() : 0;
+
+        for (org.springframework.web.multipart.MultipartFile file : files) {
+            // Validar tipo MIME
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.equals("application/pdf")) {
+                throw new IllegalArgumentException(
+                    "Arquivo " + file.getOriginalFilename() + " não é um PDF válido. Tipo detectado: " + contentType
+                );
+            }
+
+            // Validar tamanho (10MB = 10485760 bytes)
+            if (file.getSize() > 10485760L) {
+                throw new IllegalArgumentException(
+                    "Arquivo " + file.getOriginalFilename() + " excede o limite de 10MB. Tamanho: " +
+                    (file.getSize() / 1024 / 1024) + "MB"
+                );
+            }
+
+            try {
+                byte[] bytes = file.getBytes();
+                String nomeArquivo = file.getOriginalFilename();
+
+                // Usar PdfDeduplicationService para criar ou reutilizar anexo
+                AnexoCotacao anexo = pdfDeduplicationService.createOrReuseCotacaoAnexo(
+                    cotacao,
+                    bytes,
+                    ordem++,
+                    nomeArquivo
+                );
+
+                cotacao.getAnexos().add(anexo);
+
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Erro ao processar arquivo " + file.getOriginalFilename() + ": " + e.getMessage(), e);
+            }
+        }
+
+        Cotacao cotacaoSalva = cotacaoRepository.save(cotacao);
+
+        // Registrar no histórico a adição de anexos
+        registrarHistoricoAdicaoAnexos(cotacaoSalva, quantidadeAnexosAnterior, files.length);
+
+        return cotacaoMapper.toDTO(cotacaoSalva);
+    }
+
+    private void registrarHistoricoAdicaoAnexos(Cotacao cotacao, int quantidadeAnterior, int quantidadeAdicionada) {
+        HistoricoCotacao historico = new HistoricoCotacao();
+
+        historico.setCotacaoId(cotacao.getId());
+        historico.setVersao(cotacao.getNumeroVersao() != null ? cotacao.getNumeroVersao() : 1);
+
+        // Manter valores iguais (não houve alteração de preço/prazo)
+        historico.setPrecoAnterior(cotacao.getPreco());
+        historico.setPrecoNovo(cotacao.getPreco());
+        historico.setPrazoEmDiasUteisAnterior(cotacao.getPrazoEmDiasUteis());
+        historico.setPrazoEmDiasUteisNovo(cotacao.getPrazoEmDiasUteis());
+        historico.setDataLimiteAnterior(cotacao.getDataLimite());
+        historico.setDataLimiteNovo(cotacao.getDataLimite());
+
+        // Armazenar hash do PDF anterior (último anexo antes da adição, se houver)
+        if (quantidadeAnterior > 0 && cotacao.getAnexos() != null && cotacao.getAnexos().size() > quantidadeAnterior) {
+            // Pega o último anexo que existia antes da adição
+            AnexoCotacao anexoAnterior = cotacao.getAnexos().stream()
+                .filter(a -> a.getOrdem() < quantidadeAnterior)
+                .max(java.util.Comparator.comparing(AnexoCotacao::getOrdem))
+                .orElse(null);
+            if (anexoAnterior != null) {
+                historico.setHashAnexoPdfAnterior(anexoAnterior.getHashSha256());
+            }
+        }
+
+        // Armazenar hash do PDF novo (último anexo adicionado)
+        if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
+            // Pega o último anexo adicionado (maior ordem)
+            AnexoCotacao anexoNovo = cotacao.getAnexos().stream()
+                .max(java.util.Comparator.comparing(AnexoCotacao::getOrdem))
+                .orElse(null);
+            if (anexoNovo != null) {
+                historico.setHashAnexoPdfNovo(anexoNovo.getHashSha256());
+            }
+        }
+
+        // Motivo específico para adição de anexos
+        String motivoEdicao = String.format("Adicionado %d anexo(s) PDF. Total de anexos: %d → %d",
+            quantidadeAdicionada, quantidadeAnterior, quantidadeAnterior + quantidadeAdicionada);
+        historico.setMotivoEdicao(motivoEdicao);
+
+        // Pegar usuário autenticado
+        User user = getAuthenticatedUser();
+        historico.setEditadoPor(user != null ? user.getNome() : "Sistema");
+        historico.setDataEdicao(java.time.LocalDateTime.now());
+
+        historicoCotacaoRepository.saveAndFlush(historico);
     }
 }

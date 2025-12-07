@@ -116,7 +116,7 @@ const toggleNav = () => {
 }
 
 const username = computed(() => {
-  return authStore.user?.name || authStore.user?.username || 'Usuário'
+  return authStore.user?.nome || 'Usuário'
 })
 
 // Função para gerar mensagem de boas-vindas com gênero correto

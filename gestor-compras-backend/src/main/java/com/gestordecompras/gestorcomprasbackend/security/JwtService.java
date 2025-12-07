@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.security;
 
+import com.gestordecompras.gestorcomprasbackend.model.user.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -22,9 +23,25 @@ public class JwtService {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Gera um token JWT para o usuário autenticado
+     *
+     * @param userDetails - Detalhes do usuário (Spring Security)
+     * @return Token JWT assinado com claims:
+     *         - sub: email do usuário (usado para login)
+     *         - nome: nome completo do usuário
+     *         - roles: authorities/papéis do usuário
+     *         - iat: data de emissão
+     *         - exp: data de expiração (1 hora)
+     */
     public String gerarToken(UserDetails userDetails) {
+        // Cast para User para acessar o nome
+        // UserDetails.getUsername() retorna o email (login)
+        User user = (User) userDetails;
+
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
+                .setSubject(userDetails.getUsername())  // Email (usado para autenticação)
+                .claim("nome", user.getNome())          // Nome completo da pessoa
                 .claim("roles", userDetails.getAuthorities())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1h
