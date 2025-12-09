@@ -5,6 +5,7 @@
  */
 
 import api from './api.js'
+import logger from '../utils/logger.js'
 
 // Configuração da URL base da API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'

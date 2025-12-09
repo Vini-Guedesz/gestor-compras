@@ -17,6 +17,7 @@
  */
 
 import axios from 'axios'
+import logger from '../utils/logger.js'
 
 // Configuração da URL base da API usando variável de ambiente
 // Se VITE_API_BASE_URL não estiver definida, usa localhost:8081 (porta do backend)
@@ -183,13 +184,13 @@ apiClient.interceptors.response.use(
 
       // Monta mensagem final
       if (detailedErrors.length > 0) {
-        console.error('❌ Erros de validação detalhados:', detailedErrors)
+        logger.error('❌ Erros de validação detalhados:', detailedErrors)
         message = `Erro de validação:\n${detailedErrors.join('\n')}`
       } else if (!message) {
         message = `Erro HTTP ${error.response.status}`
       }
 
-      console.error('📛 Mensagem final do erro:', message)
+      logger.error('📛 Mensagem final do erro:', message)
       return Promise.reject(new Error(message))
     } else if (error.request) {
       // Erro de rede (servidor não respondeu)

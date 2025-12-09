@@ -193,6 +193,7 @@
 import { ref, computed, watch } from 'vue'
 import { useModal } from '@/composables/useModal'
 import { useAuthStore } from '@/stores/auth'
+import logger from '@/utils/logger.js'
 
 export default {
   name: 'EditCotacaoModal',
@@ -327,8 +328,8 @@ export default {
           pdfFiles: form.value.pdfFiles
         }
 
-        console.log('📋 Modal - Form values:', form.value)
-        console.log('📋 Modal - Dados a serem emitidos:', dadosEdicao)
+        logger.debug('📋 Modal - Form values:', form.value)
+        logger.debug('📋 Modal - Dados a serem emitidos:', dadosEdicao)
 
         emit('save', dadosEdicao)
       } finally {

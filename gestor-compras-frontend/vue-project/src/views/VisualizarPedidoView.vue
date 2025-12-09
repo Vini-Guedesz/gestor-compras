@@ -417,6 +417,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast.js'
+import logger from '@/utils/logger.js'
 import pedidoService from '@/services/pedidoService.js'
 import rascunhoService from '@/services/rascunhoService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
@@ -588,7 +589,7 @@ export default {
       carregandoPdf.value = true
 
       try {
-        console.log(`📄 Carregando PDF da cotação ${cotacao.id}, índice ${pdfIndex}`)
+        logger.debug(`📄 Carregando PDF da cotação ${cotacao.id}, índice ${pdfIndex}`)
         let blob
         // Usar o serviço correto baseado no tipo
         if (isRascunho.value) {
@@ -602,10 +603,10 @@ export default {
           blob = await cotacaoService.obterAnexoPdf(cotacao.id, pdfIndex)
         }
 
-        console.log(`📄 PDF recebido, tamanho: ${blob?.size || 0} bytes`)
+        logger.debug(`📄 PDF recebido, tamanho: ${blob?.size || 0} bytes`)
         if (blob && blob.size > 0) {
           pdfUrl.value = URL.createObjectURL(blob)
-          console.log(`✅ PDF carregado com sucesso para visualização`)
+          logger.debug(`✅ PDF carregado com sucesso para visualização`)
         } else {
           console.warn('⚠️ PDF vazio ou não encontrado')
         }
@@ -625,7 +626,7 @@ export default {
     }
 
     const carregarPedido = async () => {
-      console.log('🔄 Recarregando pedido...')
+      logger.debug('🔄 Recarregando pedido...')
       const id = route.params.id
       const tipo = route.query.tipo || 'pedido'
 
@@ -709,10 +710,10 @@ export default {
             }
           })
 
-          console.log('✅ Pedido recarregado. Cotações:', cotacoes.value)
-          console.log('🔍 Detalhes das cotações (foiEditada, numeroVersao):')
+          logger.debug('✅ Pedido recarregado. Cotações:', cotacoes.value)
+          logger.debug('🔍 Detalhes das cotações (foiEditada, numeroVersao):')
           cotacoes.value.forEach((c, index) => {
-            console.log(`  Cotação ${index + 1}:`, {
+            logger.debug(`  Cotação ${index + 1}:`, {
               id: c.id,
               preco: c.preco,
               foiEditada: c.foiEditada,
@@ -832,7 +833,7 @@ export default {
 
     const salvarEdicaoCotacao = async (dadosEdicao) => {
       try {
-        console.log('📝 Dados recebidos do modal:', dadosEdicao)
+        logger.debug('📝 Dados recebidos do modal:', dadosEdicao)
 
         // Preparar DTO para o backend (SEM PDFs - serão enviados separadamente)
         const editDTO = {
@@ -846,23 +847,23 @@ export default {
           anexoPdf: null // Backend ignora este campo - usar endpoint /anexos
         }
 
-        console.log('📤 DTO enviado para o backend:', editDTO)
+        logger.debug('📤 DTO enviado para o backend:', editDTO)
 
         // 1. Primeiro, editar os dados da cotação
         const resultado = await cotacaoService.editarCotacao(dadosEdicao.id, editDTO)
 
-        console.log('✅ Cotação editada:', resultado)
+        logger.debug('✅ Cotação editada:', resultado)
 
         // 2. Se há novos PDFs, fazer upload usando endpoint correto
         if (dadosEdicao.pdfFiles && dadosEdicao.pdfFiles.length > 0) {
-          console.log(`📎 Fazendo upload de ${dadosEdicao.pdfFiles.length} PDF(s)...`)
+          logger.debug(`📎 Fazendo upload de ${dadosEdicao.pdfFiles.length} PDF(s)...`)
 
           try {
             // Upload de cada PDF individualmente
             for (const pdfFile of dadosEdicao.pdfFiles) {
               await cotacaoService.adicionarAnexo(dadosEdicao.id, pdfFile)
             }
-            console.log('✅ PDFs enviados com sucesso')
+            logger.debug('✅ PDFs enviados com sucesso')
             success(`Cotação editada com sucesso! ${dadosEdicao.pdfFiles.length} PDF(s) adicionado(s).`)
           } catch (pdfError) {
             console.error('❌ Erro ao enviar PDFs:', pdfError)

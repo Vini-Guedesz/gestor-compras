@@ -1,5 +1,6 @@
 import api from './api.js'
 import axios from 'axios'
+import logger from '../utils/logger.js'
 
 const BASE_URL = '/api/v1/cotacoes'
 
@@ -808,13 +809,13 @@ export const cotacaoService = {
         throw new Error('Responsável pela edição é obrigatório')
       }
 
-      console.log('🔧 Chamando API PUT /editar...')
+      logger.debug('🔧 Chamando API PUT /editar...')
       const response = await api.put(`${BASE_URL}/${cotacaoId}/editar`, editDTO)
-      console.log('🔧 Response completo:', response)
-      console.log('🔧 Response.data:', response.data)
+      logger.debug('🔧 Response completo:', response)
+      logger.debug('🔧 Response.data:', response.data)
       return response.data
     } catch (error) {
-      console.error('❌ Erro ao editar cotação:', error)
+      logger.error('❌ Erro ao editar cotação:', error)
       throw error
     }
   },

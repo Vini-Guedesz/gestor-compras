@@ -172,6 +172,7 @@
 import { ref, computed, watch } from 'vue'
 import { useModal } from '@/composables/useModal'
 import { useToast } from '@/composables/useToast'
+import logger from '@/utils/logger.js'
 import cotacaoService from '@/services/cotacaoService'
 
 export default {
@@ -209,14 +210,14 @@ export default {
     const carregarHistorico = async () => {
       carregando.value = true
       try {
-        console.log('🔍 Buscando histórico da cotação:', props.cotacao.id)
+        logger.debug('🔍 Buscando histórico da cotação:', props.cotacao.id)
         const data = await cotacaoService.buscarHistorico(props.cotacao.id)
-        console.log('📦 Dados recebidos do backend:', data)
-        console.log('📊 Tipo dos dados:', typeof data, 'É array?', Array.isArray(data))
+        logger.debug('📦 Dados recebidos do backend:', data)
+        logger.debug('📊 Tipo dos dados:', typeof data, 'É array?', Array.isArray(data))
 
         if (Array.isArray(data)) {
           historico.value = data
-          console.log('✅ Histórico carregado com sucesso:', historico.value.length, 'itens')
+          logger.debug('✅ Histórico carregado com sucesso:', historico.value.length, 'itens')
         } else {
           console.warn('⚠️ Dados não são array:', data)
           historico.value = []

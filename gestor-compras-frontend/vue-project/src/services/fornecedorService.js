@@ -1,4 +1,5 @@
 import api from './api'
+import logger from '../utils/logger.js'
 
 /**
  * Helper para extrair dados de respostas paginadas do Spring Data

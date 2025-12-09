@@ -159,7 +159,7 @@ export default {
   },
   emits: ['update:modelValue', 'validation-change'],
   setup(props, { emit }) {
-    const { success, error: showError, warning } = useToast()
+    const { error: showError } = useToast()
     // Estado local
     const cotacoes = ref([...props.modelValue])
     const gerandoRelatorio = ref(false)

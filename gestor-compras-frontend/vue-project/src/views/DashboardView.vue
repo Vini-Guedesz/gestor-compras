@@ -82,6 +82,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { getWelcomeMessage as getWelcomeMessageUtil } from '../utils/genderUtils'
+import logger from '../utils/logger.js'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import MetricCard from '@/features/dashboard/components/MetricCard.vue'
@@ -120,19 +121,19 @@ const carregarMetricas = async () => {
 
   // Evitar chamadas muito frequentes (cooldown de 2 segundos)
   if (now - lastLoadTime.value < COOLDOWN_MS) {
-    console.log('⏸️ Carregamento de métricas em cooldown, ignorando...')
+    logger.debug('⏸️ Carregamento de métricas em cooldown, ignorando...')
     return
   }
 
   // Evitar chamadas simultâneas
   if (isLoadingMetricas.value) {
-    console.log('⏸️ Já está carregando métricas, ignorando...')
+    logger.debug('⏸️ Já está carregando métricas, ignorando...')
     return
   }
 
   lastLoadTime.value = now
   isLoadingMetricas.value = true
-  console.log('📊 Iniciando carregamento de métricas...')
+  logger.debug('📊 Iniciando carregamento de métricas...')
 
   try {
 
@@ -223,7 +224,6 @@ const navigateTo = (path) => {
 
   if (rotasImplementadas.includes(path)) {
     router.push(path)
-  } else {
   }
 }
 </script>

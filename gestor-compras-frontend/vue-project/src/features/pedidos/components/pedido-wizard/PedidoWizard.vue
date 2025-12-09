@@ -413,7 +413,8 @@ export default {
       cotacoesDrawer.value = []
     }
 
-    const visualizarPdf = (cotacao) => {
+    const visualizarPdf = () => {
+      // Funcionalidade de visualização de PDF será implementada posteriormente
     }
 
     watch(() => props.isVisible, (newVal) => {
