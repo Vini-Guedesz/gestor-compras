@@ -257,6 +257,7 @@ import fornecedorService from '@/services/fornecedorService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
 import pedidoService from '@/services/pedidoService.js'
 import relatorioService from '@/services/relatorioService.js'
+import logger from '@/utils/logger.js'
 
 // Props
 const props = defineProps({
@@ -360,7 +361,7 @@ const itensFiltradosPorPedido = computed(() => {
   const pedido = pedidosDisponiveis.value.find(p => p.id === parseInt(pedidoSelecionado.value))
 
   if (!pedido) {
-    console.warn('Pedido não encontrado:', pedidoSelecionado.value)
+    logger.warn('Pedido não encontrado:', pedidoSelecionado.value)
     return []
   }
 
@@ -573,7 +574,7 @@ const gerarRelatorio = async () => {
 
     mostrarAlerta('Relatório gerado com sucesso!', 'success')
   } catch (error) {
-    console.error('❌ Erro ao gerar relatório:', error)
+    logger.error('❌ Erro ao gerar relatório:', error)
     mostrarAlerta('Erro ao gerar relatório. Tente novamente.', 'error')
   } finally {
     gerandoRelatorio.value = false
@@ -642,7 +643,7 @@ const handleSubmit = async () => {
     }, 1000)
 
   } catch (error) {
-    console.error('❌ Erro ao processar cotação:', error)
+    logger.error('❌ Erro ao processar cotação:', error)
     mostrarAlerta('Erro interno ao processar cotação', 'error')
   } finally {
     carregando.value = false
@@ -659,7 +660,7 @@ const carregarFornecedores = async () => {
       mostrarAlerta('Nenhum fornecedor encontrado no sistema', 'warning')
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar fornecedores:', error)
+    logger.error('❌ Erro ao carregar fornecedores:', error)
     fornecedoresDisponiveis.value = []
     mostrarAlerta('Erro ao carregar fornecedores. Verifique a conexão.', 'error')
   }
@@ -674,7 +675,7 @@ const carregarItens = async () => {
       mostrarAlerta('Nenhum item de pedido encontrado', 'warning')
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar itens:', error)
+    logger.error('❌ Erro ao carregar itens:', error)
     itensDisponiveis.value = []
     mostrarAlerta('Erro ao carregar itens. Verifique a conexão.', 'error')
   }
@@ -721,7 +722,7 @@ const carregarPedidos = async () => {
       mostrarAlerta('Nenhum pedido encontrado', 'warning')
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar pedidos:', error)
+    logger.error('❌ Erro ao carregar pedidos:', error)
     pedidosDisponiveis.value = []
     mostrarAlerta('Erro ao carregar pedidos. Verifique a conexão.', 'error')
   }

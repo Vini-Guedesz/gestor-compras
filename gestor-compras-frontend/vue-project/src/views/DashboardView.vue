@@ -147,7 +147,7 @@ const carregarMetricas = async () => {
         ).length
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar pedidos:', error)
+      logger.error('❌ Erro ao carregar pedidos:', error)
     }
 
     // Carregar fornecedores - TODOS os fornecedores cadastrados (produtos + serviços)
@@ -168,7 +168,7 @@ const carregarMetricas = async () => {
 
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar fornecedores:', error)
+      logger.error('❌ Erro ao carregar fornecedores:', error)
     }
 
     // Carregar cotações
@@ -193,11 +193,11 @@ const carregarMetricas = async () => {
 
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar cotações:', error)
+      logger.error('❌ Erro ao carregar cotações:', error)
     }
 
   } catch (error) {
-    console.error('❌ Erro geral ao carregar métricas do dashboard:', error)
+    logger.error('❌ Erro geral ao carregar métricas do dashboard:', error)
   } finally {
     isLoadingMetricas.value = false
   }

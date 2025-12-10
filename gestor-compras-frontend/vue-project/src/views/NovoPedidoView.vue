@@ -209,6 +209,7 @@ import { useToast } from '@/composables/useToast'
 import rascunhoService from '@/services/rascunhoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
+import logger from '@/utils/logger.js'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import PedidoFormPage1 from '@/features/pedidos/components/pedido-wizard/StepCriarPedido.vue'
@@ -318,7 +319,7 @@ export default {
         editState.value = 'GERENCIANDO_COTACOES'
         router.replace({ query: { state: 'quotes' } })
       } catch (error) {
-        console.error('Erro ao finalizar rascunho:', error)
+        logger.error('Erro ao finalizar rascunho:', error)
         const mensagem = error.message || 'Erro ao salvar. Tente novamente.'
         toastError(`Erro ao finalizar rascunho: ${mensagem}`, { duration: 7000 })
       } finally {
@@ -337,7 +338,7 @@ export default {
             editState.value = 'EDITANDO_RASCUNHO'
             router.replace({ query: { state: 'edit' } })
         } catch (error) {
-            console.error('Erro ao carregar rascunho para edição:', error)
+            logger.error('Erro ao carregar rascunho para edição:', error)
             toastError('Erro ao carregar rascunho para edição. Tente novamente.')
         } finally {
             isLoading.value = false
@@ -408,7 +409,7 @@ export default {
         success(`Pedido #${pedidoCriado.id} criado com sucesso!`)
         router.push('/pedidos')
       } catch (error) {
-        console.error('Erro ao gerar pedido:', error)
+        logger.error('Erro ao gerar pedido:', error)
         // Verificar se é erro de autenticação
         if (error.message && (error.message.includes('401') || error.message.includes('não autenticado') || error.message.includes('Sessão expirada'))) {
           toastError('Sua sessão expirou. Por favor, faça login novamente.')
@@ -446,7 +447,7 @@ export default {
         // Aguardar o Vue processar a atualização
         await nextTick()
       } catch (error) {
-        console.error('Erro ao carregar cotações:', error)
+        logger.error('Erro ao carregar cotações:', error)
       } finally {
         carregandoCotacoes.value = false
       }
@@ -462,7 +463,7 @@ export default {
 
         await carregarCotacoesDoRascunho()
       } catch (error) {
-        console.error('Erro ao salvar cotação:', error)
+        logger.error('Erro ao salvar cotação:', error)
         const mensagem = error.message || 'Erro ao salvar cotação. Tente novamente.'
         toastError(`Erro ao salvar cotação: ${mensagem}`, { duration: 7000 })
         throw error
@@ -481,7 +482,7 @@ export default {
 
         await carregarCotacoesDoRascunho()
       } catch (error) {
-        console.error('Erro ao deletar cotação:', error)
+        logger.error('Erro ao deletar cotação:', error)
         toastError('Erro ao deletar cotação. Tente novamente.')
       } finally {
         isLoading.value = false
@@ -657,7 +658,7 @@ export default {
         ])
         fornecedores.value = [...produtos, ...servicos]
       } catch (error) {
-        console.error('Erro ao carregar fornecedores:', error)
+        logger.error('Erro ao carregar fornecedores:', error)
       } finally {
         carregandoFornecedores.value = false
       }
@@ -673,7 +674,7 @@ export default {
           itens: rascunho.itens || []
         }
       } catch (error) {
-        console.error('Erro ao carregar rascunho:', error)
+        logger.error('Erro ao carregar rascunho:', error)
         toastError('Erro ao carregar rascunho. Redirecionando...')
         router.push('/pedidos')
       } finally{

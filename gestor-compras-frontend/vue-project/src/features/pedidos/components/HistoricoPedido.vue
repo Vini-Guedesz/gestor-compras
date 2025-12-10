@@ -80,6 +80,7 @@
 import { ref, watch, onMounted } from 'vue'
 import historicoPedidoService, { tipoModificacaoConfig, formatarDataHistorico } from '@/services/historicoPedidoService.js'
 import rascunhoService from '@/services/rascunhoService.js'
+import logger from '@/utils/logger.js'
 
 export default {
   name: 'HistoricoPedido',
@@ -137,7 +138,7 @@ export default {
             observacao: h.descricao
           }))
         } catch (error) {
-          console.error('Erro ao carregar histórico do rascunho:', error)
+          logger.error('Erro ao carregar histórico do rascunho:', error)
           historico.value = []
         } finally {
           carregando.value = false
@@ -152,7 +153,7 @@ export default {
         carregando.value = true
         historico.value = await historicoPedidoService.listarPorPedido(props.pedidoId)
       } catch (error) {
-        console.error('Erro ao carregar histórico:', error)
+        logger.error('Erro ao carregar histórico:', error)
         historico.value = []
       } finally {
         carregando.value = false

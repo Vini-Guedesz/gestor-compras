@@ -546,6 +546,7 @@ const CotacaoForm = defineAsyncComponent(() => import('@/features/cotacoes/compo
 import { cotacaoService } from '../services/cotacaoService.js'
 import fornecedorService from '../services/fornecedorService.js'
 import itemPedidoService from '../services/itemPedidoService.js'
+import logger from '../utils/logger.js'
 
 // Router
 const route = useRoute()
@@ -736,7 +737,7 @@ const carregarFornecedores = async () => {
 
     fornecedores.value = [...fornecedoresProduto, ...fornecedoresServico]
   } catch (error) {
-    console.error('❌ Erro ao carregar fornecedores:', error)
+    logger.error('❌ Erro ao carregar fornecedores:', error)
     fornecedores.value = []
   }
 }
@@ -754,12 +755,12 @@ const carregarCotacoes = async () => {
     } else if (response && response.data && Array.isArray(response.data)) {
       cotacoes.value = response.data
     } else {
-      console.warn('⚠️ Resposta do backend não é um array válido:', response)
+      logger.warn('⚠️ Resposta do backend não é um array válido:', response)
       cotacoes.value = []
     }
 
   } catch (error) {
-    console.error('❌ Erro ao carregar cotações:', error)
+    logger.error('❌ Erro ao carregar cotações:', error)
     cotacoes.value = []
   } finally {
     carregandoCotacoes.value = false
@@ -843,7 +844,7 @@ const isDataLimiteVencida = (dataLimite) => {
 // Função auxiliar para buscar item de pedido com cache
 const buscarItemPedidoComCache = async (itemPedidoId) => {
   if (!itemPedidoId) {
-    console.warn('⚠️ itemPedidoId não fornecido')
+    logger.warn('⚠️ itemPedidoId não fornecido')
     return null
   }
 
@@ -863,7 +864,7 @@ const buscarItemPedidoComCache = async (itemPedidoId) => {
 
     return item
   } catch (error) {
-    console.error(`❌ Erro ao buscar item ${itemPedidoId}:`, error)
+    logger.error(`❌ Erro ao buscar item ${itemPedidoId}:`, error)
     return null
   }
 }
@@ -937,7 +938,7 @@ const salvarCotacao = async (dadosCotacao) => {
     await carregarCotacoes()
 
   } catch (error) {
-    console.error('❌ Erro ao salvar cotação:', error)
+    logger.error('❌ Erro ao salvar cotação:', error)
     // O erro já é tratado no formulário, então não precisamos fazer nada aqui
     throw error
   } finally {
@@ -958,10 +959,10 @@ const visualizarCotacao = async (id) => {
       if (cotacao.itemPedidoId) {
         itemSelecionado.value = await buscarItemPedidoComCache(cotacao.itemPedidoId)
         if (!itemSelecionado.value) {
-          console.warn('⚠️ Item do pedido não encontrado:', cotacao.itemPedidoId)
+          logger.warn('⚠️ Item do pedido não encontrado:', cotacao.itemPedidoId)
         }
       } else {
-        console.warn('⚠️ Cotação sem itemPedidoId')
+        logger.warn('⚠️ Cotação sem itemPedidoId')
         itemSelecionado.value = null
       }
 
@@ -975,17 +976,17 @@ const visualizarCotacao = async (id) => {
       if (response.itemPedidoId) {
         itemSelecionado.value = await buscarItemPedidoComCache(response.itemPedidoId)
         if (!itemSelecionado.value) {
-          console.warn('⚠️ Item do pedido não encontrado:', response.itemPedidoId)
+          logger.warn('⚠️ Item do pedido não encontrado:', response.itemPedidoId)
         }
       } else {
-        console.warn('⚠️ Cotação sem itemPedidoId')
+        logger.warn('⚠️ Cotação sem itemPedidoId')
         itemSelecionado.value = null
       }
 
       showDetalhesModal.value = true
     }
   } catch (error) {
-    console.error('❌ Erro ao buscar detalhes da cotação:', error)
+    logger.error('❌ Erro ao buscar detalhes da cotação:', error)
     toastError('Erro ao carregar detalhes da cotação.')
   }
 }
@@ -1019,7 +1020,7 @@ const deletarCotacao = async (id) => {
 
       success('Cotação excluída com sucesso!')
     } catch (error) {
-      console.error('❌ Erro ao excluir cotação:', error)
+      logger.error('❌ Erro ao excluir cotação:', error)
 
       // Mensagens de erro mais específicas
       let mensagemErro = 'Erro ao excluir cotação.'
@@ -1065,7 +1066,7 @@ const exportarRelatorio = async () => {
 
 
   } catch (error) {
-    console.error('❌ Erro ao gerar relatório:', error)
+    logger.error('❌ Erro ao gerar relatório:', error)
 
     let mensagemErro = 'Erro ao gerar relatório de cotações.'
     if (error.response?.status === 404) {
@@ -1097,7 +1098,7 @@ const gerarRelatorioComparativo = async (itemPedidoId) => {
     success('Relatório comparativo gerado com sucesso!')
 
   } catch (error) {
-    console.error('❌ Erro ao gerar relatório comparativo:', error)
+    logger.error('❌ Erro ao gerar relatório comparativo:', error)
 
     let mensagemErro = 'Erro ao gerar relatório comparativo.'
     if (error.response?.status === 404) {

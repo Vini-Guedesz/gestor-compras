@@ -5,6 +5,7 @@
  */
 
 import api from './api.js'
+import logger from '../utils/logger.js'
 
 /**
  * Helper para extrair dados de respostas paginadas do Spring Data
@@ -22,7 +23,7 @@ const itemPedidoService = {
       const data = await api.get('/api/v1/itens-pedido')
       return extractContent(data)
     } catch (error) {
-      console.error('❌ Erro ao listar itens de pedido no backend:', error.message)
+      logger.error('❌ Erro ao listar itens de pedido no backend:', error.message)
       throw error
     }
   },
@@ -32,7 +33,7 @@ const itemPedidoService = {
       const data = await api.get(`/api/v1/itens-pedido/${id}`)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao obter item de pedido ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao obter item de pedido ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -42,7 +43,7 @@ const itemPedidoService = {
       const data = await api.post('/api/v1/itens-pedido', item)
       return data
     } catch (error) {
-      console.error('❌ Erro ao criar item de pedido:', error.message)
+      logger.error('❌ Erro ao criar item de pedido:', error.message)
       throw error
     }
   },
@@ -52,7 +53,7 @@ const itemPedidoService = {
       const data = await api.put(`/api/v1/itens-pedido/${id}`, item)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao atualizar item de pedido ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao atualizar item de pedido ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -61,7 +62,7 @@ const itemPedidoService = {
     try {
       await api.delete(`/api/v1/itens-pedido/${id}`)
     } catch (error) {
-      console.error(`❌ Erro ao excluir item de pedido ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao excluir item de pedido ID ${id} no backend:`, error.message)
       throw error
     }
   }

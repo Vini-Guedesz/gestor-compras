@@ -103,6 +103,7 @@ import { useToast } from '@/composables/useToast'
 import { getUserRole } from '@/utils/genderUtils'
 import { useMobileSidebar } from '@/composables/useMobileSidebar'
 import LogoutModal from '@/components/ui/modals/LogoutModal.vue'
+import logger from '@/utils/logger.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -192,7 +193,7 @@ const confirmLogout = async () => {
     router.push('/login')
 
   } catch (error) {
-    console.error('Erro ao fazer logout:', error)
+    logger.error('Erro ao fazer logout:', error)
     toastError('Erro ao sair da aplicação. Tente novamente.')
   }
 }

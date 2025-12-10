@@ -20,7 +20,7 @@ const fornecedorService = {
       const data = await api.get('/api/v1/fornecedores-de-produto')
       return extractContent(data)
     } catch (error) {
-      console.error('❌ Erro ao listar fornecedores de produto no backend:', error.message)
+      logger.error('❌ Erro ao listar fornecedores de produto no backend:', error.message)
       throw error
     }
   },
@@ -30,7 +30,7 @@ const fornecedorService = {
       const data = await api.get(`/api/v1/fornecedores-de-produto/${id}`)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao obter fornecedor de produto ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao obter fornecedor de produto ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -41,12 +41,12 @@ const fornecedorService = {
       const data = await api.post('/api/v1/fornecedores-de-produto', fornecedor)
       return data
     } catch (error) {
-      console.error('❌ Erro ao criar fornecedor de produto no backend:', error.message)
+      logger.error('❌ Erro ao criar fornecedor de produto no backend:', error.message)
 
       // Tratamento específico para erros de validação
       if (error.response && error.response.status === 400) {
         const validationErrors = error.response.data
-        console.error('📛 Erros de validação:', validationErrors)
+        logger.error('📛 Erros de validação:', validationErrors)
 
         // Criar mensagem mais amigável baseada nos erros de validação
         let friendlyMessage = 'Erro de validação:\n'
@@ -75,7 +75,7 @@ const fornecedorService = {
       const data = await api.put(`/api/v1/fornecedores-de-produto`, fornecedorComId)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao atualizar fornecedor de produto ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao atualizar fornecedor de produto ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -85,7 +85,7 @@ const fornecedorService = {
       await api.delete(`/api/v1/fornecedores-de-produto/${id}`)
       return true
     } catch (error) {
-      console.error(`❌ Erro ao remover fornecedor de produto ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao remover fornecedor de produto ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -96,7 +96,7 @@ const fornecedorService = {
       const data = await api.get('/api/v1/fornecedores-de-servico')
       return extractContent(data)
     } catch (error) {
-      console.error('❌ Erro ao listar fornecedores de serviço no backend:', error.message)
+      logger.error('❌ Erro ao listar fornecedores de serviço no backend:', error.message)
       throw error
     }
   },
@@ -106,7 +106,7 @@ const fornecedorService = {
       const data = await api.get(`/api/v1/fornecedores-de-servico/${id}`)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao obter fornecedor de serviço ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao obter fornecedor de serviço ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -116,12 +116,12 @@ const fornecedorService = {
       const data = await api.post('/api/v1/fornecedores-de-servico', fornecedor)
       return data
     } catch (error) {
-      console.error('❌ Erro ao criar fornecedor de serviço no backend:', error.message)
+      logger.error('❌ Erro ao criar fornecedor de serviço no backend:', error.message)
 
       // Tratamento específico para erros de validação
       if (error.response && error.response.status === 400) {
         const validationErrors = error.response.data
-        console.error('📛 Erros de validação:', validationErrors)
+        logger.error('📛 Erros de validação:', validationErrors)
 
         // Criar mensagem mais amigável baseada nos erros de validação
         let friendlyMessage = 'Erro de validação:\n'
@@ -151,12 +151,12 @@ const fornecedorService = {
       const data = await api.put(`/api/v1/fornecedores-de-servico`, fornecedorComId)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao atualizar fornecedor de serviço ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao atualizar fornecedor de serviço ID ${id} no backend:`, error.message)
 
       // Tratamento específico para erros de validação
       if (error.response && error.response.status === 400) {
         const validationErrors = error.response.data
-        console.error('📛 Erros de validação:', validationErrors)
+        logger.error('📛 Erros de validação:', validationErrors)
 
         // Criar mensagem mais amigável baseada nos erros de validação
         let friendlyMessage = 'Erro de validação:\n'
@@ -183,7 +183,7 @@ const fornecedorService = {
       await api.delete(`/api/v1/fornecedores-de-servico/${id}`)
       return true
     } catch (error) {
-      console.error(`❌ Erro ao remover fornecedor de serviço ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao remover fornecedor de serviço ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -197,7 +197,7 @@ const fornecedorService = {
       ])
       return [...produtos, ...servicos]
     } catch (error) {
-      console.error('❌ Erro ao listar todos os fornecedores:', error.message)
+      logger.error('❌ Erro ao listar todos os fornecedores:', error.message)
       throw error
     }
   },
@@ -211,7 +211,7 @@ const fornecedorService = {
         tipo: 'PRODUTO'
       }))
     } catch (error) {
-      console.error('❌ Erro ao listar fornecedores de produto:', error.message)
+      logger.error('❌ Erro ao listar fornecedores de produto:', error.message)
       throw error
     }
   },
@@ -224,7 +224,7 @@ const fornecedorService = {
         tipo: 'SERVICO'
       }))
     } catch (error) {
-      console.error('❌ Erro ao listar fornecedores de serviço:', error.message)
+      logger.error('❌ Erro ao listar fornecedores de serviço:', error.message)
       throw error
     }
   },
@@ -237,7 +237,7 @@ const fornecedorService = {
       ])
       return [...produtos, ...servicos]
     } catch (error) {
-      console.error('❌ Erro ao listar fornecedores para cotação:', error.message)
+      logger.error('❌ Erro ao listar fornecedores para cotação:', error.message)
       throw error
     }
   },
@@ -307,7 +307,7 @@ export const fornecedorUtils = {
 
       return fornecedoresComTipo
     } catch (error) {
-      console.error('❌ Erro ao carregar fornecedores para cotação:', error)
+      logger.error('❌ Erro ao carregar fornecedores para cotação:', error)
       throw error
     }
   }

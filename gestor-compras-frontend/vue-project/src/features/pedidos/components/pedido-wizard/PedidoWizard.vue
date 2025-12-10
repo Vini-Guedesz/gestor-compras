@@ -118,6 +118,7 @@ import { useToast } from '@/composables/useToast.js'
 import pedidoService from '@/services/pedidoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoService from '@/services/cotacaoService.js'
+import logger from '@/utils/logger.js'
 import WizardProgress from './WizardProgressBar.vue'
 import PedidoFormPage1 from './StepCriarPedido.vue'
 import PedidoFormPage2 from './StepAprovarItens.vue'
@@ -247,7 +248,7 @@ export default {
         await carregarCotacoesDoPedido()
         proximaPagina()
       } catch (error) {
-        console.error('Erro ao salvar pedido:', error)
+        logger.error('Erro ao salvar pedido:', error)
         showError('Erro ao salvar pedido. Tente novamente.')
       } finally {
         isLoading.value = false
@@ -288,7 +289,7 @@ export default {
         wizardData.value.itemAtual = null
         voltarPagina()
       } catch (error) {
-        console.error('Erro ao salvar cotações:', error)
+        logger.error('Erro ao salvar cotações:', error)
         showError('Erro ao salvar cotações. Tente novamente.')
       } finally {
         isLoading.value = false
@@ -371,7 +372,7 @@ export default {
         ])
         fornecedores.value = [...produtos, ...servicos]
       } catch (error) {
-        console.error('Erro ao carregar fornecedores:', error)
+        logger.error('Erro ao carregar fornecedores:', error)
       } finally {
         carregandoFornecedores.value = false
       }
@@ -385,7 +386,7 @@ export default {
         const cotacoes = await cotacaoService.listarPorPedido(wizardData.value.pedido.id)
         todasCotacoes.value = cotacoes
       } catch (error) {
-        console.error('Erro ao carregar cotações:', error)
+        logger.error('Erro ao carregar cotações:', error)
       } finally {
         carregandoCotacoes.value = false
       }
@@ -400,7 +401,7 @@ export default {
         const cotacoes = await cotacaoService.listarPorItem(item.id)
         cotacoesDrawer.value = cotacoes
       } catch (error) {
-        console.error('Erro ao carregar cotações do item:', error)
+        logger.error('Erro ao carregar cotações do item:', error)
         cotacoesDrawer.value = []
       } finally {
         carregandoDrawer.value = false

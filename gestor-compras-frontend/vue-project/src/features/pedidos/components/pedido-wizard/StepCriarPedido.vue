@@ -207,6 +207,7 @@
 import { ref, computed, watch } from 'vue'
 import { useToast } from '@/composables/useToast.js'
 import rascunhoService from '@/services/rascunhoService.js'
+import logger from '@/utils/logger.js'
 
 export default {
   name: 'PedidoFormPage1',
@@ -391,7 +392,7 @@ export default {
         hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
 
       } catch (error) {
-        console.error('Erro ao salvar item:', error)
+        logger.error('Erro ao salvar item:', error)
         showError(error.message || 'Erro ao salvar item')
         // Desmarcar salvando em caso de erro
         if (formData.value.itens[index]) {
@@ -440,7 +441,7 @@ export default {
 
         success(`Todos os ${itensSalvosComSucesso} itens foram salvos com sucesso!`)
       } catch (error) {
-        console.error('Erro ao salvar itens:', error)
+        logger.error('Erro ao salvar itens:', error)
         showError(`${itensSalvosComSucesso} de ${totalItensParaSalvar} itens foram salvos. Erro: ${error.message || 'Erro desconhecido'}`)
       } finally {
         salvandoTodos.value = false
@@ -479,7 +480,7 @@ export default {
           formData.value.itens = [...itensDoServidor, ...itensNaoSalvosRestantes]
 
         } catch (error) {
-          console.error('Erro ao remover item:', error)
+          logger.error('Erro ao remover item:', error)
           showError(error.message || 'Erro ao remover item')
         }
       } else {

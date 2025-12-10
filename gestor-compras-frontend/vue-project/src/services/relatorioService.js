@@ -89,7 +89,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error('Erro ao gerar relatório de fornecedores:', error)
+      logger.error('Erro ao gerar relatório de fornecedores:', error)
       throw new Error('Erro ao gerar relatório. Tente novamente.')
     }
   },
@@ -118,7 +118,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error('Erro ao visualizar relatório de fornecedores:', error)
+      logger.error('Erro ao visualizar relatório de fornecedores:', error)
       throw new Error('Erro ao visualizar relatório. Tente novamente.')
     }
   },
@@ -152,7 +152,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error('Erro ao gerar relatório de itens de pedido:', error)
+      logger.error('Erro ao gerar relatório de itens de pedido:', error)
       throw new Error('Erro ao gerar relatório. Tente novamente.')
     }
   },
@@ -181,7 +181,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error('Erro ao visualizar relatório de itens de pedido:', error)
+      logger.error('Erro ao visualizar relatório de itens de pedido:', error)
       throw new Error('Erro ao visualizar relatório. Tente novamente.')
     }
   },
@@ -216,7 +216,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error(`Erro ao gerar relatório do item de pedido ${id}:`, error)
+      logger.error(`Erro ao gerar relatório do item de pedido ${id}:`, error)
       throw new Error('Erro ao gerar relatório. Tente novamente.')
     }
   },
@@ -246,7 +246,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error(`Erro ao visualizar relatório do item de pedido ${id}:`, error)
+      logger.error(`Erro ao visualizar relatório do item de pedido ${id}:`, error)
       throw new Error('Erro ao visualizar relatório. Tente novamente.')
     }
   },
@@ -287,7 +287,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error('Erro ao gerar relatório de itens para cotação:', error)
+      logger.error('Erro ao gerar relatório de itens para cotação:', error)
       throw new Error('Erro ao gerar relatório. Tente novamente.')
     }
   },
@@ -323,7 +323,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error('Erro ao visualizar relatório de itens para cotação:', error)
+      logger.error('Erro ao visualizar relatório de itens para cotação:', error)
       throw new Error('Erro ao visualizar relatório. Tente novamente.')
     }
   },
@@ -362,7 +362,7 @@ const relatorioService = {
 
       return true
     } catch (error) {
-      console.error('Erro ao visualizar relatório de itens para cotação (rascunho):', error)
+      logger.error('Erro ao visualizar relatório de itens para cotação (rascunho):', error)
       throw new Error('Erro ao visualizar relatório. Tente novamente.')
     }
   }

@@ -167,6 +167,7 @@
 <script>
 import { ref, computed } from 'vue'
 import { useToast } from '@/composables/useToast.js'
+import logger from '@/utils/logger.js'
 
 export default {
   name: 'CotacaoFormItem',
@@ -282,7 +283,7 @@ export default {
         const anexos = await Promise.all(anexosPromises)
         localCotacao.value.anexoPdf = anexos[0] // Manter primeiro para compatibilidade
       } catch (error) {
-        console.error('Erro ao processar PDFs:', error)
+        logger.error('Erro ao processar PDFs:', error)
         showError('Erro ao processar os arquivos PDF')
       }
 

@@ -430,6 +430,7 @@ import relatorioService from '@/services/relatorioService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
 import pedidoService from '@/services/pedidoService.js'
+import logger from '@/utils/logger.js'
 
 // Router
 const route = useRoute()
@@ -598,7 +599,7 @@ const carregarFornecedores = async () => {
     fornecedoresProduto.value = produtoResponse || []
     fornecedoresServico.value = servicoResponse || []
   } catch (error) {
-    console.error('Erro ao carregar fornecedores:', error)
+    logger.error('Erro ao carregar fornecedores:', error)
   } finally {
     isLoading.value = false
   }
@@ -646,7 +647,7 @@ const salvarFornecedor = async (dadosFornecedor) => {
     success(fornecedorEditando.value ? 'Fornecedor atualizado com sucesso!' : 'Fornecedor cadastrado com sucesso!')
 
   } catch (error) {
-    console.error('❌ Erro ao salvar fornecedor:', error)
+    logger.error('❌ Erro ao salvar fornecedor:', error)
 
     // Mostrar erro mais específico para o usuário
     let mensagemErro = 'Erro ao salvar fornecedor.'
@@ -698,7 +699,7 @@ const excluirFornecedor = async () => {
 
     await carregarFornecedores()
   } catch (error) {
-    console.error('Erro ao excluir fornecedor:', error)
+    logger.error('Erro ao excluir fornecedor:', error)
   } finally {
     showConfirmModal.value = false
     fornecedorParaExcluir.value = null
@@ -748,7 +749,7 @@ const buscarItemPedidoComCache = async (itemPedidoId) => {
 
     return item
   } catch (error) {
-    console.warn(`⚠️ Erro ao buscar item ${itemPedidoId}:`, error)
+    logger.warn(`⚠️ Erro ao buscar item ${itemPedidoId}:`, error)
     return null
   }
 }
@@ -771,7 +772,7 @@ const buscarPedidoComCache = async (pedidoId) => {
 
     return pedido
   } catch (error) {
-    console.warn(`⚠️ Erro ao buscar pedido ${pedidoId}:`, error)
+    logger.warn(`⚠️ Erro ao buscar pedido ${pedidoId}:`, error)
     return null
   }
 }
@@ -860,7 +861,7 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
       }
     }
   } catch (error) {
-    console.error('Erro ao carregar histórico do fornecedor:', error)
+    logger.error('Erro ao carregar histórico do fornecedor:', error)
     // Em caso de erro, mostrar dados vazios
     historicoCompras.value = {
       total: 0,
@@ -892,7 +893,7 @@ const gerarRelatorioFornecedores = async () => {
     await relatorioService.gerarRelatorioFornecedores()
     success('Relatório gerado com sucesso!')
   } catch (error) {
-    console.error('Erro ao gerar relatório:', error)
+    logger.error('Erro ao gerar relatório:', error)
     toastError('Erro ao gerar relatório. Tente novamente.')
   } finally {
     gerandoRelatorio.value = false

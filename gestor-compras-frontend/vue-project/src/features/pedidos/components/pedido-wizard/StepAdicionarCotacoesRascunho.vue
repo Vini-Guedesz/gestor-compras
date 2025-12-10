@@ -467,6 +467,7 @@ import { useToast } from '@/composables/useToast.js'
 import { useModal } from '@/composables/useModal.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import relatorioService from '@/services/relatorioService.js'
+import logger from '@/utils/logger.js'
 
 export default {
   name: 'StepAdicionarCotacoesRascunho',
@@ -696,7 +697,7 @@ export default {
         )
 
       } catch (error) {
-        console.error('❌ Erro ao gerar relatório:', error)
+        logger.error('❌ Erro ao gerar relatório:', error)
         showError('Erro ao gerar relatório. Tente novamente.')
       } finally {
         gerandoRelatorio.value = false
@@ -852,7 +853,7 @@ export default {
           throw new Error('Nenhum PDF encontrado para esta cotação')
         }
       } catch (error) {
-        console.error('Erro ao carregar PDF:', error)
+        logger.error('Erro ao carregar PDF:', error)
 
         // Mensagem mais amigável para erro 404
         if (error.message.includes('404')) {

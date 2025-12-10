@@ -198,6 +198,7 @@ import { useRouter, useRoute } from 'vue-router'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import cotacaoService from '../services/cotacaoService.js'
+import logger from '../utils/logger.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -325,7 +326,7 @@ const salvarCotacao = async () => {
 
     router.push('/cotacoes')
   } catch (error) {
-    console.error('Erro ao salvar cotação:', error)
+    logger.error('Erro ao salvar cotação:', error)
   } finally {
     carregando.value = false
   }
@@ -339,7 +340,7 @@ const carregarCotacao = async () => {
     const response = await cotacaoService.obterPorId(route.params.id)
     cotacao.value = { ...cotacao.value, ...response.data }
   } catch (error) {
-    console.error('Erro ao carregar cotação:', error)
+    logger.error('Erro ao carregar cotação:', error)
     router.push('/cotacoes')
   } finally {
     carregando.value = false

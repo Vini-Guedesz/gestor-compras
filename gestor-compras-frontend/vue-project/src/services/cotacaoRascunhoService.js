@@ -16,7 +16,7 @@ const cotacaoRascunhoService = {
       const data = await api.get(`/api/v1/rascunhos/${rascunhoId}/cotacoes`)
       return data
     } catch (error) {
-      console.error('Erro ao listar cotações do rascunho:', error.message)
+      logger.error('Erro ao listar cotações do rascunho:', error.message)
       throw error
     }
   },
@@ -26,7 +26,7 @@ const cotacaoRascunhoService = {
       const data = await api.get(`/api/v1/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}`)
       return data
     } catch (error) {
-      console.error(`Erro ao obter cotação ${cotacaoId}:`, error.message)
+      logger.error(`Erro ao obter cotação ${cotacaoId}:`, error.message)
       throw error
     }
   },
@@ -98,7 +98,7 @@ const cotacaoRascunhoService = {
       const data = await api.post(`/api/v1/rascunhos/${rascunhoId}/cotacoes`, cotacao)
       return data
     } catch (error) {
-      console.error('Erro ao criar cotação:', error.message)
+      logger.error('Erro ao criar cotação:', error.message)
       throw error
     }
   },
@@ -108,7 +108,7 @@ const cotacaoRascunhoService = {
       await api.delete(`/api/v1/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}`)
       return true
     } catch (error) {
-      console.error(`Erro ao remover cotação ${cotacaoId}:`, error.message)
+      logger.error(`Erro ao remover cotação ${cotacaoId}:`, error.message)
       throw error
     }
   },
@@ -137,7 +137,7 @@ const cotacaoRascunhoService = {
       const blob = await response.blob()
       return blob
     } catch (error) {
-      console.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
+      logger.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
       throw error
     }
   },

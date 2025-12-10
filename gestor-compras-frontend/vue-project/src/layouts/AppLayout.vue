@@ -89,6 +89,7 @@ import { getWelcomeMessage as getWelcomeMessageUtil } from '../utils/genderUtils
 import relatorioService from '../services/relatorioService'
 import { useToast } from '../composables/useToast'
 import ToastContainer from '../components/ui/ToastContainer.vue'
+import logger from '../utils/logger.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -143,7 +144,7 @@ const gerarRelatorioFornecedores = async () => {
     await relatorioService.gerarRelatorioFornecedores()
     relatoriosMenuOpen.value = false // Fecha o menu após gerar
   } catch (error) {
-    console.error('Erro ao gerar relatório:', error)
+    logger.error('Erro ao gerar relatório:', error)
     toastError('Erro ao gerar relatório. Tente novamente.')
   } finally {
     gerandoRelatorio.value = false

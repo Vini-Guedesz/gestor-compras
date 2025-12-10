@@ -18,6 +18,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { authService } from '../services/authService.js'
+import logger from '../utils/logger.js'
 
 export const useAuthStore = defineStore('auth', () => {
   // Estados reativos da autenticação
@@ -117,7 +118,7 @@ export const useAuthStore = defineStore('auth', () => {
       logout()
       return false
     } catch (error) {
-      console.error('Erro ao verificar autenticação:', error)
+      logger.error('Erro ao verificar autenticação:', error)
       logout()
       return false
     } finally {

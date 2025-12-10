@@ -294,6 +294,7 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useToast } from '@/composables/useToast.js'
+import logger from '@/utils/logger.js'
 
 const props = defineProps({
   isVisible: {
@@ -706,7 +707,7 @@ const buscarCEPComValidacao = async () => {
         fieldErrors.value.cep = 'CEP não encontrado'
       }
     } catch (error) {
-      console.warn('Erro ao buscar CEP:', error)
+      logger.warn('Erro ao buscar CEP:', error)
       fieldErrors.value.cep = 'Erro ao consultar CEP'
     }
   }
@@ -762,9 +763,9 @@ const handleSubmit = () => {
 
   // ===== VALIDAÇÃO: VERIFICAR MUDANÇA DE TIPO =====
   if (props.fornecedor && props.fornecedor.tipo !== formData.value.tipo) {
-    console.warn('⚠️ TENTATIVA DE MUDAR TIPO DE FORNECEDOR DETECTADA!')
-    console.warn('   Tipo original:', props.fornecedor.tipo)
-    console.warn('   Tipo atual no form:', formData.value.tipo)
+    logger.warn('⚠️ TENTATIVA DE MUDAR TIPO DE FORNECEDOR DETECTADA!')
+    logger.warn('   Tipo original:', props.fornecedor.tipo)
+    logger.warn('   Tipo atual no form:', formData.value.tipo)
 
     const tipoOriginal = props.fornecedor.tipo === 'produto' ? 'Produto' : 'Serviço'
     const tipoNovo = formData.value.tipo === 'produto' ? 'Produto' : 'Serviço'
@@ -796,7 +797,7 @@ const handleSubmit = () => {
     // Encontrar primeiro campo com erro para focar
     const firstErrorField = Object.keys(fieldErrors.value).find(key => fieldErrors.value[key])
     if (firstErrorField) {
-      console.warn('Primeiro erro encontrado em:', firstErrorField, ':', fieldErrors.value[firstErrorField])
+      logger.warn('Primeiro erro encontrado em:', firstErrorField, ':', fieldErrors.value[firstErrorField])
     }
 
     warning('Por favor, corrija os erros destacados no formulário antes de continuar.')
@@ -865,17 +866,17 @@ const handleSubmit = () => {
   // ===== ETAPA 5: VALIDAÇÕES FINAIS =====
 
   if ('numero' in dadosParaEnvio.contato) {
-    console.error('   ❌ ERRO: contato tem campo "numero"!')
+    logger.error('   ❌ ERRO: contato tem campo "numero"!')
     return
   }
 
   if (!('numero' in dadosParaEnvio.endereco)) {
-    console.error('   ❌ ERRO: endereco NÃO tem campo "numero"!')
+    logger.error('   ❌ ERRO: endereco NÃO tem campo "numero"!')
     return
   }
 
   if (!dadosParaEnvio.endereco.numero) {
-    console.error('   ❌ ERRO: endereco.numero está vazio!')
+    logger.error('   ❌ ERRO: endereco.numero está vazio!')
     return
   }
 

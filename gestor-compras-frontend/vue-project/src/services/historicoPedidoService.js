@@ -5,6 +5,7 @@
  */
 
 import api from './api.js'
+import logger from '../utils/logger.js'
 
 const historicoPedidoService = {
   async listarPorPedido(pedidoId) {
@@ -12,7 +13,7 @@ const historicoPedidoService = {
       const data = await api.get(`/api/v1/historico-pedidos/pedido/${pedidoId}`)
       return data
     } catch (error) {
-      console.error(`Erro ao buscar histórico do pedido ${pedidoId}:`, error.message)
+      logger.error(`Erro ao buscar histórico do pedido ${pedidoId}:`, error.message)
       throw error
     }
   },
@@ -22,7 +23,7 @@ const historicoPedidoService = {
       const data = await api.get(`/api/v1/historico-pedidos/usuario/${userId}`)
       return data
     } catch (error) {
-      console.error(`Erro ao buscar histórico do usuário ${userId}:`, error.message)
+      logger.error(`Erro ao buscar histórico do usuário ${userId}:`, error.message)
       throw error
     }
   }

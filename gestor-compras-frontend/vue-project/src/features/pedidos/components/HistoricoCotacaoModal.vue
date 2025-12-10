@@ -219,11 +219,11 @@ export default {
           historico.value = data
           logger.debug('✅ Histórico carregado com sucesso:', historico.value.length, 'itens')
         } else {
-          console.warn('⚠️ Dados não são array:', data)
+          logger.warn('⚠️ Dados não são array:', data)
           historico.value = []
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar histórico:', error)
+        logger.error('❌ Erro ao carregar histórico:', error)
         showError('Erro ao carregar histórico de edições')
         historico.value = []
       } finally {
@@ -326,7 +326,7 @@ export default {
           fecharPdfViewer()
         }
       } catch (error) {
-        console.error('Erro ao visualizar PDF do histórico:', error)
+        logger.error('Erro ao visualizar PDF do histórico:', error)
         showError('Erro ao carregar PDF do histórico')
         fecharPdfViewer()
       } finally {

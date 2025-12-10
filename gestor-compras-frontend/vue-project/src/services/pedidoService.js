@@ -23,7 +23,7 @@ const pedidoService = {
       const data = await api.get(`/api/v1/solicitacoes-pedido`)
       return extractContent(data)
     } catch (error) {
-      console.error('❌ Erro ao listar pedidos no backend:', error.message)
+      logger.error('❌ Erro ao listar pedidos no backend:', error.message)
       throw error
     }
   },
@@ -41,7 +41,7 @@ const pedidoService = {
       const data = await api.get(`/api/v1/solicitacoes-pedido/${id}`)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao obter pedido ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao obter pedido ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -86,7 +86,7 @@ const pedidoService = {
       const data = await api.post(`/api/v1/solicitacoes-pedido`, pedido)
       return { data: data }
     } catch (error) {
-      console.error('❌ Erro ao criar pedido:', error.message)
+      logger.error('❌ Erro ao criar pedido:', error.message)
       throw error
     }
   },
@@ -100,7 +100,7 @@ const pedidoService = {
       const data = await api.put(`/api/v1/solicitacoes-pedido/${id}`, pedido)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao atualizar pedido ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao atualizar pedido ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -116,7 +116,7 @@ const pedidoService = {
       const data = await api.put(`/api/v1/solicitacoes-pedido/${id}`, pedidoAtualizado)
       return data
     } catch (error) {
-      console.error(`❌ Erro ao atualizar o pedido ID ${id}:`, error.message)
+      logger.error(`❌ Erro ao atualizar o pedido ID ${id}:`, error.message)
       throw error
     }
   },
@@ -130,7 +130,7 @@ const pedidoService = {
       await api.delete(`/api/v1/solicitacoes-pedido/${id}`)
       return true
     } catch (error) {
-      console.error(`❌ Erro ao remover pedido ID ${id} no backend:`, error.message)
+      logger.error(`❌ Erro ao remover pedido ID ${id} no backend:`, error.message)
       throw error
     }
   },
@@ -180,7 +180,7 @@ const pedidoService = {
         return resultado.data || resultado
       }
     } catch (error) {
-      console.error('❌ Erro ao salvar pedido:', error)
+      logger.error('❌ Erro ao salvar pedido:', error)
       throw error
     }
   }

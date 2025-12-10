@@ -234,6 +234,7 @@
 import { ref, computed, onMounted } from 'vue'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
+import logger from '../utils/logger.js'
 
 // Estados reativo
 const isEditMode = ref(false)
@@ -300,7 +301,7 @@ const salvarConfiguracoes = async () => {
         showNotificationMessage('success', 'Configurações atualizadas com sucesso!')
         isEditMode.value = false
     } catch (error) {
-        console.error('Erro ao atualizar configurações:', error)
+        logger.error('Erro ao atualizar configurações:', error)
         showNotificationMessage('error', 'Erro ao atualizar configurações. Tente novamente.')
     }
 }
@@ -319,7 +320,7 @@ const alterarSenha = async () => {
         showPasswordForm.value = false
         limparPasswordForm()
     } catch (error) {
-        console.error('Erro ao alterar senha:', error)
+        logger.error('Erro ao alterar senha:', error)
         showNotificationMessage('error', 'Erro ao alterar senha. Verifique a senha atual.')
     }
 }

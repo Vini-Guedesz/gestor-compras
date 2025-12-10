@@ -126,6 +126,7 @@ import { ref, onMounted } from 'vue'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import { useAuthStore } from '../stores/auth.js'
+import logger from '../utils/logger.js'
 
 const authStore = useAuthStore()
 
@@ -175,7 +176,7 @@ const salvarPerfil = async () => {
         showNotificationMessage('success', 'Perfil atualizado com sucesso!')
         isEditMode.value = false
     } catch (error) {
-        console.error('Erro ao atualizar perfil:', error)
+        logger.error('Erro ao atualizar perfil:', error)
         showNotificationMessage('error', 'Erro ao atualizar perfil. Tente novamente.')
     }
 }

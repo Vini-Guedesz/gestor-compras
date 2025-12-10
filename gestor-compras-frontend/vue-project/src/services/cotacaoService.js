@@ -39,7 +39,7 @@ relatorioClient.interceptors.request.use(
     return config
   },
   (error) => {
-    console.error('❌ Erro no interceptor de request:', error)
+    logger.error('❌ Erro no interceptor de request:', error)
     return Promise.reject(error)
   }
 )
@@ -76,7 +76,7 @@ export const cotacaoService = {
       const response = await api.get(url)
       return extractContent(response)
     } catch (error) {
-      console.error('Erro ao listar cotações:', error)
+      logger.error('Erro ao listar cotações:', error)
       throw error
     }
   },
@@ -87,7 +87,7 @@ export const cotacaoService = {
       const response = await api.get(`${BASE_URL}/${id}`)
       return response
     } catch (error) {
-      console.error('Erro ao buscar cotação:', error)
+      logger.error('Erro ao buscar cotação:', error)
       throw error
     }
   },
@@ -100,7 +100,7 @@ export const cotacaoService = {
       })
       return extractContent(response)
     } catch (error) {
-      console.error('Erro ao buscar cotações do fornecedor:', error)
+      logger.error('Erro ao buscar cotações do fornecedor:', error)
       throw error
     }
   },
@@ -111,7 +111,7 @@ export const cotacaoService = {
       const response = await api.get(`${BASE_URL}/pedido/${pedidoId}`)
       return extractContent(response)
     } catch (error) {
-      console.error('❌ Erro ao buscar cotações do pedido:', error)
+      logger.error('❌ Erro ao buscar cotações do pedido:', error)
       // Bug Fix #12: Propagar erro ao invés de retornar array vazio silenciosamente
       throw new Error(`Erro ao carregar cotações do pedido: ${error.message}`)
     }
@@ -123,7 +123,7 @@ export const cotacaoService = {
       const response = await api.get(`${BASE_URL}/item/${itemPedidoId}`)
       return extractContent(response)
     } catch (error) {
-      console.error('❌ Erro ao buscar cotações do item:', error)
+      logger.error('❌ Erro ao buscar cotações do item:', error)
       // Bug Fix #12: Propagar erro ao invés de retornar array vazio silenciosamente
       throw new Error(`Erro ao carregar cotações do item: ${error.message}`)
     }
@@ -192,7 +192,7 @@ export const cotacaoService = {
       return response
 
     } catch (error) {
-      console.error('❌ Erro ao criar cotação:', error)
+      logger.error('❌ Erro ao criar cotação:', error)
       throw error
     }
   },
@@ -255,7 +255,7 @@ export const cotacaoService = {
       return response
 
     } catch (error) {
-      console.error('❌ Erro ao atualizar cotação:', error)
+      logger.error('❌ Erro ao atualizar cotação:', error)
       throw error
     }
   },
@@ -270,7 +270,7 @@ export const cotacaoService = {
       await api.delete(`${BASE_URL}/${id}`)
       return true
     } catch (error) {
-      console.error('❌ Erro ao excluir cotação:', error)
+      logger.error('❌ Erro ao excluir cotação:', error)
       throw error
     }
   },
@@ -281,7 +281,7 @@ export const cotacaoService = {
       const response = await api.delete(`${BASE_URL}/${id}`)
       return response
     } catch (error) {
-      console.error('Erro ao deletar cotação:', error)
+      logger.error('Erro ao deletar cotação:', error)
       throw error
     }
   },
@@ -294,7 +294,7 @@ export const cotacaoService = {
       })
       return response.data
     } catch (error) {
-      console.error('Erro ao enviar cotação:', error)
+      logger.error('Erro ao enviar cotação:', error)
       throw error
     }
   },
@@ -305,7 +305,7 @@ export const cotacaoService = {
       const response = await api.get(`${BASE_URL}/${id}/propostas`)
       return response.data
     } catch (error) {
-      console.error('Erro ao obter propostas:', error)
+      logger.error('Erro ao obter propostas:', error)
       throw error
     }
   },
@@ -319,7 +319,7 @@ export const cotacaoService = {
       })
       return response.data
     } catch (error) {
-      console.error('Erro ao selecionar proposta:', error)
+      logger.error('Erro ao selecionar proposta:', error)
       throw error
     }
   },
@@ -332,7 +332,7 @@ export const cotacaoService = {
       })
       return response.data
     } catch (error) {
-      console.error('Erro ao aprovar cotação:', error)
+      logger.error('Erro ao aprovar cotação:', error)
       throw error
     }
   },
@@ -345,7 +345,7 @@ export const cotacaoService = {
       })
       return response.data
     } catch (error) {
-      console.error('Erro ao cancelar cotação:', error)
+      logger.error('Erro ao cancelar cotação:', error)
       throw error
     }
   },
@@ -356,7 +356,7 @@ export const cotacaoService = {
       const response = await api.post(`${BASE_URL}/${id}/reabrir`)
       return response.data
     } catch (error) {
-      console.error('Erro ao reabrir cotação:', error)
+      logger.error('Erro ao reabrir cotação:', error)
       throw error
     }
   },
@@ -367,7 +367,7 @@ export const cotacaoService = {
       const response = await api.post(`${BASE_URL}/${id}/duplicar`)
       return response.data
     } catch (error) {
-      console.error('Erro ao duplicar cotação:', error)
+      logger.error('Erro ao duplicar cotação:', error)
       throw error
     }
   },
@@ -378,7 +378,7 @@ export const cotacaoService = {
       const response = await api.post(`${BASE_URL}/${cotacaoId}/itens`, item)
       return response.data
     } catch (error) {
-      console.error('Erro ao adicionar item:', error)
+      logger.error('Erro ao adicionar item:', error)
       throw error
     }
   },
@@ -389,7 +389,7 @@ export const cotacaoService = {
       const response = await api.put(`${BASE_URL}/${cotacaoId}/itens/${itemId}`, item)
       return response.data
     } catch (error) {
-      console.error('Erro ao atualizar item:', error)
+      logger.error('Erro ao atualizar item:', error)
       throw error
     }
   },
@@ -400,7 +400,7 @@ export const cotacaoService = {
       const response = await api.delete(`${BASE_URL}/${cotacaoId}/itens/${itemId}`)
       return response.data
     } catch (error) {
-      console.error('Erro ao remover item:', error)
+      logger.error('Erro ao remover item:', error)
       throw error
     }
   },
@@ -416,7 +416,7 @@ export const cotacaoService = {
       const response = await api.post(`${BASE_URL}/${cotacaoId}/anexos`, formData)
       return response.data
     } catch (error) {
-      console.error('Erro ao adicionar anexo:', error)
+      logger.error('Erro ao adicionar anexo:', error)
       throw error
     }
   },
@@ -427,7 +427,7 @@ export const cotacaoService = {
       const response = await api.delete(`${BASE_URL}/${cotacaoId}/anexos/${anexoId}`)
       return response.data
     } catch (error) {
-      console.error('Erro ao remover anexo:', error)
+      logger.error('Erro ao remover anexo:', error)
       throw error
     }
   },
@@ -445,13 +445,13 @@ export const cotacaoService = {
 
       // Verificar se a resposta existe e tem conteúdo
       if (!response.data || response.data.size === 0) {
-        console.error('❌ Resposta vazia ou sem dados do servidor')
+        logger.error('❌ Resposta vazia ou sem dados do servidor')
         throw new Error('Não foi possível gerar o relatório - resposta vazia do servidor')
       }
 
       // Verificar se o status da resposta é ok
       if (response.status !== 200) {
-        console.error('❌ Status HTTP não ok:', response.status, response.statusText)
+        logger.error('❌ Status HTTP não ok:', response.status, response.statusText)
         throw new Error(`Erro no servidor: ${response.status} - ${response.statusText}`)
       }
 
@@ -466,11 +466,11 @@ export const cotacaoService = {
 
       return true
     } catch (error) {
-      console.error('❌ Erro ao gerar relatório comparativo:', error)
+      logger.error('❌ Erro ao gerar relatório comparativo:', error)
 
       // Log mais detalhado do erro
       if (error.response) {
-        console.error('❌ Detalhes do erro de resposta:', {
+        logger.error('❌ Detalhes do erro de resposta:', {
           status: error.response.status,
           statusText: error.response.statusText,
           data: error.response.data,
@@ -491,21 +491,21 @@ export const cotacaoService = {
 
       // Verificar se a resposta existe
       if (!response.data) {
-        console.error('❌ response.data é null ou undefined')
+        logger.error('❌ response.data é null ou undefined')
         throw new Error('Não foi possível gerar o relatório - dados ausentes')
       }
 
       // Para blob, verificar o tamanho
       if (response.data instanceof Blob) {
         if (response.data.size === 0) {
-          console.error('❌ Blob está vazio (size = 0)')
+          logger.error('❌ Blob está vazio (size = 0)')
           throw new Error('Não foi possível gerar o relatório - arquivo vazio')
         }
       }
 
       // Verificar se o status da resposta é ok
       if (response.status !== 200) {
-        console.error('❌ Status HTTP não ok:', response.status, response.statusText)
+        logger.error('❌ Status HTTP não ok:', response.status, response.statusText)
         throw new Error(`Erro no servidor: ${response.status} - ${response.statusText}`)
       }
 
@@ -528,11 +528,11 @@ export const cotacaoService = {
 
       return true
     } catch (error) {
-      console.error('❌ Erro ao gerar relatório de cotações:', error)
+      logger.error('❌ Erro ao gerar relatório de cotações:', error)
 
       // Log mais detalhado do erro
       if (error.response) {
-        console.error('❌ Detalhes do erro de resposta:', {
+        logger.error('❌ Detalhes do erro de resposta:', {
           status: error.response.status,
           statusText: error.response.statusText,
           data: error.response.data,
@@ -543,9 +543,9 @@ export const cotacaoService = {
         if (error.response.data instanceof Blob) {
           try {
             const text = await error.response.data.text()
-            console.error('❌ Conteúdo do erro (blob como texto):', text)
+            logger.error('❌ Conteúdo do erro (blob como texto):', text)
           } catch (e) {
-            console.error('❌ Não foi possível ler o blob de erro:', e)
+            logger.error('❌ Não foi possível ler o blob de erro:', e)
           }
         }
       }
@@ -560,7 +560,7 @@ export const cotacaoService = {
       const response = await api.get(`${BASE_URL}/estatisticas?periodo=${periodo}`)
       return response.data
     } catch (error) {
-      console.error('Erro ao obter estatísticas:', error)
+      logger.error('Erro ao obter estatísticas:', error)
       throw error
     }
   },
@@ -571,7 +571,7 @@ export const cotacaoService = {
       const response = await api.get(`${BASE_URL}/${id}/historico`)
       return response.data
     } catch (error) {
-      console.error('Erro ao obter histórico:', error)
+      logger.error('Erro ao obter histórico:', error)
       throw error
     }
   },
@@ -584,7 +584,7 @@ export const cotacaoService = {
       })
       return response.data
     } catch (error) {
-      console.error('Erro ao adicionar comentário:', error)
+      logger.error('Erro ao adicionar comentário:', error)
       throw error
     }
   },
@@ -597,7 +597,7 @@ export const cotacaoService = {
       })
       return response.data
     } catch (error) {
-      console.error('Erro ao notificar fornecedores:', error)
+      logger.error('Erro ao notificar fornecedores:', error)
       throw error
     }
   },
@@ -608,7 +608,7 @@ export const cotacaoService = {
       const response = await api.post(`${BASE_URL}/validar`, cotacao)
       return response.data
     } catch (error) {
-      console.error('Erro ao validar cotação:', error)
+      logger.error('Erro ao validar cotação:', error)
       throw error
     }
   },
@@ -619,7 +619,7 @@ export const cotacaoService = {
       const response = await api.get(`${BASE_URL}/modelos`)
       return response.data
     } catch (error) {
-      console.error('Erro ao obter modelos:', error)
+      logger.error('Erro ao obter modelos:', error)
       throw error
     }
   },
@@ -630,7 +630,7 @@ export const cotacaoService = {
       const response = await api.post(`${BASE_URL}/modelos/${modeloId}/criar`, dados)
       return response.data
     } catch (error) {
-      console.error('Erro ao criar cotação de modelo:', error)
+      logger.error('Erro ao criar cotação de modelo:', error)
       throw error
     }
   },
@@ -676,7 +676,7 @@ export const cotacaoService = {
       return response
 
     } catch (error) {
-      console.error('❌ Erro no upload do PDF:', error)
+      logger.error('❌ Erro no upload do PDF:', error)
       throw error
     }
   },
@@ -706,7 +706,7 @@ export const cotacaoService = {
       const blob = await response.blob()
       return blob
     } catch (error) {
-      console.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
+      logger.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
       throw error
     }
   },
@@ -724,7 +724,7 @@ export const cotacaoService = {
       }
 
     } catch (error) {
-      console.error('❌ Erro ao verificar anexo:', error)
+      logger.error('❌ Erro ao verificar anexo:', error)
       return {
         temAnexo: false,
         caminhoAnexo: null,
@@ -752,7 +752,7 @@ export const cotacaoService = {
       }
 
     } catch (error) {
-      console.error('❌ Erro ao obter informações do anexo:', error)
+      logger.error('❌ Erro ao obter informações do anexo:', error)
       throw error
     }
   },
@@ -765,7 +765,7 @@ export const cotacaoService = {
       })
       return response.data
     } catch (error) {
-      console.error('Erro ao salvar como modelo:', error)
+      logger.error('Erro ao salvar como modelo:', error)
       throw error
     }
   },
@@ -787,7 +787,7 @@ export const cotacaoService = {
       return response
 
     } catch (error) {
-      console.error('❌ Erro ao vincular itens:', error)
+      logger.error('❌ Erro ao vincular itens:', error)
       throw error
     }
   },
@@ -832,7 +832,7 @@ export const cotacaoService = {
       const data = await api.get(`${BASE_URL}/${cotacaoId}/historico`)
       return data
     } catch (error) {
-      console.error('❌ Erro ao buscar histórico:', error)
+      logger.error('❌ Erro ao buscar histórico:', error)
       throw error
     }
   },
@@ -849,7 +849,7 @@ export const cotacaoService = {
       const response = await relatorioClient.get(`${BASE_URL}/historico/${historicoId}/pdf/anterior`)
       return response.data
     } catch (error) {
-      console.error('❌ Erro ao obter PDF anterior do histórico:', error)
+      logger.error('❌ Erro ao obter PDF anterior do histórico:', error)
       throw error
     }
   },
@@ -866,7 +866,7 @@ export const cotacaoService = {
       const response = await relatorioClient.get(`${BASE_URL}/historico/${historicoId}/pdf/novo`)
       return response.data
     } catch (error) {
-      console.error('❌ Erro ao obter PDF novo do histórico:', error)
+      logger.error('❌ Erro ao obter PDF novo do histórico:', error)
       throw error
     }
   },
@@ -886,7 +886,7 @@ export const cotacaoService = {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('❌ Erro ao baixar PDF anterior do histórico:', error)
+      logger.error('❌ Erro ao baixar PDF anterior do histórico:', error)
       throw error
     }
   },
@@ -906,7 +906,7 @@ export const cotacaoService = {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('❌ Erro ao baixar PDF novo do histórico:', error)
+      logger.error('❌ Erro ao baixar PDF novo do histórico:', error)
       throw error
     }
   }

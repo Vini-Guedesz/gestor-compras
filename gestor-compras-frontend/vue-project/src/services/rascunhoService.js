@@ -5,6 +5,7 @@
  */
 
 import api from './api.js'
+import logger from '../utils/logger.js'
 
 /**
  * Helper para extrair dados de respostas paginadas do Spring Data
@@ -22,7 +23,7 @@ const rascunhoService = {
       const data = await api.get('/api/v1/rascunhos')
       return extractContent(data)
     } catch (error) {
-      console.error('Erro ao listar rascunhos:', error.message)
+      logger.error('Erro ao listar rascunhos:', error.message)
       throw error
     }
   },
@@ -32,7 +33,7 @@ const rascunhoService = {
       const data = await api.get(`/api/v1/rascunhos/usuario/${userId}`)
       return extractContent(data)
     } catch (error) {
-      console.error('Erro ao listar rascunhos do usuário:', error.message)
+      logger.error('Erro ao listar rascunhos do usuário:', error.message)
       throw error
     }
   },
@@ -42,7 +43,7 @@ const rascunhoService = {
       const data = await api.get(`/api/v1/rascunhos/${id}`)
       return data
     } catch (error) {
-      console.error(`Erro ao obter rascunho ID ${id}:`, error.message)
+      logger.error(`Erro ao obter rascunho ID ${id}:`, error.message)
       throw error
     }
   },
@@ -67,7 +68,7 @@ const rascunhoService = {
       const data = await api.post('/api/v1/rascunhos', rascunho)
       return data
     } catch (error) {
-      console.error('Erro ao criar rascunho:', error.message)
+      logger.error('Erro ao criar rascunho:', error.message)
       throw error
     }
   },
@@ -77,7 +78,7 @@ const rascunhoService = {
       const data = await api.put(`/api/v1/rascunhos/${id}`, rascunho)
       return data
     } catch (error) {
-      console.error(`Erro ao atualizar rascunho ID ${id}:`, error.message)
+      logger.error(`Erro ao atualizar rascunho ID ${id}:`, error.message)
       throw error
     }
   },
@@ -87,7 +88,7 @@ const rascunhoService = {
       await api.delete(`/api/v1/rascunhos/${id}`)
       return true
     } catch (error) {
-      console.error(`Erro ao remover rascunho ID ${id}:`, error.message)
+      logger.error(`Erro ao remover rascunho ID ${id}:`, error.message)
       throw error
     }
   },
@@ -111,7 +112,7 @@ const rascunhoService = {
 
       return data
     } catch (error) {
-      console.error('Erro ao converter rascunho para pedido:', error.message)
+      logger.error('Erro ao converter rascunho para pedido:', error.message)
       throw error
     }
   },
@@ -126,7 +127,7 @@ const rascunhoService = {
         return await this.criar(rascunho)
       }
     } catch (error) {
-      console.error('Erro ao salvar rascunho:', error)
+      logger.error('Erro ao salvar rascunho:', error)
       throw error
     }
   },
@@ -138,7 +139,7 @@ const rascunhoService = {
       const data = await api.post(`/api/v1/rascunhos/${rascunhoId}/itens`, item)
       return data
     } catch (error) {
-      console.error('Erro ao adicionar item:', error.message)
+      logger.error('Erro ao adicionar item:', error.message)
       throw error
     }
   },
@@ -148,7 +149,7 @@ const rascunhoService = {
       const data = await api.put(`/api/v1/rascunhos/${rascunhoId}/itens/${itemId}`, item)
       return data
     } catch (error) {
-      console.error('Erro ao atualizar item:', error.message)
+      logger.error('Erro ao atualizar item:', error.message)
       throw error
     }
   },
@@ -158,7 +159,7 @@ const rascunhoService = {
       const data = await api.delete(`/api/v1/rascunhos/${rascunhoId}/itens/${itemId}`)
       return data
     } catch (error) {
-      console.error('Erro ao remover item:', error.message)
+      logger.error('Erro ao remover item:', error.message)
       throw error
     }
   },
@@ -168,7 +169,7 @@ const rascunhoService = {
       const data = await api.get(`/api/v1/rascunhos/${rascunhoId}/historico`)
       return data
     } catch (error) {
-      console.error('Erro ao listar histórico:', error.message)
+      logger.error('Erro ao listar histórico:', error.message)
       throw error
     }
   },
@@ -178,7 +179,7 @@ const rascunhoService = {
       const data = await api.patch(`/api/v1/rascunhos/${rascunhoId}/status?status=${status}`)
       return data
     } catch (error) {
-      console.error('Erro ao atualizar status:', error.message)
+      logger.error('Erro ao atualizar status:', error.message)
       throw error
     }
   }

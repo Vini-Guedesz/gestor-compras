@@ -608,10 +608,10 @@ export default {
           pdfUrl.value = URL.createObjectURL(blob)
           logger.debug(`✅ PDF carregado com sucesso para visualização`)
         } else {
-          console.warn('⚠️ PDF vazio ou não encontrado')
+          logger.warn('⚠️ PDF vazio ou não encontrado')
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar PDF:', error)
+        logger.error('❌ Erro ao carregar PDF:', error)
       } finally {
         carregandoPdf.value = false
       }
@@ -725,7 +725,7 @@ export default {
           })
         }
       } catch (error) {
-        console.error('Erro ao carregar:', error)
+        logger.error('Erro ao carregar:', error)
         showError('Erro ao carregar dados. Redirecionando...')
         router.push('/pedidos')
       } finally {
@@ -772,7 +772,7 @@ export default {
           pdfModalUrl.value = URL.createObjectURL(blob)
         }
       } catch (error) {
-        console.error('Erro ao carregar PDF:', error)
+        logger.error('Erro ao carregar PDF:', error)
         showError('Erro ao carregar PDF')
       } finally {
         carregandoPdfModal.value = false
@@ -805,7 +805,7 @@ export default {
         await carregarPedido()
         success('Cotação excluída com sucesso!')
       } catch (error) {
-        console.error('Erro ao excluir cotação:', error)
+        logger.error('Erro ao excluir cotação:', error)
         showError('Erro ao excluir cotação. Tente novamente.')
       }
     }
@@ -866,7 +866,7 @@ export default {
             logger.debug('✅ PDFs enviados com sucesso')
             success(`Cotação editada com sucesso! ${dadosEdicao.pdfFiles.length} PDF(s) adicionado(s).`)
           } catch (pdfError) {
-            console.error('❌ Erro ao enviar PDFs:', pdfError)
+            logger.error('❌ Erro ao enviar PDFs:', pdfError)
             showError('Cotação editada, mas erro ao adicionar PDFs: ' + (pdfError.message || 'Erro desconhecido'))
           }
         } else {
@@ -879,8 +879,8 @@ export default {
         // Fechar modal
         fecharModalEditarCotacao()
       } catch (error) {
-        console.error('❌ Erro ao editar cotação:', error)
-        console.error('❌ Detalhes do erro:', error.response?.data || error.message)
+        logger.error('❌ Erro ao editar cotação:', error)
+        logger.error('❌ Detalhes do erro:', error.response?.data || error.message)
         showError('Erro ao editar cotação: ' + (error.response?.data?.message || error.message || 'Erro desconhecido'))
       }
     }

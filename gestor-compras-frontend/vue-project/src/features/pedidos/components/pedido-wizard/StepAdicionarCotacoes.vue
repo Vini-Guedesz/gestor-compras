@@ -129,6 +129,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useToast } from '@/composables/useToast.js'
 import CotacaoFormItem from './CotacaoInlineForm.vue'
 import relatorioService from '@/services/relatorioService.js'
+import logger from '@/utils/logger.js'
 
 export default {
   name: 'PedidoFormPage3',
@@ -238,7 +239,7 @@ export default {
         )
 
       } catch (error) {
-        console.error('❌ Erro ao gerar relatório:', error)
+        logger.error('❌ Erro ao gerar relatório:', error)
         showError('Erro ao gerar relatório. Tente novamente.')
       } finally {
         gerandoRelatorio.value = false

@@ -457,6 +457,7 @@ import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
 import relatorioService from '@/services/relatorioService.js'
 import rascunhoService from '@/services/rascunhoService.js'
+import logger from '@/utils/logger.js'
 
 export default {
   name: 'PedidosView',
@@ -661,7 +662,7 @@ export default {
         pedidos.value = [...listaPedidos, ...rascunhosFormatados]
 
       } catch (error) {
-        console.error('❌ Erro ao carregar pedidos do backend:', error)
+        logger.error('❌ Erro ao carregar pedidos do backend:', error)
         pedidos.value = []
       } finally {
         isLoading.value = false
@@ -773,7 +774,7 @@ export default {
         // Para pedidos normais (PENDENTE, etc.) - redirecionar para view de visualização/edição
         router.push(`/pedidos/visualizar/${pedido.id}?mode=edit`)
       } catch (error) {
-        console.error('Erro ao redirecionar para edição:', error)
+        logger.error('Erro ao redirecionar para edição:', error)
         toastError('Erro ao abrir pedido para edição.')
       }
     }
@@ -852,7 +853,7 @@ export default {
                 byteArray[i] = binaryString.charCodeAt(i)
               }
             } catch (e) {
-              console.error('Falha ao decodificar base64:', e)
+              logger.error('Falha ao decodificar base64:', e)
               throw new Error('Formato de PDF inválido (string não base64)')
             }
           } else if (typeof response.anexoPdf === 'object') {
@@ -863,7 +864,7 @@ export default {
               byteArray[index] = response.anexoPdf[key]
             })
           } else {
-            console.error('❌ Tipo desconhecido:', typeof response.anexoPdf)
+            logger.error('❌ Tipo desconhecido:', typeof response.anexoPdf)
             throw new Error(`Formato de PDF inválido (tipo: ${typeof response.anexoPdf})`)
           }
 
@@ -872,7 +873,7 @@ export default {
           const pdfHeader = String.fromCharCode(byteArray[0], byteArray[1], byteArray[2], byteArray[3])
 
           if (!pdfHeader.includes('%PDF') && byteArray.length > 0) {
-            console.warn('⚠️ Arquivo não parece ser um PDF válido!')
+            logger.warn('⚠️ Arquivo não parece ser um PDF válido!')
           }
 
           // Criar Blob com tipo MIME correto
@@ -885,12 +886,12 @@ export default {
           // Se houver caminho de anexo, usar URL direta
           pdfUrl.value = response.caminhoAnexo
         } else {
-          console.error('❌ Nenhum PDF encontrado')
+          logger.error('❌ Nenhum PDF encontrado')
           throw new Error('Nenhum PDF encontrado para esta cotação')
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar PDF:', error)
-        console.error('Stack:', error.stack)
+        logger.error('❌ Erro ao carregar PDF:', error)
+        logger.error('Stack:', error.stack)
         erroPdf.value = error.message || 'Erro ao carregar PDF. Tente novamente.'
       } finally {
         carregandoPdf.value = false
@@ -935,7 +936,7 @@ export default {
           }
         }
       } catch (error) {
-        console.error('Erro ao excluir:', error)
+        logger.error('Erro ao excluir:', error)
         toastError('Erro ao excluir. Tente novamente.')
       } finally {
         showConfirmModal.value = false
@@ -960,7 +961,7 @@ export default {
 
         success('Pedido aprovado com sucesso!')
       } catch (error) {
-        console.error('Erro ao aprovar pedido:', error)
+        logger.error('Erro ao aprovar pedido:', error)
         toastError('Erro ao aprovar pedido. Tente novamente.')
       } finally {
         isLoading.value = false
@@ -1042,7 +1043,7 @@ export default {
 
         success(`Status do pedido alterado para "${getStatusLabel(novoStatus)}" com sucesso!`)
       } catch (error) {
-        console.error('Erro ao alterar status do pedido:', error)
+        logger.error('Erro ao alterar status do pedido:', error)
         toastError('Erro ao alterar status do pedido. Tente novamente.')
       } finally {
         isLoading.value = false
@@ -1058,7 +1059,7 @@ export default {
         await relatorioService.gerarRelatorioItensPedido()
         success('Relatório gerado com sucesso!')
       } catch (error) {
-        console.error('Erro ao gerar relatório:', error)
+        logger.error('Erro ao gerar relatório:', error)
         toastError('Erro ao gerar relatório. Tente novamente.')
       } finally{
         gerandoRelatorio.value = false
