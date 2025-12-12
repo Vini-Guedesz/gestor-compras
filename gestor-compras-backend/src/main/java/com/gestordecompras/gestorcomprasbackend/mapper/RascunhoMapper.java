@@ -6,6 +6,9 @@ import com.gestordecompras.gestorcomprasbackend.dto.rascunho.RascunhoUpdateDTO;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.Rascunho;
 import org.mapstruct.*;
 
+/**
+ * Mapper para conversão entre Rascunho e seus DTOs.
+ */
 @Mapper(componentModel = "spring", uses = {ItemRascunhoMapper.class})
 public interface RascunhoMapper {
 

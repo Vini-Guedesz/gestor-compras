@@ -12,6 +12,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controller REST para geração de Relatórios de Itens de Pedido.
+ *
+ * <p>Gera PDFs via JasperReports: lista completa de itens ou item individual por ID.</p>
+ *
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> USER, ADMIN</p>
+ *
+ * @since 1.0.0
+ * @see JasperReportService
+ */
 @RestController
 @RequestMapping("/relatorios")
 @Tag(name = "Relatórios", description = "API para geração de relatórios")
@@ -20,10 +30,12 @@ public class ItemPedidoRelatorioController {
 
     private final JasperReportService jasperReportService;
 
+    /** Construtor com injeção de dependência. */
     public ItemPedidoRelatorioController(JasperReportService jasperReportService) {
         this.jasperReportService = jasperReportService;
     }
 
+    /** Gera PDF com lista completa de todos os itens de pedido. */
     @GetMapping("/itens-pedido")
     public ResponseEntity<byte[]> gerarRelatorioItensPedido() throws JRException {
         byte[] relatorio = jasperReportService.gerarRelatorioItensPedido();
@@ -34,6 +46,7 @@ public class ItemPedidoRelatorioController {
                 .body(relatorio);
     }
 
+    /** Gera PDF detalhado de um item de pedido específico por ID. */
     @GetMapping("/itens-pedido/{id}")
     public ResponseEntity<byte[]> gerarRelatorioItemPedidoPorId(@PathVariable Long id) throws JRException {
         byte[] relatorio = jasperReportService.gerarRelatorioItemPedidoPorId(id);

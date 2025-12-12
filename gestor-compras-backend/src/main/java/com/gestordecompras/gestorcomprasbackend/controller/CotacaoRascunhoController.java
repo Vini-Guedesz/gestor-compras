@@ -22,6 +22,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller REST para gerenciar Cotações vinculadas a Rascunhos.
+ *
+ * <p>Cotações de rascunho são temporárias e migradas para cotações normais durante
+ * a conversão do rascunho em pedido final. Suportam múltiplos anexos PDF.</p>
+ *
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> USER, ADMIN</p>
+ *
+ * @since 1.0.0
+ * @see CotacaoRascunhoService
+ * @see CotacaoRascunhoDTO
+ */
 @RestController
 @RequestMapping(ApiVersionConfig.API_V1 + "/rascunhos/{rascunhoId}/cotacoes")
 @Tag(name = "Cotações de Rascunho", description = "API para gerenciamento de cotações em rascunhos de pedidos (v1)")

@@ -33,6 +33,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço responsável pelo gerenciamento de cotações.
+ * <p>
+ * Gerencia o ciclo de vida completo das cotações, incluindo criação, atualização,
+ * versionamento, auditoria, uploads de anexos e vinculação com pedidos.
+ * </p>
+ *
+ * @author Gestor de Compras
+ * @since 1.0
+ */
 @Service
 public class CotacaoService {
 
@@ -49,6 +59,22 @@ public class CotacaoService {
     private final HistoricoCotacaoMapper historicoCotacaoMapper;
     private final PdfDeduplicationService pdfDeduplicationService;
 
+    /**
+     * Construtor com injeção de dependências.
+     *
+     * @param cotacaoRepository Repositório de cotações.
+     * @param cotacaoMapper Mapper para conversão entre entidade e DTO.
+     * @param cotacaoItemMapper Mapper para itens de cotação.
+     * @param fornecedorDeProdutoRepository Repositório de fornecedores de produto.
+     * @param fornecedorDeServicoRepository Repositório de fornecedores de serviço.
+     * @param itemPedidoRepository Repositório de itens de pedido.
+     * @param solicitacaoDePedidoRepository Repositório de solicitações de pedido.
+     * @param historicoPedidoService Serviço de histórico de pedidos.
+     * @param userRepository Repositório de usuários.
+     * @param historicoCotacaoRepository Repositório de histórico de cotações.
+     * @param historicoCotacaoMapper Mapper para histórico de cotações.
+     * @param pdfDeduplicationService Serviço de deduplicação de PDFs.
+     */
     public CotacaoService(CotacaoRepository cotacaoRepository, CotacaoMapper cotacaoMapper,
                          CotacaoItemMapper cotacaoItemMapper,
                          FornecedorDeProdutoRepository fornecedorDeProdutoRepository,
@@ -91,12 +117,25 @@ public class CotacaoService {
         return null;
     }
 
+    /**
+     * Recupera todas as cotações de forma paginada.
+     *
+     * @param pageable Objeto contendo informações de paginação.
+     * @return Página de DTOs de cotações.
+     */
     @Transactional(readOnly = true)
     public Page<CotacaoDTO> getAllCotacoes(Pageable pageable) {
         // Bug Fix #9: Usar query otimizada para evitar N+1
         return cotacaoRepository.findAll(pageable).map(cotacaoMapper::toDTO);
     }
 
+    /**
+     * Busca uma cotação pelo ID.
+     *
+     * @param id Identificador da cotação.
+     * @return DTO da cotação encontrada.
+     * @throws EntityNotFoundException Se a cotação não for encontrada.
+     */
     @Transactional(readOnly = true)
     public CotacaoDTO getCotacaoById(Long id) {
         return cotacaoRepository.findById(id)
@@ -104,6 +143,14 @@ public class CotacaoService {
                 .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
     }
 
+    /**
+     * Cria uma nova cotação.
+     *
+     * @param cotacaoCreateDTO DTO com os dados para criação.
+     * @return DTO da cotação criada.
+     * @throws EntityNotFoundException Se entidades relacionadas (pedido, fornecedor, itens) não forem encontradas.
+     * @throws IllegalArgumentException Se houver inconsistências nos dados (ex: tipo de fornecedor inválido).
+     */
     @Transactional
     public CotacaoDTO createCotacao(CotacaoCreateDTO cotacaoCreateDTO) {
         // Validar que foi fornecido pelo menos um formato (novo ou legacy)
@@ -216,6 +263,14 @@ public class CotacaoService {
         return cotacaoMapper.toDTO(cotacaoSalva);
     }
 
+    /**
+     * Atualiza dados básicos de uma cotação.
+     *
+     * @param id Identificador da cotação.
+     * @param cotacaoUpdateDTO Dados a atualizar (prazo, data limite).
+     * @return DTO da cotação atualizada.
+     * @throws EntityNotFoundException Se a cotação não for encontrada.
+     */
     @Transactional
     public CotacaoDTO updateCotacao(Long id, CotacaoUpdateDTO cotacaoUpdateDTO) {
         return cotacaoRepository.findById(id)
@@ -269,6 +324,12 @@ public class CotacaoService {
                 .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + id));
     }
 
+    /**
+     * Exclui uma cotação.
+     *
+     * @param id Identificador da cotação.
+     * @throws EntityNotFoundException Se a cotação não for encontrada.
+     */
     @Transactional
     public void deleteCotacao(Long id) {
         Cotacao cotacao = cotacaoRepository.findById(id)
@@ -297,11 +358,25 @@ public class CotacaoService {
         }
     }
 
+    /**
+     * Obtém o conteúdo do primeiro anexo PDF da cotação.
+     *
+     * @param id Identificador da cotação.
+     * @return Array de bytes do PDF.
+     */
     @Transactional(readOnly = true)
     public byte[] obterAnexoPdf(Long id) {
         return obterAnexoPdf(id, 0);
     }
 
+    /**
+     * Obtém o conteúdo de um anexo específico da cotação.
+     *
+     * @param id Identificador da cotação.
+     * @param index Índice do anexo (0-based).
+     * @return Array de bytes do PDF.
+     * @throws EntityNotFoundException Se a cotação ou o anexo não forem encontrados.
+     */
     @Transactional(readOnly = true)
     public byte[] obterAnexoPdf(Long id, int index) {
         Cotacao cotacao = cotacaoRepository.findById(id)
@@ -318,6 +393,18 @@ public class CotacaoService {
         throw new EntityNotFoundException("Nenhum anexo encontrado para esta cotação");
     }
 
+    /**
+     * Vincula itens de pedido a uma cotação existente.
+     * <p>
+     * Atualiza a lista de itens vinculados, mantendo preços se possível e removendo itens desvinculados.
+     * Utiliza lógica de retry para lidar com concorrência (Optimistic Locking).
+     * </p>
+     *
+     * @param cotacaoId ID da cotação.
+     * @param itensPedidoIds Lista de IDs dos itens de pedido a vincular.
+     * @return DTO da cotação atualizada.
+     * @throws EntityNotFoundException Se a cotação ou itens não forem encontrados.
+     */
     // Bug Fix #10: Adicionar retry logic para lidar com conflitos de concorrência
     @Retryable(
         retryFor = {OptimisticLockException.class, OptimisticLockingFailureException.class},
@@ -376,11 +463,14 @@ public class CotacaoService {
     }
 
     /**
-     * Edita uma cotação existente com auditoria completa
-     * Cria registro no histórico antes de aplicar as mudanças
+     * Edita uma cotação existente com auditoria completa.
+     * <p>
+     * Cria registro no histórico antes de aplicar as mudanças e incrementa o número da versão.
+     * </p>
      *
-     * @param editDTO Dados da edição com motivo obrigatório
-     * @return Cotação atualizada
+     * @param editDTO Dados da edição com motivo obrigatório.
+     * @return DTO da cotação atualizada.
+     * @throws IllegalArgumentException Se não houver mudanças ou motivo for inválido.
      */
     @Transactional
     @Retryable(
@@ -574,7 +664,10 @@ public class CotacaoService {
 
 
     /**
-     * Busca o histórico completo de edições de uma cotação
+     * Busca o histórico completo de edições de uma cotação.
+     *
+     * @param cotacaoId ID da cotação.
+     * @return Lista de DTOs do histórico ordenados por data (mais recente primeiro).
      */
     @Transactional(readOnly = true)
     public List<HistoricoCotacaoDTO> buscarHistoricoCotacao(Long cotacaoId) {
@@ -585,8 +678,14 @@ public class CotacaoService {
     }
 
     /**
-     * Obtém PDF anterior do histórico usando o hash armazenado
-     * Busca o PDF real na tabela anexo_cotacao através do hash
+     * Obtém PDF anterior do histórico usando o hash armazenado.
+     * <p>
+     * Busca o PDF real na tabela de deduplicação através do hash referenciado.
+     * </p>
+     *
+     * @param historicoId ID do registro histórico.
+     * @return Array de bytes do PDF.
+     * @throws EntityNotFoundException Se o histórico ou o PDF não forem encontrados.
      */
     public byte[] obterPdfAnteriorHistorico(Long historicoId) {
         HistoricoCotacao historico = historicoCotacaoRepository.findById(historicoId)
@@ -611,8 +710,11 @@ public class CotacaoService {
     }
 
     /**
-     * Obtém PDF novo do histórico usando o hash armazenado
-     * Busca o PDF real na tabela anexo_cotacao através do hash
+     * Obtém PDF novo do histórico usando o hash armazenado.
+     *
+     * @param historicoId ID do registro histórico.
+     * @return Array de bytes do PDF.
+     * @throws EntityNotFoundException Se o histórico ou o PDF não forem encontrados.
      */
     public byte[] obterPdfNovoHistorico(Long historicoId) {
         HistoricoCotacao historico = historicoCotacaoRepository.findById(historicoId)
@@ -636,12 +738,16 @@ public class CotacaoService {
     }
 
     /**
-     * Upload de múltiplos anexos PDF com deduplificação automática
-     * Valida tipo MIME, tamanho, e usa PdfDeduplicationService para economia de storage
+     * Realiza o upload de múltiplos anexos PDF com deduplificação automática.
+     * <p>
+     * Valida tipo MIME e tamanho, e utiliza {@link PdfDeduplicationService} para otimizar armazenamento.
+     * </p>
      *
-     * @param cotacaoId ID da cotação
-     * @param files Array de arquivos MultipartFile
-     * @return CotacaoDTO atualizada
+     * @param cotacaoId ID da cotação.
+     * @param files Array de arquivos recebidos na requisição.
+     * @return DTO da cotação atualizada.
+     * @throws IllegalArgumentException Se arquivos forem inválidos ou excederem o tamanho.
+     * @throws EntityNotFoundException Se a cotação não for encontrada.
      */
     @Transactional
     public CotacaoDTO uploadAnexos(Long cotacaoId, org.springframework.web.multipart.MultipartFile[] files) {

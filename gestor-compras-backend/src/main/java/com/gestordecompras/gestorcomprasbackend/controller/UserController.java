@@ -19,6 +19,32 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Controller REST para gerenciar usuários do sistema.
+ *
+ * <p>Oferece operações CRUD completas com validação e segurança.
+ * Todos os endpoints (exceto POST para registro) requerem autenticação JWT
+ * e role ADMIN.</p>
+ *
+ * <p><b>Endpoints principais:</b></p>
+ * <ul>
+ *   <li>GET /api/v1/users - Listar todos os usuários</li>
+ *   <li>GET /api/v1/users/{id} - Buscar por ID</li>
+ *   <li>POST /api/v1/users - Criar novo usuário</li>
+ *   <li>PUT /api/v1/users - Atualizar usuário existente</li>
+ *   <li>DELETE /api/v1/users/{id} - Deletar usuário</li>
+ * </ul>
+ *
+ * <p><b>Autenticação:</b> JWT obrigatório (exceto POST)</p>
+ * <p><b>Roles permitidas:</b> ADMIN</p>
+ *
+ * @since 1.0.0
+ * @author Equipe de Desenvolvimento
+ * @see UserService
+ * @see UserDTO
+ * @see UserCreateDTO
+ * @see UserUpdateDTO
+ */
 @RestController
 @RequestMapping(ApiVersionConfig.API_V1 + "/users")
 @Tag(name = "Usuários", description = "API para gerenciamento de usuários (v1)")
@@ -27,10 +53,23 @@ public class UserController {
 
     private final UserService service;
 
+    /**
+     * Construtor com injeção de dependência do service.
+     *
+     * @param service Service de lógica de negócio para usuários
+     */
     public UserController(UserService service) {
         this.service = service;
     }
 
+    /**
+     * Lista todos os usuários cadastrados no sistema.
+     *
+     * <p>Retorna uma lista completa com todos os usuários ativos e inativos.
+     * Os resultados incluem ID, nome, email e role de cada usuário.</p>
+     *
+     * @return ResponseEntity contendo lista de UserDTO
+     */
     @GetMapping
     @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista com todos os usuários cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de usuários retornada com sucesso")
@@ -39,6 +78,15 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    /**
+     * Busca um usuário específico por ID.
+     *
+     * <p>Retorna os detalhes completos do usuário identificado pelo ID fornecido.</p>
+     *
+     * @param id Identificador único do usuário
+     * @return ResponseEntity contendo UserDTO com dados completos
+     * @throws jakarta.persistence.EntityNotFoundException se usuário não encontrado com o ID fornecido
+     */
     @GetMapping("/{id}")
     @Operation(summary = "Buscar usuário por ID", description = "Retorna um usuário específico pelo seu ID")
     @ApiResponses(value = {
@@ -50,6 +98,26 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    /**
+     * Cria um novo usuário no sistema.
+     *
+     * <p>Valida os dados de entrada e persiste o novo usuário.
+     * A senha fornecida é criptografada com BCrypt antes de ser armazenada.</p>
+     *
+     * <p><b>Validações realizadas:</b></p>
+     * <ul>
+     *   <li>Email único no sistema</li>
+     *   <li>Email em formato válido</li>
+     *   <li>Senha com mínimo 6 caracteres</li>
+     *   <li>Role válido (USER ou ADMIN)</li>
+     * </ul>
+     *
+     * @param dto Dados do usuário a ser criado
+     * @param uriBuilder Builder para construção da URI de localização
+     * @return ResponseEntity com UserDTO criado e status 201 (CREATED)
+     * @throws com.gestordecompras.gestorcomprasbackend.exception.DataIntegrityConflictException se email já existe
+     * @throws IllegalArgumentException se dados inválidos
+     */
     @PostMapping
     @Operation(summary = "Criar novo usuário", description = "Cria um novo usuário com os dados fornecidos")
     @ApiResponses(value = {
@@ -62,6 +130,18 @@ public class UserController {
         return ResponseEntity.created(uri).body(createdUser);
     }
 
+    /**
+     * Atualiza um usuário existente.
+     *
+     * <p>Atualiza os dados do usuário identificado pelo ID presente no DTO.
+     * Apenas campos fornecidos serão atualizados. Se senha for fornecida,
+     * será criptografada antes de armazenar.</p>
+     *
+     * @param dto Novos dados do usuário (incluindo ID)
+     * @return ResponseEntity com UserDTO atualizado
+     * @throws jakarta.persistence.EntityNotFoundException se usuário não encontrado
+     * @throws com.gestordecompras.gestorcomprasbackend.exception.DataIntegrityConflictException se atualização causa conflito de email
+     */
     @PutMapping
     @Operation(summary = "Atualizar usuário", description = "Atualiza os dados de um usuário existente")
     @ApiResponses(value = {
@@ -74,6 +154,20 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    /**
+     * Remove um usuário do sistema.
+     *
+     * <p>Deleta permanentemente o usuário identificado pelo ID.
+     * Esta operação não pode ser desfeita.</p>
+     *
+     * <p><b>IMPORTANTE:</b> Se o usuário tiver relacionamentos com outras entidades
+     * (ex: rascunhos criados), a operação pode falhar com erro de integridade.</p>
+     *
+     * @param id ID do usuário a ser removido
+     * @return ResponseEntity com status 204 (NO_CONTENT)
+     * @throws jakarta.persistence.EntityNotFoundException se usuário não encontrado
+     * @throws com.gestordecompras.gestorcomprasbackend.exception.DataIntegrityConflictException se usuário possui relacionamentos que impedem remoção
+     */
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir usuário", description = "Remove um usuário pelo seu ID")
     @ApiResponses(value = {

@@ -5,6 +5,9 @@ import com.gestordecompras.gestorcomprasbackend.model.cotacao.HistoricoCotacao;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+/**
+ * Mapper para conversão de HistoricoCotacao para DTO.
+ */
 @Mapper(componentModel = "spring")
 public interface HistoricoCotacaoMapper {
 

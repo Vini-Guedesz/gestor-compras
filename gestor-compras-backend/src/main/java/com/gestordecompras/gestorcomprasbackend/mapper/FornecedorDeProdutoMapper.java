@@ -9,6 +9,9 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
 
+/**
+ * Mapper para conversão entre FornecedorDeProduto e seus DTOs.
+ */
 @Mapper(componentModel = "spring", uses = {EnderecoMapper.class, ContatoMapper.class})
 public interface FornecedorDeProdutoMapper {
 

@@ -15,37 +15,85 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço responsável pela gestão de fornecedores de produtos.
+ * <p>
+ * Esta classe fornece funcionalidades para o ciclo de vida completo de fornecedores de produtos,
+ * incluindo criação, atualização, recuperação (paginada e lista completa) e exclusão.
+ * </p>
+ *
+ * @author Gestor de Compras
+ * @since 1.0
+ */
 @Service
 public class FornecedorDeProdutoService {
 
     private final FornecedorDeProdutoRepository repository;
     private final FornecedorDeProdutoMapper mapper;
 
+    /**
+     * Construtor com injeção de dependências.
+     *
+     * @param repository Repositório de fornecedores de produtos.
+     * @param mapper Mapper para conversão entre entidade e DTO.
+     */
     public FornecedorDeProdutoService(FornecedorDeProdutoRepository repository, FornecedorDeProdutoMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
     }
 
+    /**
+     * Recupera fornecedores de produtos de forma paginada.
+     *
+     * @param pageable Objeto contendo informações de paginação.
+     * @return Uma página de DTOs de fornecedores de produtos.
+     */
     public Page<FornecedorDeProdutoDTO> getAllFornecedoresDeProduto(Pageable pageable) {
         return repository.findAll(pageable).map(mapper::toDTO);
     }
 
+    /**
+     * Recupera todos os fornecedores de produtos, carregando relacionamentos.
+     *
+     * @return Lista completa de DTOs de fornecedores de produtos.
+     */
     public List<FornecedorDeProdutoDTO> getAllFornecedoresDeProduto() {
         return repository.findAllWithRelationships().stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Recupera todas as entidades de fornecedores de produtos.
+     * <p>
+     * Use com cautela para evitar carregamento excessivo de dados, preferindo DTOs quando possível.
+     * </p>
+     *
+     * @return Lista de entidades FornecedorDeProduto.
+     */
     public List<FornecedorDeProduto> getAllFornecedoresDeProdutoEntities() {
         return repository.findAllWithRelationships();
     }
 
+    /**
+     * Busca um fornecedor de produto pelo ID, incluindo relacionamentos.
+     *
+     * @param id Identificador único do fornecedor.
+     * @return DTO do fornecedor encontrado.
+     * @throws EntityNotFoundException Se o fornecedor não for encontrado.
+     */
     public FornecedorDeProdutoDTO getFornecedorDeProdutoById(Integer id) {
         return repository.findByIdWithRelationships(id)
                 .map(mapper::toDTO)
                 .orElseThrow(() -> new EntityNotFoundException("Fornecedor de produto não encontrado com ID: " + id));
     }
 
+    /**
+     * Cria um novo fornecedor de produto.
+     *
+     * @param dto DTO com os dados para criação do fornecedor.
+     * @return DTO do fornecedor criado.
+     */
     @Transactional
     public FornecedorDeProdutoDTO createFornecedorDeProduto(FornecedorDeProdutoCreateDTO dto) {
         FornecedorDeProduto fornecedor = mapper.toEntity(dto);
@@ -53,6 +101,13 @@ public class FornecedorDeProdutoService {
         return mapper.toDTO(savedFornecedor);
     }
 
+    /**
+     * Atualiza um fornecedor de produto existente.
+     *
+     * @param dto DTO com os dados atualizados e o ID do fornecedor.
+     * @return DTO do fornecedor atualizado.
+     * @throws EntityNotFoundException Se o fornecedor não for encontrado.
+     */
     @Transactional
     public FornecedorDeProdutoDTO updateFornecedorDeProduto(FornecedorDeProdutoUpdateDTO dto) {
         FornecedorDeProduto fornecedor = repository.findById(dto.id())
@@ -62,6 +117,12 @@ public class FornecedorDeProdutoService {
         return mapper.toDTO(repository.save(fornecedor));
     }
 
+    /**
+     * Exclui um fornecedor de produto pelo ID.
+     *
+     * @param id Identificador único do fornecedor a ser excluído.
+     * @throws EntityNotFoundException Se o fornecedor não for encontrado.
+     */
     @Transactional
     public void deleteFornecedorDeProduto(Integer id) {
         if (!repository.existsById(id)) {

@@ -23,6 +23,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço responsável pelo gerenciamento de cotações associadas a rascunhos.
+ * <p>
+ * Permite adicionar estimativas de preços e prazos aos itens de um rascunho
+ * antes que ele seja transformado em um pedido formal.
+ * </p>
+ *
+ * @author Gestor de Compras
+ * @since 1.0
+ */
 @Service
 public class CotacaoRascunhoService {
 
@@ -44,6 +54,12 @@ public class CotacaoRascunhoService {
     @Autowired
     private PdfDeduplicationService pdfDeduplicationService;
 
+    /**
+     * Lista todas as cotações de rascunho associadas a um rascunho específico.
+     *
+     * @param rascunhoId Identificador do rascunho.
+     * @return Lista de DTOs das cotações encontradas.
+     */
     @Transactional(readOnly = true)
     public List<CotacaoRascunhoDTO> listarPorRascunho(Long rascunhoId) {
         // Carregar cotações com itens (primeira query)
@@ -58,6 +74,13 @@ public class CotacaoRascunhoService {
         return cotacoes.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    /**
+     * Busca uma cotação de rascunho pelo seu ID.
+     *
+     * @param id Identificador da cotação de rascunho.
+     * @return DTO da cotação encontrada.
+     * @throws EntityNotFoundException Se a cotação não for encontrada.
+     */
     @Transactional(readOnly = true)
     public CotacaoRascunhoDTO obterPorId(Long id) {
         CotacaoRascunho cotacao = cotacaoRascunhoRepository.findByIdWithItens(id);
@@ -69,6 +92,15 @@ public class CotacaoRascunhoService {
         return toDTO(cotacao);
     }
 
+    /**
+     * Cria uma nova cotação de rascunho.
+     *
+     * @param rascunhoId Identificador do rascunho pai.
+     * @param dto Dados da nova cotação de rascunho.
+     * @return DTO da cotação criada.
+     * @throws EntityNotFoundException Se o rascunho ou fornecedor não forem encontrados.
+     * @throws IllegalArgumentException Se o tipo de fornecedor for inválido ou itens não pertencerem ao rascunho.
+     */
     @Transactional
     public CotacaoRascunhoDTO criar(Long rascunhoId, CotacaoRascunhoCreateDTO dto) {
         Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
@@ -139,6 +171,12 @@ public class CotacaoRascunhoService {
         return toDTO(salva);
     }
 
+    /**
+     * Exclui uma cotação de rascunho.
+     *
+     * @param id Identificador da cotação.
+     * @throws EntityNotFoundException Se a cotação não for encontrada.
+     */
     @Transactional
     public void deletar(Long id) {
         if (!cotacaoRascunhoRepository.existsById(id)) {
@@ -147,11 +185,25 @@ public class CotacaoRascunhoService {
         cotacaoRascunhoRepository.deleteById(id);
     }
 
+    /**
+     * Obtém o conteúdo do primeiro anexo PDF da cotação de rascunho.
+     *
+     * @param id Identificador da cotação.
+     * @return Array de bytes do PDF.
+     */
     @Transactional(readOnly = true)
     public byte[] obterAnexoPdf(Long id) {
         return obterAnexoPdf(id, 0);
     }
 
+    /**
+     * Obtém o conteúdo de um anexo específico da cotação de rascunho.
+     *
+     * @param id Identificador da cotação.
+     * @param index Índice do anexo (0-based).
+     * @return Array de bytes do PDF.
+     * @throws EntityNotFoundException Se a cotação ou anexo não forem encontrados.
+     */
     @Transactional(readOnly = true)
     public byte[] obterAnexoPdf(Long id, int index) {
         // Usar query que faz fetch dos anexos

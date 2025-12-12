@@ -23,6 +23,12 @@ public interface CotacaoRepository extends JpaRepository<Cotacao, Long> {
     // @Query("SELECT MAX(c.preco) FROM Cotacao c")
     // BigDecimal findMaxPreco();
 
+    /**
+     * Busca cotações associadas a um item de pedido específico, carregando dados dos fornecedores.
+     *
+     * @param itemPedidoId ID do item de pedido
+     * @return Lista de cotações
+     */
     @Query("SELECT DISTINCT c FROM Cotacao c " +
            "LEFT JOIN FETCH c.itens ci " +
            "LEFT JOIN FETCH ci.itemPedido ip " +
@@ -31,7 +37,12 @@ public interface CotacaoRepository extends JpaRepository<Cotacao, Long> {
            "WHERE ip.id = :itemPedidoId")
     List<Cotacao> findByItemPedidoIdWithFornecedores(@Param("itemPedidoId") Long itemPedidoId);
 
-    // Bug Fix #9: Query otimizada para evitar N+1 ao buscar todas as cotações
+    /**
+     * Busca todas as cotações carregando relacionamentos para evitar problema N+1.
+     * Bug Fix #9: Query otimizada.
+     *
+     * @return Lista de todas as cotações com relacionamentos carregados
+     */
     @Query("SELECT DISTINCT c FROM Cotacao c " +
            "LEFT JOIN FETCH c.itens " +
            "LEFT JOIN FETCH c.fornecedorProduto " +

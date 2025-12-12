@@ -10,7 +10,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-
+/**
+ * Entidade que representa um usuário do sistema.
+ * <p>
+ * Implementa {@link UserDetails} para integração direta com o Spring Security.
+ * O campo {@code email} é utilizado como identificador de login (username).
+ * </p>
+ *
+ * @author Gestor de Compras
+ * @since 1.0
+ */
 @Table(name = "users")
 @Entity(name = "users")
 @Data
@@ -18,53 +27,84 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
 public class User implements UserDetails {
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     /**
-     * Nome completo do usuário (ex: "João Silva")
-     * NÃO é usado para autenticação - apenas informação de perfil
+     * Nome completo do usuário (ex: "João Silva").
+     * <p>
+     * Utilizado para exibição na interface e relatórios. Não é usado para login.
+     * </p>
      */
-    private String nome;  // Antes: username
+    private String nome;
 
+    /**
+     * Senha criptografada do usuário.
+     */
     private String senha;
 
+    /**
+     * Papel ou perfil de acesso do usuário (ex: ADMIN, USER).
+     */
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
     /**
-     * Email do usuário (ex: "joao@email.com")
-     * Este campo É usado para autenticação via UserDetails.getUsername()
+     * Endereço de email do usuário.
+     * <p>
+     * Serve como identificador único para login (username) no Spring Security.
+     * </p>
      */
     private String email;
 
+    /**
+     * Retorna as autoridades concedidas ao usuário.
+     *
+     * @return Lista contendo a role do usuário prefixada com "ROLE_".
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
+    /**
+     * Retorna a senha do usuário.
+     *
+     * @return A senha criptografada.
+     */
     @Override
     public String getPassword() {
         return senha;
     }
 
     /**
-     * Retorna o identificador único para login (Spring Security UserDetails)
-     * IMPORTANTE: Retorna EMAIL, não o campo 'nome'
+     * Retorna o nome de usuário usado para autenticação.
+     * <p>
+     * <strong>IMPORTANTE:</strong> Retorna o email, pois é o identificador de login neste sistema.
+     * </p>
+     *
+     * @return O email do usuário.
      */
     @Override
     public String getUsername() {
-        return email;  // LOGIN: usa email como username
+        return email;
     }
 
     /**
-     * Getter para o nome completo do usuário
-     * Este é o campo 'nome' da tabela, não o username de login
+     * Obtém o nome completo do usuário para fins de exibição.
+     *
+     * @return O nome completo.
      */
     public String getNome() {
         return nome;
     }
 
+    /**
+     * Define o nome completo do usuário.
+     *
+     * @param nome O novo nome completo.
+     */
     public void setNome(String nome) {
         this.nome = nome;
     }

@@ -18,6 +18,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Controller REST para gerenciar Endereços.
+ *
+ * <p>Oferece operações CRUD para endereços usados por fornecedores. Validação de CEP obrigatória.</p>
+ *
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> ADMIN only</p>
+ *
+ * @since 1.0.0
+ * @see EnderecoService
+ * @see EnderecoDTO
+ */
 @RestController
 @RequestMapping(ApiVersionConfig.API_V1 + "/enderecos")
 @Tag(name = "Endereços", description = "API para gerenciamento de endereços (v1)")
@@ -26,10 +37,12 @@ public class EnderecoController {
 
     private final EnderecoService service;
 
+    /** Construtor com injeção de dependência. */
     public EnderecoController(EnderecoService service) {
         this.service = service;
     }
 
+    /** Lista todos os endereços. */
     @GetMapping
     @Operation(summary = "Listar todos os endereços", description = "Retorna uma lista com todos os endereços cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de endereços retornada com sucesso")
@@ -38,6 +51,7 @@ public class EnderecoController {
         return ResponseEntity.ok(enderecos);
     }
 
+    /** Busca endereço por ID. */
     @GetMapping("/{id}")
     @Operation(summary = "Buscar endereço por ID", description = "Retorna um endereço específico pelo seu ID")
     @ApiResponses(value = {
@@ -49,6 +63,7 @@ public class EnderecoController {
         return ResponseEntity.ok(endereco);
     }
 
+    /** Cria novo endereço validando CEP. */
     @PostMapping
     @Operation(summary = "Criar novo endereço", description = "Cria um novo endereço com os dados fornecidos")
     @ApiResponses(value = {
@@ -61,6 +76,7 @@ public class EnderecoController {
         return ResponseEntity.created(uri).body(createdEndereco);
     }
 
+    /** Atualiza endereço existente (ID obrigatório no DTO). */
     @PutMapping
     @Operation(summary = "Atualizar endereço", description = "Atualiza os dados de um endereço existente")
     @ApiResponses(value = {
@@ -73,6 +89,7 @@ public class EnderecoController {
         return ResponseEntity.ok(updatedEndereco);
     }
 
+    /** Remove endereço permanentemente. */
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir endereço", description = "Remove um endereço pelo seu ID")
     @ApiResponses(value = {

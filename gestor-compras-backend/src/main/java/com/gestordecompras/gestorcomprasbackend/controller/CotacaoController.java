@@ -7,6 +7,7 @@ import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoEditDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoUpdateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.HistoricoCotacaoDTO;
 import com.gestordecompras.gestorcomprasbackend.service.CotacaoService;
+import com.gestordecompras.gestorcomprasbackend.service.PdfDeduplicationService; // << ADICIONADO
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -24,6 +25,27 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller REST para gerenciar Cotações de Fornecedores.
+ *
+ * <p>Oferece operações completas para gerenciar cotações incluindo upload de PDFs,
+ * auditoria de edições, deduplificação de anexos e vinculação de itens.</p>
+ *
+ * <p><b>Funcionalidades Especiais:</b></p>
+ * <ul>
+ *   <li>Upload multipart de múltiplos PDFs com deduplificação automática via SHA-256</li>
+ *   <li>Sistema de auditoria: histórico completo de edições com PDFs anterior/novo</li>
+ *   <li>Economia de 33% de banda (multipart vs Base64) + 30-78% storage (dedup)</li>
+ *   <li>Vinculação dinâmica de itens de pedido via PATCH</li>
+ * </ul>
+ *
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> USER, ADMIN</p>
+ *
+ * @since 1.0.0
+ * @see CotacaoService
+ * @see CotacaoDTO
+ * @see com.gestordecompras.gestorcomprasbackend.service.PdfDeduplicationService
+ */
 @RestController
 @RequestMapping(ApiVersionConfig.API_V1 + "/cotacoes")
 @Tag(name = "Cotações", description = "API para gerenciamento de cotações de fornecedores (v1)")
@@ -31,13 +53,15 @@ import java.util.List;
 public class CotacaoController {
 
     private final CotacaoService cotacaoService;
-    private final com.gestordecompras.gestorcomprasbackend.service.PdfDeduplicationService pdfDeduplicationService;
+    private final PdfDeduplicationService pdfDeduplicationService;
 
-    public CotacaoController(CotacaoService cotacaoService, com.gestordecompras.gestorcomprasbackend.service.PdfDeduplicationService pdfDeduplicationService) {
+    /** Construtor com injeção de dependências (service e deduplicação PDF). */
+    public CotacaoController(CotacaoService cotacaoService, PdfDeduplicationService pdfDeduplicationService) {
         this.cotacaoService = cotacaoService;
         this.pdfDeduplicationService = pdfDeduplicationService;
     }
 
+    /** Lista todas as cotações com paginação (padrão: 20 por página). */
     @GetMapping
     @Operation(summary = "Listar todas as cotações", description = "Retorna uma lista com todas as cotações cadastradas")
     @ApiResponse(responseCode = "200", description = "Lista de cotações retornada com sucesso")
@@ -45,6 +69,7 @@ public class CotacaoController {
         return ResponseEntity.ok(cotacaoService.getAllCotacoes(pageable));
     }
 
+    /** Busca cotação por ID incluindo fornecedor e itens associados. */
     @GetMapping("/{id}")
     @Operation(summary = "Buscar cotação por ID", description = "Retorna uma cotação específica pelo seu ID")
     @ApiResponses(value = {
@@ -55,6 +80,7 @@ public class CotacaoController {
         return ResponseEntity.ok(cotacaoService.getCotacaoById(id));
     }
 
+    /** Cria nova cotação validando fornecedor, preço e itens obrigatórios. */
     @PostMapping
     @Operation(summary = "Criar nova cotação", description = "Cria uma nova cotação com os dados fornecidos")
     @ApiResponses(value = {
@@ -65,6 +91,7 @@ public class CotacaoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cotacaoService.createCotacao(cotacaoCreateDTO));
     }
 
+    /** Atualiza cotação existente. */
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar cotação", description = "Atualiza os dados de uma cotação existente")
     @ApiResponses(value = {
@@ -76,6 +103,7 @@ public class CotacaoController {
         return ResponseEntity.ok(cotacaoService.updateCotacao(id, cotacaoUpdateDTO));
     }
 
+    /** Remove cotação permanentemente. */
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir cotação", description = "Remove uma cotação pelo seu ID")
     @ApiResponses(value = {
@@ -87,6 +115,7 @@ public class CotacaoController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Retorna o primeiro anexo PDF da cotação em formato binário para download. */
     @GetMapping("/{id}/anexo")
     @Operation(summary = "Obter anexo PDF da cotação", description = "Retorna o primeiro anexo PDF da cotação")
     public ResponseEntity<byte[]> obterAnexoPdf(@PathVariable Long id) {
@@ -102,6 +131,7 @@ public class CotacaoController {
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
+    /** Retorna um anexo PDF específico da cotação pelo índice (0-based). */
     @GetMapping("/{id}/anexo/{index}")
     @Operation(summary = "Obter anexo PDF por índice", description = "Retorna um anexo PDF específico da cotação pelo índice")
     public ResponseEntity<byte[]> obterAnexoPdfPorIndice(
@@ -119,6 +149,7 @@ public class CotacaoController {
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
+    /** Vincula lista de itens de pedido à cotação (operação PATCH parcial). */
     @PatchMapping("/{cotacaoId}/vincular-itens")
     @Operation(summary = "Vincular itens à cotação", description = "Atualiza os itens vinculados a uma cotação específica")
     @ApiResponses(value = {
@@ -131,6 +162,12 @@ public class CotacaoController {
         return ResponseEntity.ok(cotacaoService.vincularItens(cotacaoId, itensPedidoIds));
     }
 
+    /**
+     * Edita cotação com auditoria completa.
+     *
+     * <p>Cria registro no histórico contendo preços/prazos/PDFs anteriores e novos.
+     * Requer motivo da edição obrigatório.</p>
+     */
     @PutMapping("/{id}/editar")
     @Operation(
             summary = "Editar cotação com auditoria",
@@ -146,6 +183,7 @@ public class CotacaoController {
         return ResponseEntity.ok(cotacaoService.editarCotacao(cotacaoEditDTO));
     }
 
+    /** Retorna histórico completo de edições da cotação (preços, prazos, PDFs, motivos). */
     @GetMapping("/{id}/historico")
     @Operation(
             summary = "Buscar histórico de edições",
@@ -160,6 +198,7 @@ public class CotacaoController {
         return ResponseEntity.ok(cotacaoService.buscarHistoricoCotacao(id));
     }
 
+    /** Retorna PDF da versão anterior armazenado no histórico de edição. */
     @GetMapping("/historico/{historicoId}/pdf/anterior")
     @Operation(
             summary = "Obter PDF anterior do histórico",
@@ -182,6 +221,7 @@ public class CotacaoController {
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
+    /** Retorna PDF da versão nova armazenado no histórico de edição. */
     @GetMapping("/historico/{historicoId}/pdf/novo")
     @Operation(
             summary = "Obter PDF novo do histórico",
@@ -204,6 +244,14 @@ public class CotacaoController {
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
+    /**
+     * Upload de múltiplos anexos PDF com deduplificação automática.
+     *
+     * <p>Implementa Content-Addressable Storage via SHA-256: PDFs idênticos são armazenados
+     * uma única vez. Economia de 33% de banda (multipart vs Base64) + 30-78% de storage.</p>
+     *
+     * <p>Validações: apenas PDF, máximo 10MB por arquivo.</p>
+     */
     @PostMapping(value = "/{id}/anexos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Upload de anexos PDF com deduplificação",
@@ -225,6 +273,7 @@ public class CotacaoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cotacao);
     }
 
+    /** Gera relatório de deduplificação de PDFs: total anexos, únicos, economia de espaço. */
     @GetMapping("/deduplication-report")
     @Operation(
             summary = "Relatório de Deduplificação de PDFs",

@@ -21,6 +21,18 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Controller REST para gerenciar Fornecedores de Serviço.
+ *
+ * <p>Oferece operações CRUD completas com paginação. Fornecedores de serviço
+ * possuem Inscrição Municipal e prestam serviços.</p>
+ *
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> USER, ADMIN</p>
+ *
+ * @since 1.0.0
+ * @see FornecedorDeServicoService
+ * @see FornecedorDeServicoDTO
+ */
 @RestController
 @RequestMapping(ApiVersionConfig.API_V1 + "/fornecedores-de-servico")
 @Tag(name = "Fornecedores de Serviço", description = "API para gerenciamento de fornecedores de serviço (v1)")
@@ -29,10 +41,12 @@ public class FornecedorDeServicoController {
 
     private final FornecedorDeServicoService service;
 
+    /** Construtor com injeção de dependência. */
     public FornecedorDeServicoController(FornecedorDeServicoService service) {
         this.service = service;
     }
 
+    /** Lista todos os fornecedores de serviço com paginação (padrão: 20 por página). */
     @GetMapping
     @Operation(summary = "Listar todos os fornecedores de serviço", description = "Retorna uma lista com todos os fornecedores de serviço cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de fornecedores de serviço retornada com sucesso")
@@ -41,6 +55,7 @@ public class FornecedorDeServicoController {
         return ResponseEntity.ok(fornecedores);
     }
 
+    /** Busca fornecedor por ID incluindo endereço e contato. */
     @GetMapping("/{id}")
     @Operation(summary = "Buscar fornecedor de serviço por ID", description = "Retorna um fornecedor de serviço específico pelo seu ID")
     @ApiResponses(value = {
@@ -52,6 +67,7 @@ public class FornecedorDeServicoController {
         return ResponseEntity.ok(fornecedor);
     }
 
+    /** Cria novo fornecedor validando CNPJ e Inscrição Municipal. */
     @PostMapping
     @Operation(summary = "Criar novo fornecedor de serviço", description = "Cria um novo fornecedor de serviço com os dados fornecidos")
     @ApiResponses(value = {
@@ -64,6 +80,7 @@ public class FornecedorDeServicoController {
         return ResponseEntity.created(uri).body(createdFornecedor);
     }
 
+    /** Atualiza fornecedor existente (ID obrigatório no DTO). */
     @PutMapping
     @Operation(summary = "Atualizar fornecedor de serviço", description = "Atualiza os dados de um fornecedor de serviço existente")
     @ApiResponses(value = {
@@ -76,6 +93,7 @@ public class FornecedorDeServicoController {
         return ResponseEntity.ok(updatedFornecedor);
     }
 
+    /** Remove fornecedor permanentemente. Falha se houver cotações associadas. */
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir fornecedor de serviço", description = "Remove um fornecedor de serviço pelo seu ID")
     @ApiResponses(value = {

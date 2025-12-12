@@ -15,6 +15,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller REST para gerenciar Itens de Pedido.
+ *
+ * <p>Cada item pertence a uma solicitação e contém nome, quantidade e descrição.
+ * Normalmente gerenciados através da solicitação pai.</p>
+ *
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> USER, ADMIN</p>
+ *
+ * @since 1.0.0
+ * @see ItemPedidoService
+ * @see ItemPedidoDTO
+ */
 @RestController
 @RequestMapping(ApiVersionConfig.API_V1 + "/itens-pedido")
 @Tag(name = "Itens de Pedido", description = "API para gerenciamento de itens de pedido (v1)")
@@ -23,10 +35,12 @@ public class ItemPedidoController {
 
     private final ItemPedidoService itemPedidoService;
 
+    /** Construtor com injeção de dependência. */
     public ItemPedidoController(ItemPedidoService itemPedidoService) {
         this.itemPedidoService = itemPedidoService;
     }
 
+    /** Lista todos os itens (sem paginação - usar com cautela). */
     @GetMapping
     @Operation(summary = "Listar todos os itens de pedido", description = "Retorna uma lista com todos os itens de pedido cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de itens retornada com sucesso")
@@ -34,6 +48,7 @@ public class ItemPedidoController {
         return ResponseEntity.ok(itemPedidoService.getAllItens());
     }
 
+    /** Busca item por ID incluindo solicitação associada. */
     @GetMapping("/{id}")
     @Operation(summary = "Buscar item de pedido por ID", description = "Retorna um item de pedido específico pelo seu ID")
     @ApiResponses(value = {
@@ -44,6 +59,7 @@ public class ItemPedidoController {
         return ResponseEntity.ok(itemPedidoService.getItemById(id));
     }
 
+    /** Cria novo item validando quantidade > 0. */
     @PostMapping
     @Operation(summary = "Criar novo item de pedido", description = "Cria um novo item de pedido com os dados fornecidos")
     @ApiResponses(value = {
@@ -54,6 +70,7 @@ public class ItemPedidoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(itemPedidoService.createItem(itemPedidoDTO));
     }
 
+    /** Atualiza item existente. */
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar item de pedido", description = "Atualiza os dados de um item de pedido existente")
     @ApiResponses(value = {
@@ -65,6 +82,7 @@ public class ItemPedidoController {
         return ResponseEntity.ok(itemPedidoService.updateItem(id, itemPedidoDTO));
     }
 
+    /** Remove item permanentemente da solicitação. */
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir item de pedido", description = "Remove um item de pedido pelo seu ID")
     @ApiResponses(value = {

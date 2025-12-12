@@ -15,6 +15,16 @@ import java.util.stream.Collectors;
 
 import com.gestordecompras.gestorcomprasbackend.repository.ItemPedidoRepository;
 
+/**
+ * Serviço responsável pelo gerenciamento de solicitações de pedidos.
+ * <p>
+ * Gerencia o ciclo de vida das solicitações, incluindo criação, atualização,
+ * consulta (simples e otimizada com relacionamentos) e exclusão.
+ * </p>
+ *
+ * @author Gestor de Compras
+ * @since 1.0
+ */
 @Service
 public class SolicitacaoDePedidoService {
 
@@ -22,17 +32,41 @@ public class SolicitacaoDePedidoService {
     private final SolicitacaoDePedidoMapper solicitacaoDePedidoMapper;
     private final ItemPedidoRepository itemPedidoRepository;
 
+    /**
+     * Construtor com injeção de dependências.
+     *
+     * @param solicitacaoDePedidoRepository Repositório de solicitações de pedido.
+     * @param solicitacaoDePedidoMapper Mapper para conversão entre entidade e DTO.
+     * @param itemPedidoRepository Repositório de itens de pedido.
+     */
     public SolicitacaoDePedidoService(SolicitacaoDePedidoRepository solicitacaoDePedidoRepository, SolicitacaoDePedidoMapper solicitacaoDePedidoMapper, ItemPedidoRepository itemPedidoRepository) {
         this.solicitacaoDePedidoRepository = solicitacaoDePedidoRepository;
         this.solicitacaoDePedidoMapper = solicitacaoDePedidoMapper;
         this.itemPedidoRepository = itemPedidoRepository;
     }
 
+    /**
+     * Recupera solicitações de pedido de forma paginada.
+     *
+     * @param pageable Objeto contendo informações de paginação.
+     * @return Página de DTOs de solicitações de pedido.
+     */
     public Page<SolicitacaoDePedidoDTO> getAllSolicitacoes(Pageable pageable) {
         return solicitacaoDePedidoRepository.findAll(pageable)
                 .map(solicitacaoDePedidoMapper::toDTO);
     }
 
+    /**
+     * Busca uma solicitação de pedido pelo ID.
+     * <p>
+     * Utiliza estratégia otimizada com múltiplas queries para carregar relacionamentos
+     * (itens e cotações) evitando o problema de produto cartesiano (N+1).
+     * </p>
+     *
+     * @param id Identificador da solicitação.
+     * @return DTO da solicitação encontrada.
+     * @throws EntityNotFoundException Se a solicitação não for encontrada.
+     */
     public SolicitacaoDePedidoDTO getSolicitacaoById(Long id) {
         // Bug Fix #1: Carregar dados em múltiplas queries para evitar produto cartesiano
 
@@ -49,6 +83,13 @@ public class SolicitacaoDePedidoService {
         return solicitacaoDePedidoMapper.toDTO(pedido);
     }
 
+    /**
+     * Cria uma nova solicitação de pedido.
+     *
+     * @param solicitacaoDePedidoDTO DTO com os dados para criação.
+     * @return DTO da solicitação criada.
+     * @throws IllegalArgumentException Se a solicitação não tiver itens.
+     */
     public SolicitacaoDePedidoDTO createSolicitacao(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
         SolicitacaoDePedido solicitacaoDePedido = solicitacaoDePedidoMapper.toEntity(solicitacaoDePedidoDTO);
 
@@ -70,6 +111,17 @@ public class SolicitacaoDePedidoService {
         return solicitacaoDePedidoMapper.toDTO(solicitacaoSalva);
     }
 
+    /**
+     * Atualiza uma solicitação de pedido existente.
+     * <p>
+     * Permite atualizar status, observação e modificar a lista de itens (adicionar, editar, remover).
+     * </p>
+     *
+     * @param id Identificador da solicitação.
+     * @param solicitacaoDePedidoDTO DTO com os novos dados.
+     * @return DTO da solicitação atualizada.
+     * @throws EntityNotFoundException Se a solicitação não for encontrada.
+     */
     public SolicitacaoDePedidoDTO updateSolicitacao(Long id, SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
         return solicitacaoDePedidoRepository.findById(id)
                 .map(solicitacao -> {
@@ -139,6 +191,12 @@ public class SolicitacaoDePedidoService {
                 .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com ID: " + id));
     }
 
+    /**
+     * Exclui uma solicitação de pedido.
+     *
+     * @param id Identificador da solicitação.
+     * @throws EntityNotFoundException Se a solicitação não for encontrada.
+     */
     public void deleteSolicitacao(Long id) {
         if (!solicitacaoDePedidoRepository.existsById(id)) {
             throw new EntityNotFoundException("Solicitação de pedido não encontrada com ID: " + id);

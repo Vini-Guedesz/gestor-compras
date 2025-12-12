@@ -5,6 +5,9 @@ import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+/**
+ * Mapper para conversão entre ItemPedido e seus DTOs.
+ */
 @Mapper(componentModel = "spring")
 public interface ItemPedidoMapper {
     ItemPedidoDTO toDTO(ItemPedido itemPedido);

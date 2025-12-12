@@ -11,6 +11,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Mapper manual para conversão entre Cotacao e seus DTOs.
+ * Implementado como classe para lidar com lógicas complexas de mapeamento (ex: itens legacy vs novos).
+ */
 @Component
 public class CotacaoMapper {
 

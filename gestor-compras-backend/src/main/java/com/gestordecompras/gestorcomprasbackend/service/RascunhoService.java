@@ -25,6 +25,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço responsável pelo gerenciamento de rascunhos de pedidos.
+ * <p>
+ * Permite que usuários criem rascunhos, adicionem itens, realizem cotações preliminares
+ * e convertam esses rascunhos em solicitações de pedido formais.
+ * </p>
+ *
+ * @author Gestor de Compras
+ * @since 1.0
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,11 +53,23 @@ public class RascunhoService {
     private final NumeroItemDisponivelRepository numeroItemDisponivelRepository;
     private final PdfDeduplicationService pdfDeduplicationService;
 
+    /**
+     * Recupera todos os rascunhos de forma paginada.
+     *
+     * @param pageable Objeto contendo informações de paginação.
+     * @return Página de DTOs de rascunhos.
+     */
     @Transactional(readOnly = true)
     public Page<RascunhoDTO> getAllRascunhos(Pageable pageable) {
         return rascunhoRepository.findAll(pageable).map(rascunhoMapper::toDTO);
     }
 
+    /**
+     * Recupera todos os rascunhos criados por um usuário específico.
+     *
+     * @param userId ID do usuário criador.
+     * @return Lista de DTOs de rascunhos do usuário.
+     */
     @Transactional(readOnly = true)
     public List<RascunhoDTO> getRascunhosPorUsuario(Long userId) {
         return rascunhoRepository.findAllByCriadorIdWithItens(userId).stream()
@@ -55,6 +77,13 @@ public class RascunhoService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Busca um rascunho pelo ID, incluindo seus itens.
+     *
+     * @param id Identificador do rascunho.
+     * @return DTO do rascunho encontrado.
+     * @throws EntityNotFoundException Se o rascunho não for encontrado.
+     */
     @Transactional(readOnly = true)
     public RascunhoDTO getRascunhoById(Long id) {
         Rascunho rascunho = rascunhoRepository.findByIdWithItens(id);
@@ -64,6 +93,12 @@ public class RascunhoService {
         return rascunhoMapper.toDTO(rascunho);
     }
 
+    /**
+     * Cria um novo rascunho.
+     *
+     * @param dto DTO com os dados para criação.
+     * @return DTO do rascunho criado.
+     */
     @Transactional
     public RascunhoDTO createRascunho(RascunhoCreateDTO dto) {
         User criador = getUsuarioAutenticado();
@@ -88,6 +123,15 @@ public class RascunhoService {
         return rascunhoMapper.toDTO(rascunhoSalvo);
     }
 
+    /**
+     * Atualiza o status de um rascunho.
+     *
+     * @param rascunhoId ID do rascunho.
+     * @param status Novo status (ATIVO, EM_COTACAO, FINALIZADO).
+     * @return DTO do rascunho atualizado.
+     * @throws EntityNotFoundException Se o rascunho não for encontrado.
+     * @throws IllegalArgumentException Se o status for inválido.
+     */
     @Transactional
     public RascunhoDTO atualizarStatus(Long rascunhoId, String status) {
         Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
@@ -103,6 +147,14 @@ public class RascunhoService {
         }
     }
 
+    /**
+     * Adiciona um novo item ao rascunho.
+     *
+     * @param rascunhoId ID do rascunho.
+     * @param itemDTO DTO com os dados do item.
+     * @return DTO do rascunho atualizado com o novo item.
+     * @throws EntityNotFoundException Se o rascunho não for encontrado.
+     */
     @Transactional
     public RascunhoDTO adicionarItem(Long rascunhoId, ItemRascunhoCreateDTO itemDTO) {
         Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
@@ -151,6 +203,16 @@ public class RascunhoService {
         return numero;
     }
 
+    /**
+     * Atualiza um item existente no rascunho.
+     *
+     * @param rascunhoId ID do rascunho.
+     * @param itemId ID do item a ser atualizado.
+     * @param itemDTO Novos dados do item.
+     * @return DTO do rascunho atualizado.
+     * @throws EntityNotFoundException Se o rascunho ou o item não forem encontrados.
+     * @throws IllegalArgumentException Se o item não pertencer ao rascunho.
+     */
     @Transactional
     public RascunhoDTO atualizarItem(Long rascunhoId, Long itemId, ItemRascunhoUpdateDTO itemDTO) {
         Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
@@ -190,6 +252,15 @@ public class RascunhoService {
         return rascunhoMapper.toDTO(rascunho);
     }
 
+    /**
+     * Remove um item do rascunho.
+     *
+     * @param rascunhoId ID do rascunho.
+     * @param itemId ID do item a ser removido.
+     * @return DTO do rascunho atualizado.
+     * @throws EntityNotFoundException Se o rascunho ou o item não forem encontrados.
+     * @throws IllegalArgumentException Se o item não pertencer ao rascunho.
+     */
     @Transactional
     public RascunhoDTO removerItem(Long rascunhoId, Long itemId) {
         Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
@@ -220,6 +291,14 @@ public class RascunhoService {
         return rascunhoMapper.toDTO(rascunho);
     }
 
+    /**
+     * Atualiza dados gerais do rascunho e seus itens em lote.
+     *
+     * @param id Identificador do rascunho.
+     * @param dto DTO com os dados atualizados.
+     * @return DTO do rascunho atualizado.
+     * @throws EntityNotFoundException Se o rascunho não for encontrado.
+     */
     @Transactional
     public RascunhoDTO updateRascunho(Long id, RascunhoUpdateDTO dto) {
         Rascunho rascunho = rascunhoRepository.findById(id)
@@ -252,6 +331,12 @@ public class RascunhoService {
         return rascunhoMapper.toDTO(rascunhoAtualizado);
     }
 
+    /**
+     * Exclui um rascunho.
+     *
+     * @param id Identificador do rascunho.
+     * @throws EntityNotFoundException Se o rascunho não for encontrado.
+     */
     @Transactional
     public void deleteRascunho(Long id) {
         if (!rascunhoRepository.existsById(id)) {
@@ -260,6 +345,19 @@ public class RascunhoService {
         rascunhoRepository.deleteById(id);
     }
 
+    /**
+     * Converte um rascunho em uma solicitação de pedido oficial.
+     * <p>
+     * Cria um novo pedido com base nos itens selecionados e suas cotações, e marca o rascunho como finalizado.
+     * </p>
+     *
+     * @param rascunhoId ID do rascunho.
+     * @param dto DTO contendo a seleção de itens e mapeamento de cotações.
+     * @return DTO do pedido criado.
+     * @throws EntityNotFoundException Se o rascunho não for encontrado.
+     * @throws SecurityException Se o usuário não for o dono do rascunho.
+     * @throws IllegalArgumentException Se houver inconsistências na seleção de itens ou cotações.
+     */
     @Transactional
     public SolicitacaoDePedidoDTO converterRascunhoParaPedido(Long rascunhoId, ConverterRascunhoParaPedidoDTO dto) {
         Rascunho rascunho = rascunhoRepository.findByIdWithItens(rascunhoId);

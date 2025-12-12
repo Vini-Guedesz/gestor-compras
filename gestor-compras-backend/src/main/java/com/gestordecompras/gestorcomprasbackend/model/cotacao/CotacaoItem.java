@@ -10,13 +10,15 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 /**
- * Entidade intermediária entre Cotacao e ItemPedido
+ * Entidade intermediária que representa um item específico dentro de uma cotação.
+ * <p>
+ * Resolve o problema de relacionamento N:N com atributos extras (Bug #5), permitindo
+ * armazenar o preço unitário e a quantidade cotada especificamente para cada item
+ * em cada cotação.
+ * </p>
  *
- * Resolve o Bug #5: Permite armazenar informações específicas do relacionamento
- * cotação-item, como preço unitário e quantidade cotada.
- *
- * Esta entidade substitui o relacionamento N:N direto anterior que não permitia
- * armazenar preços individuais por item.
+ * @author Gestor de Compras
+ * @since 1.0
  */
 @Entity
 @Table(name = "cotacao_item",
@@ -35,34 +37,46 @@ public class CotacaoItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Cotação à qual este item pertence.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cotacao_id", nullable = false)
     private Cotacao cotacao;
 
+    /**
+     * Item do pedido original que está sendo cotado.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_pedido_id", nullable = false)
     private ItemPedido itemPedido;
 
     /**
-     * Preço unitário do item nesta cotação específica
+     * Preço unitário do item ofertado nesta cotação.
      */
     @Column(name = "preco_unitario", nullable = false, precision = 19, scale = 2)
     private BigDecimal precoUnitario;
 
     /**
-     * Quantidade cotada (pode diferir da quantidade solicitada)
+     * Quantidade cotada pelo fornecedor.
+     * <p>
+     * Pode diferir da quantidade solicitada se o fornecedor tiver restrições de estoque
+     * ou venda mínima.
+     * </p>
      */
     @Column(name = "quantidade", nullable = false)
     private Integer quantidade;
 
     /**
-     * Observações específicas sobre este item nesta cotação
+     * Observações específicas sobre este item nesta cotação (ex: marca, modelo, validade).
      */
     @Column(name = "observacao", length = 1000)
     private String observacao;
 
     /**
-     * Calcula o preço total deste item (preço unitário * quantidade)
+     * Calcula o subtotal para este item (preço unitário * quantidade).
+     *
+     * @return Valor total do item nesta cotação.
      */
     public BigDecimal calcularPrecoTotal() {
         if (precoUnitario == null || quantidade == null) {
@@ -72,7 +86,9 @@ public class CotacaoItem {
     }
 
     /**
-     * Método helper para configurar relacionamento bidirecional
+     * Método auxiliar para configurar o relacionamento bidirecional com segurança.
+     *
+     * @param cotacao A cotação pai.
      */
     public void setCotacao(Cotacao cotacao) {
         this.cotacao = cotacao;

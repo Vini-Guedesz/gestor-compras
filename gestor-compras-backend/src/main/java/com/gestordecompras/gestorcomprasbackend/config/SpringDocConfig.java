@@ -10,6 +10,12 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuração do OpenAPI (Swagger) para documentação da API
+ *
+ * Define as informações gerais da API, esquema de segurança (JWT)
+ * e detalhes de contato/licença.
+ */
 @Configuration
 public class SpringDocConfig {
 

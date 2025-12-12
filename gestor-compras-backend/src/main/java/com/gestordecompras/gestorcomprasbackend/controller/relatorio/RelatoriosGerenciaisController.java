@@ -16,6 +16,17 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * Controller REST para geração de Relatórios Gerenciais e Executivos.
+ *
+ * <p>Gera PDFs executivos via JasperReports: dashboards, rankings, comparativos,
+ * solicitações abertas/fechadas e itens para cotação.</p>
+ *
+ * <p><b>Autenticação:</b> Pública (sem JWT) | <b>Roles:</b> Todos</p>
+ *
+ * @since 1.0.0
+ * @see JasperReportService
+ */
 @RestController
 @RequestMapping("/relatorios")
 @Tag(name = "Relatórios Gerenciais", description = "Endpoints para geração de relatórios executivos e gerenciais")
@@ -25,10 +36,12 @@ public class RelatoriosGerenciaisController {
 
     private final JasperReportService jasperReportService;
 
+    /** Construtor com injeção de dependência. */
     public RelatoriosGerenciaisController(JasperReportService jasperReportService) {
         this.jasperReportService = jasperReportService;
     }
 
+    /** Gera PDF com KPIs executivos: total pedidos, fornecedores, cotações, etc. */
     @GetMapping("/dashboard-executivo")
     @Operation(summary = "Dashboard Executivo", description = "Gera relatório com KPIs e métricas executivas do sistema")
     public ResponseEntity<byte[]> gerarDashboardExecutivo() {
@@ -46,6 +59,7 @@ public class RelatoriosGerenciaisController {
         }
     }
 
+    /** Gera PDF com ranking dos itens mais solicitados. */
     @GetMapping("/itens-mais-solicitados")
     @Operation(summary = "Itens Mais Solicitados", description = "Gera relatório com ranking dos itens mais solicitados")
     public ResponseEntity<byte[]> gerarRelatorioItensMaisSolicitados() {
@@ -63,6 +77,7 @@ public class RelatoriosGerenciaisController {
         }
     }
 
+    /** Gera PDF comparativo de todas as cotações para um item específico. */
     @GetMapping("/comparativo-cotacao/{itemPedidoId}")
     @Operation(summary = "Comparativo de Cotações por Item", description = "Gera relatório comparativo de todas as cotações para um item específico")
     public ResponseEntity<byte[]> gerarComparativoCotacao(@PathVariable Long itemPedidoId) {
@@ -80,6 +95,7 @@ public class RelatoriosGerenciaisController {
         }
     }
 
+    /** Gera PDF com solicitações PENDENTE ou EM_ANDAMENTO. */
     @GetMapping("/solicitacoes-abertas")
     @Operation(summary = "Solicitações Abertas", description = "Gera relatório com todas as solicitações de pedido com status PENDENTE ou EM_ANDAMENTO")
     public ResponseEntity<byte[]> gerarRelatorioSolicitacoesAbertas() {
@@ -97,6 +113,7 @@ public class RelatoriosGerenciaisController {
         }
     }
 
+    /** Gera PDF com pedidos APROVADO ou CANCELADO. */
     @GetMapping("/pedidos-fechados")
     @Operation(summary = "Pedidos Fechados", description = "Gera relatório com todos os pedidos com status APROVADO ou CANCELADO")
     public ResponseEntity<byte[]> gerarRelatorioPedidosFechados() {
@@ -114,6 +131,11 @@ public class RelatoriosGerenciaisController {
         }
     }
 
+    /**
+     * Gera PDF com itens selecionados de um pedido para envio aos fornecedores.
+     *
+     * <p>Se nenhum ID de item for fornecido, inclui todos os itens da solicitação.</p>
+     */
     @PostMapping("/itens-para-cotacao")
     @Operation(summary = "Itens para Cotação",
                description = "Gera relatório com os itens selecionados de uma solicitação para envio aos fornecedores. " +
@@ -139,6 +161,11 @@ public class RelatoriosGerenciaisController {
         }
     }
 
+    /**
+     * Gera PDF com itens selecionados de um rascunho para envio aos fornecedores.
+     *
+     * <p>Se nenhum ID de item for fornecido, inclui todos os itens do rascunho.</p>
+     */
     @PostMapping("/itens-para-cotacao-rascunho")
     @Operation(summary = "Itens para Cotação (Rascunho)",
                description = "Gera relatório com os itens selecionados de um rascunho para envio aos fornecedores. " +

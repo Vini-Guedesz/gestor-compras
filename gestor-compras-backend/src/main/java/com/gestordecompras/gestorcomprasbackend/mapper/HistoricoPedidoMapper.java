@@ -5,6 +5,9 @@ import com.gestordecompras.gestorcomprasbackend.model.pedido.HistoricoPedido;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+/**
+ * Mapper para conversão de HistoricoPedido para DTO.
+ */
 @Mapper(componentModel = "spring")
 public interface HistoricoPedidoMapper {
 

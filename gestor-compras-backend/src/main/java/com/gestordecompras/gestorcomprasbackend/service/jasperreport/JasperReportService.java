@@ -31,6 +31,16 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * Serviço responsável pela geração de relatórios PDF usando JasperReports.
+ * <p>
+ * Centraliza a lógica de carregamento, compilação de templates (.jrxml), busca de dados
+ * e exportação para formato PDF. Utiliza cache de templates para otimizar a performance.
+ * </p>
+ *
+ * @author Gestor de Compras
+ * @since 1.0
+ */
 @Service
 public class JasperReportService {
 
@@ -65,11 +75,11 @@ public class JasperReportService {
     }
 
     /**
-     * Obtém um JasperReport compilado do cache ou compila e cacheia se necessário
+     * Obtém um JasperReport compilado do cache ou compila e cacheia se necessário.
      *
-     * @param templatePath Caminho do template .jrxml no classpath
-     * @return JasperReport compilado
-     * @throws JRException Se houver erro na compilação
+     * @param templatePath Caminho do template .jrxml no classpath.
+     * @return JasperReport compilado.
+     * @throws JRException Se houver erro na leitura ou compilação do template.
      */
     private JasperReport getOrCompileTemplate(String templatePath) throws JRException {
         return templateCache.computeIfAbsent(templatePath, path -> {
@@ -86,13 +96,21 @@ public class JasperReportService {
     }
 
     /**
-     * Limpa o cache de templates compilados
-     * Útil para recarregar templates após atualizações
+     * Limpa o cache de templates compilados.
+     * <p>
+     * Útil para recarregar templates após atualizações em tempo de execução sem reiniciar a aplicação.
+     * </p>
      */
     public void clearTemplateCache() {
         templateCache.clear();
     }
 
+    /**
+     * Gera relatório de lista de todos os fornecedores de produto.
+     *
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     */
     public byte[] gerarRelatorioFornecedores() throws JRException {
         List<FornecedorDeProduto> fornecedores = fornecedorDeProdutoService.getAllFornecedoresDeProdutoEntities();
 
@@ -107,6 +125,12 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    /**
+     * Gera relatório de lista de todos os itens de pedido cadastrados.
+     *
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     */
     public byte[] gerarRelatorioItensPedido() throws JRException {
         List<ItemPedido> itens = itemPedidoService.getAllItensEntities();
 
@@ -121,6 +145,14 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    /**
+     * Gera relatório detalhado de um item de pedido específico.
+     *
+     * @param id ID do item de pedido.
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     * @throws EntityNotFoundException Se o item não for encontrado.
+     */
     public byte[] gerarRelatorioItemPedidoPorId(Long id) throws JRException {
         ItemPedido item = itemPedidoService.getItemEntityById(id);
 
@@ -145,6 +177,12 @@ public class JasperReportService {
 
     // Novos métodos de relatório
 
+    /**
+     * Gera o dashboard executivo com indicadores (KPIs) de compras.
+     *
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     */
     @Transactional(readOnly = true)
     public byte[] gerarDashboardExecutivo() throws JRException {
         DashboardExecutivoDTO dashboard = calcularDashboardExecutivo();
@@ -165,6 +203,12 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    /**
+     * Gera relatório dos itens mais solicitados (ranking).
+     *
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     */
     @Transactional(readOnly = true)
     public byte[] gerarRelatorioItensMaisSolicitados() throws JRException {
         List<ItemMaisSolicitadoDTO> itens = calcularItensMaisSolicitados();
@@ -185,6 +229,13 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    /**
+     * Gera relatório comparativo de cotações para um item específico.
+     *
+     * @param itemPedidoId ID do item para comparação.
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     */
     @Transactional(readOnly = true)
     public byte[] gerarComparativoCotacaoPorItem(Long itemPedidoId) throws JRException {
         List<ComparativoCotacaoDTO> cotacoes = buscarCotacoesPorItem(itemPedidoId);
@@ -208,6 +259,12 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    /**
+     * Gera relatório de solicitações de pedido em aberto.
+     *
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     */
     @Transactional(readOnly = true)
     public byte[] gerarRelatorioSolicitacoesAbertas() throws JRException {
         List<SolicitacaoAbertaDTO> solicitacoes = buscarSolicitacoesAbertas();
@@ -228,6 +285,12 @@ public class JasperReportService {
         return out.toByteArray();
     }
 
+    /**
+     * Gera relatório de pedidos fechados/concluídos.
+     *
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     */
     @Transactional(readOnly = true)
     public byte[] gerarRelatorioPedidosFechados() throws JRException {
         List<PedidoFechadoDTO> pedidos = buscarPedidosFechados();
@@ -401,6 +464,15 @@ public class JasperReportService {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Gera relatório de itens selecionados para cotação (de uma solicitação).
+     *
+     * @param request Filtros para geração do relatório (ID da solicitação e opcionalmente IDs dos itens).
+     * @return Byte array do PDF gerado.
+     * @throws JRException Em caso de erro na geração do relatório.
+     * @throws EntityNotFoundException Se a solicitação não for encontrada.
+     * @throws IllegalArgumentException Se não houver itens correspondentes.
+     */
     @Transactional(readOnly = true)
     public byte[] gerarRelatorioItensParaCotacao(SolicitacaoRelatorioRequestDTO request) throws JRException {
         // Validar e buscar a solicitação
@@ -459,10 +531,13 @@ public class JasperReportService {
     }
 
     /**
-     * Gera relatório de itens para cotação a partir de um rascunho
-     * @param request Dados da requisição contendo ID do rascunho e IDs opcionais dos itens
-     * @return Byte array do PDF gerado
-     * @throws JRException Se houver erro na geração do relatório
+     * Gera relatório de itens para cotação a partir de um rascunho.
+     *
+     * @param request Dados da requisição contendo ID do rascunho e IDs opcionais dos itens.
+     * @return Byte array do PDF gerado.
+     * @throws JRException Se houver erro na geração do relatório.
+     * @throws EntityNotFoundException Se o rascunho não for encontrado.
+     * @throws IllegalArgumentException Se não houver itens correspondentes.
      */
     @Transactional(readOnly = true)
     public byte[] gerarRelatorioItensParaCotacaoRascunho(SolicitacaoRelatorioRequestDTO request) throws JRException {

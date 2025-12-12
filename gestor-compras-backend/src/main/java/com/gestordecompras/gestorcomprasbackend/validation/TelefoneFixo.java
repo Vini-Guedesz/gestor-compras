@@ -5,6 +5,10 @@ import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
+/**
+ * Validação customizada para números de telefone fixo brasileiros
+ * Verifica o formato (XX) XXXX-XXXX
+ */
 @Documented
 @Constraint(validatedBy = TelefoneFixoValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})

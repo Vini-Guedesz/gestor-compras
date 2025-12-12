@@ -5,6 +5,10 @@ import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
+/**
+ * Validação customizada para CEP (Código de Endereçamento Postal)
+ * Verifica o formato 8 dígitos e opcionalmente consulta existência na API ViaCEP
+ */
 @Documented
 @Constraint(validatedBy = CEPValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})

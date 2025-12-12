@@ -18,6 +18,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Controller REST para gerenciar Contatos.
+ *
+ * <p>Oferece operações CRUD para contatos usados por fornecedores. Validação de telefone e email.</p>
+ *
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> ADMIN only</p>
+ *
+ * @since 1.0.0
+ * @see ContatoService
+ * @see ContatoDTO
+ */
 @RestController
 @RequestMapping(ApiVersionConfig.API_V1 + "/contatos")
 @Tag(name = "Contatos", description = "API para gerenciamento de contatos (v1)")
@@ -26,10 +37,12 @@ public class ContatoController {
 
     private final ContatoService service;
 
+    /** Construtor com injeção de dependência. */
     public ContatoController(ContatoService service) {
         this.service = service;
     }
 
+    /** Lista todos os contatos. */
     @GetMapping
     @Operation(summary = "Listar todos os contatos", description = "Retorna uma lista com todos os contatos cadastrados")
     @ApiResponse(responseCode = "200", description = "Lista de contatos retornada com sucesso")
@@ -38,6 +51,7 @@ public class ContatoController {
         return ResponseEntity.ok(contatos);
     }
 
+    /** Busca contato por ID. */
     @GetMapping("/{id}")
     @Operation(summary = "Buscar contato por ID", description = "Retorna um contato específico pelo seu ID")
     @ApiResponses(value = {
@@ -49,6 +63,7 @@ public class ContatoController {
         return ResponseEntity.ok(contato);
     }
 
+    /** Cria novo contato validando telefone e email. */
     @PostMapping
     @Operation(summary = "Criar novo contato", description = "Cria um novo contato com os dados fornecidos")
     @ApiResponses(value = {
@@ -61,6 +76,7 @@ public class ContatoController {
         return ResponseEntity.created(uri).body(createdContato);
     }
 
+    /** Atualiza contato existente (ID obrigatório no DTO). */
     @PutMapping
     @Operation(summary = "Atualizar contato", description = "Atualiza os dados de um contato existente")
     @ApiResponses(value = {
@@ -73,6 +89,7 @@ public class ContatoController {
         return ResponseEntity.ok(updatedContato);
     }
 
+    /** Remove contato permanentemente. */
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir contato", description = "Remove um contato pelo seu ID")
     @ApiResponses(value = {

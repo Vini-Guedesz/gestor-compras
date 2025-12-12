@@ -5,6 +5,10 @@ import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
+/**
+ * Validação customizada para números de celular brasileiros
+ * Verifica o formato (XX) 9XXXX-XXXX e a presença do 9º dígito
+ */
 @Documented
 @Constraint(validatedBy = CelularValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
