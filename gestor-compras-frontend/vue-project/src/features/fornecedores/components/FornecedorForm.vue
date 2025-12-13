@@ -3,39 +3,70 @@
     <div v-if="isVisible" class="modal-overlay" @click.self="$emit('close')">
       <div class="modal-container">
         <div class="modal-header">
-          <h2 class="modal-title">{{ fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor' }}</h2>
+          <div class="modal-header-content">
+            <h2 class="modal-title">{{ fornecedor ? 'Editar Fornecedor' : 'Novo Fornecedor' }}</h2>
+            <p class="modal-subtitle">
+              {{ fornecedor ? 'Atualize as informações cadastrais do fornecedor' : 'Preencha os dados para cadastrar um novo fornecedor' }}
+            </p>
+          </div>
           <button @click="$emit('close')" class="close-button">&times;</button>
         </div>
         <div class="modal-body">
         <form @submit.prevent="handleSubmit">
           <!-- Tipo de Fornecedor -->
           <div class="form-section">
-            <h3 class="section-title">Tipo de Fornecedor</h3>
-            <div class="radio-group">
-              <label class="radio-option">
+            <h3 class="section-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" style="margin-right: 8px;">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              Tipo de Fornecedor
+            </h3>
+            <div class="radio-group-cards">
+              <label class="radio-card" :class="{ active: formData.tipo === 'produto' }">
                 <input
                   type="radio"
                   v-model="formData.tipo"
                   value="produto"
                   @change="clearSecondaryFields"
                 />
-                <span class="radio-label">Fornecedor de Produto</span>
+                <div class="radio-card-content">
+                  <svg viewBox="0 0 24 24" width="24" height="24" class="radio-card-icon">
+                    <path fill="currentColor" d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,5.11 21.1,4 20,4Z"/>
+                  </svg>
+                  <div>
+                    <span class="radio-card-label">Fornecedor de Produto</span>
+                    <span class="radio-card-description">Fornece produtos físicos e materiais</span>
+                  </div>
+                </div>
               </label>
-              <label class="radio-option">
+              <label class="radio-card" :class="{ active: formData.tipo === 'servico' }">
                 <input
                   type="radio"
                   v-model="formData.tipo"
                   value="servico"
                   @change="clearSecondaryFields"
                 />
-                <span class="radio-label">Fornecedor de Serviço</span>
+                <div class="radio-card-content">
+                  <svg viewBox="0 0 24 24" width="24" height="24" class="radio-card-icon">
+                    <path fill="currentColor" d="M12,3C10.73,3 9.6,3.8 9.18,5H3V7H4.95L2,14C1.53,16 3,17 5.5,17C8,17 9.56,16 9,14L6.05,7H9.17C9.5,7.85 10.15,8.5 11,8.83V20H2V22H22V20H13V8.82C13.85,8.5 14.5,7.85 14.82,7H17.95L15,14C14.53,16 16,17 18.5,17C21,17 22.56,16 22,14L19.05,7H21V5H14.83C14.4,3.8 13.27,3 12,3M12,5A1,1 0 0,1 13,6A1,1 0 0,1 12,7A1,1 0 0,1 11,6A1,1 0 0,1 12,5M5.5,10.25L7,14.5C7,14.5 6.5,15 5.5,15C4.5,15 4,14.5 4,14.5L5.5,10.25M18.5,10.25L20,14.5C20,14.5 19.5,15 18.5,15C17.5,15 17,14.5 17,14.5L18.5,10.25Z"/>
+                  </svg>
+                  <div>
+                    <span class="radio-card-label">Fornecedor de Serviço</span>
+                    <span class="radio-card-description">Presta serviços e mão de obra</span>
+                  </div>
+                </div>
               </label>
             </div>
           </div>
 
           <!-- Dados Gerais -->
           <div class="form-section">
-            <h3 class="section-title">Dados Gerais</h3>
+            <h3 class="section-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" style="margin-right: 8px;">
+                <path fill="currentColor" d="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,4.89 20.1,4 19,4Z"/>
+              </svg>
+              Dados Gerais
+            </h3>
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Razão Social *</label>
@@ -55,7 +86,7 @@
               </div>
 
                             <div class="form-group">
-                <label class="form-label">CNPJ *</label>
+                <label class="form-label">CNPJ (Pessoa Jurídica) *</label>
                 <input
                   type="text"
                   v-model="formData.cnpj"
@@ -91,7 +122,12 @@
 
           <!-- Dados de Contato -->
           <div class="form-section">
-            <h3 class="section-title">Dados de Contato</h3>
+            <h3 class="section-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" style="margin-right: 8px;">
+                <path fill="currentColor" d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"/>
+              </svg>
+              Dados de Contato
+            </h3>
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">E-mail *</label>
@@ -154,7 +190,12 @@
 
           <!-- Endereço -->
           <div class="form-section">
-            <h3 class="section-title">Endereço</h3>
+            <h3 class="section-title">
+              <svg viewBox="0 0 24 24" width="20" height="20" style="margin-right: 8px;">
+                <path fill="currentColor" d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"/>
+              </svg>
+              Endereço
+            </h3>
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">CEP *</label>
@@ -316,6 +357,18 @@ watch(() => props.isVisible, (newValue) => {
   if (newValue) {
     document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handleEscKey)
+
+    // Resetar formulário quando abrir sem fornecedor (modo criação)
+    if (!props.fornecedor) {
+      resetForm()
+      // Resetar também os estados de validação
+      Object.keys(fieldTouched.value).forEach(key => {
+        fieldTouched.value[key] = false
+      })
+      Object.keys(fieldErrors.value).forEach(key => {
+        fieldErrors.value[key] = ''
+      })
+    }
   } else {
     document.body.style.overflow = ''
     document.removeEventListener('keydown', handleEscKey)
@@ -914,17 +967,29 @@ const handleSubmit = () => {
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
+  align-items: flex-start;
+  padding: 24px 24px 20px 24px;
   border-bottom: 1px solid #e5e7eb;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 12px 12px 0 0;
+}
+
+.modal-header-content {
+  flex: 1;
 }
 
 .modal-title {
   font-size: 1.5rem;
   font-weight: 600;
   color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.modal-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .close-button {
@@ -965,6 +1030,8 @@ const handleSubmit = () => {
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
 }
 
 .form-grid {
@@ -1081,6 +1148,83 @@ const handleSubmit = () => {
   font-weight: 500;
 }
 
+/* Radio Cards - Improved Design */
+.radio-group-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.radio-card {
+  position: relative;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: block;
+}
+
+.radio-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.radio-card.active {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.radio-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.radio-card-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.radio-card-icon {
+  flex-shrink: 0;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.radio-card.active .radio-card-icon {
+  color: #3b82f6;
+}
+
+.radio-card-label {
+  display: block;
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.9375rem;
+  margin-bottom: 4px;
+}
+
+.radio-card-description {
+  display: block;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.radio-card.active .radio-card-label {
+  color: #1d4ed8;
+}
+
+.radio-card.active .radio-card-description {
+  color: #1e40af;
+}
+
 
 
 .modal-footer {
@@ -1089,7 +1233,7 @@ const handleSubmit = () => {
   gap: 12px;
   padding: 20px 24px;
   border-top: 1px solid #e5e7eb;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 0 0 12px 12px;
 }
 
@@ -1114,6 +1258,11 @@ const handleSubmit = () => {
   background: #9ca3af;
   cursor: not-allowed;
   transform: none;
+  opacity: 0.6;
+}
+
+.btn-primary:disabled:hover {
+  background: #9ca3af;
 }
 
 .btn-secondary {

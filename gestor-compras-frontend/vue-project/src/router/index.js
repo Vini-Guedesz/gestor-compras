@@ -21,6 +21,7 @@ import { useAuthStore } from '../stores/auth'
 const LoginView = () => import('../views/LoginView.vue')
 const DashboardView = () => import('../views/DashboardView.vue')
 const FornecedoresView = () => import('../views/FornecedoresView.vue')
+const VisualizarFornecedorView = () => import('../views/VisualizarFornecedorView.vue')
 const PedidosView = () => import('../views/PedidosView.vue')
 const PerfilView = () => import('../views/PerfilView.vue')
 const ConfiguracoesView = () => import('../views/ConfiguracoesView.vue')
@@ -52,6 +53,12 @@ const router = createRouter({
       path: '/fornecedores',
       name: 'fornecedores',
       component: FornecedoresView,
+      meta: { requiresAuth: true } // Requer autenticação
+    },
+    {
+      path: '/fornecedores/:id',
+      name: 'visualizar-fornecedor',
+      component: VisualizarFornecedorView,
       meta: { requiresAuth: true } // Requer autenticação
     },
     {
