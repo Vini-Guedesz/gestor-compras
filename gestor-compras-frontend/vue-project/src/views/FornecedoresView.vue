@@ -151,8 +151,6 @@
                 <th>Fornecedor</th>
                 <th>Tipo</th>
                 <th>Documento</th>
-                <th>Contato</th>
-                <th>Cidade</th>
                 <th>Status</th>
                 <th>Ações</th>
               </tr>
@@ -175,25 +173,6 @@
                 <td class="document-cell">
                   <span class="document">{{ formatarDocumento(fornecedor) }}</span>
                 </td>
-                <td class="contact-cell">
-                  <div class="contact-info">
-                    <span class="contact-email" v-if="fornecedor.contato?.email">
-                      {{ fornecedor.contato.email }}
-                    </span>
-                    <span class="contact-phone" v-if="fornecedor.contato?.telefoneFixo">
-                      📞 {{ formatarTelefone(fornecedor.contato.telefoneFixo) }}
-                    </span>
-                    <span class="contact-phone" v-if="fornecedor.contato?.celular">
-                      📱 {{ formatarTelefone(fornecedor.contato.celular) }}
-                    </span>
-                  </div>
-                </td>
-                <td class="address-cell">
-                  <span v-if="fornecedor.endereco?.cidade">
-                    {{ fornecedor.endereco.cidade }}/{{ fornecedor.endereco.estado }}
-                  </span>
-                  <span v-else class="text-muted">Não informado</span>
-                </td>
                 <td>
                   <span class="status-badge" :class="getStatusClass(fornecedor.status || 'ativo')">
                     {{ getStatusLabel(fornecedor.status || 'ativo') }}
@@ -207,7 +186,7 @@
                           d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                       </svg>
                     </button>
-                    <button class="action-btn view" @click="visualizarFornecedor(fornecedor)" title="Visualizar">
+                    <button class="action-btn view" @click="visualizarFornecedor(fornecedor)" title="Visualizar Detalhes">
                       <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor"
                           d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
@@ -1263,22 +1242,6 @@ onMounted(() => {
 .type-tag.servico {
   background: #d1fae5;
   color: #047857;
-}
-
-.contact-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.contact-email {
-  font-size: 0.875rem;
-  color: #111827;
-}
-
-.contact-phone {
-  font-size: 0.75rem;
-  color: #6b7280;
 }
 
 .status-badge {
