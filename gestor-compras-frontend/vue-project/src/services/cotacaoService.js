@@ -406,14 +406,14 @@ export const cotacaoService = {
   },
 
   // Adicionar anexo
-  async adicionarAnexo(cotacaoId, arquivo) {
+  async adicionarAnexo(cotacaoId, arquivo, createHistory = true) {
     try {
       const formData = new FormData()
       formData.append('files', arquivo)  // Backend espera 'files' não 'arquivo'
 
       // IMPORTANTE: NÃO definir Content-Type manualmente!
       // O Axios detecta FormData e configura automaticamente com o boundary correto
-      const response = await api.post(`${BASE_URL}/${cotacaoId}/anexos`, formData)
+      const response = await api.post(`${BASE_URL}/${cotacaoId}/anexos?createHistory=${createHistory}`, formData)
       return response.data
     } catch (error) {
       logger.error('Erro ao adicionar anexo:', error)

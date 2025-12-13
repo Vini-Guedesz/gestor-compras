@@ -860,8 +860,9 @@ export default {
 
           try {
             // Upload de cada PDF individualmente
+            // createHistory=false para não criar registro duplicado no histórico
             for (const pdfFile of dadosEdicao.pdfFiles) {
-              await cotacaoService.adicionarAnexo(dadosEdicao.id, pdfFile)
+              await cotacaoService.adicionarAnexo(dadosEdicao.id, pdfFile, false)
             }
             logger.debug('✅ PDFs enviados com sucesso')
             success(`Cotação editada com sucesso! ${dadosEdicao.pdfFiles.length} PDF(s) adicionado(s).`)

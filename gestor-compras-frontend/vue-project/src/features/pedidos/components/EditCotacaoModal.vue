@@ -273,8 +273,8 @@ export default {
     // Resetar form quando abrir/fechar modal
     watch(() => props.show, (newVal) => {
       if (newVal) {
-        // Pegar nome do usuário logado
-        const nomeUsuario = authStore.user?.username || authStore.user?.email || 'Usuário'
+        // Pegar nome do usuário logado (padronizado com backend)
+        const nomeUsuario = authStore.user?.nome || authStore.user?.username || authStore.user?.email || 'Usuário'
 
         form.value = {
           motivoEdicao: '',

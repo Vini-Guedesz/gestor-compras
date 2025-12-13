@@ -613,7 +613,10 @@ public class CotacaoService {
         HistoricoCotacao historico = new HistoricoCotacao();
 
         historico.setCotacaoId(cotacaoAnterior.getId());
-        historico.setVersao(cotacaoAnterior.getNumeroVersao() != null ? cotacaoAnterior.getNumeroVersao() : 1);
+        // A versão no histórico representa a versão NOVA (resultado da edição), não a anterior
+        // Exemplo: se cotação está na v1 e é editada, o histórico terá versão=2 (a nova versão criada)
+        Integer versaoAnterior = cotacaoAnterior.getNumeroVersao() != null ? cotacaoAnterior.getNumeroVersao() : 0;
+        historico.setVersao(versaoAnterior + 1);
 
         // Dados anteriores (antes da edição)
         historico.setPrecoAnterior(cotacaoAnterior.getPreco());
@@ -661,7 +664,33 @@ public class CotacaoService {
         historicoCotacaoRepository.saveAndFlush(historico);
     }
 
+    /**
+     * Atualiza o histórico mais recente com os hashes dos PDFs recém-adicionados.
+     * Chamado quando PDFs são adicionados como parte de uma edição (createHistory=false).
+     */
+    private void atualizarHistoricoComNovosPdfs(Cotacao cotacao, int quantidadeAdicionada) {
+        // Buscar o histórico mais recente desta cotação
+        List<HistoricoCotacao> historicos = historicoCotacaoRepository.findByCotacaoIdOrderByDataEdicaoDesc(cotacao.getId());
 
+        if (historicos.isEmpty()) {
+            // Nenhum histórico encontrado - não há nada para atualizar
+            return;
+        }
+
+        HistoricoCotacao historicoMaisRecente = historicos.get(0);
+
+        // Atualizar com o hash do PDF mais recente
+        if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
+            AnexoCotacao anexoMaisRecente = cotacao.getAnexos().stream()
+                .max(java.util.Comparator.comparing(AnexoCotacao::getOrdem))
+                .orElse(null);
+
+            if (anexoMaisRecente != null) {
+                historicoMaisRecente.setHashAnexoPdfNovo(anexoMaisRecente.getHashSha256());
+                historicoCotacaoRepository.save(historicoMaisRecente);
+            }
+        }
+    }
 
     /**
      * Busca o histórico completo de edições de uma cotação.
@@ -750,7 +779,7 @@ public class CotacaoService {
      * @throws EntityNotFoundException Se a cotação não for encontrada.
      */
     @Transactional
-    public CotacaoDTO uploadAnexos(Long cotacaoId, org.springframework.web.multipart.MultipartFile[] files) {
+    public CotacaoDTO uploadAnexos(Long cotacaoId, org.springframework.web.multipart.MultipartFile[] files, boolean createHistory) {
         Cotacao cotacao = cotacaoRepository.findById(cotacaoId)
             .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + cotacaoId));
 
@@ -802,7 +831,13 @@ public class CotacaoService {
         Cotacao cotacaoSalva = cotacaoRepository.save(cotacao);
 
         // Registrar no histórico a adição de anexos
-        registrarHistoricoAdicaoAnexos(cotacaoSalva, quantidadeAnexosAnterior, files.length);
+        if (createHistory) {
+            // Upload independente: criar novo registro de histórico
+            registrarHistoricoAdicaoAnexos(cotacaoSalva, quantidadeAnexosAnterior, files.length);
+        } else {
+            // Upload como parte de edição: atualizar histórico mais recente com os PDFs
+            atualizarHistoricoComNovosPdfs(cotacaoSalva, files.length);
+        }
 
         return cotacaoMapper.toDTO(cotacaoSalva);
     }

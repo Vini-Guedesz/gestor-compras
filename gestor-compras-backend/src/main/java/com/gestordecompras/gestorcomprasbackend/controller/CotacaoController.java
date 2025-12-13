@@ -267,9 +267,10 @@ public class CotacaoController {
     })
     public ResponseEntity<CotacaoDTO> uploadAnexos(
             @PathVariable Long id,
-            @RequestParam("files") org.springframework.web.multipart.MultipartFile[] files) {
+            @RequestParam("files") org.springframework.web.multipart.MultipartFile[] files,
+            @RequestParam(value = "createHistory", defaultValue = "true") boolean createHistory) {
 
-        CotacaoDTO cotacao = cotacaoService.uploadAnexos(id, files);
+        CotacaoDTO cotacao = cotacaoService.uploadAnexos(id, files, createHistory);
         return ResponseEntity.status(HttpStatus.CREATED).body(cotacao);
     }
 
