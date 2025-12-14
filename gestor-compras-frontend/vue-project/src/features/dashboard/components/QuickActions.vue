@@ -41,16 +41,6 @@ const actions = ref([
     action: 'novo-pedido'
   },
   {
-    id: 'nova-cotacao',
-    title: 'Nova Cotação',
-    description: 'Acessar módulo de cotações',
-    icon: 'document',
-    color: '#10b981',
-    variant: 'success',
-    route: '/cotacoes',
-    action: 'nova-cotacao'
-  },
-  {
     id: 'cadastrar-fornecedor',
     title: 'Cadastrar Fornecedor',
     description: 'Acessar módulo de fornecedores',

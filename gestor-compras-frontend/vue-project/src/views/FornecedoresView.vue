@@ -18,16 +18,6 @@
             </p>
           </div>
           <div class="action-buttons">
-            <button class="action-button secondary" @click="gerarRelatorioFornecedores" :disabled="gerandoRelatorio">
-              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="white" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-              <span v-if="gerandoRelatorio" class="loading-content">
-                <span class="loading-spinner"></span>
-                Gerando...
-              </span>
-              <span v-else>Gerar Relatório</span>
-            </button>
             <button class="action-button" @click="abrirFormularioNovo">
               <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
@@ -262,13 +252,12 @@ const showFornecedorForm = ref(false)
 const showConfirmModal = ref(false)
 const fornecedorEditando = ref(null)
 const fornecedorParaExcluir = ref(null)
-const gerandoRelatorio = ref(false)
 
 // Dados
 const fornecedoresProduto = ref([])
 const fornecedoresServico = ref([])
 
-// Filtros
+// Estados
 const searchQuery = ref('')
 const filtroTipo = ref('')
 const filtroStatus = ref('')
@@ -521,22 +510,6 @@ const limparFiltros = () => {
   filtroStatus.value = ''
 }
 
-// Função para gerar relatório de fornecedores
-const gerarRelatorioFornecedores = async () => {
-  if (gerandoRelatorio.value) return
-
-  try {
-    gerandoRelatorio.value = true
-    await relatorioService.gerarRelatorioFornecedores()
-    success('Relatório gerado com sucesso!')
-  } catch (error) {
-    logger.error('Erro ao gerar relatório:', error)
-    toastError('Erro ao gerar relatório. Tente novamente.')
-  } finally {
-    gerandoRelatorio.value = false
-  }
-}
-
 // Lifecycle
 onMounted(() => {
   carregarFornecedores()
@@ -593,17 +566,24 @@ onMounted(() => {
 }
 
 .action-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #3b82f6 !important;
+  color: white !important;
+  border: none !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  font-family: Arial, sans-serif !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  white-space: nowrap !important;
+  min-height: 44px !important;
+  min-width: 180px !important;
+  line-height: 1.5 !important;
 }
 
 .action-button.secondary {

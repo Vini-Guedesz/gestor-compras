@@ -17,24 +17,6 @@
               Gerencie solicitações de cotações e compare propostas de fornecedores
             </p>
           </div>
-          <div class="action-buttons">
-            <button class="action-button secondary" @click="exportarRelatorio" :disabled="gerandoRelatorio">
-              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="white" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-              <span v-if="gerandoRelatorio" class="loading-content">
-                <span class="loading-spinner"></span>
-                Gerando...
-              </span>
-              <span v-else>Gerar Relatório</span>
-            </button>
-            <button class="action-button" @click="abrirFormularioNova">
-              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-              </svg>
-              Nova Cotação
-            </button>
-          </div>
         </div>
       </div>
 
@@ -495,21 +477,6 @@
                 </table>
               </div>
             </div>
-
-            <!-- Botão de Relatório -->
-            <div class="acoes-detalhes">
-              <button
-                @click="gerarRelatorioComparativo(cotacaoSelecionada.itemPedidoId)"
-                class="btn-acao primary"
-                :disabled="gerandoRelatorio"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path fill="white" d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z"/>
-                </svg>
-                <span v-if="gerandoRelatorio">Gerando Relatório...</span>
-                <span v-else>Gerar Relatório Comparativo</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -553,7 +520,6 @@ const route = useRoute()
 const { success, warning, error: toastError } = useToast()
 
 // Estado reativo
-const gerandoRelatorio = ref(false)
 const showCotacaoForm = ref(false)
 const showDetalhesModal = ref(false)
 const cotacaoSelecionada = ref(null)
@@ -881,11 +847,6 @@ const podeDeletar = () => {
 }
 
 // Ações
-const abrirFormularioNova = () => {
-  cotacaoSelecionada.value = null
-  showCotacaoForm.value = true
-}
-
 const editarCotacao = (cotacao) => {
   cotacaoSelecionada.value = cotacao
   showCotacaoForm.value = true
@@ -1048,70 +1009,6 @@ const deletarCotacao = async (id) => {
     } finally {
       operacaoEmAndamento.value = false
     }
-  }
-}
-
-const exportarRelatorio = async () => {
-  try {
-    gerandoRelatorio.value = true
-
-    // Verificar se há cotações para gerar relatório
-    if (cotacoes.value.length === 0) {
-      warning('Não há cotações para gerar relatório.')
-      return
-    }
-
-    // Gerar relatório geral (dashboard executivo)
-    await cotacaoService.gerarRelatorioCotacoes()
-
-
-  } catch (error) {
-    logger.error('❌ Erro ao gerar relatório:', error)
-
-    let mensagemErro = 'Erro ao gerar relatório de cotações.'
-    if (error.response?.status === 404) {
-      mensagemErro = 'Serviço de relatórios não encontrado. Verifique se o backend está funcionando.'
-    } else if (error.response?.status === 500) {
-      mensagemErro = 'Erro interno do servidor ao gerar relatório.'
-    } else if (error.message) {
-      mensagemErro = `Erro: ${error.message}`
-    }
-
-    toastError(mensagemErro, { duration: 7000 })
-  } finally {
-    gerandoRelatorio.value = false
-  }
-}
-
-const gerarRelatorioComparativo = async (itemPedidoId) => {
-  try {
-    gerandoRelatorio.value = true
-
-    if (!itemPedidoId) {
-      warning('ID do item não encontrado para gerar relatório comparativo.')
-      return
-    }
-
-    // Gerar relatório comparativo de cotações por item
-    await cotacaoService.gerarRelatorioComparativo(itemPedidoId)
-
-    success('Relatório comparativo gerado com sucesso!')
-
-  } catch (error) {
-    logger.error('❌ Erro ao gerar relatório comparativo:', error)
-
-    let mensagemErro = 'Erro ao gerar relatório comparativo.'
-    if (error.response?.status === 404) {
-      mensagemErro = 'Não foram encontradas cotações para este item ou o serviço não está disponível.'
-    } else if (error.response?.status === 500) {
-      mensagemErro = 'Erro interno do servidor ao gerar relatório.'
-    } else if (error.message) {
-      mensagemErro = `Erro: ${error.message}`
-    }
-
-    toastError(mensagemErro, { duration: 7000 })
-  } finally {
-    gerandoRelatorio.value = false
   }
 }
 
