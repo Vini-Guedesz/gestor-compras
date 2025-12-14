@@ -1,13 +1,13 @@
 /**
  * @fileoverview Composable de Sistema de Notificações Toast
- * 
+ *
  * Sistema global de notificações estilizadas (toast) para substituir alert()
  * e fornecer feedback visual consistente ao usuário. Suporta múltiplos tipos,
  * auto-fechamento configurável, ações customizadas e gerenciamento de fila.
- * 
+ *
  * @module composables/useToast
  * @requires vue
- * 
+ *
  * @description
  * Este composable implementa:
  * - Sistema global de notificações toast
@@ -17,23 +17,23 @@
  * - Fila de múltiplos toasts
  * - Remoção manual ou automática
  * - Estado compartilhado entre componentes
- * 
+ *
  * @example
  * // Uso básico
  * import { useToast } from '@/composables/useToast'
- * 
+ *
  * const { success, error, warning, info } = useToast()
- * 
+ *
  * // Notificações simples
  * success('Pedido criado com sucesso!')
  * error('Erro ao salvar dados')
  * warning('Este campo é obrigatório')
  * info('Carregando informações...')
- * 
+ *
  * @example
  * // Com opções avançadas
  * const { addToast } = useToast()
- * 
+ *
  * addToast({
  *   message: 'Arquivo enviado',
  *   type: 'success',
@@ -43,13 +43,13 @@
  *     console.log('Desfazer clicado')
  *   }
  * })
- * 
+ *
  * @example
  * // Renderização de toasts (em App.vue ou layout)
  * import { useToast } from '@/composables/useToast'
- * 
+ *
  * const { toasts, removeToast } = useToast()
- * 
+ *
  * // Template
  * <div v-for="toast in toasts" :key="toast.id">
  *   <div :class="`toast-${toast.type}`">
@@ -57,7 +57,7 @@
  *     <button @click="removeToast(toast.id)">×</button>
  *   </div>
  * </div>
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -99,7 +99,7 @@ let nextId = 0
 
 /**
  * Composable de gerenciamento de notificações toast
- * 
+ *
  * @function useToast
  * @returns {Object} Objeto com métodos de controle de toasts
  * @returns {import('vue').Ref<Array<Toast>>} returns.toasts - Array reativo de toasts ativos
@@ -110,7 +110,7 @@ let nextId = 0
  * @returns {Function} returns.warning - Atalho para toast de aviso
  * @returns {Function} returns.info - Atalho para toast de informação
  * @returns {Function} returns.clearAll - Remove todos os toasts
- * 
+ *
  * @description
  * Fornece controle completo sobre sistema de notificações toast.
  * Estado global garante que toasts sejam visíveis independente
@@ -119,21 +119,21 @@ let nextId = 0
 export function useToast() {
   /**
    * Adiciona um novo toast à fila
-   * 
+   *
    * @function addToast
    * @param {ToastOptions} options - Opções de configuração do toast
    * @returns {number} ID do toast criado (para remoção manual)
-   * 
+   *
    * @example
    * const toastId = addToast({
    *   message: 'Operação concluída',
    *   type: 'success',
    *   duration: 3000
    * })
-   * 
+   *
    * // Remover manualmente depois
    * setTimeout(() => removeToast(toastId), 1000)
-   * 
+   *
    * @example
    * // Com ação customizada
    * addToast({
@@ -162,13 +162,13 @@ export function useToast() {
 
   /**
    * Remove um toast específico da fila
-   * 
+   *
    * @function removeToast
    * @param {number} id - ID do toast a ser removido
-   * 
+   *
    * @example
    * const id = success('Salvo!')
-   * 
+   *
    * // Remover após 2 segundos
    * setTimeout(() => removeToast(id), 2000)
    */
@@ -181,12 +181,12 @@ export function useToast() {
 
   /**
    * Cria toast de sucesso (verde)
-   * 
+   *
    * @function success
    * @param {string} message - Mensagem de sucesso
    * @param {Omit<ToastOptions, 'message'|'type'>} [options={}] - Opções adicionais
    * @returns {number} ID do toast criado
-   * 
+   *
    * @example
    * success('Pedido criado com sucesso!')
    * success('Salvo!', { duration: 2000 })
@@ -197,12 +197,12 @@ export function useToast() {
 
   /**
    * Cria toast de erro (vermelho)
-   * 
+   *
    * @function error
    * @param {string} message - Mensagem de erro
    * @param {Omit<ToastOptions, 'message'|'type'>} [options={}] - Opções adicionais
    * @returns {number} ID do toast criado
-   * 
+   *
    * @example
    * error('Erro ao salvar dados')
    * error('Conexão perdida', { duration: 0 })
@@ -213,12 +213,12 @@ export function useToast() {
 
   /**
    * Cria toast de aviso (amarelo/laranja)
-   * 
+   *
    * @function warning
    * @param {string} message - Mensagem de aviso
    * @param {Omit<ToastOptions, 'message'|'type'>} [options={}] - Opções adicionais
    * @returns {number} ID do toast criado
-   * 
+   *
    * @example
    * warning('Este campo é obrigatório')
    * warning('Sessão expirando em 5 minutos')
@@ -229,12 +229,12 @@ export function useToast() {
 
   /**
    * Cria toast de informação (azul)
-   * 
+   *
    * @function info
    * @param {string} message - Mensagem informativa
    * @param {Omit<ToastOptions, 'message'|'type'>} [options={}] - Opções adicionais
    * @returns {number} ID do toast criado
-   * 
+   *
    * @example
    * info('Carregando dados...')
    * info('Nova versão disponível', { actionText: 'Atualizar' })
@@ -245,16 +245,16 @@ export function useToast() {
 
   /**
    * Remove todos os toasts ativos
-   * 
+   *
    * @function clearAll
-   * 
+   *
    * @example
    * // Limpar todos ao fazer logout
    * const handleLogout = () => {
    *   clearAll()
    *   logout()
    * }
-   * 
+   *
    * @example
    * // Limpar antes de mostrar toast crítico
    * clearAll()

@@ -1,13 +1,13 @@
 /**
  * @fileoverview Serviço de Gerenciamento de Cotações de Rascunho
- * 
+ *
  * Módulo responsável por operações relacionadas às cotações vinculadas a rascunhos.
  * Permite adicionar cotações a rascunhos antes de convertê-los em pedidos oficiais.
- * 
+ *
  * @module services/cotacaoRascunhoService
  * @requires ./api
  * @requires ../utils/logger
- * 
+ *
  * @description
  * Este serviço implementa:
  * - Listagem de cotações por rascunho
@@ -17,10 +17,10 @@
  * - Conversão de arquivos para bytes (base64)
  * - Validação de dados (fornecedor, itens, preço, tipo fornecedor)
  * - Validação de arquivos PDF (tipo e tamanho máximo 10MB)
- * 
+ *
  * @example
  * const cotacoes = await cotacaoRascunhoService.listarPorRascunho(5)
- * 
+ *
  * @example
  * const novaCotacao = {
  *   fornecedorId: 10,
@@ -30,7 +30,7 @@
  *   anexoPdf: arquivoPdf
  * }
  * await cotacaoRascunhoService.criar(5, novaCotacao)
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -48,14 +48,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081
 const cotacaoRascunhoService = {
   /**
    * Lista todas as cotações vinculadas a um rascunho
-   * 
+   *
    * @async
    * @function listarPorRascunho
    * @memberof cotacaoRascunhoService
    * @param {number} rascunhoId - ID do rascunho
    * @returns {Promise<Array>} Array de cotações do rascunho
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const cotacoes = await cotacaoRascunhoService.listarPorRascunho(5)
    */
@@ -71,7 +71,7 @@ const cotacaoRascunhoService = {
 
   /**
    * Obtém uma cotação específica de um rascunho
-   * 
+   *
    * @async
    * @function obterPorId
    * @memberof cotacaoRascunhoService
@@ -79,7 +79,7 @@ const cotacaoRascunhoService = {
    * @param {number} cotacaoId - ID da cotação
    * @returns {Promise<Object>} Dados da cotação
    * @throws {Error} Erro 404 se cotação não encontrada
-   * 
+   *
    * @example
    * const cotacao = await cotacaoRascunhoService.obterPorId(5, 10)
    */
@@ -95,7 +95,7 @@ const cotacaoRascunhoService = {
 
   /**
    * Cria uma nova cotação para um rascunho
-   * 
+   *
    * @async
    * @function criar
    * @memberof cotacaoRascunhoService
@@ -108,7 +108,7 @@ const cotacaoRascunhoService = {
    * @param {File} [cotacao.anexoPdf] - Arquivo PDF anexo (máx 10MB)
    * @returns {Promise<Object>} Cotação criada
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * const cotacao = {
    *   fornecedorId: 10,
@@ -117,7 +117,7 @@ const cotacaoRascunhoService = {
    *   preco: 1500.00
    * }
    * await cotacaoRascunhoService.criar(5, cotacao)
-   * 
+   *
    * @description
    * Validações aplicadas:
    * - Fornecedor obrigatório
@@ -200,7 +200,7 @@ const cotacaoRascunhoService = {
 
   /**
    * Deleta uma cotação de um rascunho
-   * 
+   *
    * @async
    * @function deletar
    * @memberof cotacaoRascunhoService
@@ -208,7 +208,7 @@ const cotacaoRascunhoService = {
    * @param {number} cotacaoId - ID da cotação a deletar
    * @returns {Promise<boolean>} true se deleção bem-sucedida
    * @throws {Error} Erro 404 ou comunicação
-   * 
+   *
    * @example
    * await cotacaoRascunhoService.deletar(5, 10)
    */
@@ -224,7 +224,7 @@ const cotacaoRascunhoService = {
 
   /**
    * Obtém anexo PDF de uma cotação de rascunho
-   * 
+   *
    * @async
    * @function obterAnexoPdf
    * @memberof cotacaoRascunhoService
@@ -233,12 +233,12 @@ const cotacaoRascunhoService = {
    * @param {number} [pdfIndex=0] - Índice do PDF (múltiplos anexos)
    * @returns {Promise<Blob>} Arquivo PDF como blob
    * @throws {Error} Erro 404 se PDF não encontrado
-   * 
+   *
    * @example
    * const pdfBlob = await cotacaoRascunhoService.obterAnexoPdf(5, 10)
    * const url = window.URL.createObjectURL(pdfBlob)
    * window.open(url, '_blank')
-   * 
+   *
    * @description
    * Faz download do anexo PDF e retorna como blob para visualização ou download.
    */
@@ -274,17 +274,17 @@ const cotacaoRascunhoService = {
   // Converter arquivo para array de bytes
   /**
    * Converte arquivo File para array de bytes (base64)
-   * 
+   *
    * @async
    * @function arquivoParaBytes
    * @memberof cotacaoRascunhoService
    * @param {File} arquivo - Arquivo a ser convertido
    * @returns {Promise<Array<number>>} Array de bytes do arquivo
    * @throws {Error} Erro ao ler arquivo
-   * 
+   *
    * @example
    * const bytes = await cotacaoRascunhoService.arquivoParaBytes(pdfFile)
-   * 
+   *
    * @description
    * Utilitário interno para converter File em array de bytes.
    * Usa FileReader para ler o arquivo como ArrayBuffer e converter em array de números.

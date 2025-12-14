@@ -1,15 +1,15 @@
 /**
  * @fileoverview Serviço de Gerenciamento de Pedidos de Compra
- * 
+ *
  * Módulo responsável por todas as operações CRUD e lógica de negócios relacionadas
  * aos pedidos de compra (solicitações de pedido). Fornece interface unificada para
  * comunicação com o backend, validações de dados, transformações e utilitários
  * auxiliares para manipulação de pedidos.
- * 
+ *
  * @module services/pedidoService
  * @requires ./api
  * @requires ../utils/logger
- * 
+ *
  * @description
  * Este serviço implementa:
  * - CRUD completo de pedidos (criar, listar, buscar, atualizar, deletar)
@@ -18,11 +18,11 @@
  * - Extração de dados de respostas paginadas do Spring Data
  * - Múltiplos aliases de métodos para retrocompatibilidade
  * - Utilitários para cálculo de totais, formatação e manipulação de status
- * 
+ *
  * @example
  * // Listar todos os pedidos
  * const pedidos = await pedidoService.listar()
- * 
+ *
  * @example
  * // Criar novo pedido
  * const novoPedido = {
@@ -32,15 +32,15 @@
  *   ]
  * }
  * const resultado = await pedidoService.criar(novoPedido)
- * 
+ *
  * @example
  * // Aprovar pedido
  * await pedidoService.aprovar(123)
- * 
+ *
  * @example
  * // Calcular total do pedido
  * const total = pedidoUtils.calcularTotalPedido(pedido)
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -89,20 +89,20 @@ import logger from '../utils/logger.js'
 
 /**
  * Extrai conteúdo de respostas paginadas do Spring Data
- * 
+ *
  * @function extractContent
  * @param {SpringPageResponse|Array<*>|*} response - Resposta da API
  * @returns {Array<*>} Array de elementos extraídos
- * 
+ *
  * @description
  * Helper para normalizar respostas da API. O Spring Data REST retorna objetos
  * paginados com estrutura { content: [], totalPages, totalElements, ... }.
  * Esta função extrai o array 'content' ou retorna array vazio se não encontrado.
- * 
+ *
  * @example
  * const response = { content: [pedido1, pedido2], totalPages: 1 }
  * const pedidos = extractContent(response) // [pedido1, pedido2]
- * 
+ *
  * @example
  * const response = [pedido1, pedido2]
  * const pedidos = extractContent(response) // [pedido1, pedido2]
@@ -122,17 +122,17 @@ const extractContent = (response) => {
 const pedidoService = {
   /**
    * Lista todos os pedidos de compra
-   * 
+   *
    * @async
    * @function listar
    * @memberof pedidoService
    * @returns {Promise<Array<Pedido>>} Array de pedidos
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const pedidos = await pedidoService.listar()
    * console.log(`Total de pedidos: ${pedidos.length}`)
-   * 
+   *
    * @description
    * Busca todos os pedidos no endpoint /api/v1/solicitacoes-pedido.
    * Utiliza extractContent para normalizar resposta paginada do Spring Data.
@@ -173,14 +173,14 @@ const pedidoService = {
 
   /**
    * Obtém um pedido específico por ID
-   * 
+   *
    * @async
    * @function obterPorId
    * @memberof pedidoService
    * @param {number} id - ID do pedido
    * @returns {Promise<Pedido>} Dados completos do pedido
    * @throws {Error} Erro 404 se pedido não encontrado ou erro de comunicação
-   * 
+   *
    * @example
    * const pedido = await pedidoService.obterPorId(123)
    * console.log('Status:', pedido.status)
@@ -210,14 +210,14 @@ const pedidoService = {
 
   /**
    * Cria um novo pedido de compra
-   * 
+   *
    * @async
    * @function criar
    * @memberof pedidoService
    * @param {Pedido} pedido - Dados do pedido a ser criado
    * @returns {Promise<{data: Pedido}>} Objeto contendo o pedido criado
    * @throws {Error} Erro de validação ou comunicação com API
-   * 
+   *
    * @example
    * const novoPedido = {
    *   observacao: 'Pedido urgente',
@@ -227,7 +227,7 @@ const pedidoService = {
    *   ]
    * }
    * const resultado = await pedidoService.criar(novoPedido)
-   * 
+   *
    * @description
    * Valida regras de negócio antes de enviar ao backend:
    * - Pedido deve ter pelo menos 1 item
@@ -291,7 +291,7 @@ const pedidoService = {
 
   /**
    * Atualiza um pedido existente
-   * 
+   *
    * @async
    * @function atualizar
    * @memberof pedidoService
@@ -299,11 +299,11 @@ const pedidoService = {
    * @param {Pedido} pedido - Dados completos atualizados do pedido
    * @returns {Promise<Pedido>} Pedido atualizado
    * @throws {Error} Erro 404 se pedido não encontrado ou erro de comunicação
-   * 
+   *
    * @example
    * const pedidoAtualizado = { ...pedidoExistente, observacao: 'Nova observação' }
    * await pedidoService.atualizar(123, pedidoAtualizado)
-   * 
+   *
    * @description
    * Substitui completamente os dados do pedido no servidor.
    * Use _updatePedido() para atualizações parciais.
@@ -334,7 +334,7 @@ const pedidoService = {
 
   /**
    * Atualiza parcialmente um pedido (uso interno)
-   * 
+   *
    * @async
    * @private
    * @function _updatePedido
@@ -343,7 +343,7 @@ const pedidoService = {
    * @param {Partial<Pedido>} updates - Campos a serem atualizados
    * @returns {Promise<Pedido>} Pedido atualizado
    * @throws {Error} Erro ao buscar ou atualizar
-   * 
+   *
    * @description
    * Método interno que busca o pedido atual, mescla com as atualizações
    * parciais e envia PUT completo. Usado por alterarStatus() e rejeitar().
@@ -362,14 +362,14 @@ const pedidoService = {
 
   /**
    * Altera o status de um pedido
-   * 
+   *
    * @async
    * @function alterarStatus
    * @memberof pedidoService
    * @param {number} id - ID do pedido
    * @param {string} novoStatus - Novo status (PENDENTE, APROVADO, REJEITADO, etc.)
    * @returns {Promise<Pedido>} Pedido com status atualizado
-   * 
+   *
    * @example
    * await pedidoService.alterarStatus(123, 'APROVADO')
    */
@@ -379,18 +379,18 @@ const pedidoService = {
 
   /**
    * Remove (deleta) um pedido
-   * 
+   *
    * @async
    * @function remover
    * @memberof pedidoService
    * @param {number} id - ID do pedido a ser removido
    * @returns {Promise<boolean>} true se remoção bem-sucedida
    * @throws {Error} Erro 404 se pedido não encontrado ou erro de comunicação
-   * 
+   *
    * @example
    * await pedidoService.remover(123)
    * console.log('Pedido removido com sucesso')
-   * 
+   *
    * @description
    * Deleta permanentemente o pedido do banco de dados.
    * Operação irreversível.
@@ -447,13 +447,13 @@ const pedidoService = {
 
   /**
    * Aprova um pedido (altera status para APROVADO)
-   * 
+   *
    * @async
    * @function aprovar
    * @memberof pedidoService
    * @param {number} id - ID do pedido
    * @returns {Promise<Pedido>} Pedido aprovado
-   * 
+   *
    * @example
    * await pedidoService.aprovar(123)
    */
@@ -476,14 +476,14 @@ const pedidoService = {
 
   /**
    * Rejeita um pedido (altera status para REJEITADO)
-   * 
+   *
    * @async
    * @function rejeitar
    * @memberof pedidoService
    * @param {number} id - ID do pedido
    * @param {string} [motivo=''] - Motivo da rejeição (salvo na observação)
    * @returns {Promise<Pedido>} Pedido rejeitado
-   * 
+   *
    * @example
    * await pedidoService.rejeitar(123, 'Orçamento insuficiente')
    */
@@ -520,24 +520,24 @@ const pedidoService = {
 
   /**
    * Salva um pedido (cria se novo, atualiza se existente)
-   * 
+   *
    * @async
    * @function salvar
    * @memberof pedidoService
    * @param {Pedido} pedido - Dados do pedido (com ou sem ID)
    * @returns {Promise<Pedido>} Pedido salvo
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * // Criar novo pedido
    * const novoPedido = { observacao: 'Teste', itens: [...] }
    * const resultado = await pedidoService.salvar(novoPedido)
-   * 
+   *
    * @example
    * // Atualizar pedido existente
    * const pedidoExistente = { id: 123, observacao: 'Atualizado', itens: [...] }
    * const resultado = await pedidoService.salvar(pedidoExistente)
-   * 
+   *
    * @description
    * Método unificado que detecta automaticamente se deve criar ou atualizar:
    * - Se pedido.id existe: chama atualizar()
@@ -563,7 +563,7 @@ const pedidoService = {
 
 /**
  * Utilitários para manipulação e formatação de pedidos
- * 
+ *
  * @namespace pedidoUtils
  * @description
  * Coleção de funções auxiliares para cálculos, formatações e
@@ -572,12 +572,12 @@ const pedidoService = {
 export const pedidoUtils = {
   /**
    * Calcula o valor total de um item (quantidade × preço)
-   * 
+   *
    * @function calcularTotalItem
    * @memberof pedidoUtils
    * @param {ItemPedido} item - Item do pedido
    * @returns {number} Valor total do item
-   * 
+   *
    * @example
    * const item = { quantidade: 5, preco: 10.50 }
    * const total = pedidoUtils.calcularTotalItem(item) // 52.50
@@ -588,12 +588,12 @@ export const pedidoUtils = {
 
   /**
    * Calcula o valor total de um pedido (soma de todos os itens)
-   * 
+   *
    * @function calcularTotalPedido
    * @memberof pedidoUtils
    * @param {Pedido} pedido - Pedido completo
    * @returns {number} Valor total do pedido
-   * 
+   *
    * @example
    * const pedido = {
    *   itens: [
@@ -610,12 +610,12 @@ export const pedidoUtils = {
 
   /**
    * Formata valor numérico para moeda brasileira (BRL)
-   * 
+   *
    * @function formatarMoeda
    * @memberof pedidoUtils
    * @param {number} valor - Valor a ser formatado
    * @returns {string} Valor formatado (ex: "R$ 1.234,56")
-   * 
+   *
    * @example
    * pedidoUtils.formatarMoeda(1234.56) // "R$ 1.234,56"
    * pedidoUtils.formatarMoeda(0) // "R$ 0,00"
@@ -629,12 +629,12 @@ export const pedidoUtils = {
 
   /**
    * Formata data ISO 8601 para formato brasileiro
-   * 
+   *
    * @function formatarData
    * @memberof pedidoUtils
    * @param {string} data - Data em formato ISO 8601
    * @returns {string} Data formatada (dd/mm/aaaa) ou string vazia
-   * 
+   *
    * @example
    * pedidoUtils.formatarData('2024-01-15T10:30:00Z') // "15/01/2024"
    * pedidoUtils.formatarData(null) // ""
@@ -646,14 +646,14 @@ export const pedidoUtils = {
 
   /**
    * Mapeamento de status com configurações de apresentação
-   * 
+   *
    * @type {Object.<string, StatusConfig>}
    * @memberof pedidoUtils
-   * 
+   *
    * @description
    * Mapeia códigos de status para labels formatados e classes CSS.
    * Suporta status em UPPERCASE (padrão) e lowercase (legacy).
-   * 
+   *
    * Status disponíveis:
    * - PENDENTE/pendente: Aguardando aprovação
    * - APROVADO/aprovado: Aprovado para cotação
@@ -678,17 +678,17 @@ export const pedidoUtils = {
 
   /**
    * Obtém informações de apresentação para um status
-   * 
+   *
    * @function obterStatusInfo
    * @memberof pedidoUtils
    * @param {string} status - Código do status
    * @returns {StatusConfig} Objeto com label e class CSS
-   * 
+   *
    * @example
    * const info = pedidoUtils.obterStatusInfo('APROVADO')
    * console.log(info.label) // "Aprovado"
    * console.log(info.class) // "success"
-   * 
+   *
    * @example
    * // Status desconhecido retorna configuração padrão
    * const info = pedidoUtils.obterStatusInfo('STATUS_INVALIDO')

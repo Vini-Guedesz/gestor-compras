@@ -1,15 +1,15 @@
 /**
  * @fileoverview Serviço de Gerenciamento de Cotações
- * 
+ *
  * Módulo responsável por todas as operações CRUD e lógica de negócios relacionadas
  * às cotações de compras. Gerencia o ciclo completo de cotações, desde a criação
  * até aprovação, incluindo anexos PDF, histórico de edições e relatórios comparativos.
- * 
+ *
  * @module services/cotacaoService
  * @requires ./api
  * @requires axios
  * @requires ../utils/logger
- * 
+ *
  * @description
  * Este serviço implementa:
  * - CRUD completo de Cotações
@@ -21,7 +21,7 @@
  * - Gerenciamento de propostas e seleção de vencedores
  * - Aprovação, cancelamento e reabertura de cotações
  * - Validação de dados antes de envio
- * 
+ *
  * @typedef {Object} Cotacao
  * @property {number} [id] - ID da cotação
  * @property {number} fornecedorId - ID do fornecedor
@@ -33,14 +33,14 @@
  * @property {string} [dataLimite] - Data limite da cotação (ISO 8601)
  * @property {Array<number>|File} [anexoPdf] - Anexo PDF (bytes ou arquivo)
  * @property {string} [status] - Status da cotação
- * 
+ *
  * @typedef {Object} CotacaoEditDTO
  * @property {number} [preco] - Novo preço
  * @property {number} [prazoEntrega] - Novo prazo
  * @property {Array<number>|File} [anexoPdf] - Novo anexo PDF
  * @property {string} motivoEdicao - Motivo da edição (mín. 10 caracteres)
  * @property {string} editadoPor - Responsável pela edição
- * 
+ *
  * @typedef {Object} HistoricoCotacao
  * @property {number} id - ID do registro de histórico
  * @property {number} cotacaoId - ID da cotação
@@ -49,7 +49,7 @@
  * @property {string} motivoEdicao - Motivo da alteração
  * @property {Object} valoresAnteriores - Valores antes da edição
  * @property {Object} valoresNovos - Valores após a edição
- * 
+ *
  * @example
  * // Criar nova cotação
  * const cotacao = {
@@ -61,15 +61,15 @@
  *   prazoEmDiasUteis: 15
  * }
  * await cotacaoService.criar(cotacao)
- * 
+ *
  * @example
  * // Listar cotações por pedido
  * const cotacoes = await cotacaoService.listarPorPedido(10)
- * 
+ *
  * @example
  * // Gerar relatório comparativo
  * await cotacaoService.gerarRelatorioComparativo(itemPedidoId)
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -85,16 +85,16 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081
 
 /**
  * Extrai conteúdo de respostas paginadas do Spring Data
- * 
+ *
  * @function extractContent
  * @param {Object|Array<*>} response - Resposta da API
  * @returns {Array<*>} Array de elementos extraídos
- * 
+ *
  * @description
  * Helper para normalizar respostas da API. O Spring Data REST retorna objetos
  * paginados com estrutura { content: [], totalPages, totalElements, ... }.
  * Esta função extrai o array 'content' ou retorna array vazio se não encontrado.
- * 
+ *
  * @example
  * const response = { content: [cotacao1, cotacao2], totalPages: 1 }
  * const cotacoes = extractContent(response) // [cotacao1, cotacao2]
@@ -108,7 +108,7 @@ const extractContent = (response) => {
 
 /**
  * Cliente Axios específico para relatórios
- * 
+ *
  * @constant {AxiosInstance} relatorioClient
  * @description
  * Instância configurada do Axios para receber dados binários (PDF).
@@ -165,7 +165,7 @@ relatorioClient.interceptors.response.use(
 export const cotacaoService = {
   /**
    * Lista todas as cotações com filtros opcionais
-   * 
+   *
    * @async
    * @function listar
    * @memberof cotacaoService
@@ -178,7 +178,7 @@ export const cotacaoService = {
    * @param {number} [filtros.tamanho] - Tamanho da página
    * @returns {Promise<Array<Cotacao>>} Array de cotações
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const cotacoes = await cotacaoService.listar({ status: 'PENDENTE' })
    */
@@ -204,14 +204,14 @@ export const cotacaoService = {
 
   /**
    * Busca uma cotação específica por ID
-   * 
+   *
    * @async
    * @function buscarPorId
    * @memberof cotacaoService
    * @param {number} id - ID da cotação
    * @returns {Promise<Cotacao>} Dados completos da cotação
    * @throws {Error} Erro 404 se cotação não encontrada
-   * 
+   *
    * @example
    * const cotacao = await cotacaoService.buscarPorId(15)
    */
@@ -227,14 +227,14 @@ export const cotacaoService = {
 
   /**
    * Busca cotações de um fornecedor específico
-   * 
+   *
    * @async
    * @function buscarPorFornecedor
    * @memberof cotacaoService
    * @param {number} fornecedorId - ID do fornecedor
    * @returns {Promise<Array<Cotacao>>} Cotações do fornecedor
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const cotacoes = await cotacaoService.buscarPorFornecedor(5)
    */
@@ -252,17 +252,17 @@ export const cotacaoService = {
 
   /**
    * Lista todas as cotações vinculadas a um pedido
-   * 
+   *
    * @async
    * @function listarPorPedido
    * @memberof cotacaoService
    * @param {number} pedidoId - ID do pedido
    * @returns {Promise<Array<Cotacao>>} Cotações do pedido
    * @throws {Error} Erro ao carregar cotações
-   * 
+   *
    * @example
    * const cotacoes = await cotacaoService.listarPorPedido(10)
-   * 
+   *
    * @description
    * Bug Fix #12: Propaga erro ao invés de retornar array vazio silenciosamente
    */
@@ -279,17 +279,17 @@ export const cotacaoService = {
 
   /**
    * Lista todas as cotações vinculadas a um item de pedido
-   * 
+   *
    * @async
    * @function listarPorItem
    * @memberof cotacaoService
    * @param {number} itemPedidoId - ID do item do pedido
    * @returns {Promise<Array<Cotacao>>} Cotações do item
    * @throws {Error} Erro ao carregar cotações
-   * 
+   *
    * @example
    * const cotacoes = await cotacaoService.listarPorItem(25)
-   * 
+   *
    * @description
    * Bug Fix #12: Propaga erro ao invés de retornar array vazio silenciosamente
    */
@@ -306,14 +306,14 @@ export const cotacaoService = {
 
   /**
    * Cria uma nova cotação
-   * 
+   *
    * @async
    * @function criar
    * @memberof cotacaoService
    * @param {Cotacao} dadosCotacao - Dados da cotação
    * @returns {Promise<Cotacao>} Cotação criada
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * const cotacao = {
    *   fornecedorId: 5,
@@ -325,7 +325,7 @@ export const cotacaoService = {
    *   anexoPdf: arquivoPDF  // File object
    * }
    * await cotacaoService.criar(cotacao)
-   * 
+   *
    * @description
    * Validações aplicadas:
    * - fornecedorId obrigatório
@@ -404,14 +404,14 @@ export const cotacaoService = {
 
   /**
    * Método de conveniência para salvar cotação (alias para criar)
-   * 
+   *
    * @async
    * @function salvar
    * @memberof cotacaoService
    * @param {Cotacao} dadosCotacao - Dados da cotação
    * @returns {Promise<Cotacao>} Cotação salva
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * await cotacaoService.salvar(dadosCotacao)
    */
@@ -421,7 +421,7 @@ export const cotacaoService = {
 
   /**
    * Atualiza uma cotação existente
-   * 
+   *
    * @async
    * @function atualizar
    * @memberof cotacaoService
@@ -429,13 +429,13 @@ export const cotacaoService = {
    * @param {CotacaoEditDTO} dadosCotacao - Dados a serem atualizados
    * @returns {Promise<Cotacao>} Cotação atualizada
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * await cotacaoService.atualizar(15, {
    *   preco: 1800.00,
    *   prazoEntrega: 20
    * })
-   * 
+   *
    * @description
    * Apenas campos fornecidos são atualizados. Validações:
    * - preco deve ser > 0
@@ -501,14 +501,14 @@ export const cotacaoService = {
 
   /**
    * Exclui uma cotação
-   * 
+   *
    * @async
    * @function deleteCotacao
    * @memberof cotacaoService
    * @param {number} id - ID da cotação
    * @returns {Promise<boolean>} true se exclusão bem-sucedida
    * @throws {Error} Erro se ID não fornecido ou falha na comunicação
-   * 
+   *
    * @example
    * await cotacaoService.deleteCotacao(15)
    */
@@ -1073,14 +1073,14 @@ export const cotacaoService = {
 
   /**
    * Busca o histórico de edições de uma cotação
-   * 
+   *
    * @async
    * @function buscarHistorico
    * @memberof cotacaoService
    * @param {number} cotacaoId - ID da cotação
    * @returns {Promise<Array<HistoricoCotacao>>} Lista de registros de histórico
    * @throws {Error} Erro se ID não fornecido ou falha na comunicação
-   * 
+   *
    * @example
    * const historico = await cotacaoService.buscarHistorico(15)
    * historico.forEach(h => {
@@ -1103,14 +1103,14 @@ export const cotacaoService = {
 
   /**
    * Obtém PDF anterior do histórico de cotação para visualização
-   * 
+   *
    * @async
    * @function obterPdfAnteriorHistorico
    * @memberof cotacaoService
    * @param {number} historicoId - ID do registro de histórico
    * @returns {Promise<Blob>} Blob do PDF anterior
    * @throws {Error} Erro ao obter PDF
-   * 
+   *
    * @example
    * const blob = await cotacaoService.obterPdfAnteriorHistorico(5)
    */
@@ -1130,14 +1130,14 @@ export const cotacaoService = {
 
   /**
    * Obtém PDF novo do histórico de cotação para visualização
-   * 
+   *
    * @async
    * @function obterPdfNovoHistorico
    * @memberof cotacaoService
    * @param {number} historicoId - ID do registro de histórico
    * @returns {Promise<Blob>} Blob do PDF novo
    * @throws {Error} Erro ao obter PDF
-   * 
+   *
    * @example
    * const blob = await cotacaoService.obterPdfNovoHistorico(5)
    */
@@ -1157,14 +1157,14 @@ export const cotacaoService = {
 
   /**
    * Baixa PDF anterior do histórico de cotação (download direto)
-   * 
+   *
    * @async
    * @function baixarPdfAnteriorHistorico
    * @memberof cotacaoService
    * @param {number} historicoId - ID do registro de histórico
    * @returns {Promise<void>}
    * @throws {Error} Erro ao baixar PDF
-   * 
+   *
    * @example
    * await cotacaoService.baixarPdfAnteriorHistorico(5)
    */

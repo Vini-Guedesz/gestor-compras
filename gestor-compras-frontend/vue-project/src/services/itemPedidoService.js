@@ -1,23 +1,23 @@
 /**
  * @fileoverview Serviço de Gerenciamento de Itens de Pedido
- * 
+ *
  * Módulo responsável por operações CRUD em itens de pedido individuais.
  * Complementa o pedidoService para operações específicas em itens.
- * 
+ *
  * @module services/itemPedidoService
  * @requires ./api
  * @requires ../utils/logger
- * 
+ *
  * @description
  * Este serviço implementa:
  * - CRUD completo de Itens de Pedido
  * - Listagem de todos os itens cadastrados
  * - Busca por ID específico
  * - Extração de dados de respostas paginadas
- * 
+ *
  * @example
  * const itens = await itemPedidoService.listarTodos()
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -45,13 +45,13 @@ const extractContent = (response) => {
 const itemPedidoService = {
   /**
    * Lista todos os itens de pedido cadastrados
-   * 
+   *
    * @async
    * @function listarTodos
    * @memberof itemPedidoService
    * @returns {Promise<Array>} Array de itens de pedido
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const itens = await itemPedidoService.listarTodos()
    */
@@ -67,14 +67,14 @@ const itemPedidoService = {
 
   /**
    * Busca um item de pedido específico por ID
-   * 
+   *
    * @async
    * @function buscarPorId
    * @memberof itemPedidoService
    * @param {number} id - ID do item
    * @returns {Promise<Object>} Dados do item
    * @throws {Error} Erro 404 se item não encontrado
-   * 
+   *
    * @example
    * const item = await itemPedidoService.buscarPorId(123)
    */
@@ -90,14 +90,14 @@ const itemPedidoService = {
 
   /**
    * Cria um novo item de pedido
-   * 
+   *
    * @async
    * @function criar
    * @memberof itemPedidoService
    * @param {Object} item - Dados do item
    * @returns {Promise<Object>} Item criado
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * const item = { nome: 'Mouse', quantidade: 10, pedidoId: 5 }
    * await itemPedidoService.criar(item)
@@ -114,7 +114,7 @@ const itemPedidoService = {
 
   /**
    * Atualiza um item de pedido existente
-   * 
+   *
    * @async
    * @function atualizar
    * @memberof itemPedidoService
@@ -122,7 +122,7 @@ const itemPedidoService = {
    * @param {Object} item - Dados atualizados
    * @returns {Promise<Object>} Item atualizado
    * @throws {Error} Erro 404 ou comunicação
-   * 
+   *
    * @example
    * await itemPedidoService.atualizar(123, { quantidade: 20 })
    */
@@ -138,14 +138,14 @@ const itemPedidoService = {
 
   /**
    * Exclui um item de pedido
-   * 
+   *
    * @async
    * @function excluir
    * @memberof itemPedidoService
    * @param {number} id - ID do item a excluir
    * @returns {Promise<void>}
    * @throws {Error} Erro 404 ou comunicação
-   * 
+   *
    * @example
    * await itemPedidoService.excluir(123)
    */

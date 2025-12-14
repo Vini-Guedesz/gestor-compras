@@ -1,14 +1,14 @@
 /**
  * @fileoverview Serviço de Geração e Download de Relatórios
- * 
+ *
  * Módulo responsável pela geração e download de relatórios em formato PDF.
  * Utiliza instância dedicada do Axios configurada para recebimento de dados
  * binários (blob) com timeout estendido para operações mais demoradas.
- * 
+ *
  * @module services/relatorioService
  * @requires axios
  * @requires ../utils/logger
- * 
+ *
  * @description
  * Este serviço implementa:
  * - Geração de relatórios de fornecedores (Produto e Serviço)
@@ -19,19 +19,19 @@
  * - Download automático de arquivos PDF gerados
  * - Interceptação de requisições para autenticação via JWT
  * - Tratamento especializado de erros de geração
- * 
+ *
  * @example
  * // Gerar relatório de fornecedores
  * await relatorioService.gerarRelatorioFornecedores()
- * 
+ *
  * @example
  * // Gerar relatório de pedidos com filtro
  * await relatorioService.gerarRelatorioPedidos({ status: 'APROVADO' })
- * 
+ *
  * @example
  * // Gerar relatório comparativo de cotações
  * await relatorioService.gerarRelatorioComparativoCotacoes(123)
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -44,7 +44,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081
 
 /**
  * Cliente Axios configurado para download de relatórios em PDF
- * 
+ *
  * @const {axios.AxiosInstance} relatorioClient
  * @description
  * Instância específica do Axios com:
@@ -98,17 +98,17 @@ relatorioClient.interceptors.response.use(
 const relatorioService = {
   /**
    * Gera e faz download automático do relatório de fornecedores em PDF
-   * 
+   *
    * @async
    * @function gerarRelatorioFornecedores
    * @memberof relatorioService
    * @returns {Promise<boolean>} true se download bem-sucedido
    * @throws {Error} Erro ao gerar relatório
-   * 
+   *
    * @example
    * await relatorioService.gerarRelatorioFornecedores()
    * // Arquivo 'relatorio-fornecedores.pdf' será baixado automaticamente
-   * 
+   *
    * @description
    * Gera relatório PDF de todos os fornecedores (produto e serviço) e
    * inicia download automático no navegador.
@@ -145,17 +145,17 @@ const relatorioService = {
 
   /**
    * Visualiza o relatório de fornecedores em PDF em nova aba do navegador
-   * 
+   *
    * @async
    * @function visualizarRelatorioFornecedores
    * @memberof relatorioService
    * @returns {Promise<boolean>} true se visualização bem-sucedida
    * @throws {Error} Erro ao visualizar relatório
-   * 
+   *
    * @example
    * await relatorioService.visualizarRelatorioFornecedores()
    * // Nova aba será aberta com o PDF
-   * 
+   *
    * @description
    * Gera relatório PDF e abre em nova aba do navegador sem fazer download.
    * URL do blob é liberada após 1 segundo.
@@ -187,17 +187,17 @@ const relatorioService = {
 
   /**
    * Gera e faz download do relatório de todos os itens de pedido em PDF
-   * 
+   *
    * @async
    * @function gerarRelatorioItensPedido
    * @memberof relatorioService
    * @returns {Promise<boolean>} true se download bem-sucedido
    * @throws {Error} Erro ao gerar relatório
-   * 
+   *
    * @example
    * await relatorioService.gerarRelatorioItensPedido()
    * // Arquivo 'relatorio-itens-pedido.pdf' será baixado
-   * 
+   *
    * @description
    * Gera relatório consolidado de todos os itens de pedidos cadastrados.
    */
@@ -233,16 +233,16 @@ const relatorioService = {
 
   /**
    * Visualiza o relatório de itens de pedido em PDF em nova aba
-   * 
+   *
    * @async
    * @function visualizarRelatorioItensPedido
    * @memberof relatorioService
    * @returns {Promise<boolean>} true se visualização bem-sucedida
    * @throws {Error} Erro ao visualizar relatório
-   * 
+   *
    * @example
    * await relatorioService.visualizarRelatorioItensPedido()
-   * 
+   *
    * @description
    * Abre relatório de itens de pedido em nova aba do navegador.
    */
@@ -273,18 +273,18 @@ const relatorioService = {
 
   /**
    * Gera e faz download do relatório detalhado de um item de pedido específico
-   * 
+   *
    * @async
    * @function gerarRelatorioItemPedido
    * @memberof relatorioService
    * @param {number} id - ID do item de pedido
    * @returns {Promise<boolean>} true se download bem-sucedido
    * @throws {Error} Erro ao gerar relatório ou item não encontrado
-   * 
+   *
    * @example
    * await relatorioService.gerarRelatorioItemPedido(123)
    * // Arquivo 'relatorio-item-pedido-123.pdf' será baixado
-   * 
+   *
    * @description
    * Gera relatório detalhado de um único item de pedido com todas as informações.
    */
@@ -391,7 +391,7 @@ const relatorioService = {
 
   /**
    * Visualiza relatório de itens para cotação em nova aba do navegador
-   * 
+   *
    * @async
    * @function visualizarRelatorioItensParaCotacao
    * @memberof relatorioService
@@ -399,15 +399,15 @@ const relatorioService = {
    * @param {Array<number>} [itensIds=[]] - IDs dos itens a incluir (vazio = todos)
    * @returns {Promise<boolean>} true se visualização bem-sucedida
    * @throws {Error} Erro ao visualizar relatório
-   * 
+   *
    * @example
    * // Visualizar todos os itens do pedido 10
    * await relatorioService.visualizarRelatorioItensParaCotacao(10)
-   * 
+   *
    * @example
    * // Visualizar apenas itens específicos
    * await relatorioService.visualizarRelatorioItensParaCotacao(10, [1, 2, 3])
-   * 
+   *
    * @description
    * Útil para enviar relatório aos fornecedores durante processo de cotação.
    */
@@ -443,7 +443,7 @@ const relatorioService = {
 
   /**
    * Visualiza relatório de itens para cotação de um rascunho em nova aba
-   * 
+   *
    * @async
    * @function visualizarRelatorioItensParaCotacaoRascunho
    * @memberof relatorioService
@@ -451,10 +451,10 @@ const relatorioService = {
    * @param {Array<number>} [itensIds=[]] - IDs dos itens a incluir (vazio = todos)
    * @returns {Promise<boolean>} true se visualização bem-sucedida
    * @throws {Error} Erro ao visualizar relatório
-   * 
+   *
    * @example
    * await relatorioService.visualizarRelatorioItensParaCotacaoRascunho(5, [1, 2])
-   * 
+   *
    * @description
    * Similar a visualizarRelatorioItensParaCotacao, mas para pedidos em rascunho.
    * Permite pré-visualização antes de finalizar o pedido.

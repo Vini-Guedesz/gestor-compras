@@ -1,23 +1,23 @@
 /**
  * @fileoverview Serviço de Histórico de Pedidos
- * 
+ *
  * Módulo responsável por consultas ao histórico de modificações dos pedidos.
  * Permite auditoria completa de todas as alterações realizadas em pedidos.
- * 
+ *
  * @module services/historicoPedidoService
  * @requires ./api
  * @requires ../utils/logger
- * 
+ *
  * @description
  * Este serviço implementa:
  * - Listagem de histórico por pedido específico
  * - Listagem de histórico por usuário
  * - Configuração de tipos de modificação com labels e ícones
  * - Formatação de datas para exibição
- * 
+ *
  * @example
  * const historico = await historicoPedidoService.listarPorPedido(123)
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -32,14 +32,14 @@ import logger from '../utils/logger.js'
 const historicoPedidoService = {
   /**
    * Lista histórico de modificações de um pedido específico
-   * 
+   *
    * @async
    * @function listarPorPedido
    * @memberof historicoPedidoService
    * @param {number} pedidoId - ID do pedido
    * @returns {Promise<Array>} Histórico de modificações
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const historico = await historicoPedidoService.listarPorPedido(123)
    * historico.forEach(h => console.log(h.tipoModificacao, h.data))
@@ -56,14 +56,14 @@ const historicoPedidoService = {
 
   /**
    * Lista histórico de modificações realizadas por um usuário
-   * 
+   *
    * @async
    * @function listarPorUsuario
    * @memberof historicoPedidoService
    * @param {number} userId - ID do usuário
    * @returns {Promise<Array>} Histórico de ações do usuário
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const historico = await historicoPedidoService.listarPorUsuario(10)
    */
@@ -80,10 +80,10 @@ const historicoPedidoService = {
 
 /**
  * Configuração de tipos de modificação para exibição
- * 
+ *
  * @const {Object.<string, {label: string, icon: string, color: string}>}
  * @memberof historicoPedidoService
- * 
+ *
  * @description
  * Mapeia tipos de modificação para informações de apresentação:
  * - label: Texto descritivo
@@ -111,11 +111,11 @@ export const tipoModificacaoConfig = {
 
 /**
  * Formata data para exibição no histórico
- * 
+ *
  * @function formatarDataHistorico
  * @param {string|Date} data - Data a formatar (ISO 8601 ou objeto Date)
  * @returns {string} Data formatada (dd/mm/aaaa hh:mm) ou string vazia
- * 
+ *
  * @example
  * formatarDataHistorico('2024-01-15T10:30:00Z') // '15/01/2024 10:30'
  */

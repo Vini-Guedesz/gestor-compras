@@ -5,29 +5,29 @@
  * Cliente HTTP configurado com Axios para comunicação com o backend.
  * Gerencia autenticação automática via JWT, tratamento global de erros
  * e interceptadores de requisição/resposta.
- * 
+ *
  * @example
  * import api from '@/services/api'
- * 
+ *
  * // GET request
  * const users = await api.get('/users')
- * 
+ *
  * // POST request
  * const newUser = await api.post('/users', { name: 'João' })
- * 
+ *
  * // PUT request
  * const updated = await api.put('/users/1', { name: 'João Silva' })
- * 
+ *
  * // DELETE request
  * await api.delete('/users/1')
- * 
+ *
  * @author Equipe de Desenvolvimento
  * @version 1.0.0
  * @since 2024
- * 
+ *
  * @requires axios
  * @requires utils/logger
- * 
+ *
  * @see {@link https://axios-http.com/docs/intro|Axios Documentation}
  */
 
@@ -52,7 +52,7 @@ let isRedirecting = false
  * Instância configurada do Axios
  * @constant {AxiosInstance}
  * @private
- * 
+ *
  * @property {string} baseURL - URL base para todas as requisições
  * @property {Object} headers - Headers padrão
  * @property {string} headers.Content-Type - Tipo de conteúdo JSON
@@ -239,21 +239,21 @@ apiClient.interceptors.response.use(
 const api = {
   /**
    * Realiza requisição HTTP GET
-   * 
+   *
    * @async
    * @function get
    * @memberof api
    * @param {string} endpoint - Caminho do endpoint (ex: '/users', '/pedidos/123')
    * @returns {Promise<*>} Dados da resposta (response.data)
    * @throws {Error} Erro tratado pelos interceptadores
-   * 
+   *
    * @example
    * // Buscar lista de usuários
    * const users = await api.get('/api/v1/users')
-   * 
+   *
    * // Buscar usuário específico
    * const user = await api.get('/api/v1/users/123')
-   * 
+   *
    * @description
    * Método GET para buscar recursos do servidor.
    * O token JWT é adicionado automaticamente pelo interceptador.
@@ -265,7 +265,7 @@ const api = {
 
   /**
    * Realiza requisição HTTP POST
-   * 
+   *
    * @async
    * @function post
    * @memberof api
@@ -273,19 +273,19 @@ const api = {
    * @param {Object|FormData} data - Dados a serem enviados no corpo da requisição
    * @returns {Promise<*>} Dados da resposta (response.data)
    * @throws {Error} Erro tratado pelos interceptadores
-   * 
+   *
    * @example
    * // Criar novo usuário
    * const newUser = await api.post('/api/v1/users', {
    *   nome: 'João Silva',
    *   email: 'joao@email.com'
    * })
-   * 
+   *
    * // Enviar FormData (upload de arquivo)
    * const formData = new FormData()
    * formData.append('file', file)
    * const result = await api.post('/api/v1/upload', formData)
-   * 
+   *
    * @description
    * Método POST para criar novos recursos no servidor.
    * Suporta tanto JSON quanto FormData (para uploads).
@@ -297,7 +297,7 @@ const api = {
 
   /**
    * Realiza requisição HTTP PATCH
-   * 
+   *
    * @async
    * @function patch
    * @memberof api
@@ -305,13 +305,13 @@ const api = {
    * @param {Object} data - Dados parciais a serem atualizados
    * @returns {Promise<*>} Dados da resposta (response.data)
    * @throws {Error} Erro tratado pelos interceptadores
-   * 
+   *
    * @example
    * // Atualizar apenas o nome do usuário
    * const updated = await api.patch('/api/v1/users/123', {
    *   nome: 'João Silva Atualizado'
    * })
-   * 
+   *
    * @description
    * Método PATCH para atualização parcial de recursos.
    * Envia apenas os campos que precisam ser atualizados.
@@ -323,7 +323,7 @@ const api = {
 
   /**
    * Realiza requisição HTTP PUT
-   * 
+   *
    * @async
    * @function put
    * @memberof api
@@ -331,7 +331,7 @@ const api = {
    * @param {Object} data - Dados completos do recurso
    * @returns {Promise<*>} Dados da resposta (response.data)
    * @throws {Error} Erro tratado pelos interceptadores
-   * 
+   *
    * @example
    * // Atualizar usuário completo
    * const updated = await api.put('/api/v1/users/123', {
@@ -340,7 +340,7 @@ const api = {
    *   email: 'joao@email.com',
    *   telefone: '11999999999'
    * })
-   * 
+   *
    * @description
    * Método PUT para atualização completa de recursos.
    * Deve enviar todos os campos do recurso, não apenas os alterados.
@@ -352,22 +352,22 @@ const api = {
 
   /**
    * Realiza requisição HTTP DELETE
-   * 
+   *
    * @async
    * @function delete
    * @memberof api
    * @param {string} endpoint - Caminho do endpoint
    * @returns {Promise<*|boolean>} Dados da resposta ou true para 204 No Content
    * @throws {Error} Erro tratado pelos interceptadores
-   * 
+   *
    * @example
    * // Deletar usuário
    * await api.delete('/api/v1/users/123')
-   * 
+   *
    * // Deletar com retorno de dados
    * const result = await api.delete('/api/v1/pedidos/456')
    * console.log('Pedido deletado:', result)
-   * 
+   *
    * @description
    * Método DELETE para remover recursos do servidor.
    * Retorna true automaticamente se o servidor responder com status 204 (No Content).

@@ -1,14 +1,14 @@
 /**
  * @fileoverview Serviço de Gerenciamento de Rascunhos de Pedidos
- * 
+ *
  * Módulo responsável por todas as operações relacionadas aos rascunhos de pedidos.
  * Rascunhos permitem salvar pedidos parcialmente completos para finalização posterior,
  * além de possibilitar conversão direta para pedidos oficiais.
- * 
+ *
  * @module services/rascunhoService
  * @requires ./api
  * @requires ../utils/logger
- * 
+ *
  * @description
  * Este serviço implementa:
  * - CRUD completo de Rascunhos de Pedidos
@@ -19,21 +19,21 @@
  * - Atualização de status
  * - Validação de dados antes de salvar
  * - Método unificado salvar() (criar ou atualizar)
- * 
+ *
  * @typedef {Object} Rascunho
  * @property {number} [id] - ID do rascunho
  * @property {string} [observacao] - Observação geral
  * @property {string} [status] - Status do rascunho
  * @property {Array<ItemRascunho>} itens - Lista de itens (mínimo 1)
  * @property {number} [usuarioId] - ID do usuário proprietário
- * 
+ *
  * @typedef {Object} ItemRascunho
  * @property {number} [id] - ID do item
  * @property {string} nome - Nome do produto/serviço (obrigatório)
  * @property {number} quantidade - Quantidade solicitada (> 0)
  * @property {string} [descricao] - Descrição detalhada
  * @property {string} [observacao] - Observações
- * 
+ *
  * @example
  * // Criar rascunho
  * const rascunho = {
@@ -41,11 +41,11 @@
  *   itens: [{ nome: 'Notebook', quantidade: 2 }]
  * }
  * await rascunhoService.criar(rascunho)
- * 
+ *
  * @example
  * // Converter rascunho para pedido com cotações
  * await rascunhoService.converterParaPedido(5, null, { 1: 10, 2: 11 })
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -73,13 +73,13 @@ const extractContent = (response) => {
 const rascunhoService = {
   /**
    * Lista todos os rascunhos
-   * 
+   *
    * @async
    * @function listar
    * @memberof rascunhoService
    * @returns {Promise<Array<Rascunho>>} Array de rascunhos
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const rascunhos = await rascunhoService.listar()
    */
@@ -95,14 +95,14 @@ const rascunhoService = {
 
   /**
    * Lista rascunhos de um usuário específico
-   * 
+   *
    * @async
    * @function listarPorUsuario
    * @memberof rascunhoService
    * @param {number} userId - ID do usuário
    * @returns {Promise<Array<Rascunho>>} Rascunhos do usuário
    * @throws {Error} Erro de comunicação com API
-   * 
+   *
    * @example
    * const meusRascunhos = await rascunhoService.listarPorUsuario(10)
    */
@@ -118,14 +118,14 @@ const rascunhoService = {
 
   /**
    * Obtém um rascunho específico por ID
-   * 
+   *
    * @async
    * @function obterPorId
    * @memberof rascunhoService
    * @param {number} id - ID do rascunho
    * @returns {Promise<Rascunho>} Dados completos do rascunho
    * @throws {Error} Erro 404 se rascunho não encontrado
-   * 
+   *
    * @example
    * const rascunho = await rascunhoService.obterPorId(5)
    */
@@ -141,14 +141,14 @@ const rascunhoService = {
 
   /**
    * Cria um novo rascunho de pedido
-   * 
+   *
    * @async
    * @function criar
    * @memberof rascunhoService
    * @param {Rascunho} rascunho - Dados do rascunho
    * @returns {Promise<Rascunho>} Rascunho criado
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * const rascunho = {
    *   observacao: 'Urgente',
@@ -158,7 +158,7 @@ const rascunhoService = {
    *   ]
    * }
    * await rascunhoService.criar(rascunho)
-   * 
+   *
    * @description
    * Validações aplicadas:
    * - Rascunho deve ter pelo menos 1 item
@@ -191,7 +191,7 @@ const rascunhoService = {
 
   /**
    * Atualiza um rascunho existente
-   * 
+   *
    * @async
    * @function atualizar
    * @memberof rascunhoService
@@ -199,7 +199,7 @@ const rascunhoService = {
    * @param {Rascunho} rascunho - Dados atualizados
    * @returns {Promise<Rascunho>} Rascunho atualizado
    * @throws {Error} Erro 404 ou comunicação
-   * 
+   *
    * @example
    * await rascunhoService.atualizar(5, { observacao: 'Nova observação' })
    */
@@ -215,14 +215,14 @@ const rascunhoService = {
 
   /**
    * Remove (deleta) um rascunho
-   * 
+   *
    * @async
    * @function remover
    * @memberof rascunhoService
    * @param {number} id - ID do rascunho a ser removido
    * @returns {Promise<boolean>} true se remoção bem-sucedida
    * @throws {Error} Erro 404 ou comunicação
-   * 
+   *
    * @example
    * await rascunhoService.remover(5)
    */
@@ -238,7 +238,7 @@ const rascunhoService = {
 
   /**
    * Converte um rascunho em pedido oficial
-   * 
+   *
    * @async
    * @function converterParaPedido
    * @memberof rascunhoService
@@ -247,16 +247,16 @@ const rascunhoService = {
    * @param {Object.<number, number>} [cotacaoParaItens=null] - Mapa itemId -> cotacaoId
    * @returns {Promise<Object>} Pedido criado
    * @throws {Error} Erro se nenhum parâmetro fornecido
-   * 
+   *
    * @example
    * // Formato novo: vincular cotações aos itens
    * await rascunhoService.converterParaPedido(5, null, { 1: 10, 2: 11 })
    * // Item 1 usa cotação 10, Item 2 usa cotação 11
-   * 
+   *
    * @example
    * // Formato legado: apenas IDs dos itens
    * await rascunhoService.converterParaPedido(5, [1, 2, 3])
-   * 
+   *
    * @description
    * Converte rascunho em pedido oficial. Preferível usar cotacaoParaItens
    * para já vincular cotações aos itens do pedido.
@@ -287,24 +287,24 @@ const rascunhoService = {
 
   /**
    * Salva um rascunho (cria se novo, atualiza se existente)
-   * 
+   *
    * @async
    * @function salvar
    * @memberof rascunhoService
    * @param {Rascunho} rascunho - Dados do rascunho (com ou sem ID)
    * @returns {Promise<Rascunho>} Rascunho salvo
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * // Criar novo
    * const novo = { itens: [{ nome: 'Item', quantidade: 1 }] }
    * await rascunhoService.salvar(novo)
-   * 
+   *
    * @example
    * // Atualizar existente
    * const existente = { id: 5, observacao: 'Atualizado', itens: [...] }
    * await rascunhoService.salvar(existente)
-   * 
+   *
    * @description
    * Método unificado que detecta automaticamente a operação:
    * - Se rascunho.id existe: chama atualizar()
@@ -326,7 +326,7 @@ const rascunhoService = {
 
   /**
    * Adiciona um novo item a um rascunho existente
-   * 
+   *
    * @async
    * @function adicionarItem
    * @memberof rascunhoService
@@ -334,7 +334,7 @@ const rascunhoService = {
    * @param {ItemRascunho} item - Dados do item a adicionar
    * @returns {Promise<ItemRascunho>} Item criado
    * @throws {Error} Erro de validação ou comunicação
-   * 
+   *
    * @example
    * await rascunhoService.adicionarItem(5, { nome: 'Mouse', quantidade: 10 })
    */
@@ -350,7 +350,7 @@ const rascunhoService = {
 
   /**
    * Atualiza um item específico do rascunho
-   * 
+   *
    * @async
    * @function atualizarItem
    * @memberof rascunhoService
@@ -359,7 +359,7 @@ const rascunhoService = {
    * @param {ItemRascunho} item - Dados atualizados do item
    * @returns {Promise<ItemRascunho>} Item atualizado
    * @throws {Error} Erro 404 ou comunicação
-   * 
+   *
    * @example
    * await rascunhoService.atualizarItem(5, 10, { quantidade: 20 })
    */
@@ -375,7 +375,7 @@ const rascunhoService = {
 
   /**
    * Remove um item do rascunho
-   * 
+   *
    * @async
    * @function removerItem
    * @memberof rascunhoService
@@ -383,7 +383,7 @@ const rascunhoService = {
    * @param {number} itemId - ID do item a remover
    * @returns {Promise<*>} Resposta da API
    * @throws {Error} Erro 404 ou comunicação
-   * 
+   *
    * @example
    * await rascunhoService.removerItem(5, 10)
    */
@@ -399,14 +399,14 @@ const rascunhoService = {
 
   /**
    * Lista o histórico de alterações de um rascunho
-   * 
+   *
    * @async
    * @function listarHistorico
    * @memberof rascunhoService
    * @param {number} rascunhoId - ID do rascunho
    * @returns {Promise<Array>} Histórico de alterações
    * @throws {Error} Erro de comunicação
-   * 
+   *
    * @example
    * const historico = await rascunhoService.listarHistorico(5)
    */
@@ -422,7 +422,7 @@ const rascunhoService = {
 
   /**
    * Atualiza o status de um rascunho
-   * 
+   *
    * @async
    * @function atualizarStatus
    * @memberof rascunhoService
@@ -430,7 +430,7 @@ const rascunhoService = {
    * @param {string} status - Novo status
    * @returns {Promise<Rascunho>} Rascunho com status atualizado
    * @throws {Error} Erro de comunicação
-   * 
+   *
    * @example
    * await rascunhoService.atualizarStatus(5, 'EM_REVISAO')
    */

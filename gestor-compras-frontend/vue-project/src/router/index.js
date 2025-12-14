@@ -1,23 +1,23 @@
 /**
  * @fileoverview Configuração do Vue Router
- * 
+ *
  * Define sistema completo de rotas da aplicação com:
  * - Lazy loading de componentes para performance
  * - Proteção de rotas baseada em autenticação
  * - Guards globais (beforeEach)
  * - Redirecionamentos automáticos
  * - Rotas dinâmicas com parâmetros
- * 
+ *
  * @module router
  * @requires vue-router
  * @requires stores/auth
- * 
+ *
  * @description
  * Estrutura de rotas:
- * 
+ *
  * Públicas (requiresGuest):
  * - /login - Autenticação de usuário
- * 
+ *
  * Protegidas (requiresAuth):
  * - /dashboard - Painel principal com métricas
  * - /fornecedores - Lista de fornecedores
@@ -31,22 +31,22 @@
  * - /cotacoes/:id - Detalhes da cotação
  * - /perfil - Perfil do usuário
  * - /configuracoes - Configurações do sistema
- * 
+ *
  * @example
  * // Navegação programática
  * import { useRouter } from 'vue-router'
- * 
+ *
  * const router = useRouter()
  * router.push('/dashboard')
  * router.push({ name: 'visualizar-pedido', params: { id: 123 } })
- * 
+ *
  * @example
  * // Links declarativos
  * <router-link to="/fornecedores">Fornecedores</router-link>
  * <router-link :to="{ name: 'editar-rascunho', params: { id: rascunhoId } }">
  *   Editar Rascunho
  * </router-link>
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -56,11 +56,11 @@ import { useAuthStore } from '../stores/auth'
 
 /**
  * Lazy loading de views para otimização de performance
- * 
+ *
  * @description
  * Cada view é carregada apenas quando a rota é acessada.
  * Reduz bundle inicial e acelera tempo de carregamento.
- * 
+ *
  * Sintaxe: () => import('./path/to/component.vue')
  * Webpack/Vite criam chunks separados automaticamente.
  */
@@ -83,9 +83,9 @@ const VisualizarPedidoView = () => import('../views/VisualizarPedidoView.vue')
 
 /**
  * Instância do Vue Router
- * 
+ *
  * @constant {import('vue-router').Router}
- * 
+ *
  * @description
  * Configurado com createWebHistory para URLs limpas (sem #).
  * Requer configuração de servidor para redirecionar 404 para index.html.
@@ -181,22 +181,22 @@ const router = createRouter({
 
 /**
  * Navigation Guard Global - beforeEach
- * 
+ *
  * @function beforeEach
  * @param {import('vue-router').RouteLocationNormalized} to - Rota destino
  * @param {import('vue-router').RouteLocationNormalized} from - Rota origem
  * @param {import('vue-router').NavigationGuardNext} next - Função de continuação
- * 
+ *
  * @description
  * Executado antes de cada navegação de rota.
- * 
+ *
  * Responsabilidades:
  * 1. Verificar autenticação do usuário (via authStore.checkAuth)
  * 2. Proteger rotas com meta.requiresAuth
  * 3. Redirecionar usuários não logados para /login
  * 4. Redirecionar usuários logados para /dashboard se tentarem acessar /login
  * 5. Prevenir loops de redirecionamento
- * 
+ *
  * @example
  * // Rota protegida
  * {
@@ -204,7 +204,7 @@ const router = createRouter({
  *   component: DashboardView,
  *   meta: { requiresAuth: true } // Guard bloqueia se não autenticado
  * }
- * 
+ *
  * @example
  * // Rota só para visitantes
  * {
@@ -250,10 +250,10 @@ router.beforeEach(async (to, from, next) => {
 
 /**
  * Exporta instância do router
- * 
+ *
  * @exports router
  * @type {import('vue-router').Router}
- * 
+ *
  * @description
  * Importar em main.js: app.use(router)
  * Usar em componentes: const router = useRouter()

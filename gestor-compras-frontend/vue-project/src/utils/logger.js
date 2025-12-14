@@ -1,13 +1,13 @@
 /**
  * @fileoverview Sistema de Logging Condicional por Ambiente
- * 
+ *
  * Wrapper inteligente do console que controla logs baseado no ambiente
  * (desenvolvimento/produção). Facilita debug e prepara integração com
  * serviços de monitoramento como Sentry, LogRocket, etc.
- * 
+ *
  * @module utils/logger
  * @requires vite
- * 
+ *
  * @description
  * Este módulo implementa:
  * - Logs condicionais baseados em import.meta.env.DEV
@@ -15,25 +15,25 @@
  * - Preparação para integração com serviços de monitoramento
  * - Debug mode com flag VITE_ENABLE_DEBUG
  * - API idêntica ao console nativo (drop-in replacement)
- * 
+ *
  * @example
  * // Usar ao invés de console
  * import logger from '@/utils/logger'
- * 
+ *
  * logger.log('Info de desenvolvimento') // Só mostra em DEV
  * logger.error('Erro crítico') // Mostra em DEV, pode enviar para Sentry em PROD
  * logger.warn('Aviso importante') // Só mostra em DEV
  * logger.info('Info crítica') // Mostra sempre (DEV e PROD)
  * logger.debug('Debug detalhado') // Só com VITE_ENABLE_DEBUG=true
- * 
+ *
  * @example
  * // Configuração .env para debug
  * // .env.development
  * VITE_ENABLE_DEBUG=true
- * 
+ *
  * // .env.production
  * VITE_ENABLE_DEBUG=false
- * 
+ *
  * @author Sistema Gestor de Compras
  * @version 1.0.0
  */
@@ -54,14 +54,14 @@ const isDev = import.meta.env.DEV
 export const logger = {
   /**
    * Log informativo de desenvolvimento
-   * 
+   *
    * @function log
    * @param {...*} args - Argumentos a serem logados
-   * 
+   *
    * @example
    * logger.log('User:', user)
    * logger.log('Fetching data...', { url, params })
-   * 
+   *
    * @description
    * Exibe apenas em desenvolvimento (DEV).
    * Em produção, não faz nada (performance).
@@ -75,18 +75,18 @@ export const logger = {
 
   /**
    * Log de erro com suporte a monitoramento
-   * 
+   *
    * @function error
    * @param {...*} args - Erro e informações adicionais
-   * 
+   *
    * @example
    * logger.error('API Error:', error)
    * logger.error('Failed to fetch', { endpoint, status })
-   * 
+   *
    * @description
    * Desenvolvimento: Exibe no console.error
    * Produção: Silencioso (pronto para integração com Sentry)
-   * 
+   *
    * TODO: Integrar com serviço de monitoramento:
    * - Sentry.captureException(args[0])
    * - LogRocket.captureException(args[0])
@@ -103,14 +103,14 @@ export const logger = {
 
   /**
    * Log de aviso
-   * 
+   *
    * @function warn
    * @param {...*} args - Avisos e informações
-   * 
+   *
    * @example
    * logger.warn('Deprecated API used')
    * logger.warn('Missing optional field:', field)
-   * 
+   *
    * @description
    * Exibe apenas em desenvolvimento.
    * Use para avisos não críticos, APIs depreciadas, etc.
@@ -123,14 +123,14 @@ export const logger = {
 
   /**
    * Log de informação crítica
-   * 
+   *
    * @function info
    * @param {...*} args - Informações a serem logadas
-   * 
+   *
    * @example
    * logger.info('App initialized')
    * logger.info('User logged in:', userId)
-   * 
+   *
    * @description
    * Exibe SEMPRE (desenvolvimento E produção).
    * Use APENAS para informações críticas que precisam
@@ -142,18 +142,18 @@ export const logger = {
 
   /**
    * Log de debug detalhado
-   * 
+   *
    * @function debug
    * @param {...*} args - Informações de debug
-   * 
+   *
    * @example
    * logger.debug('State changed:', oldState, newState)
    * logger.debug('API Response:', response.data)
-   * 
+   *
    * @description
    * Exibe apenas em desenvolvimento E com flag VITE_ENABLE_DEBUG=true.
    * Use para logs muito detalhados que poluem o console.
-   * 
+   *
    * Ativar: criar arquivo .env.development.local:
    * VITE_ENABLE_DEBUG=true
    */
