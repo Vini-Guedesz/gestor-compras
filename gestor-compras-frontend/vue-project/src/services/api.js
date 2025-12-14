@@ -1,38 +1,62 @@
 /**
- * Serviço de API - Cliente HTTP centralizado
- *
- * Este arquivo configura um cliente HTTP usando Axios para comunicação
- * com o backend da aplicação.
- *
- * Funcionalidades principais:
- * - Configuração centralizada da URL base da API
- * - Interceptadores para adicionar automaticamente tokens de autenticação
- * - Tratamento global de erros HTTP
- * - Métodos simplificados para requisições HTTP
- *
- * Configurações:
- * - URL base: obtida de variável de ambiente ou fallback para localhost:8080
- * - Timeout: 10 segundos para evitar requisições infinitas
- * - Headers padrão: Content-Type application/json
+ * @fileoverview Cliente HTTP centralizado usando Axios
+ * @module services/api
+ * @description
+ * Cliente HTTP configurado com Axios para comunicação com o backend.
+ * Gerencia autenticação automática via JWT, tratamento global de erros
+ * e interceptadores de requisição/resposta.
+ * 
+ * @example
+ * import api from '@/services/api'
+ * 
+ * // GET request
+ * const users = await api.get('/users')
+ * 
+ * // POST request
+ * const newUser = await api.post('/users', { name: 'João' })
+ * 
+ * // PUT request
+ * const updated = await api.put('/users/1', { name: 'João Silva' })
+ * 
+ * // DELETE request
+ * await api.delete('/users/1')
+ * 
+ * @author Equipe de Desenvolvimento
+ * @version 1.0.0
+ * @since 2024
+ * 
+ * @requires axios
+ * @requires utils/logger
+ * 
+ * @see {@link https://axios-http.com/docs/intro|Axios Documentation}
  */
 
 import axios from 'axios'
 import logger from '../utils/logger.js'
 
-// Configuração da URL base da API usando variável de ambiente
-// Se VITE_API_BASE_URL não estiver definida, usa localhost:8081 (porta do backend)
+/**
+ * URL base da API obtida de variável de ambiente
+ * @constant {string}
+ * @default 'http://localhost:8081'
+ */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
 
-// Flag para evitar múltiplos redirects para login
+/**
+ * Flag para evitar múltiplos redirects simultâneos para login
+ * @private
+ * @type {boolean}
+ */
 let isRedirecting = false
 
 /**
  * Instância configurada do Axios
- *
- * Configurações aplicadas:
- * - URL base para todas as requisições
- * - Headers padrão para JSON
- * - Timeout para evitar requisições que não respondem
+ * @constant {AxiosInstance}
+ * @private
+ * 
+ * @property {string} baseURL - URL base para todas as requisições
+ * @property {Object} headers - Headers padrão
+ * @property {string} headers.Content-Type - Tipo de conteúdo JSON
+ * @property {number} timeout - Timeout de 10 segundos
  */
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -63,13 +87,8 @@ apiClient.interceptors.request.use(
       delete config.headers['Content-Type']
     }
 
-    // DEBUG: Log do body sendo enviado
-    if (config.data && config.url.includes('fornecedores')) {
-      if (config.data.contato) {
-      }
-      if (config.data.endereco) {
-      }
-    }
+    // DEBUG: Log do body sendo enviado (desativado)
+    // Remover comentários vazios após debug
 
     return config
   },
@@ -211,16 +230,33 @@ apiClient.interceptors.response.use(
 )
 
 /**
- * API wrapper - métodos simplificados para requisições HTTP
- *
- * Encapsula os métodos do Axios retornando diretamente os dados
- * da resposta, sem a necessidade de acessar response.data
+ * Objeto API com métodos simplificados para requisições HTTP
+ * @namespace api
+ * @description
+ * Wrapper em torno do Axios que simplifica as requisições HTTP,
+ * retornando diretamente os dados sem precisar acessar response.data
  */
 const api = {
   /**
-   * Requisição GET
-   * @param {string} endpoint - Endpoint da API (ex: '/users')
-   * @returns {Promise} Dados da resposta
+   * Realiza requisição HTTP GET
+   * 
+   * @async
+   * @function get
+   * @memberof api
+   * @param {string} endpoint - Caminho do endpoint (ex: '/users', '/pedidos/123')
+   * @returns {Promise<*>} Dados da resposta (response.data)
+   * @throws {Error} Erro tratado pelos interceptadores
+   * 
+   * @example
+   * // Buscar lista de usuários
+   * const users = await api.get('/api/v1/users')
+   * 
+   * // Buscar usuário específico
+   * const user = await api.get('/api/v1/users/123')
+   * 
+   * @description
+   * Método GET para buscar recursos do servidor.
+   * O token JWT é adicionado automaticamente pelo interceptador.
    */
   async get(endpoint) {
     const response = await apiClient.get(endpoint)
@@ -228,10 +264,31 @@ const api = {
   },
 
   /**
-   * Requisição POST
-   * @param {string} endpoint - Endpoint da API
-   * @param {Object} data - Dados a serem enviados no corpo da requisição
-   * @returns {Promise} Dados da resposta
+   * Realiza requisição HTTP POST
+   * 
+   * @async
+   * @function post
+   * @memberof api
+   * @param {string} endpoint - Caminho do endpoint
+   * @param {Object|FormData} data - Dados a serem enviados no corpo da requisição
+   * @returns {Promise<*>} Dados da resposta (response.data)
+   * @throws {Error} Erro tratado pelos interceptadores
+   * 
+   * @example
+   * // Criar novo usuário
+   * const newUser = await api.post('/api/v1/users', {
+   *   nome: 'João Silva',
+   *   email: 'joao@email.com'
+   * })
+   * 
+   * // Enviar FormData (upload de arquivo)
+   * const formData = new FormData()
+   * formData.append('file', file)
+   * const result = await api.post('/api/v1/upload', formData)
+   * 
+   * @description
+   * Método POST para criar novos recursos no servidor.
+   * Suporta tanto JSON quanto FormData (para uploads).
    */
   async post(endpoint, data) {
     const response = await apiClient.post(endpoint, data)
@@ -239,10 +296,25 @@ const api = {
   },
 
   /**
-   * Requisição PATCH
-   * @param {string} endpoint - Endpoint da API
-   * @param {Object} data - Dados a serem enviados no corpo da requisição
-   * @returns {Promise} Dados da resposta
+   * Realiza requisição HTTP PATCH
+   * 
+   * @async
+   * @function patch
+   * @memberof api
+   * @param {string} endpoint - Caminho do endpoint
+   * @param {Object} data - Dados parciais a serem atualizados
+   * @returns {Promise<*>} Dados da resposta (response.data)
+   * @throws {Error} Erro tratado pelos interceptadores
+   * 
+   * @example
+   * // Atualizar apenas o nome do usuário
+   * const updated = await api.patch('/api/v1/users/123', {
+   *   nome: 'João Silva Atualizado'
+   * })
+   * 
+   * @description
+   * Método PATCH para atualização parcial de recursos.
+   * Envia apenas os campos que precisam ser atualizados.
    */
   async patch(endpoint, data) {
     const response = await apiClient.patch(endpoint, data)
@@ -250,10 +322,28 @@ const api = {
   },
 
   /**
-   * Requisição PUT
-   * @param {string} endpoint - Endpoint da API
-   * @param {Object} data - Dados a serem enviados no corpo da requisição
-   * @returns {Promise} Dados da resposta
+   * Realiza requisição HTTP PUT
+   * 
+   * @async
+   * @function put
+   * @memberof api
+   * @param {string} endpoint - Caminho do endpoint
+   * @param {Object} data - Dados completos do recurso
+   * @returns {Promise<*>} Dados da resposta (response.data)
+   * @throws {Error} Erro tratado pelos interceptadores
+   * 
+   * @example
+   * // Atualizar usuário completo
+   * const updated = await api.put('/api/v1/users/123', {
+   *   id: 123,
+   *   nome: 'João Silva',
+   *   email: 'joao@email.com',
+   *   telefone: '11999999999'
+   * })
+   * 
+   * @description
+   * Método PUT para atualização completa de recursos.
+   * Deve enviar todos os campos do recurso, não apenas os alterados.
    */
   async put(endpoint, data) {
     const response = await apiClient.put(endpoint, data)
@@ -261,9 +351,27 @@ const api = {
   },
 
   /**
-   * Requisição DELETE
-   * @param {string} endpoint - Endpoint da API
-   * @returns {Promise} Dados da resposta (ou true se 204 No Content)
+   * Realiza requisição HTTP DELETE
+   * 
+   * @async
+   * @function delete
+   * @memberof api
+   * @param {string} endpoint - Caminho do endpoint
+   * @returns {Promise<*|boolean>} Dados da resposta ou true para 204 No Content
+   * @throws {Error} Erro tratado pelos interceptadores
+   * 
+   * @example
+   * // Deletar usuário
+   * await api.delete('/api/v1/users/123')
+   * 
+   * // Deletar com retorno de dados
+   * const result = await api.delete('/api/v1/pedidos/456')
+   * console.log('Pedido deletado:', result)
+   * 
+   * @description
+   * Método DELETE para remover recursos do servidor.
+   * Retorna true automaticamente se o servidor responder com status 204 (No Content).
+   * Caso contrário, retorna os dados da resposta.
    */
   async delete(endpoint) {
     const response = await apiClient.delete(endpoint)
@@ -275,4 +383,8 @@ const api = {
   }
 }
 
+/**
+ * @exports api
+ * @default
+ */
 export default api

@@ -1,3 +1,79 @@
+/**
+ * @fileoverview Serviço de Gerenciamento de Cotações
+ * 
+ * Módulo responsável por todas as operações CRUD e lógica de negócios relacionadas
+ * às cotações de compras. Gerencia o ciclo completo de cotações, desde a criação
+ * até aprovação, incluindo anexos PDF, histórico de edições e relatórios comparativos.
+ * 
+ * @module services/cotacaoService
+ * @requires ./api
+ * @requires axios
+ * @requires ../utils/logger
+ * 
+ * @description
+ * Este serviço implementa:
+ * - CRUD completo de Cotações
+ * - Vinculação de cotações com fornecedores (Produto ou Serviço)
+ * - Vinculação de cotações com itens de pedido
+ * - Upload e download de anexos PDF (únicos e múltiplos)
+ * - Histórico de edições com auditoria
+ * - Geração de relatórios comparativos de cotações
+ * - Gerenciamento de propostas e seleção de vencedores
+ * - Aprovação, cancelamento e reabertura de cotações
+ * - Validação de dados antes de envio
+ * 
+ * @typedef {Object} Cotacao
+ * @property {number} [id] - ID da cotação
+ * @property {number} fornecedorId - ID do fornecedor
+ * @property {string} tipoFornecedor - Tipo do fornecedor ('PRODUTO' ou 'SERVICO')
+ * @property {number} solicitacaoDePedidoId - ID do pedido vinculado
+ * @property {Array<number>} itensPedidoIds - IDs dos itens do pedido cotados
+ * @property {number} preco - Valor da cotação
+ * @property {number} [prazoEmDiasUteis] - Prazo de entrega em dias úteis
+ * @property {string} [dataLimite] - Data limite da cotação (ISO 8601)
+ * @property {Array<number>|File} [anexoPdf] - Anexo PDF (bytes ou arquivo)
+ * @property {string} [status] - Status da cotação
+ * 
+ * @typedef {Object} CotacaoEditDTO
+ * @property {number} [preco] - Novo preço
+ * @property {number} [prazoEntrega] - Novo prazo
+ * @property {Array<number>|File} [anexoPdf] - Novo anexo PDF
+ * @property {string} motivoEdicao - Motivo da edição (mín. 10 caracteres)
+ * @property {string} editadoPor - Responsável pela edição
+ * 
+ * @typedef {Object} HistoricoCotacao
+ * @property {number} id - ID do registro de histórico
+ * @property {number} cotacaoId - ID da cotação
+ * @property {string} dataEdicao - Data da edição (ISO 8601)
+ * @property {string} editadoPor - Responsável pela edição
+ * @property {string} motivoEdicao - Motivo da alteração
+ * @property {Object} valoresAnteriores - Valores antes da edição
+ * @property {Object} valoresNovos - Valores após a edição
+ * 
+ * @example
+ * // Criar nova cotação
+ * const cotacao = {
+ *   fornecedorId: 5,
+ *   tipoFornecedor: 'PRODUTO',
+ *   solicitacaoDePedidoId: 10,
+ *   itensPedidoIds: [1, 2, 3],
+ *   preco: 1500.00,
+ *   prazoEmDiasUteis: 15
+ * }
+ * await cotacaoService.criar(cotacao)
+ * 
+ * @example
+ * // Listar cotações por pedido
+ * const cotacoes = await cotacaoService.listarPorPedido(10)
+ * 
+ * @example
+ * // Gerar relatório comparativo
+ * await cotacaoService.gerarRelatorioComparativo(itemPedidoId)
+ * 
+ * @author Sistema Gestor de Compras
+ * @version 1.0.0
+ */
+
 import api from './api.js'
 import axios from 'axios'
 import logger from '../utils/logger.js'
@@ -8,7 +84,20 @@ const BASE_URL = '/api/v1/cotacoes'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
 
 /**
- * Helper para extrair dados de respostas paginadas do Spring Data
+ * Extrai conteúdo de respostas paginadas do Spring Data
+ * 
+ * @function extractContent
+ * @param {Object|Array<*>} response - Resposta da API
+ * @returns {Array<*>} Array de elementos extraídos
+ * 
+ * @description
+ * Helper para normalizar respostas da API. O Spring Data REST retorna objetos
+ * paginados com estrutura { content: [], totalPages, totalElements, ... }.
+ * Esta função extrai o array 'content' ou retorna array vazio se não encontrado.
+ * 
+ * @example
+ * const response = { content: [cotacao1, cotacao2], totalPages: 1 }
+ * const cotacoes = extractContent(response) // [cotacao1, cotacao2]
  */
 const extractContent = (response) => {
   if (response && typeof response === 'object' && 'content' in response) {
@@ -18,8 +107,16 @@ const extractContent = (response) => {
 }
 
 /**
- * Cria uma instância específica do Axios para relatórios
- * com configuração para receber dados binários (PDF)
+ * Cliente Axios específico para relatórios
+ * 
+ * @constant {AxiosInstance} relatorioClient
+ * @description
+ * Instância configurada do Axios para receber dados binários (PDF).
+ * Configurações:
+ * - baseURL: API_BASE_URL
+ * - timeout: 30 segundos (relatórios podem demorar mais)
+ * - responseType: 'blob' (dados binários)
+ * - Interceptor de autenticação com JWT
  */
 const relatorioClient = axios.create({
   baseURL: API_BASE_URL,
@@ -28,7 +125,8 @@ const relatorioClient = axios.create({
 })
 
 /**
- * Interceptador para adicionar token de autenticação nos relatórios
+ * Interceptador de requisições - adiciona token JWT
+ * @description Intercepta todas as requisições para adicionar o token de autenticação no header
  */
 relatorioClient.interceptors.request.use(
   (config) => {
@@ -45,7 +143,8 @@ relatorioClient.interceptors.request.use(
 )
 
 /**
- * Interceptador de resposta para tratar erros nos relatórios
+ * Interceptador de respostas - trata erros de autenticação
+ * @description Intercepta respostas para tratar erro 401 (não autorizado) e redirecionar para login
  */
 relatorioClient.interceptors.response.use(
   (response) => response,
@@ -59,8 +158,30 @@ relatorioClient.interceptors.response.use(
   }
 )
 
+/**
+ * Serviço principal de gerenciamento de cotações
+ * @namespace cotacaoService
+ */
 export const cotacaoService = {
-  // Listar todas as cotações
+  /**
+   * Lista todas as cotações com filtros opcionais
+   * 
+   * @async
+   * @function listar
+   * @memberof cotacaoService
+   * @param {Object} [filtros={}] - Filtros de busca
+   * @param {string} [filtros.status] - Filtrar por status
+   * @param {number} [filtros.fornecedor] - Filtrar por ID do fornecedor
+   * @param {string} [filtros.periodo] - Filtrar por período
+   * @param {string} [filtros.busca] - Termo de busca genérica
+   * @param {number} [filtros.pagina] - Número da página
+   * @param {number} [filtros.tamanho] - Tamanho da página
+   * @returns {Promise<Array<Cotacao>>} Array de cotações
+   * @throws {Error} Erro de comunicação com API
+   * 
+   * @example
+   * const cotacoes = await cotacaoService.listar({ status: 'PENDENTE' })
+   */
   async listar(filtros = {}) {
     try {
       const params = new URLSearchParams()
@@ -81,7 +202,19 @@ export const cotacaoService = {
     }
   },
 
-  // Buscar cotação por ID
+  /**
+   * Busca uma cotação específica por ID
+   * 
+   * @async
+   * @function buscarPorId
+   * @memberof cotacaoService
+   * @param {number} id - ID da cotação
+   * @returns {Promise<Cotacao>} Dados completos da cotação
+   * @throws {Error} Erro 404 se cotação não encontrada
+   * 
+   * @example
+   * const cotacao = await cotacaoService.buscarPorId(15)
+   */
   async buscarPorId(id) {
     try {
       const response = await api.get(`${BASE_URL}/${id}`)
@@ -92,7 +225,19 @@ export const cotacaoService = {
     }
   },
 
-  // Buscar cotações por fornecedor
+  /**
+   * Busca cotações de um fornecedor específico
+   * 
+   * @async
+   * @function buscarPorFornecedor
+   * @memberof cotacaoService
+   * @param {number} fornecedorId - ID do fornecedor
+   * @returns {Promise<Array<Cotacao>>} Cotações do fornecedor
+   * @throws {Error} Erro de comunicação com API
+   * 
+   * @example
+   * const cotacoes = await cotacaoService.buscarPorFornecedor(5)
+   */
   async buscarPorFornecedor(fornecedorId) {
     try {
       const response = await api.get(`${BASE_URL}`, {
@@ -105,7 +250,22 @@ export const cotacaoService = {
     }
   },
 
-  // Listar cotações por pedido
+  /**
+   * Lista todas as cotações vinculadas a um pedido
+   * 
+   * @async
+   * @function listarPorPedido
+   * @memberof cotacaoService
+   * @param {number} pedidoId - ID do pedido
+   * @returns {Promise<Array<Cotacao>>} Cotações do pedido
+   * @throws {Error} Erro ao carregar cotações
+   * 
+   * @example
+   * const cotacoes = await cotacaoService.listarPorPedido(10)
+   * 
+   * @description
+   * Bug Fix #12: Propaga erro ao invés de retornar array vazio silenciosamente
+   */
   async listarPorPedido(pedidoId) {
     try {
       const response = await api.get(`${BASE_URL}/pedido/${pedidoId}`)
@@ -117,7 +277,22 @@ export const cotacaoService = {
     }
   },
 
-  // Listar cotações por item
+  /**
+   * Lista todas as cotações vinculadas a um item de pedido
+   * 
+   * @async
+   * @function listarPorItem
+   * @memberof cotacaoService
+   * @param {number} itemPedidoId - ID do item do pedido
+   * @returns {Promise<Array<Cotacao>>} Cotações do item
+   * @throws {Error} Erro ao carregar cotações
+   * 
+   * @example
+   * const cotacoes = await cotacaoService.listarPorItem(25)
+   * 
+   * @description
+   * Bug Fix #12: Propaga erro ao invés de retornar array vazio silenciosamente
+   */
   async listarPorItem(itemPedidoId) {
     try {
       const response = await api.get(`${BASE_URL}/item/${itemPedidoId}`)
@@ -129,7 +304,37 @@ export const cotacaoService = {
     }
   },
 
-  // Criar nova cotação
+  /**
+   * Cria uma nova cotação
+   * 
+   * @async
+   * @function criar
+   * @memberof cotacaoService
+   * @param {Cotacao} dadosCotacao - Dados da cotação
+   * @returns {Promise<Cotacao>} Cotação criada
+   * @throws {Error} Erro de validação ou comunicação
+   * 
+   * @example
+   * const cotacao = {
+   *   fornecedorId: 5,
+   *   tipoFornecedor: 'PRODUTO',
+   *   solicitacaoDePedidoId: 10,
+   *   itensPedidoIds: [1, 2],
+   *   preco: 1500.00,
+   *   prazoEmDiasUteis: 15,
+   *   anexoPdf: arquivoPDF  // File object
+   * }
+   * await cotacaoService.criar(cotacao)
+   * 
+   * @description
+   * Validações aplicadas:
+   * - fornecedorId obrigatório
+   * - tipoFornecedor obrigatório (PRODUTO ou SERVICO)
+   * - solicitacaoDePedidoId obrigatório
+   * - itensPedidoIds deve ter ao menos 1 item
+   * - preco deve ser > 0
+   * - anexoPdf se fornecido: apenas PDF, máx 10MB
+   */
   async criar(dadosCotacao) {
     try {
       // Validação básica conforme CotacaoCreateDTO
@@ -197,12 +402,46 @@ export const cotacaoService = {
     }
   },
 
-  // Método de conveniência para salvar
+  /**
+   * Método de conveniência para salvar cotação (alias para criar)
+   * 
+   * @async
+   * @function salvar
+   * @memberof cotacaoService
+   * @param {Cotacao} dadosCotacao - Dados da cotação
+   * @returns {Promise<Cotacao>} Cotação salva
+   * @throws {Error} Erro de validação ou comunicação
+   * 
+   * @example
+   * await cotacaoService.salvar(dadosCotacao)
+   */
   async salvar(dadosCotacao) {
     return this.criar(dadosCotacao)
   },
 
-  // Atualizar cotação
+  /**
+   * Atualiza uma cotação existente
+   * 
+   * @async
+   * @function atualizar
+   * @memberof cotacaoService
+   * @param {number} id - ID da cotação
+   * @param {CotacaoEditDTO} dadosCotacao - Dados a serem atualizados
+   * @returns {Promise<Cotacao>} Cotação atualizada
+   * @throws {Error} Erro de validação ou comunicação
+   * 
+   * @example
+   * await cotacaoService.atualizar(15, {
+   *   preco: 1800.00,
+   *   prazoEntrega: 20
+   * })
+   * 
+   * @description
+   * Apenas campos fornecidos são atualizados. Validações:
+   * - preco deve ser > 0
+   * - prazoEntrega deve ser ≥ 0
+   * - anexoPdf se fornecido: apenas PDF, máx 10MB
+   */
   async atualizar(id, dadosCotacao) {
     try {
       // Validação básica
@@ -260,7 +499,19 @@ export const cotacaoService = {
     }
   },
 
-  // Excluir cotação
+  /**
+   * Exclui uma cotação
+   * 
+   * @async
+   * @function deleteCotacao
+   * @memberof cotacaoService
+   * @param {number} id - ID da cotação
+   * @returns {Promise<boolean>} true se exclusão bem-sucedida
+   * @throws {Error} Erro se ID não fornecido ou falha na comunicação
+   * 
+   * @example
+   * await cotacaoService.deleteCotacao(15)
+   */
   async deleteCotacao(id) {
     try {
       if (!id) {
@@ -822,6 +1073,19 @@ export const cotacaoService = {
 
   /**
    * Busca o histórico de edições de uma cotação
+   * 
+   * @async
+   * @function buscarHistorico
+   * @memberof cotacaoService
+   * @param {number} cotacaoId - ID da cotação
+   * @returns {Promise<Array<HistoricoCotacao>>} Lista de registros de histórico
+   * @throws {Error} Erro se ID não fornecido ou falha na comunicação
+   * 
+   * @example
+   * const historico = await cotacaoService.buscarHistorico(15)
+   * historico.forEach(h => {
+   *   console.log(`${h.dataEdicao} - ${h.editadoPor}: ${h.motivoEdicao}`)
+   * })
    */
   async buscarHistorico(cotacaoId) {
     try {
@@ -839,6 +1103,16 @@ export const cotacaoService = {
 
   /**
    * Obtém PDF anterior do histórico de cotação para visualização
+   * 
+   * @async
+   * @function obterPdfAnteriorHistorico
+   * @memberof cotacaoService
+   * @param {number} historicoId - ID do registro de histórico
+   * @returns {Promise<Blob>} Blob do PDF anterior
+   * @throws {Error} Erro ao obter PDF
+   * 
+   * @example
+   * const blob = await cotacaoService.obterPdfAnteriorHistorico(5)
    */
   async obterPdfAnteriorHistorico(historicoId) {
     try {
@@ -856,6 +1130,16 @@ export const cotacaoService = {
 
   /**
    * Obtém PDF novo do histórico de cotação para visualização
+   * 
+   * @async
+   * @function obterPdfNovoHistorico
+   * @memberof cotacaoService
+   * @param {number} historicoId - ID do registro de histórico
+   * @returns {Promise<Blob>} Blob do PDF novo
+   * @throws {Error} Erro ao obter PDF
+   * 
+   * @example
+   * const blob = await cotacaoService.obterPdfNovoHistorico(5)
    */
   async obterPdfNovoHistorico(historicoId) {
     try {
@@ -873,6 +1157,16 @@ export const cotacaoService = {
 
   /**
    * Baixa PDF anterior do histórico de cotação (download direto)
+   * 
+   * @async
+   * @function baixarPdfAnteriorHistorico
+   * @memberof cotacaoService
+   * @param {number} historicoId - ID do registro de histórico
+   * @returns {Promise<void>}
+   * @throws {Error} Erro ao baixar PDF
+   * 
+   * @example
+   * await cotacaoService.baixarPdfAnteriorHistorico(5)
    */
   async baixarPdfAnteriorHistorico(historicoId) {
     try {
@@ -912,4 +1206,7 @@ export const cotacaoService = {
   }
 }
 
+/**
+ * @exports cotacaoService
+ */
 export default cotacaoService
