@@ -684,13 +684,14 @@ export const cotacaoService = {
   // Obter anexo PDF da cotação
   async obterAnexoPdf(cotacaoId, pdfIndex = 0) {
     try {
+      logger.debug(`📄 Buscando PDF da cotação ${cotacaoId}, índice ${pdfIndex}`)
 
       // Obter o token de autenticação
       const token = sessionStorage.getItem('authToken')
 
       // Usar o endpoint com índice para consistência
       const url = `${API_BASE_URL}/api/v1/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
-
+      logger.debug(`🔗 URL da requisição: ${url}`)
 
       const response = await fetch(url, {
         method: 'GET',
@@ -699,14 +700,22 @@ export const cotacaoService = {
         }
       })
 
+      logger.debug(`📡 Resposta HTTP: ${response.status} ${response.statusText}`)
+      logger.debug(`📋 Content-Type: ${response.headers.get('content-type')}`)
+      logger.debug(`📏 Content-Length: ${response.headers.get('content-length')}`)
+
       if (!response.ok) {
-        throw new Error(`Erro ao buscar PDF: ${response.status}`)
+        if (response.status === 404) {
+          throw new Error('PDF não encontrado. Esta cotação pode não ter anexo.')
+        }
+        throw new Error(`Erro ao buscar PDF: ${response.status} ${response.statusText}`)
       }
 
       const blob = await response.blob()
+      logger.debug(`✅ Blob criado: ${blob.size} bytes, tipo: ${blob.type}`)
       return blob
     } catch (error) {
-      logger.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
+      logger.error(`❌ Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
       throw error
     }
   },
@@ -907,6 +916,77 @@ export const cotacaoService = {
       window.URL.revokeObjectURL(url)
     } catch (error) {
       logger.error('❌ Erro ao baixar PDF novo do histórico:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Gera e baixa PDF de uma cotação específica
+   */
+  async gerarPDFCotacao(cotacaoId) {
+    try {
+      if (!cotacaoId) {
+        throw new Error('ID da cotação é obrigatório')
+      }
+
+      logger.debug(`📄 Gerando PDF da cotação ${cotacaoId}`)
+
+      const response = await relatorioClient.get(`/relatorios/cotacao/${cotacaoId}`)
+
+      // Verificar se a resposta existe e tem conteúdo
+      if (!response.data || response.data.size === 0) {
+        logger.error('❌ Resposta vazia ou sem dados do servidor')
+        throw new Error('Não foi possível gerar o relatório - resposta vazia do servidor')
+      }
+
+      // Verificar se o status da resposta é ok
+      if (response.status !== 200) {
+        logger.error('❌ Status HTTP não ok:', response.status, response.statusText)
+        throw new Error(`Erro no servidor: ${response.status} - ${response.statusText}`)
+      }
+
+      // Criar link para download
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = `cotacao_${cotacaoId}_${new Date().toISOString().split('T')[0]}.pdf`
+
+      // Adicionar ao DOM, clicar e remover
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      // Limpar URL após um delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(downloadUrl)
+      }, 100)
+
+      logger.debug(`✅ PDF da cotação ${cotacaoId} gerado com sucesso`)
+      return true
+    } catch (error) {
+      logger.error('❌ Erro ao gerar PDF da cotação:', error)
+
+      // Log mais detalhado do erro
+      if (error.response) {
+        logger.error('❌ Detalhes do erro de resposta:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers
+        })
+
+        // Se a resposta for um blob de erro, tentar ler como texto
+        if (error.response.data instanceof Blob) {
+          try {
+            const text = await error.response.data.text()
+            logger.error('❌ Conteúdo do erro (blob como texto):', text)
+          } catch (e) {
+            logger.error('❌ Não foi possível ler o blob de erro:', e)
+          }
+        }
+      }
+
       throw error
     }
   }

@@ -17,24 +17,6 @@
               Gerencie solicitações de cotações e compare propostas de fornecedores
             </p>
           </div>
-          <div class="action-buttons">
-            <button class="action-button secondary" @click="exportarRelatorio" :disabled="gerandoRelatorio">
-              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="white" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-              </svg>
-              <span v-if="gerandoRelatorio" class="loading-content">
-                <span class="loading-spinner"></span>
-                Gerando...
-              </span>
-              <span v-else>Gerar Relatório</span>
-            </button>
-            <button class="action-button" @click="abrirFormularioNova">
-              <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-              </svg>
-              Nova Cotação
-            </button>
-          </div>
         </div>
       </div>
 
@@ -142,30 +124,10 @@
       <div class="data-section">
         <div class="section-header">
           <h2 class="section-title">Lista de Cotações</h2>
-          <div class="view-controls">
-            <button
-              :class="['view-button', { active: visualizacao === 'tabela' }]"
-              @click="visualizacao = 'tabela'"
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16">
-                <path fill="currentColor" d="M3,3H21A2,2 0 0,1 23,5V19A2,2 0 0,1 21,21H3A2,2 0 0,1 1,19V5A2,2 0 0,1 3,3M5,7V5H7V7H5M9,5V7H11V7H9M13,5V7H15V7H13M17,5V7H19V7H17M5,9V11H7V9H5M9,9V11H11V9H9M13,9V11H15V9H13M17,9V11H19V9H17M5,13V15H7V13H5M9,13V15H11V13H9M13,13V15H15V13H13M17,13V15H19V13H17M5,17V19H7V17H5M9,17V19H11V17H9M13,17V19H15V17H13M17,17V19H19V17H17Z"/>
-              </svg>
-              Tabela
-            </button>
-            <button
-              :class="['view-button', { active: visualizacao === 'cards' }]"
-              @click="visualizacao = 'cards'"
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16">
-                <path fill="currentColor" d="M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3"/>
-              </svg>
-              Cards
-            </button>
-          </div>
         </div>
 
-        <!-- Visualização em Tabela -->
-        <div v-if="visualizacao === 'tabela'" class="table-container">
+        <!-- Tabela -->
+        <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
@@ -232,7 +194,7 @@
                 </td>
                 <td>
                   <div class="item-cell">
-                    <span class="item-id">Item #{{ cotacao.itemPedidoId || 'N/A' }}</span>
+                    <span class="item-id">{{ cotacao.itens?.[0]?.nomeItem || `Item #${cotacao.itens?.[0]?.itemPedidoId || 'N/A'}` }}</span>
                   </div>
                 </td>
                 <td>
@@ -259,17 +221,6 @@
                       </svg>
                     </button>
                     <button
-                      v-if="podeEditar()"
-                      @click="editarCotacao(cotacao)"
-                      class="action-btn edit"
-                      title="Editar"
-                    >
-                      <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
-                      </svg>
-                    </button>
-
-                    <button
                       v-if="podeDeletar()"
                       @click="deletarCotacao(cotacao.id)"
                       class="action-btn delete"
@@ -286,57 +237,6 @@
               </tr>
             </tbody>
           </table>
-        </div>
-
-        <!-- Visualização em Cards -->
-        <div v-if="visualizacao === 'cards'" class="cards-container">
-          <div v-for="cotacao in cotacoesPaginadas" :key="cotacao.id" class="cotacao-card">
-            <div class="card-header">
-              <span class="card-id">{{ String(cotacao.id).padStart(3, '0') }}</span>
-              <span class="card-price">R$ {{ formatarPreco(cotacao.preco) }}</span>
-            </div>
-            <div class="card-body">
-              <h3 class="card-title">Cotação #{{ cotacao.id }}</h3>
-              <p class="card-subtitle">{{ getNomeFornecedor(cotacao.fornecedorId, cotacao.tipoFornecedor) }}</p>
-              <div class="card-meta">
-                <div class="meta-item">
-                  <span class="meta-label">Item do Pedido:</span>
-                  <span class="meta-value">#{{ cotacao.itemPedidoId }}</span>
-                </div>
-                <div class="meta-item">
-                  <span class="meta-label">Prazo de Entrega:</span>
-                  <span class="meta-value">{{ cotacao.prazoEmDiasUteis ? cotacao.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</span>
-                </div>
-                <div class="meta-item">
-                  <span class="meta-label">Validade da Cotação:</span>
-                  <span class="meta-value" :class="{ expired: isDataLimiteVencida(cotacao.dataLimite) }">{{ formatarData(cotacao.dataLimite) }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="card-actions">
-              <button @click="visualizarCotacao(cotacao.id)" class="card-action-btn primary">
-                Visualizar
-              </button>
-              <button
-                v-if="podeEditar()"
-                @click="editarCotacao(cotacao)"
-                class="card-action-btn secondary"
-              >
-                Editar
-              </button>
-
-              <button
-                v-if="podeDeletar()"
-                @click="deletarCotacao(cotacao.id)"
-                class="card-action-btn danger"
-                title="Excluir Cotação"
-                :disabled="operacaoEmAndamento"
-              >
-                <span v-if="operacaoEmAndamento" class="loading-spinner-small"></span>
-                {{ operacaoEmAndamento ? 'Excluindo...' : 'Excluir' }}
-              </button>
-            </div>
-          </div>
         </div>
 
         <!-- Paginação -->
@@ -382,83 +282,146 @@
       <div v-if="showDetalhesModal" class="modal-overlay" @click="fecharDetalhes">
         <div class="detalhes-modal" @click.stop>
           <!-- Header -->
-          <div class="detalhes-header">
-            <div class="header-title-group">
-              <h2>Detalhes da Cotação #{{ String(cotacaoSelecionada?.id).padStart(3, '0') }}</h2>
+          <div class="view-header-modal">
+            <div class="header-content">
+              <h2 class="view-title">Cotação #{{ String(cotacaoSelecionada?.id).padStart(3, '0') }}</h2>
+              <p class="view-subtitle">Detalhes completos da cotação</p>
             </div>
             <button @click="fecharDetalhes" class="close-button">&times;</button>
           </div>
 
           <div class="detalhes-body" v-if="cotacaoSelecionada">
-            <!-- Informações do Item -->
-            <div class="detalhe-section">
-              <h3 class="section-title">Informações do Item</h3>
-              <div v-if="itemSelecionado" class="info-grid">
-                <div class="info-item full-width">
-                  <span class="info-label">Nome do Item</span>
-                  <span class="info-value highlight">{{ itemSelecionado.nome }}</span>
+            <!-- Seção: Informações Gerais -->
+            <div class="section-card">
+              <h3 class="section-title">Informações Gerais</h3>
+              <div class="info-grid-enhanced">
+                <div class="info-card">
+                  <div class="info-card-icon" style="background: #dbeafe;">
+                    <svg viewBox="0 0 20 20" fill="#2563eb">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="info-card-content">
+                    <span class="info-card-label">ID da Cotação</span>
+                    <span class="info-card-value">#{{ cotacaoSelecionada.id }}</span>
+                  </div>
                 </div>
-                <div class="info-item">
-                  <span class="info-label">Quantidade</span>
-                  <span class="info-value">{{ itemSelecionado.quantidade }}</span>
+                <div class="info-card">
+                  <div class="info-card-icon" style="background: #d1fae5;">
+                    <svg viewBox="0 0 20 20" fill="#047857">
+                      <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="info-card-content">
+                    <span class="info-card-label">Preço</span>
+                    <span class="info-card-value">R$ {{ formatarPreco(cotacaoSelecionada.preco) }}</span>
+                  </div>
                 </div>
-                <div class="info-item">
-                  <span class="info-label">ID do Item</span>
-                  <span class="info-value">#{{ cotacaoSelecionada.itemPedidoId }}</span>
+                <div class="info-card" v-if="cotacaoSelecionada.prazoEmDiasUteis">
+                  <div class="info-card-icon" style="background: #fef3c7;">
+                    <svg viewBox="0 0 20 20" fill="#d97706">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="info-card-content">
+                    <span class="info-card-label">Prazo de Entrega</span>
+                    <span class="info-card-value">{{ cotacaoSelecionada.prazoEmDiasUteis }} dias úteis</span>
+                  </div>
                 </div>
-                <div v-if="itemSelecionado.descricao" class="info-item full-width">
-                  <span class="info-label">Descrição</span>
-                  <span class="info-value">{{ itemSelecionado.descricao }}</span>
-                </div>
-                <div v-if="itemSelecionado.observacao" class="info-item full-width">
-                  <span class="info-label">Observações</span>
-                  <span class="info-value">{{ itemSelecionado.observacao }}</span>
-                </div>
-              </div>
-              <div v-else class="loading-state">
-                <div class="loading-spinner-small"></div>
-                <span>Carregando detalhes do item...</span>
-              </div>
-            </div>
-
-            <!-- Informações da Cotação -->
-            <div class="detalhe-section">
-              <h3 class="section-title">Dados da Cotação</h3>
-              <div class="info-grid">
-                <div class="info-item">
-                  <span class="info-label">Fornecedor</span>
-                  <span class="info-value">{{ getNomeFornecedor(cotacaoSelecionada.fornecedorId, cotacaoSelecionada.tipoFornecedor) }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">ID da Cotação</span>
-                  <span class="info-value">#{{ cotacaoSelecionada.id }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Preço</span>
-                  <span class="info-value price-highlight">R$ {{ formatarPreco(cotacaoSelecionada.preco) }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Prazo de Entrega</span>
-                  <span class="info-value">{{ cotacaoSelecionada.prazoEmDiasUteis ? cotacaoSelecionada.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Validade da Cotação</span>
-                  <span class="info-value" :class="{ 'expired': isDataLimiteVencida(cotacaoSelecionada.dataLimite) }">
-                    {{ formatarData(cotacaoSelecionada.dataLimite) }}
-                  </span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Status da Validade</span>
-                  <span class="info-value" :class="{ 'expired': isDataLimiteVencida(cotacaoSelecionada.dataLimite) }">
-                    {{ getDiasRestantes(cotacaoSelecionada.dataLimite) }}
-                  </span>
+                <div class="info-card" v-if="cotacaoSelecionada.dataLimite">
+                  <div class="info-card-icon" style="background: #e0e7ff;">
+                    <svg viewBox="0 0 20 20" fill="#6366f1">
+                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="info-card-content">
+                    <span class="info-card-label">Validade</span>
+                    <span class="info-card-value" :class="{ 'expired': isDataLimiteVencida(cotacaoSelecionada.dataLimite) }">
+                      {{ formatarData(cotacaoSelecionada.dataLimite) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Comparação de Cotações -->
-            <div v-if="cotacoesDoItem.length > 1" class="detalhe-section">
-              <h3 class="section-title">Comparação de Cotações para este Item</h3>
+            <!-- Seção: Fornecedor -->
+            <div class="section-card">
+              <h3 class="section-title">Fornecedor</h3>
+              <div class="fornecedor-info-box">
+                <div class="fornecedor-nome-principal">
+                  {{ getNomeFornecedor(cotacaoSelecionada.fornecedorId, cotacaoSelecionada.tipoFornecedor) }}
+                </div>
+                <div class="fornecedor-tipo-tag">
+                  {{ cotacaoSelecionada.tipoFornecedor === 'produto' ? 'Fornecedor de Produto' : 'Fornecedor de Serviço' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção: Anexos -->
+            <div class="section-card">
+              <h3 class="section-title">Anexos ({{ cotacaoSelecionada.quantidadeAnexos || 0 }})</h3>
+              <div class="anexos-container">
+                <div v-if="cotacaoSelecionada.temAnexoPdf && cotacaoSelecionada.quantidadeAnexos > 0">
+                  <div v-for="index in cotacaoSelecionada.quantidadeAnexos" :key="index" class="anexo-item">
+                    <div class="anexo-info">
+                      <svg viewBox="0 0 24 24" width="32" height="32" fill="#dc2626">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                      </svg>
+                      <div class="anexo-detalhes">
+                        <span class="anexo-nome">Proposta de Cotação {{ cotacaoSelecionada.quantidadeAnexos > 1 ? `#${index}` : '' }} (PDF)</span>
+                        <span class="anexo-meta">Documento anexado</span>
+                      </div>
+                    </div>
+                    <button @click="visualizarPDFCotacao(cotacaoSelecionada.id, index - 1)" class="btn-visualizar-pdf">
+                      <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                      </svg>
+                      Visualizar
+                    </button>
+                  </div>
+                </div>
+                <div v-else class="sem-anexo">
+                  <svg viewBox="0 0 24 24" width="32" height="32" fill="#9ca3af">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,15L14,19H10M9,13V11H15V13H9Z"/>
+                  </svg>
+                  <p>Nenhum anexo disponível</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção: Itens Cotados -->
+            <div class="section-card">
+              <h3 class="section-title">Itens Cotados</h3>
+              <div v-if="cotacaoSelecionada?.itens && cotacaoSelecionada.itens.length > 0" class="itens-cotados-lista">
+                <div v-for="item in cotacaoSelecionada.itens" :key="item.id" class="item-detalhes-box">
+                  <div class="item-nome-destaque">{{ item.nomeItem }}</div>
+                  <div class="item-info-linha">
+                    <span><strong>ID do Item:</strong> #{{ item.itemPedidoId }}</span>
+                    <span><strong>Quantidade:</strong> {{ item.quantidade }}</span>
+                  </div>
+                  <div class="item-info-linha">
+                    <span><strong>Preço Unitário:</strong> R$ {{ formatarPreco(item.precoUnitario) }}</span>
+                    <span><strong>Preço Total:</strong> R$ {{ formatarPreco(item.precoTotal) }}</span>
+                  </div>
+                  <div v-if="item.observacao" class="item-observacao">
+                    <strong>Observações:</strong> {{ item.observacao }}
+                  </div>
+                </div>
+              </div>
+              <div v-else class="item-detalhes-box">
+                <div class="item-info-vazia">
+                  <svg viewBox="0 0 24 24" width="32" height="32" fill="#9ca3af">
+                    <path d="M13 13v-2h-2v2H9v2h2v2h2v-2h2v-2h-2zm-1-9C6.48 4 2 8.48 2 14s4.48 10 10 10 10-4.48 10-10S17.52 4 12 4zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                  </svg>
+                  <p>Informações dos itens não disponíveis</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção: Comparação de Cotações -->
+            <div v-if="cotacoesDoItem.length > 1" class="section-card">
+              <h3 class="section-title">Comparação com Outras Cotações</h3>
               <div class="comparacao-table">
                 <table class="cotacoes-comparativas">
                   <thead>
@@ -466,8 +429,8 @@
                       <th>Cotação</th>
                       <th>Fornecedor</th>
                       <th>Preço</th>
-                      <th>Prazo de Entrega</th>
-                      <th>Status</th>
+                      <th>Prazo</th>
+                      <th>PDF</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -487,29 +450,47 @@
                       </td>
                       <td>{{ cotacao.prazoEmDiasUteis ? cotacao.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</td>
                       <td>
-                        <span v-if="index === 0" class="badge-melhor">Melhor Preço</span>
-                        <span v-if="cotacao.id === cotacaoSelecionada?.id" class="badge-atual">Atual</span>
+                        <button @click="visualizarPDFCotacao(cotacao.id)" class="btn-pdf" title="Visualizar PDF da Cotação">
+                          <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                          </svg>
+                          Ver PDF
+                        </button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Botão de Relatório -->
-            <div class="acoes-detalhes">
-              <button
-                @click="gerarRelatorioComparativo(cotacaoSelecionada.itemPedidoId)"
-                class="btn-acao primary"
-                :disabled="gerandoRelatorio"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path fill="white" d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z"/>
-                </svg>
-                <span v-if="gerandoRelatorio">Gerando Relatório...</span>
-                <span v-else>Gerar Relatório Comparativo</span>
-              </button>
+      <!-- Modal de Visualização de PDF -->
+      <div v-if="showPDFViewer" class="modal-overlay" @click="fecharPDFViewer">
+        <div class="pdf-viewer-modal" @click.stop>
+          <div class="pdf-viewer-header">
+            <h3>Visualização do PDF - Cotação #{{ pdfCotacaoId }}{{ pdfIndex > 0 ? ` - Anexo #${pdfIndex + 1}` : '' }}</h3>
+            <button @click="fecharPDFViewer" class="close-button">&times;</button>
+          </div>
+          <div class="pdf-viewer-body">
+            <div v-if="carregandoPDF" class="loading-pdf">
+              <div class="loading-spinner-large"></div>
+              <p>Carregando PDF...</p>
             </div>
+            <div v-else-if="pdfError" class="pdf-error">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="#dc2626">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <p>{{ pdfError }}</p>
+              <button @click="fecharPDFViewer" class="btn-secondary">Fechar</button>
+            </div>
+            <iframe
+              v-else-if="pdfUrl"
+              :src="pdfUrl"
+              class="pdf-iframe"
+              frameborder="0"
+            ></iframe>
           </div>
         </div>
       </div>
@@ -545,7 +526,6 @@ import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.v
 const CotacaoForm = defineAsyncComponent(() => import('@/features/cotacoes/components/CotacaoForm.vue'))
 import { cotacaoService } from '../services/cotacaoService.js'
 import fornecedorService from '../services/fornecedorService.js'
-import itemPedidoService from '../services/itemPedidoService.js'
 import logger from '../utils/logger.js'
 
 // Router
@@ -553,22 +533,22 @@ const route = useRoute()
 const { success, warning, error: toastError } = useToast()
 
 // Estado reativo
-const gerandoRelatorio = ref(false)
 const showCotacaoForm = ref(false)
 const showDetalhesModal = ref(false)
+const showPDFViewer = ref(false)
 const cotacaoSelecionada = ref(null)
-const itemSelecionado = ref(null)
 const cotacoes = ref([])
 const fornecedores = ref([])
 const termoBusca = ref('')
-const visualizacao = ref('tabela')
 const paginaAtual = ref(1)
 const itensPorPagina = ref(10)
 const carregandoCotacoes = ref(false)
 const operacaoEmAndamento = ref(false)
-
-// Cache de itens de pedido para evitar requisições duplicadas
-const cacheItensPedido = ref(new Map())
+const pdfUrl = ref(null)
+const pdfCotacaoId = ref(null)
+const pdfIndex = ref(0)
+const carregandoPDF = ref(false)
+const pdfError = ref(null)
 
 // Filtros
 const filtros = ref({
@@ -591,6 +571,10 @@ const percentualFinalizadas = computed(() => {
   const finalizadas = resumo.value.finalizadas
 
   return Math.round((finalizadas / total) * 100)
+})
+
+const novasCotacoesMes = computed(() => {
+  return Math.floor(cotacoes.value.length * 0.15)
 })
 
 const fornecedoresUnicos = computed(() => {
@@ -634,8 +618,12 @@ const resumo = computed(() => {
 const cotacoesDoItem = computed(() => {
   if (!cotacaoSelecionada.value) return []
 
+  // Obter o ID do primeiro item da cotação selecionada
+  const itemSelecionadoId = cotacaoSelecionada.value.itens?.[0]?.itemPedidoId
+  if (!itemSelecionadoId) return []
+
   return cotacoes.value
-    .filter(c => c.itemPedidoId === cotacaoSelecionada.value.itemPedidoId)
+    .filter(c => c.itens?.[0]?.itemPedidoId === itemSelecionadoId)
     .sort((a, b) => parseFloat(a.preco) - parseFloat(b.preco)) // Ordenar por preço
 })
 
@@ -648,7 +636,8 @@ const cotacoesFiltradas = computed(() => {
     resultado = resultado.filter(c =>
       c.id.toString().includes(termo) ||
       c.fornecedorId?.toString().includes(termo) ||
-      c.itemPedidoId?.toString().includes(termo) ||
+      c.itens?.[0]?.itemPedidoId?.toString().includes(termo) ||
+      c.itens?.[0]?.nomeItem?.toLowerCase().includes(termo) ||
       c.preco?.toString().includes(termo)
     )
   }
@@ -841,56 +830,12 @@ const isDataLimiteVencida = (dataLimite) => {
   return limite < hoje
 }
 
-// Função auxiliar para buscar item de pedido com cache
-const buscarItemPedidoComCache = async (itemPedidoId) => {
-  if (!itemPedidoId) {
-    logger.warn('⚠️ itemPedidoId não fornecido')
-    return null
-  }
-
-  // Verificar se já está no cache
-  if (cacheItensPedido.value.has(itemPedidoId)) {
-    return cacheItensPedido.value.get(itemPedidoId)
-  }
-
-  // Buscar do backend se não estiver no cache
-  try {
-    const item = await itemPedidoService.buscarPorId(itemPedidoId)
-
-    // Adicionar ao cache
-    if (item) {
-      cacheItensPedido.value.set(itemPedidoId, item)
-    }
-
-    return item
-  } catch (error) {
-    logger.error(`❌ Erro ao buscar item ${itemPedidoId}:`, error)
-    return null
-  }
-}
-
-const podeEditar = () => {
-  // Como não há campo status no backend, permite editar sempre
-  // Pode adicionar lógica baseada em data ou outros critérios se necessário
-  return true
-}
-
 const podeDeletar = () => {
   // Permite deletar sempre (pode ser refinado conforme regras de negócio)
   return true
 }
 
 // Ações
-const abrirFormularioNova = () => {
-  cotacaoSelecionada.value = null
-  showCotacaoForm.value = true
-}
-
-const editarCotacao = (cotacao) => {
-  cotacaoSelecionada.value = cotacao
-  showCotacaoForm.value = true
-}
-
 const fecharFormulario = () => {
   showCotacaoForm.value = false
   cotacaoSelecionada.value = null
@@ -899,7 +844,6 @@ const fecharFormulario = () => {
 const fecharDetalhes = () => {
   showDetalhesModal.value = false
   cotacaoSelecionada.value = null
-  itemSelecionado.value = null
 }
 
 const getNomeFornecedor = (fornecedorId, tipoFornecedor) => {
@@ -948,41 +892,23 @@ const salvarCotacao = async (dadosCotacao) => {
 
 const visualizarCotacao = async (id) => {
   try {
+    logger.debug('📋 Visualizando cotação:', id)
 
     // Buscar a cotação na lista local primeiro
     const cotacao = cotacoes.value.find(c => c.id === id)
 
     if (cotacao) {
+      logger.debug('✅ Cotação encontrada localmente:', cotacao)
       cotacaoSelecionada.value = cotacao
-
-      // Buscar detalhes do item do pedido usando cache
-      if (cotacao.itemPedidoId) {
-        itemSelecionado.value = await buscarItemPedidoComCache(cotacao.itemPedidoId)
-        if (!itemSelecionado.value) {
-          logger.warn('⚠️ Item do pedido não encontrado:', cotacao.itemPedidoId)
-        }
-      } else {
-        logger.warn('⚠️ Cotação sem itemPedidoId')
-        itemSelecionado.value = null
-      }
-
+      logger.debug('📦 Itens da cotação:', cotacao.itens)
       showDetalhesModal.value = true
     } else {
       // Se não encontrar na lista, buscar no backend
+      logger.debug('🌐 Buscando cotação no backend:', id)
       const response = await cotacaoService.buscarPorId(id)
+      logger.debug('✅ Cotação recebida do backend:', response)
+      logger.debug('📦 Itens da cotação:', response.itens)
       cotacaoSelecionada.value = response
-
-      // Buscar detalhes do item do pedido usando cache
-      if (response.itemPedidoId) {
-        itemSelecionado.value = await buscarItemPedidoComCache(response.itemPedidoId)
-        if (!itemSelecionado.value) {
-          logger.warn('⚠️ Item do pedido não encontrado:', response.itemPedidoId)
-        }
-      } else {
-        logger.warn('⚠️ Cotação sem itemPedidoId')
-        itemSelecionado.value = null
-      }
-
       showDetalhesModal.value = true
     }
   } catch (error) {
@@ -1051,68 +977,71 @@ const deletarCotacao = async (id) => {
   }
 }
 
-const exportarRelatorio = async () => {
+// Função para visualizar PDF da cotação
+const visualizarPDFCotacao = async (cotacaoId, pdfIndexParam = 0) => {
   try {
-    gerandoRelatorio.value = true
+    logger.debug(`📄 Iniciando visualização de PDF da cotação ${cotacaoId}, índice ${pdfIndexParam}`)
+    showPDFViewer.value = true
+    pdfCotacaoId.value = cotacaoId
+    pdfIndex.value = pdfIndexParam
+    carregandoPDF.value = true
+    pdfError.value = null
+    pdfUrl.value = null
 
-    // Verificar se há cotações para gerar relatório
-    if (cotacoes.value.length === 0) {
-      warning('Não há cotações para gerar relatório.')
+    // Verificar se a cotação tem anexo antes de tentar buscar
+    const cotacao = cotacoes.value.find(c => c.id === cotacaoId)
+    logger.debug('📦 Dados da cotação:', { temAnexoPdf: cotacao?.temAnexoPdf, quantidadeAnexos: cotacao?.quantidadeAnexos })
+
+    if (!cotacao?.temAnexoPdf || cotacao?.quantidadeAnexos === 0) {
+      logger.warn('⚠️ Cotação não possui anexo PDF')
+      pdfError.value = 'Esta cotação não possui PDF anexado.'
+      carregandoPDF.value = false
       return
     }
 
-    // Gerar relatório geral (dashboard executivo)
-    await cotacaoService.gerarRelatorioCotacoes()
-
-
-  } catch (error) {
-    logger.error('❌ Erro ao gerar relatório:', error)
-
-    let mensagemErro = 'Erro ao gerar relatório de cotações.'
-    if (error.response?.status === 404) {
-      mensagemErro = 'Serviço de relatórios não encontrado. Verifique se o backend está funcionando.'
-    } else if (error.response?.status === 500) {
-      mensagemErro = 'Erro interno do servidor ao gerar relatório.'
-    } else if (error.message) {
-      mensagemErro = `Erro: ${error.message}`
+    // Validar índice
+    if (pdfIndexParam < 0 || pdfIndexParam >= cotacao.quantidadeAnexos) {
+      logger.warn(`⚠️ Índice inválido: ${pdfIndexParam}, quantidade de anexos: ${cotacao.quantidadeAnexos}`)
+      pdfError.value = `Anexo #${pdfIndexParam + 1} não encontrado.`
+      carregandoPDF.value = false
+      return
     }
 
-    toastError(mensagemErro, { duration: 7000 })
-  } finally {
-    gerandoRelatorio.value = false
+    // Buscar o PDF anexado à cotação
+    logger.debug(`🔍 Buscando PDF #${pdfIndexParam + 1} do backend...`)
+    const blob = await cotacaoService.obterAnexoPdf(cotacaoId, pdfIndexParam)
+    logger.debug('✅ Blob recebido:', { size: blob?.size, type: blob?.type })
+
+    if (!blob || blob.size === 0) {
+      logger.warn('⚠️ Blob vazio ou nulo')
+      pdfError.value = 'Este anexo está vazio ou não pôde ser carregado.'
+      carregandoPDF.value = false
+      return
+    }
+
+    // Criar URL para o blob
+    const url = window.URL.createObjectURL(blob)
+    logger.debug('🔗 URL do blob criada:', url)
+    pdfUrl.value = url
+    carregandoPDF.value = false
+
+  } catch (error) {
+    logger.error('❌ Erro ao visualizar PDF da cotação:', error)
+    pdfError.value = `Erro ao carregar PDF: ${error.message}`
+    carregandoPDF.value = false
   }
 }
 
-const gerarRelatorioComparativo = async (itemPedidoId) => {
-  try {
-    gerandoRelatorio.value = true
-
-    if (!itemPedidoId) {
-      warning('ID do item não encontrado para gerar relatório comparativo.')
-      return
-    }
-
-    // Gerar relatório comparativo de cotações por item
-    await cotacaoService.gerarRelatorioComparativo(itemPedidoId)
-
-    success('Relatório comparativo gerado com sucesso!')
-
-  } catch (error) {
-    logger.error('❌ Erro ao gerar relatório comparativo:', error)
-
-    let mensagemErro = 'Erro ao gerar relatório comparativo.'
-    if (error.response?.status === 404) {
-      mensagemErro = 'Não foram encontradas cotações para este item ou o serviço não está disponível.'
-    } else if (error.response?.status === 500) {
-      mensagemErro = 'Erro interno do servidor ao gerar relatório.'
-    } else if (error.message) {
-      mensagemErro = `Erro: ${error.message}`
-    }
-
-    toastError(mensagemErro, { duration: 7000 })
-  } finally {
-    gerandoRelatorio.value = false
+// Fechar visualizador de PDF
+const fecharPDFViewer = () => {
+  if (pdfUrl.value) {
+    window.URL.revokeObjectURL(pdfUrl.value)
   }
+  showPDFViewer.value = false
+  pdfUrl.value = null
+  pdfCotacaoId.value = null
+  carregandoPDF.value = false
+  pdfError.value = null
 }
 
 // Lifecycle
@@ -1121,11 +1050,6 @@ onMounted(async () => {
     carregarCotacoes(),
     carregarFornecedores()
   ])
-
-  // Verificar se deve abrir modal de nova cotação (ação rápida do dashboard)
-  if (route.query.action === 'nova-cotacao') {
-    showCotacaoForm.value = true
-  }
 })
 </script>
 
@@ -1413,34 +1337,6 @@ onMounted(async () => {
   margin: 0;
 }
 
-.view-controls {
-  display: flex;
-  gap: 8px;
-  background: #f3f4f6;
-  padding: 4px;
-  border-radius: 8px;
-}
-
-.view-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: #6b7280;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.view-button.active {
-  background: white;
-  color: #1F285F;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
 /* Tabela */
 .table-container {
   overflow-x: auto;
@@ -1685,168 +1581,6 @@ onMounted(async () => {
   border-color: #f87171;
 }
 
-/* Cards */
-.cards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-  padding: 20px;
-}
-
-.cotacao-card {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s;
-}
-
-.cotacao-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.card-id {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.card-price {
-  background: #dcfce7;
-  color: #166534;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.card-status {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.card-body {
-  margin-bottom: 20px;
-}
-
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 8px 0;
-}
-
-.card-subtitle {
-  color: #6b7280;
-  margin: 0 0 16px 0;
-}
-
-.card-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.meta-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.meta-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.meta-value {
-  font-weight: 600;
-  color: #374151;
-}
-
-.meta-value.expired {
-  color: #dc2626;
-}
-
-.card-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.card-action-btn {
-  flex: 1;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 80px;
-}
-
-.card-action-btn.primary {
-  background: #3b82f6;
-  color: white;
-}
-
-.card-action-btn.primary:hover {
-  background: #2563eb;
-}
-
-.card-action-btn.secondary {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-}
-
-.card-action-btn.secondary:hover {
-  background: #e5e7eb;
-}
-
-.card-action-btn.warning {
-  background: #fef3c7;
-  color: #d97706;
-  border: 1px solid #f59e0b;
-}
-
-.card-action-btn.warning:hover {
-  background: #fed7aa;
-}
-
-.card-action-btn.danger {
-  background: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #ef4444;
-}
-
-.card-action-btn.danger:hover {
-  background: #fecaca;
-}
-
-.card-action-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.card-action-btn:disabled:hover {
-  background: inherit;
-}
-
 /* Loading Spinner Pequeno */
 .loading-spinner-small {
   display: inline-block;
@@ -1995,8 +1729,119 @@ onMounted(async () => {
 }
 */
 
+/* Modal de Visualização de PDF */
+.pdf-viewer-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 95vw;
+  width: 1200px;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.pdf-viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #1F285F 0%, #2d3a7f 100%);
+  border-radius: 12px 12px 0 0;
+}
+
+.pdf-viewer-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: Arial, sans-serif;
+}
+
+.pdf-viewer-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 600px;
+  background: #f3f4f6;
+  position: relative;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  border: none;
+}
+
+.loading-pdf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+}
+
+.loading-spinner-large {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #1F285F;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.pdf-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  text-align: center;
+}
+
+.pdf-error p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
+  .pdf-viewer-modal {
+    width: 100%;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .pdf-viewer-header {
+    border-radius: 0;
+  }
+
+  .pdf-iframe {
+    min-height: 400px;
+  }
+
   .welcome-header {
     flex-direction: column;
     gap: 16px;
@@ -2026,11 +1871,6 @@ onMounted(async () => {
     align-items: stretch;
   }
 
-  .cards-container {
-    grid-template-columns: 1fr;
-    padding: 16px;
-  }
-
   .pagination {
     flex-direction: column;
     gap: 16px;
@@ -2050,10 +1890,6 @@ onMounted(async () => {
   .actions-cell {
     flex-direction: column;
     gap: 4px;
-  }
-
-  .card-actions {
-    flex-direction: column;
   }
 
   .main-content {
@@ -2086,51 +1922,311 @@ onMounted(async () => {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-.detalhes-header {
+.view-header-modal {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 24px;
   border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  background: linear-gradient(135deg, #1F285F 0%, #2d3a7f 100%);
+  color: white;
 }
 
-.header-title-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.view-header-modal .header-content {
+  flex: 1;
 }
 
-.detalhes-header h2 {
+.view-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.view-subtitle {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
-  color: #1F285F;
-  font-size: 1.5rem;
-  font-weight: 600;
   font-family: Arial, sans-serif;
 }
 
 .close-button {
-  background: none;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   font-size: 28px;
-  color: #6b7280;
+  color: white;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   transition: all 0.2s;
   line-height: 1;
+  margin-left: 16px;
 }
 
 .close-button:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .detalhes-body {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
+  background: #f9fafb;
+}
+
+/* Seção de Cards */
+.section-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1F285F;
+  margin: 0 0 16px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e5e7eb;
+  font-family: Arial, sans-serif;
+}
+
+/* Info Cards Enhanced */
+.info-grid-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.info-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.info-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.info-card-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: Arial, sans-serif;
+}
+
+.info-card-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  font-family: Arial, sans-serif;
+}
+
+.info-card-value.expired {
+  color: #dc2626;
+}
+
+/* Fornecedor Info Box */
+.fornecedor-info-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.fornecedor-nome-principal {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1F285F;
+  font-family: Arial, sans-serif;
+}
+
+.fornecedor-tipo-tag {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  width: fit-content;
+}
+
+/* Anexos */
+.anexos-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.anexo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.anexo-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.anexo-detalhes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.anexo-nome {
+  font-weight: 600;
+  color: #1F285F;
+  font-size: 0.95rem;
+}
+
+.anexo-quantidade {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.anexo-meta {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.btn-visualizar-pdf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: Arial, sans-serif;
+}
+
+.btn-visualizar-pdf:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);
+}
+
+.sem-anexo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.sem-anexo p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Item Detalhes Box */
+.itens-cotados-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item-detalhes-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.item-nome-destaque {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1F285F;
+  font-family: Arial, sans-serif;
+}
+
+.item-info-linha {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9375rem;
+  color: #374151;
+}
+
+.item-observacao {
+  padding: 12px;
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #92400e;
+}
+
+.item-info-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.item-info-vazia p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.item-id-info {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  font-family: 'Courier New', monospace;
 }
 
 /* Seções de Detalhes */
@@ -2523,6 +2619,33 @@ onMounted(async () => {
   font-size: 0.75rem;
   font-weight: 600;
   display: inline-block;
+}
+
+/* Botão PDF na Tabela de Comparação */
+.btn-pdf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-pdf:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);
+}
+
+.btn-pdf svg {
+  flex-shrink: 0;
 }
 
 /* Ações do Modal */
