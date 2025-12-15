@@ -1,23 +1,69 @@
 /**
- * Configuração do sistema de rotas da aplicação
+ * @fileoverview Configuração do Vue Router
  *
- * Este arquivo define:
- * - Todas as rotas disponíveis na aplicação
+ * Define sistema completo de rotas da aplicação com:
+ * - Lazy loading de componentes para performance
  * - Proteção de rotas baseada em autenticação
+ * - Guards globais (beforeEach)
  * - Redirecionamentos automáticos
+ * - Rotas dinâmicas com parâmetros
  *
+ * @module router
+ * @requires vue-router
+ * @requires stores/auth
+ *
+ * @description
  * Estrutura de rotas:
- * - / → Redireciona para /login
- * - /login → Página de login (apenas para usuários não autenticados)
- * - /dashboard → Página principal (requer autenticação)
- * - /fornecedores → Gestão de fornecedores (requer autenticação)
+ *
+ * Públicas (requiresGuest):
+ * - /login - Autenticação de usuário
+ *
+ * Protegidas (requiresAuth):
+ * - /dashboard - Painel principal com métricas
+ * - /fornecedores - Lista de fornecedores
+ * - /fornecedores/:id - Detalhes do fornecedor
+ * - /pedidos - Lista de pedidos
+ * - /pedidos/novo - Criar novo pedido
+ * - /pedidos/novo/:id - Continuar rascunho
+ * - /pedidos/rascunho/:id - Editar rascunho
+ * - /pedidos/visualizar/:id - Detalhes do pedido
+ * - /cotacoes - Lista de cotações
+ * - /cotacoes/:id - Detalhes da cotação
+ * - /perfil - Perfil do usuário
+ * - /configuracoes - Configurações do sistema
+ *
+ * @example
+ * // Navegação programática
+ * import { useRouter } from 'vue-router'
+ *
+ * const router = useRouter()
+ * router.push('/dashboard')
+ * router.push({ name: 'visualizar-pedido', params: { id: 123 } })
+ *
+ * @example
+ * // Links declarativos
+ * <router-link to="/fornecedores">Fornecedores</router-link>
+ * <router-link :to="{ name: 'editar-rascunho', params: { id: rascunhoId } }">
+ *   Editar Rascunho
+ * </router-link>
+ *
+ * @author Sistema Gestor de Compras
+ * @version 1.0.0
  */
 
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-// Lazy loading de rotas para melhor performance
-// Cada view será carregada apenas quando necessária
+/**
+ * Lazy loading de views para otimização de performance
+ *
+ * @description
+ * Cada view é carregada apenas quando a rota é acessada.
+ * Reduz bundle inicial e acelera tempo de carregamento.
+ *
+ * Sintaxe: () => import('./path/to/component.vue')
+ * Webpack/Vite criam chunks separados automaticamente.
+ */
 const LoginView = () => import('../views/LoginView.vue')
 const DashboardView = () => import('../views/DashboardView.vue')
 const FornecedoresView = () => import('../views/FornecedoresView.vue')
@@ -29,19 +75,33 @@ const CotacoesView = () => import('../views/CotacoesView.vue')
 const NovoPedidoView = () => import('../views/NovoPedidoView.vue')
 const VisualizarPedidoView = () => import('../views/VisualizarPedidoView.vue')
 
-// Criação do router com histórico de navegação do navegador
+/**
+ * @typedef {Object} RouteMeta
+ * @property {boolean} [requiresAuth] - Se rota requer autenticação
+ * @property {boolean} [requiresGuest] - Se rota é só para visitantes (não logados)
+ */
+
+/**
+ * Instância do Vue Router
+ *
+ * @constant {import('vue-router').Router}
+ *
+ * @description
+ * Configurado com createWebHistory para URLs limpas (sem #).
+ * Requer configuração de servidor para redirecionar 404 para index.html.
+ */
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/login' // Redireciona a raiz para a página de login
+      redirect: '/login' // Redireciona raiz para login
     },
     {
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { requiresGuest: true } // Apenas para usuários não autenticados
+      meta: { requiresGuest: true } // Apenas não autenticados
     },
     {
       path: '/dashboard',
@@ -53,115 +113,149 @@ const router = createRouter({
       path: '/fornecedores',
       name: 'fornecedores',
       component: FornecedoresView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     },
     {
       path: '/fornecedores/:id',
       name: 'visualizar-fornecedor',
       component: VisualizarFornecedorView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     },
     {
       path: '/pedidos',
       name: 'pedidos',
       component: PedidosView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     },
     {
       path: '/pedidos/novo',
       name: 'novo-pedido',
       component: NovoPedidoView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     },
     {
       path: '/pedidos/novo/:id',
       name: 'continuar-pedido',
       component: NovoPedidoView,
-      meta: { requiresAuth: true } // Requer autenticação - continuar rascunho existente
+      meta: { requiresAuth: true } // Continuar rascunho existente
     },
     {
       path: '/pedidos/rascunho/:id',
       name: 'editar-rascunho',
       component: NovoPedidoView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     },
     {
       path: '/pedidos/visualizar/:id',
       name: 'visualizar-pedido',
       component: VisualizarPedidoView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     },
     {
       path: '/cotacoes',
       name: 'cotacoes',
       component: CotacoesView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     },
 
     {
       path: '/cotacoes/:id',
       name: 'detalhes-cotacao',
-      component: CotacoesView, // Reutiliza a view principal por enquanto
-      meta: { requiresAuth: true } // Requer autenticação
+      component: CotacoesView, // Reutiliza view principal
+      meta: { requiresAuth: true }
     },
     {
       path: '/perfil',
       name: 'perfil',
       component: PerfilView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     },
     {
       path: '/configuracoes',
       name: 'configuracoes',
       component: ConfiguracoesView,
-      meta: { requiresAuth: true } // Requer autenticação
+      meta: { requiresAuth: true }
     }
   ],
 })
 
 /**
- * Guarda de navegação global - executa antes de cada mudança de rota
+ * Navigation Guard Global - beforeEach
+ *
+ * @function beforeEach
+ * @param {import('vue-router').RouteLocationNormalized} to - Rota destino
+ * @param {import('vue-router').RouteLocationNormalized} from - Rota origem
+ * @param {import('vue-router').NavigationGuardNext} next - Função de continuação
+ *
+ * @description
+ * Executado antes de cada navegação de rota.
  *
  * Responsabilidades:
- * - Verificar se o usuário está autenticado
- * - Proteger rotas que requerem autenticação
- * - Redirecionar usuários logados para fora da página de login
- * - Redirecionar usuários não logados para a página de login
+ * 1. Verificar autenticação do usuário (via authStore.checkAuth)
+ * 2. Proteger rotas com meta.requiresAuth
+ * 3. Redirecionar usuários não logados para /login
+ * 4. Redirecionar usuários logados para /dashboard se tentarem acessar /login
+ * 5. Prevenir loops de redirecionamento
+ *
+ * @example
+ * // Rota protegida
+ * {
+ *   path: '/dashboard',
+ *   component: DashboardView,
+ *   meta: { requiresAuth: true } // Guard bloqueia se não autenticado
+ * }
+ *
+ * @example
+ * // Rota só para visitantes
+ * {
+ *   path: '/login',
+ *   component: LoginView,
+ *   meta: { requiresGuest: true } // Guard redireciona se já logado
+ * }
  */
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // Verificar se há dados de autenticação salvos no sessionStorage
-  // Importante fazer isso antes de verificar as proteções de rota
-  // O próprio checkAuth() agora previne chamadas duplicadas com sua flag interna
+  // Verificar sessão salva no sessionStorage
+  // authStore.checkAuth() tem proteção interna contra chamadas duplicadas
   if (!authStore.isAuthenticated) {
     await authStore.checkAuth()
   }
 
-  // Proteção para rotas que requerem autenticação
+  // CASO 1: Rota requer autenticação (meta.requiresAuth)
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     // Usuário não autenticado tentando acessar rota protegida
-    // Evita loop: só redireciona se não estiver indo para login
+    // Previne loop: só redireciona se não estiver indo para /login
     if (to.path !== '/login') {
       next('/login')
     } else {
       next()
     }
   }
-  // Proteção para rotas que são apenas para visitantes (ex: login)
+  // CASO 2: Rota só para visitantes (meta.requiresGuest)
   else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    // Usuário já autenticado tentando acessar página de login
-    // Evita loop: só redireciona se não estiver indo para dashboard
+    // Usuário autenticado tentando acessar /login
+    // Previne loop: só redireciona se não estiver indo para /dashboard
     if (to.path !== '/dashboard') {
       next('/dashboard')
     } else {
       next()
     }
   }
-  // Caso contrário, permite a navegação
+  // CASO 3: Sem restrições
   else {
     next()
   }
 })
 
+/**
+ * Exporta instância do router
+ *
+ * @exports router
+ * @type {import('vue-router').Router}
+ *
+ * @description
+ * Importar em main.js: app.use(router)
+ * Usar em componentes: const router = useRouter()
+ */
 export default router
