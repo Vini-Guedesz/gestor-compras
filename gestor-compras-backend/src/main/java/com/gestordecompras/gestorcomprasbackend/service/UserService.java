@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.service;
 
+import com.gestordecompras.gestorcomprasbackend.dto.user.UpdateUserRoleDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserUpdateDTO;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -101,7 +103,8 @@ public class UserService {
             throw new DataIntegrityConflictException("Nome já cadastrado");
         }
 
-        User user = new User(null, dto.nome(), encoder.encode(dto.senha()), dto.role(), dto.email());
+        User user = new User(null, dto.nome(), encoder.encode(dto.senha()), dto.role(), dto.email(),
+                             dto.ativo() != null ? dto.ativo() : true, LocalDateTime.now());
         User savedUser = repository.save(user);
         return new UserDTO(savedUser);
     }
@@ -129,6 +132,7 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + dto.id()));
 
         updateUserData(user, dto);
+        user.setLastModifiedAt(LocalDateTime.now());
         return new UserDTO(repository.save(user));
     }
 
@@ -156,17 +160,69 @@ public class UserService {
     }
 
     /**
-     * Remove um usuário permanentemente do sistema.
+     * Desativa um usuário no sistema (soft delete).
      *
-     * <p>Esta operação não pode ser desfeita.</p>
+     * <p>Ao invés de excluir permanentemente, o usuário é marcado como inativo.
+     * Usuários inativos não podem fazer login no sistema.</p>
      *
-     * @param id ID do usuário a ser removido
+     * <p><b>IMPORTANTE:</b> O usuário continua existindo no banco de dados,
+     * mas não pode mais acessar o sistema. Para reativar, use {@link #reactivateUser(Integer)}.</p>
+     *
+     * @param id ID do usuário a ser desativado
      * @throws EntityNotFoundException se usuário não encontrado
      */
     public void deleteUser(Integer id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Usuário não encontrado com ID: " + id);
-        }
-        repository.deleteById(id);
+        User user = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + id));
+
+        user.setAtivo(false);
+        user.setLastModifiedAt(LocalDateTime.now());
+        repository.save(user);
+    }
+
+    /**
+     * Atualiza a role de um usuário (exclusivo para ADMINs).
+     *
+     * <p>Este método permite que administradores alterem o nível de acesso
+     * de outros usuários no sistema.</p>
+     *
+     * <p><b>Roles disponíveis:</b></p>
+     * <ul>
+     *   <li>ADMIN - Acesso total ao sistema</li>
+     *   <li>USUARIO - Acesso básico</li>
+     *   <li>COMPRADOR - Gerenciamento de pedidos de compra</li>
+     *   <li>APROVADOR - Aprovação de pedidos de compra</li>
+     * </ul>
+     *
+     * @param dto DTO contendo ID do usuário e nova role
+     * @return UserDTO atualizado com a nova role
+     * @throws EntityNotFoundException se usuário não encontrado
+     */
+    public UserDTO updateUserRole(UpdateUserRoleDTO dto) {
+        User user = repository.findById(dto.userId())
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + dto.userId()));
+
+        user.setRole(dto.newRole());
+        user.setLastModifiedAt(LocalDateTime.now());
+        return new UserDTO(repository.save(user));
+    }
+
+    /**
+     * Reativa um usuário previamente desativado.
+     *
+     * <p>Permite que usuários desativados voltem a ter acesso ao sistema.
+     * Apenas ADMINs podem reativar usuários.</p>
+     *
+     * @param id ID do usuário a ser reativado
+     * @return UserDTO do usuário reativado
+     * @throws EntityNotFoundException se usuário não encontrado
+     */
+    public UserDTO reactivateUser(Integer id) {
+        User user = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + id));
+
+        user.setAtivo(true);
+        user.setLastModifiedAt(LocalDateTime.now());
+        return new UserDTO(repository.save(user));
     }
 }

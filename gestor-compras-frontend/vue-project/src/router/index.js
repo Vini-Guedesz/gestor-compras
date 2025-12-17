@@ -74,6 +74,7 @@ const ConfiguracoesView = () => import('../views/ConfiguracoesView.vue')
 const CotacoesView = () => import('../views/CotacoesView.vue')
 const NovoPedidoView = () => import('../views/NovoPedidoView.vue')
 const VisualizarPedidoView = () => import('../views/VisualizarPedidoView.vue')
+const UsuariosView = () => import('../views/UsuariosView.vue')
 
 /**
  * @typedef {Object} RouteMeta
@@ -174,6 +175,12 @@ const router = createRouter({
       path: '/configuracoes',
       name: 'configuracoes',
       component: ConfiguracoesView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/usuarios',
+      name: 'usuarios',
+      component: UsuariosView,
       meta: { requiresAuth: true }
     }
   ],

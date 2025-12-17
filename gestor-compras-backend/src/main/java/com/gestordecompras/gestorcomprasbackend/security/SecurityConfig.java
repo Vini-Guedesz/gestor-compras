@@ -42,7 +42,15 @@ import java.util.Arrays;
  * <ul>
  *   <li><b>Públicos (sem autenticação):</b> /auth/login, /swagger-ui/**, fornecedores, relatórios</li>
  *   <li><b>Apenas ADMIN:</b> /users/**, /enderecos/**, /contatos/**</li>
- *   <li><b>Autenticados (USER ou ADMIN):</b> Todos os demais</li>
+ *   <li><b>Autenticados (qualquer role):</b> Todos os demais endpoints</li>
+ * </ul>
+ *
+ * <p><b>Roles disponíveis no sistema:</b></p>
+ * <ul>
+ *   <li><b>ADMIN:</b> Acesso total, incluindo gerenciamento de usuários e configurações</li>
+ *   <li><b>USUARIO:</b> Acesso básico ao sistema</li>
+ *   <li><b>COMPRADOR:</b> Permissões para criar e gerenciar pedidos de compra</li>
+ *   <li><b>APROVADOR:</b> Permissões para aprovar pedidos de compra</li>
  * </ul>
  *
  * <p><b>Características de Segurança:</b></p>
@@ -109,8 +117,9 @@ public class SecurityConfig {
     };
 
     /**
-     * Endpoints que requerem role USER ou ADMIN.
-     * Atualmente vazio - a maioria dos endpoints usa {@code anyRequest().authenticated()}.
+     * Endpoints que requerem autenticação mas aceitam qualquer role válida.
+     * Atualmente vazio - a maioria dos endpoints usa {@code anyRequest().authenticated()},
+     * permitindo acesso a ADMIN, USUARIO, COMPRADOR e APROVADOR.
      */
     private static final String[] USER_ENDPOINTS = {
     };
@@ -189,9 +198,9 @@ public class SecurityConfig {
                         .requestMatchers(ApiVersionConfig.API_V1 + "/relatorios/**").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(USER_ENDPOINTS).hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(USER_ENDPOINTS).hasAnyRole("USUARIO", "ADMIN", "COMPRADOR", "APROVADOR")
                         .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() // Permite qualquer role válida (ADMIN, USUARIO, COMPRADOR, APROVADOR)
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)

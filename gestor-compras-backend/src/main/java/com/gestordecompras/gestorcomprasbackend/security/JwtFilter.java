@@ -1,7 +1,10 @@
 package com.gestordecompras.gestorcomprasbackend.security;
 
+import com.gestordecompras.gestorcomprasbackend.model.user.User;
 import com.gestordecompras.gestorcomprasbackend.security.JwtService;
 import com.gestordecompras.gestorcomprasbackend.security.UserDetailsServiceImpl;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,7 +21,13 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.crypto.SecretKey;
+import io.jsonwebtoken.security.Keys;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 /**
  * Filtro de autenticação JWT que intercepta todas as requisições HTTP.
@@ -60,16 +70,19 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final SecretKey key;
 
     /**
      * Construtor com injeção de dependências.
      *
      * @param jwtService Serviço para validação e extração de dados do JWT
      * @param userDetailsService Service para carregar dados do usuário do banco
+     * @param secretKey Secret key para parsear JWT e extrair claims
      */
-    public JwtFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService) {
+    public JwtFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService, @Value("${jwt.secret}") String secretKey) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -123,8 +136,24 @@ public class JwtFilter extends OncePerRequestFilter {
             // Autentica apenas se email válido e usuário ainda não autenticado
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                User user = (User) userDetails;
 
-                if (jwtService.tokenValido(token, userDetails)) {
+                // Extrai timestamp de emissão do token
+                Claims claims = Jwts.parserBuilder()
+                        .setSigningKey(key)
+                        .build()
+                        .parseClaimsJws(token)
+                        .getBody();
+
+                Date tokenIssuedAt = claims.getIssuedAt();
+                LocalDateTime tokenIssuedTime = LocalDateTime.ofInstant(tokenIssuedAt.toInstant(), ZoneId.systemDefault());
+
+                // Verifica se token foi emitido antes da última modificação do usuário
+                boolean tokenEmitidoAntesDeModificacao = user.getLastModifiedAt() != null
+                        && tokenIssuedTime.isBefore(user.getLastModifiedAt());
+
+                // Verifica se token é válido E se usuário está ativo E se token não foi invalidado por edição
+                if (jwtService.tokenValido(token, userDetails) && userDetails.isEnabled() && !tokenEmitidoAntesDeModificacao) {
                     // Cria token de autenticação com authorities do usuário
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -134,6 +163,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
                     // Popula SecurityContext para disponibilizar em toda a requisição
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else if (!userDetails.isEnabled()) {
+                    logger.debug("Usuário desativado tentou acessar o sistema: {}", email);
+                } else if (tokenEmitidoAntesDeModificacao) {
+                    logger.debug("Token invalidado - usuário foi modificado após emissão do token: {}", email);
                 }
             }
         } catch (Exception e) {

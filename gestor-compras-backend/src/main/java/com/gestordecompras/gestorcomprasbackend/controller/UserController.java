@@ -1,6 +1,7 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
 import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
+import com.gestordecompras.gestorcomprasbackend.dto.user.UpdateUserRoleDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserUpdateDTO;
@@ -155,27 +156,80 @@ public class UserController {
     }
 
     /**
-     * Remove um usuário do sistema.
+     * Desativa um usuário do sistema (soft delete).
      *
-     * <p>Deleta permanentemente o usuário identificado pelo ID.
-     * Esta operação não pode ser desfeita.</p>
+     * <p>Marca o usuário como inativo ao invés de excluí-lo permanentemente.
+     * Usuários inativos não podem fazer login no sistema.</p>
      *
-     * <p><b>IMPORTANTE:</b> Se o usuário tiver relacionamentos com outras entidades
-     * (ex: rascunhos criados), a operação pode falhar com erro de integridade.</p>
+     * <p><b>IMPORTANTE:</b> O usuário permanece no banco de dados mas não pode
+     * acessar o sistema. Use o endpoint PATCH /{id}/reactivate para reativar.</p>
      *
-     * @param id ID do usuário a ser removido
+     * @param id ID do usuário a ser desativado
      * @return ResponseEntity com status 204 (NO_CONTENT)
      * @throws jakarta.persistence.EntityNotFoundException se usuário não encontrado
-     * @throws com.gestordecompras.gestorcomprasbackend.exception.DataIntegrityConflictException se usuário possui relacionamentos que impedem remoção
      */
     @DeleteMapping("/{id}")
-    @Operation(summary = "Excluir usuário", description = "Remove um usuário pelo seu ID")
+    @Operation(summary = "Desativar usuário", description = "Desativa um usuário impedindo seu acesso ao sistema")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Usuário excluído com sucesso"),
+            @ApiResponse(responseCode = "204", description = "Usuário desativado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         service.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Atualiza a role de um usuário (exclusivo para ADMINs).
+     *
+     * <p>Este endpoint permite que administradores alterem o nível de acesso
+     * de outros usuários no sistema. Apenas usuários com role ADMIN podem
+     * acessar este endpoint.</p>
+     *
+     * <p><b>Roles disponíveis:</b></p>
+     * <ul>
+     *   <li>ADMIN - Acesso total ao sistema, incluindo gerenciamento de usuários</li>
+     *   <li>USUARIO - Acesso básico ao sistema</li>
+     *   <li>COMPRADOR - Permissões para criar e gerenciar pedidos de compra</li>
+     *   <li>APROVADOR - Permissões para aprovar pedidos de compra</li>
+     * </ul>
+     *
+     * @param dto DTO contendo o ID do usuário e a nova role
+     * @return ResponseEntity com UserDTO atualizado
+     * @throws jakarta.persistence.EntityNotFoundException se usuário não encontrado
+     */
+    @PatchMapping("/role")
+    @Operation(summary = "Atualizar role de usuário", description = "Permite que ADMINs alterem a role de outros usuários")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Role atualizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado - apenas ADMINs podem alterar roles"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
+    public ResponseEntity<UserDTO> updateUserRole(@RequestBody @Valid UpdateUserRoleDTO dto) {
+        UserDTO updatedUser = service.updateUserRole(dto);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    /**
+     * Reativa um usuário previamente desativado (exclusivo para ADMINs).
+     *
+     * <p>Permite que usuários desativados voltem a ter acesso ao sistema.
+     * Apenas usuários com role ADMIN podem acessar este endpoint.</p>
+     *
+     * @param id ID do usuário a ser reativado
+     * @return ResponseEntity com UserDTO do usuário reativado
+     * @throws jakarta.persistence.EntityNotFoundException se usuário não encontrado
+     */
+    @PatchMapping("/{id}/reactivate")
+    @Operation(summary = "Reativar usuário", description = "Reativa um usuário previamente desativado")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário reativado com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado - apenas ADMINs podem reativar usuários"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
+    public ResponseEntity<UserDTO> reactivateUser(@PathVariable Integer id) {
+        UserDTO reactivatedUser = service.reactivateUser(id);
+        return ResponseEntity.ok(reactivatedUser);
     }
 }

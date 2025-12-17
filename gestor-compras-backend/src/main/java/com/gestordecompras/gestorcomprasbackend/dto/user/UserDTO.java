@@ -12,13 +12,16 @@ public record UserDTO(
         @Schema(description = "Nome completo do usuário", example = "João da Silva")
         String nome,
 
-        @Schema(description = "Perfil de acesso (USER ou ADMIN)", example = "ADMIN")
+        @Schema(description = "Perfil de acesso (ADMIN, USUARIO, COMPRADOR ou APROVADOR)", example = "ADMIN")
         UserRole role,
 
         @Schema(description = "Endereço de e-mail (usado para login)", example = "joao@email.com")
-        String email
+        String email,
+
+        @Schema(description = "Indica se o usuário está ativo no sistema", example = "true")
+        Boolean ativo
 ) {
     public UserDTO(User user) {
-        this(user.getId(), user.getNome(), user.getRole(), user.getEmail());
+        this(user.getId(), user.getNome(), user.getRole(), user.getEmail(), user.getAtivo());
     }
 }
