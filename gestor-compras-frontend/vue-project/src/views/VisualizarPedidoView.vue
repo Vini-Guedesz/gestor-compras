@@ -589,7 +589,6 @@ export default {
       carregandoPdf.value = true
 
       try {
-        logger.debug(`📄 Carregando PDF da cotação ${cotacao.id}, índice ${pdfIndex}`)
         let blob
         // Usar o serviço correto baseado no tipo
         if (isRascunho.value) {
@@ -603,10 +602,8 @@ export default {
           blob = await cotacaoService.obterAnexoPdf(cotacao.id, pdfIndex)
         }
 
-        logger.debug(`📄 PDF recebido, tamanho: ${blob?.size || 0} bytes`)
         if (blob && blob.size > 0) {
           pdfUrl.value = URL.createObjectURL(blob)
-          logger.debug(`✅ PDF carregado com sucesso para visualização`)
         } else {
           logger.warn('⚠️ PDF vazio ou não encontrado')
         }
@@ -626,7 +623,6 @@ export default {
     }
 
     const carregarPedido = async () => {
-      logger.debug('🔄 Recarregando pedido...')
       const id = route.params.id
       const tipo = route.query.tipo || 'pedido'
 
@@ -708,20 +704,6 @@ export default {
               ...c,
               fornecedorCompleto: fornecedor
             }
-          })
-
-          logger.debug('✅ Pedido recarregado. Cotações:', cotacoes.value)
-          logger.debug('🔍 Detalhes das cotações (foiEditada, numeroVersao):')
-          cotacoes.value.forEach((c, index) => {
-            logger.debug(`  Cotação ${index + 1}:`, {
-              id: c.id,
-              preco: c.preco,
-              foiEditada: c.foiEditada,
-              numeroVersao: c.numeroVersao,
-              dataUltimaEdicao: c.dataUltimaEdicao,
-              temAnexoPdf: c.temAnexoPdf,
-              quantidadeAnexos: c.quantidadeAnexos
-            })
           })
         }
       } catch (error) {
@@ -833,8 +815,6 @@ export default {
 
     const salvarEdicaoCotacao = async (dadosEdicao) => {
       try {
-        logger.debug('📝 Dados recebidos do modal:', dadosEdicao)
-
         // Preparar DTO para o backend (SEM PDFs - serão enviados separadamente)
         const editDTO = {
           id: dadosEdicao.id,
@@ -847,24 +827,17 @@ export default {
           anexoPdf: null // Backend ignora este campo - usar endpoint /anexos
         }
 
-        logger.debug('📤 DTO enviado para o backend:', editDTO)
-
         // 1. Primeiro, editar os dados da cotação
         const resultado = await cotacaoService.editarCotacao(dadosEdicao.id, editDTO)
 
-        logger.debug('✅ Cotação editada:', resultado)
-
         // 2. Se há novos PDFs, fazer upload usando endpoint correto
         if (dadosEdicao.pdfFiles && dadosEdicao.pdfFiles.length > 0) {
-          logger.debug(`📎 Fazendo upload de ${dadosEdicao.pdfFiles.length} PDF(s)...`)
-
           try {
             // Upload de cada PDF individualmente
             // createHistory=false para não criar registro duplicado no histórico
             for (const pdfFile of dadosEdicao.pdfFiles) {
               await cotacaoService.adicionarAnexo(dadosEdicao.id, pdfFile, false)
             }
-            logger.debug('✅ PDFs enviados com sucesso')
             success(`Cotação editada com sucesso! ${dadosEdicao.pdfFiles.length} PDF(s) adicionado(s).`)
           } catch (pdfError) {
             logger.error('❌ Erro ao enviar PDFs:', pdfError)

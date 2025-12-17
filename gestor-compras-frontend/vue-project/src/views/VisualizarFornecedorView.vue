@@ -597,24 +597,18 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
 
       const cotacoesComDetalhes = await Promise.all(
         cotacoesOrdenadas.map(async (cot) => {
-          logger.debug(`📋 Processando cotação ${cot.id}:`, cot)
-
           let pedido = null
 
           // Buscar o pedido relacionado
           if (cot.solicitacaoDePedidoId) {
-            logger.debug(`🔍 Buscando pedido ${cot.solicitacaoDePedidoId}`)
             pedido = await buscarPedidoComCache(cot.solicitacaoDePedidoId)
-            logger.debug(`📄 Pedido encontrado:`, pedido)
           }
 
           // Buscar todos os itens de pedido desta cotação
           const itensDetalhados = await Promise.all(
             (cot.itens || []).map(async (itemCotacao) => {
               if (itemCotacao.itemPedidoId) {
-                logger.debug(`🔍 Buscando item de pedido ${itemCotacao.itemPedidoId}`)
                 const itemPedido = await buscarItemPedidoComCache(itemCotacao.itemPedidoId)
-                logger.debug(`📦 Item encontrado:`, itemPedido)
                 return itemPedido
               }
               return null

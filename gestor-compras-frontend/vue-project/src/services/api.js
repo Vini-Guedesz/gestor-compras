@@ -87,9 +87,6 @@ apiClient.interceptors.request.use(
       delete config.headers['Content-Type']
     }
 
-    // DEBUG: Log do body sendo enviado (desativado)
-    // Remover comentários vazios após debug
-
     return config
   },
   (error) => {

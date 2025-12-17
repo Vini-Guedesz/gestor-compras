@@ -935,14 +935,11 @@ export const cotacaoService = {
   // Obter anexo PDF da cotação
   async obterAnexoPdf(cotacaoId, pdfIndex = 0) {
     try {
-      logger.debug(`📄 Buscando PDF da cotação ${cotacaoId}, índice ${pdfIndex}`)
-
       // Obter o token de autenticação
       const token = sessionStorage.getItem('authToken')
 
       // Usar o endpoint com índice para consistência
       const url = `${API_BASE_URL}/api/v1/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
-      logger.debug(`🔗 URL da requisição: ${url}`)
 
       const response = await fetch(url, {
         method: 'GET',
@@ -950,10 +947,6 @@ export const cotacaoService = {
           'Authorization': token ? `Bearer ${token}` : ''
         }
       })
-
-      logger.debug(`📡 Resposta HTTP: ${response.status} ${response.statusText}`)
-      logger.debug(`📋 Content-Type: ${response.headers.get('content-type')}`)
-      logger.debug(`📏 Content-Length: ${response.headers.get('content-length')}`)
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -963,7 +956,6 @@ export const cotacaoService = {
       }
 
       const blob = await response.blob()
-      logger.debug(`✅ Blob criado: ${blob.size} bytes, tipo: ${blob.type}`)
       return blob
     } catch (error) {
       logger.error(`❌ Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
@@ -1069,10 +1061,7 @@ export const cotacaoService = {
         throw new Error('Responsável pela edição é obrigatório')
       }
 
-      logger.debug('🔧 Chamando API PUT /editar...')
       const response = await api.put(`${BASE_URL}/${cotacaoId}/editar`, editDTO)
-      logger.debug('🔧 Response completo:', response)
-      logger.debug('🔧 Response.data:', response.data)
       return response.data
     } catch (error) {
       logger.error('❌ Erro ao editar cotação:', error)
@@ -1223,8 +1212,6 @@ export const cotacaoService = {
         throw new Error('ID da cotação é obrigatório')
       }
 
-      logger.debug(`📄 Gerando PDF da cotação ${cotacaoId}`)
-
       const response = await relatorioClient.get(`/relatorios/cotacao/${cotacaoId}`)
 
       // Verificar se a resposta existe e tem conteúdo
@@ -1256,7 +1243,6 @@ export const cotacaoService = {
         window.URL.revokeObjectURL(downloadUrl)
       }, 100)
 
-      logger.debug(`✅ PDF da cotação ${cotacaoId} gerado com sucesso`)
       return true
     } catch (error) {
       logger.error('❌ Erro ao gerar PDF da cotação:', error)

@@ -8,7 +8,7 @@
 /**
  * Versão atual da API (v1)
  */
-export const API_V1 = '/api/v1/v1';
+export const API_V1 = '/api/v1';
 
 /**
  * Prefixo de relatórios (não versionado por compatibilidade)

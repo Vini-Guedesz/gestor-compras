@@ -328,9 +328,6 @@ export default {
           pdfFiles: form.value.pdfFiles
         }
 
-        logger.debug('📋 Modal - Form values:', form.value)
-        logger.debug('📋 Modal - Dados a serem emitidos:', dadosEdicao)
-
         emit('save', dadosEdicao)
       } finally {
         salvando.value = false

@@ -210,14 +210,10 @@ export default {
     const carregarHistorico = async () => {
       carregando.value = true
       try {
-        logger.debug('🔍 Buscando histórico da cotação:', props.cotacao.id)
         const data = await cotacaoService.buscarHistorico(props.cotacao.id)
-        logger.debug('📦 Dados recebidos do backend:', data)
-        logger.debug('📊 Tipo dos dados:', typeof data, 'É array?', Array.isArray(data))
 
         if (Array.isArray(data)) {
           historico.value = data
-          logger.debug('✅ Histórico carregado com sucesso:', historico.value.length, 'itens')
         } else {
           logger.warn('⚠️ Dados não são array:', data)
           historico.value = []

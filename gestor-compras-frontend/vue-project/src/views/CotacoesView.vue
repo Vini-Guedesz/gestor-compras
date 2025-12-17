@@ -892,22 +892,15 @@ const salvarCotacao = async (dadosCotacao) => {
 
 const visualizarCotacao = async (id) => {
   try {
-    logger.debug('📋 Visualizando cotação:', id)
-
     // Buscar a cotação na lista local primeiro
     const cotacao = cotacoes.value.find(c => c.id === id)
 
     if (cotacao) {
-      logger.debug('✅ Cotação encontrada localmente:', cotacao)
       cotacaoSelecionada.value = cotacao
-      logger.debug('📦 Itens da cotação:', cotacao.itens)
       showDetalhesModal.value = true
     } else {
       // Se não encontrar na lista, buscar no backend
-      logger.debug('🌐 Buscando cotação no backend:', id)
       const response = await cotacaoService.buscarPorId(id)
-      logger.debug('✅ Cotação recebida do backend:', response)
-      logger.debug('📦 Itens da cotação:', response.itens)
       cotacaoSelecionada.value = response
       showDetalhesModal.value = true
     }
@@ -980,7 +973,6 @@ const deletarCotacao = async (id) => {
 // Função para visualizar PDF da cotação
 const visualizarPDFCotacao = async (cotacaoId, pdfIndexParam = 0) => {
   try {
-    logger.debug(`📄 Iniciando visualização de PDF da cotação ${cotacaoId}, índice ${pdfIndexParam}`)
     showPDFViewer.value = true
     pdfCotacaoId.value = cotacaoId
     pdfIndex.value = pdfIndexParam
@@ -990,7 +982,6 @@ const visualizarPDFCotacao = async (cotacaoId, pdfIndexParam = 0) => {
 
     // Verificar se a cotação tem anexo antes de tentar buscar
     const cotacao = cotacoes.value.find(c => c.id === cotacaoId)
-    logger.debug('📦 Dados da cotação:', { temAnexoPdf: cotacao?.temAnexoPdf, quantidadeAnexos: cotacao?.quantidadeAnexos })
 
     if (!cotacao?.temAnexoPdf || cotacao?.quantidadeAnexos === 0) {
       logger.warn('⚠️ Cotação não possui anexo PDF')
@@ -1008,9 +999,7 @@ const visualizarPDFCotacao = async (cotacaoId, pdfIndexParam = 0) => {
     }
 
     // Buscar o PDF anexado à cotação
-    logger.debug(`🔍 Buscando PDF #${pdfIndexParam + 1} do backend...`)
     const blob = await cotacaoService.obterAnexoPdf(cotacaoId, pdfIndexParam)
-    logger.debug('✅ Blob recebido:', { size: blob?.size, type: blob?.type })
 
     if (!blob || blob.size === 0) {
       logger.warn('⚠️ Blob vazio ou nulo')
@@ -1021,7 +1010,6 @@ const visualizarPDFCotacao = async (cotacaoId, pdfIndexParam = 0) => {
 
     // Criar URL para o blob
     const url = window.URL.createObjectURL(blob)
-    logger.debug('🔗 URL do blob criada:', url)
     pdfUrl.value = url
     carregandoPDF.value = false
 

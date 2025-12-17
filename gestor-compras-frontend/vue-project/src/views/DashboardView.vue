@@ -121,19 +121,16 @@ const carregarMetricas = async () => {
 
   // Evitar chamadas muito frequentes (cooldown de 2 segundos)
   if (now - lastLoadTime.value < COOLDOWN_MS) {
-    logger.debug('⏸️ Carregamento de métricas em cooldown, ignorando...')
     return
   }
 
   // Evitar chamadas simultâneas
   if (isLoadingMetricas.value) {
-    logger.debug('⏸️ Já está carregando métricas, ignorando...')
     return
   }
 
   lastLoadTime.value = now
   isLoadingMetricas.value = true
-  logger.debug('📊 Iniciando carregamento de métricas...')
 
   try {
 
