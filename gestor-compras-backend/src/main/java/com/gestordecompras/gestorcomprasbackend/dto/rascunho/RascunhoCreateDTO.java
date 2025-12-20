@@ -11,5 +11,8 @@ public record RascunhoCreateDTO(
     List<ItemRascunhoCreateDTO> itens,
 
     @Size(max = 1000, message = "A observação deve ter no máximo 1000 caracteres")
-    String observacao
+    String observacao,
+
+    @Size(max = 5000, message = "O objetivo deve ter no máximo 5000 caracteres")
+    String objetivo
 ) {}

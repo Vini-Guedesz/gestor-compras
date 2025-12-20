@@ -106,6 +106,7 @@ public class RascunhoService {
         Rascunho rascunho = new Rascunho();
         rascunho.setCriador(criador);
         rascunho.setObservacao(dto.observacao());
+        rascunho.setObjetivo(dto.objetivo());
         rascunho.setProximoNumeroItem(1);
 
         Rascunho rascunhoSalvo = rascunhoRepository.save(rascunho);
@@ -313,6 +314,7 @@ public class RascunhoService {
         }
 
         rascunho.setObservacao(dto.observacao());
+        rascunho.setObjetivo(dto.objetivo());
 
         // Atualizar itens se fornecidos
         if (dto.itens() != null) {
@@ -415,6 +417,7 @@ public class RascunhoService {
         // Criar novo pedido
         SolicitacaoDePedido pedido = new SolicitacaoDePedido();
         pedido.setObservacao(rascunho.getObservacao());
+        pedido.setObjetivo(rascunho.getObjetivo()); // Copiar objetivo do rascunho
         pedido.setStatus(StatusPedido.PENDENTE);
         pedido.setItens(new ArrayList<>());
 

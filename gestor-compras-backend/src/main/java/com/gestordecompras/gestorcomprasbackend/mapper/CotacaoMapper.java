@@ -79,7 +79,10 @@ public class CotacaoMapper {
                 cotacao.getNumeroVersao(),
                 cotacao.getDataUltimaEdicao(),
                 cotacao.getMotivoUltimaEdicao(),
-                cotacao.getEditadoPor()
+                cotacao.getEditadoPor(),
+                // Campos de projeto
+                cotacao.getGastoPrevisto(),
+                cotacao.getProjeto()
         );
     }
 
@@ -94,6 +97,10 @@ public class CotacaoMapper {
         cotacao.setPrazoEmDiasUteis(cotacaoCreateDTO.prazoEmDiasUteis());
         cotacao.setDataLimite(cotacaoCreateDTO.dataLimite());
         // REMOVIDO: anexoPdf - gerenciado via AnexoCotacao com deduplificação
+
+        // Campos de projeto
+        cotacao.setGastoPrevisto(cotacaoCreateDTO.gastoPrevisto() != null ? cotacaoCreateDTO.gastoPrevisto() : false);
+        cotacao.setProjeto(cotacaoCreateDTO.projeto());
 
         // Legacy: setPreco só é usado se estiver no formato antigo
         if (!cotacaoCreateDTO.usaNovoFormato() && cotacaoCreateDTO.preco() != null) {
