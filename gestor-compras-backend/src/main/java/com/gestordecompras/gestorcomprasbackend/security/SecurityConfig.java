@@ -111,6 +111,7 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/error",
+            "/actuator/**",  // Permitir acesso ao Actuator para monitoramento (Prometheus/Grafana)
             ApiVersionConfig.API_V1 + "/fornecedores-de-produto/**",
             ApiVersionConfig.API_V1 + "/fornecedores-de-servico/**",
             ApiVersionConfig.API_V1 + "/cotacoes/deduplication-report"

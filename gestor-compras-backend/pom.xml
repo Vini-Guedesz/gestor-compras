@@ -121,6 +121,30 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-aspects</artifactId>
 		</dependency>
+
+		<!-- Monitoramento: Spring Boot Actuator -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<!-- Monitoramento: Micrometer Prometheus (expõe métricas para Prometheus) -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+
+		<!-- Cache: Caffeine (alto desempenho) -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+
+		<!-- Cache: Spring Boot Starter Cache -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
 	</dependencies>
 
 

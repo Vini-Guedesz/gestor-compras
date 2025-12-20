@@ -5,6 +5,8 @@ import com.gestordecompras.gestorcomprasbackend.mapper.ItemPedidoMapper;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.repository.ItemPedidoRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,10 +40,27 @@ public class ItemPedidoService {
     }
 
     /**
-     * Recupera todos os itens de pedido cadastrados como DTOs.
+     * Recupera todos os itens de pedido cadastrados como DTOs com paginação.
+     *
+     * @param pageable Parâmetros de paginação e ordenação.
+     * @return Página de DTOs representando os itens.
+     */
+    public Page<ItemPedidoDTO> getAllItens(Pageable pageable) {
+        return itemPedidoRepository.findAll(pageable)
+                .map(itemPedidoMapper::toDTO);
+    }
+
+    /**
+     * Recupera todos os itens de pedido cadastrados como DTOs (sem paginação).
+     * <p>
+     * <b>Deprecated:</b> Use {@link #getAllItens(Pageable)} para melhor performance.
+     * Mantido para compatibilidade com código legado.
+     * </p>
      *
      * @return Lista de DTOs representando todos os itens.
+     * @deprecated Use {@link #getAllItens(Pageable)} para evitar sobrecarga de memória.
      */
+    @Deprecated
     public List<ItemPedidoDTO> getAllItens() {
         return itemPedidoRepository.findAll().stream()
                 .map(itemPedidoMapper::toDTO)

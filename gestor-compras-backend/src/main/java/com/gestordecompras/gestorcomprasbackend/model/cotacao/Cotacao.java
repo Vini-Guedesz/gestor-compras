@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -68,8 +69,14 @@ public class Cotacao {
      * Relacionamento 1:N através da entidade intermediária {@link CotacaoItem}.
      * Permite definir preço unitário, quantidade e observações para cada item.
      * </p>
+     * <p>
+     * BatchSize otimiza o lazy loading: ao carregar itens de uma cotação,
+     * Hibernate carrega também itens de até 25 outras cotações em memória,
+     * reduzindo o problema N+1 de 25 queries para 1 query.
+     * </p>
      */
     @OneToMany(mappedBy = "cotacao", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 25)
     private List<CotacaoItem> itens = new ArrayList<>();
 
     /**
@@ -95,9 +102,14 @@ public class Cotacao {
      * <p>
      * Utiliza a entidade {@link AnexoCotacao} que referencia o armazenamento centralizado.
      * </p>
+     * <p>
+     * BatchSize otimiza o lazy loading de anexos quando múltiplas cotações são carregadas,
+     * reduzindo queries desnecessárias ao banco.
+     * </p>
      */
     @OneToMany(mappedBy = "cotacao", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordem ASC")
+    @BatchSize(size = 25)
     private List<AnexoCotacao> anexos = new ArrayList<>();
 
     /**

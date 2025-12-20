@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,12 +43,13 @@ public class ItemPedidoController {
         this.itemPedidoService = itemPedidoService;
     }
 
-    /** Lista todos os itens (sem paginação - usar com cautela). */
+    /** Lista todos os itens com paginação para melhor performance. */
     @GetMapping
-    @Operation(summary = "Listar todos os itens de pedido", description = "Retorna uma lista com todos os itens de pedido cadastrados")
-    @ApiResponse(responseCode = "200", description = "Lista de itens retornada com sucesso")
-    public ResponseEntity<List<ItemPedidoDTO>> getAllItens() {
-        return ResponseEntity.ok(itemPedidoService.getAllItens());
+    @Operation(summary = "Listar itens de pedido com paginação", description = "Retorna uma página com os itens de pedido cadastrados. Padrão: 20 itens por página ordenados por ID.")
+    @ApiResponse(responseCode = "200", description = "Página de itens retornada com sucesso")
+    public ResponseEntity<Page<ItemPedidoDTO>> getAllItens(
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(itemPedidoService.getAllItens(pageable));
     }
 
     /** Busca item por ID incluindo solicitação associada. */

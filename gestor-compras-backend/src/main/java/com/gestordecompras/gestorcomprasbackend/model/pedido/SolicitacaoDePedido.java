@@ -4,6 +4,7 @@ import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.StatusPedido;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,14 +44,25 @@ public class SolicitacaoDePedido {
      * O relacionamento possui CascadeType.ALL, significando que alterações na lista
      * são propagadas para o banco de dados.
      * </p>
+     * <p>
+     * BatchSize otimiza o lazy loading: ao carregar itens de uma solicitação,
+     * Hibernate carrega também itens de até 25 outras solicitações em memória,
+     * reduzindo o problema N+1.
+     * </p>
      */
     @OneToMany(mappedBy = "solicitacaoDePedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 25)
     private List<ItemPedido> itens;
 
     /**
      * Conjunto de cotações recebidas para esta solicitação.
+     * <p>
+     * BatchSize otimiza o lazy loading de cotações quando múltiplas solicitações
+     * são carregadas simultaneamente.
+     * </p>
      */
     @OneToMany(mappedBy = "solicitacaoDePedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 25)
     private Set<Cotacao> cotacoes;
 
     /**

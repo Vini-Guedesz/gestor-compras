@@ -1,12 +1,16 @@
 package com.gestordecompras.gestorcomprasbackend.repository;
 
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface CotacaoRepository extends JpaRepository<Cotacao, Long> {
     /**
@@ -24,29 +28,47 @@ public interface CotacaoRepository extends JpaRepository<Cotacao, Long> {
     // BigDecimal findMaxPreco();
 
     /**
-     * Busca cotações associadas a um item de pedido específico, carregando dados dos fornecedores.
+     * Busca cotações associadas a um item de pedido específico.
+     * <p>
+     * <b>OTIMIZAÇÃO:</b> Query simplificada sem múltiplos JOIN FETCH para evitar produto cartesiano.
+     * Use @EntityGraph ou lazy loading com @BatchSize para carregar relacionamentos adicionais.
+     * </p>
      *
      * @param itemPedidoId ID do item de pedido
      * @return Lista de cotações
      */
     @Query("SELECT DISTINCT c FROM Cotacao c " +
-           "LEFT JOIN FETCH c.itens ci " +
-           "LEFT JOIN FETCH ci.itemPedido ip " +
-           "LEFT JOIN FETCH c.fornecedorProduto " +
-           "LEFT JOIN FETCH c.fornecedorServico " +
-           "WHERE ip.id = :itemPedidoId")
+           "JOIN c.itens ci " +
+           "WHERE ci.itemPedido.id = :itemPedidoId")
+    @EntityGraph(attributePaths = {"fornecedorProduto", "fornecedorServico"})
     List<Cotacao> findByItemPedidoIdWithFornecedores(@Param("itemPedidoId") Long itemPedidoId);
 
     /**
-     * Busca todas as cotações carregando relacionamentos para evitar problema N+1.
-     * Bug Fix #9: Query otimizada.
+     * Busca paginada de cotações com otimização de lazy loading usando EntityGraph.
+     * <p>
+     * Carrega antecipadamente os fornecedores e a solicitação de pedido para evitar
+     * problema N+1 (múltiplas queries para cada cotação da página).
+     * </p>
+     * <p>
+     * <b>Performance:</b> Reduz de N+1 queries para apenas 1 query com JOINs.
+     * Exemplo: Página com 20 cotações = 1 query ao invés de 21 queries.
+     * </p>
      *
-     * @return Lista de todas as cotações com relacionamentos carregados
+     * @param pageable Parâmetros de paginação e ordenação
+     * @return Página de cotações com relacionamentos carregados
      */
-    @Query("SELECT DISTINCT c FROM Cotacao c " +
-           "LEFT JOIN FETCH c.itens " +
-           "LEFT JOIN FETCH c.fornecedorProduto " +
-           "LEFT JOIN FETCH c.fornecedorServico " +
-           "LEFT JOIN FETCH c.solicitacaoDePedido")
-    List<Cotacao> findAllWithRelationships();
+    @EntityGraph(attributePaths = {"fornecedorProduto", "fornecedorServico", "solicitacaoDePedido"})
+    Page<Cotacao> findAll(Pageable pageable);
+
+    /**
+     * Busca cotação por ID com otimização de lazy loading usando EntityGraph.
+     * <p>
+     * Carrega antecipadamente os fornecedores e a solicitação de pedido em uma única query.
+     * </p>
+     *
+     * @param id ID da cotação
+     * @return Optional contendo a cotação com relacionamentos carregados
+     */
+    @EntityGraph(attributePaths = {"fornecedorProduto", "fornecedorServico", "solicitacaoDePedido"})
+    Optional<Cotacao> findById(Long id);
 }

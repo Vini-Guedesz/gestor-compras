@@ -13,6 +13,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -64,18 +67,21 @@ public class UserController {
     }
 
     /**
-     * Lista todos os usuários cadastrados no sistema.
+     * Lista todos os usuários cadastrados no sistema com paginação.
      *
-     * <p>Retorna uma lista completa com todos os usuários ativos e inativos.
-     * Os resultados incluem ID, nome, email e role de cada usuário.</p>
+     * <p>Retorna uma página com usuários ativos e inativos.
+     * Os resultados incluem ID, nome, email e role de cada usuário.
+     * Padrão: 20 usuários por página ordenados por ID.</p>
      *
-     * @return ResponseEntity contendo lista de UserDTO
+     * @param pageable Parâmetros de paginação e ordenação
+     * @return ResponseEntity contendo página de UserDTO
      */
     @GetMapping
-    @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista com todos os usuários cadastrados")
-    @ApiResponse(responseCode = "200", description = "Lista de usuários retornada com sucesso")
-    public ResponseEntity<List<UserDTO>> findAll() {
-        List<UserDTO> users = service.getAllUsers();
+    @Operation(summary = "Listar usuários com paginação", description = "Retorna uma página com os usuários cadastrados. Padrão: 20 usuários por página ordenados por ID.")
+    @ApiResponse(responseCode = "200", description = "Página de usuários retornada com sucesso")
+    public ResponseEntity<Page<UserDTO>> findAll(
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        Page<UserDTO> users = service.getAllUsers(pageable);
         return ResponseEntity.ok(users);
     }
 

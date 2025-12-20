@@ -1,6 +1,9 @@
 package com.gestordecompras.gestorcomprasbackend.repository;
 
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeServico;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,4 +40,28 @@ public interface FornecedorDeServicoRepository extends JpaRepository<FornecedorD
            "LEFT JOIN FETCH f.contato " +
            "WHERE f.id = :id")
     Optional<FornecedorDeServico> findByIdWithRelationships(@Param("id") Integer id);
+
+    /**
+     * Busca paginada de fornecedores com otimização de lazy loading usando EntityGraph.
+     * <p>
+     * Carrega antecipadamente endereço e contato para evitar problema N+1.
+     * </p>
+     *
+     * @param pageable Parâmetros de paginação e ordenação
+     * @return Página de fornecedores com relacionamentos carregados
+     */
+    @EntityGraph(attributePaths = {"endereco", "contato"})
+    Page<FornecedorDeServico> findAll(Pageable pageable);
+
+    /**
+     * Busca fornecedor por ID com otimização de lazy loading usando EntityGraph.
+     * <p>
+     * Carrega antecipadamente endereço e contato em uma única query.
+     * </p>
+     *
+     * @param id ID do fornecedor
+     * @return Optional contendo o fornecedor com relacionamentos carregados
+     */
+    @EntityGraph(attributePaths = {"endereco", "contato"})
+    Optional<FornecedorDeServico> findById(Integer id);
 }

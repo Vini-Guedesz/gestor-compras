@@ -9,6 +9,8 @@ import com.gestordecompras.gestorcomprasbackend.model.user.User;
 import com.gestordecompras.gestorcomprasbackend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,13 +58,33 @@ public class UserService {
     }
 
     /**
-     * Lista todos os usuários cadastrados no sistema.
+     * Lista todos os usuários cadastrados no sistema com paginação.
+     *
+     * <p>Retorna uma página com usuários, incluindo informações
+     * básicas (ID, nome, email, role). Senhas não são incluídas no DTO.</p>
+     *
+     * @param pageable Parâmetros de paginação e ordenação
+     * @return Página de UserDTO com dados dos usuários
+     */
+    @Transactional(readOnly = true)
+    public Page<UserDTO> getAllUsers(Pageable pageable) {
+        return repository.findAll(pageable)
+                .map(UserDTO::new);
+    }
+
+    /**
+     * Lista todos os usuários cadastrados no sistema (sem paginação).
      *
      * <p>Retorna uma lista com todos os usuários, incluindo informações
      * básicas (ID, nome, email, role). Senhas não são incluídas no DTO.</p>
      *
+     * <p><b>Deprecated:</b> Use {@link #getAllUsers(Pageable)} para melhor performance.
+     * Mantido para compatibilidade com código legado.</p>
+     *
      * @return Lista de UserDTO com dados de todos os usuários
+     * @deprecated Use {@link #getAllUsers(Pageable)} para evitar sobrecarga de memória.
      */
+    @Deprecated
     @Transactional(readOnly = true)
     public List<UserDTO> getAllUsers() {
         return repository.findAll().stream()

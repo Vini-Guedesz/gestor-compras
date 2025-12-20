@@ -3,6 +3,9 @@ package com.gestordecompras.gestorcomprasbackend.repository;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.StatusPedido;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -88,4 +91,43 @@ public interface SolicitacaoDePedidoRepository extends JpaRepository<Solicitacao
            "LEFT JOIN FETCH s.itens " +
            "WHERE s.id = :id")
     Optional<SolicitacaoDePedido> findByIdWithItensAndCotacoes(@Param("id") Long id);
+
+    /**
+     * Busca paginada de solicitações por status, com otimização de lazy loading.
+     * <p>
+     * <b>OTIMIZAÇÃO:</b> Use esta versão paginada ao invés de {@link #findByStatusInWithItens(List)}.
+     * EntityGraph carrega itens antecipadamente para evitar N+1.
+     * </p>
+     *
+     * @param statuses Lista de status para filtrar
+     * @param pageable Parâmetros de paginação e ordenação
+     * @return Página de solicitações com itens carregados
+     */
+    @EntityGraph(attributePaths = {"itens"})
+    @Query("SELECT s FROM SolicitacaoDePedido s WHERE s.status IN :statuses")
+    Page<SolicitacaoDePedido> findByStatusIn(@Param("statuses") List<StatusPedido> statuses, Pageable pageable);
+
+    /**
+     * Busca paginada de todas as solicitações com otimização de lazy loading.
+     * <p>
+     * EntityGraph carrega itens antecipadamente para evitar problema N+1.
+     * </p>
+     *
+     * @param pageable Parâmetros de paginação e ordenação
+     * @return Página de solicitações com itens carregados
+     */
+    @EntityGraph(attributePaths = {"itens"})
+    Page<SolicitacaoDePedido> findAll(Pageable pageable);
+
+    /**
+     * Busca solicitação por ID com otimização de lazy loading.
+     * <p>
+     * EntityGraph carrega itens em uma única query.
+     * </p>
+     *
+     * @param id ID da solicitação
+     * @return Optional contendo a solicitação com itens carregados
+     */
+    @EntityGraph(attributePaths = {"itens"})
+    Optional<SolicitacaoDePedido> findById(Long id);
 }

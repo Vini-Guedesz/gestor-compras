@@ -59,9 +59,15 @@ public class RelatoriosGerenciaisController {
         }
     }
 
-    /** Gera PDF com ranking dos itens mais solicitados. */
+    /**
+     * Gera PDF com ranking dos itens mais solicitados.
+     * <p>
+     * <b>TODO:</b> Adicionar parâmetro limit ao JasperReportService para evitar sobrecarga com muitos itens.
+     * </p>
+     */
     @GetMapping("/itens-mais-solicitados")
-    @Operation(summary = "Itens Mais Solicitados", description = "Gera relatório com ranking dos itens mais solicitados")
+    @Operation(summary = "Itens Mais Solicitados",
+               description = "Gera relatório com ranking dos itens mais solicitados")
     public ResponseEntity<byte[]> gerarRelatorioItensMaisSolicitados() {
         try {
             byte[] pdf = jasperReportService.gerarRelatorioItensMaisSolicitados();
@@ -95,9 +101,15 @@ public class RelatoriosGerenciaisController {
         }
     }
 
-    /** Gera PDF com solicitações PENDENTE ou EM_ANDAMENTO. */
+    /**
+     * Gera PDF com solicitações PENDENTE ou EM_ANDAMENTO.
+     * <p>
+     * <b>TODO:</b> Adicionar parâmetro limit ao JasperReportService para evitar sobrecarga.
+     * </p>
+     */
     @GetMapping("/solicitacoes-abertas")
-    @Operation(summary = "Solicitações Abertas", description = "Gera relatório com todas as solicitações de pedido com status PENDENTE ou EM_ANDAMENTO")
+    @Operation(summary = "Solicitações Abertas",
+               description = "Gera relatório com solicitações com status PENDENTE ou EM_ANDAMENTO")
     public ResponseEntity<byte[]> gerarRelatorioSolicitacoesAbertas() {
         try {
             byte[] pdf = jasperReportService.gerarRelatorioSolicitacoesAbertas();
@@ -113,9 +125,15 @@ public class RelatoriosGerenciaisController {
         }
     }
 
-    /** Gera PDF com pedidos APROVADO ou CANCELADO. */
+    /**
+     * Gera PDF com pedidos APROVADO ou CANCELADO.
+     * <p>
+     * <b>TODO:</b> Adicionar parâmetro limit ao JasperReportService para evitar sobrecarga.
+     * </p>
+     */
     @GetMapping("/pedidos-fechados")
-    @Operation(summary = "Pedidos Fechados", description = "Gera relatório com todos os pedidos com status APROVADO ou CANCELADO")
+    @Operation(summary = "Pedidos Fechados",
+               description = "Gera relatório com pedidos com status APROVADO ou CANCELADO")
     public ResponseEntity<byte[]> gerarRelatorioPedidosFechados() {
         try {
             byte[] pdf = jasperReportService.gerarRelatorioPedidosFechados();
