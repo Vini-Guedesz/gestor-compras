@@ -1,0 +1,11 @@
+# Dados do Prometheus
+data/
+
+# Dados do Grafana
+grafana/data/
+
+# Dados do Alertmanager
+alertmanager/data/
+
+# Logs
+*.log
