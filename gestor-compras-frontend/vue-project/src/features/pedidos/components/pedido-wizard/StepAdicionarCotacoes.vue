@@ -254,7 +254,9 @@ export default {
         prazoEmDiasUteis: null,
         dataLimite: null,
         anexoPdf: null,
-        pdfFile: null
+        pdfFile: null,
+        gastoPrevisto: false,
+        projeto: null
       })
     }
 

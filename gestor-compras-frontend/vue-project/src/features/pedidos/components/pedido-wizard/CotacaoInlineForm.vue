@@ -112,6 +112,40 @@
         />
       </div>
 
+      <!-- Gasto Previsto -->
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            :checked="localCotacao.gastoPrevisto"
+            @change="updateField('gastoPrevisto', $event.target.checked)"
+            class="form-checkbox"
+          />
+          <span>Gasto Previsto no Orçamento</span>
+        </label>
+        <small class="form-hint">
+          Marque se este gasto já estava previsto no orçamento
+        </small>
+      </div>
+
+      <!-- Projeto (apenas se gasto previsto) -->
+      <div v-if="localCotacao.gastoPrevisto" class="form-group">
+        <label class="form-label">
+          Projeto
+        </label>
+        <input
+          type="text"
+          :value="localCotacao.projeto"
+          @input="updateField('projeto', $event.target.value)"
+          class="form-input"
+          placeholder="Nome do projeto (ex: Projeto Expansão 2025)"
+          maxlength="255"
+        />
+        <small class="form-hint">
+          Informe o nome do projeto ao qual este gasto pertence
+        </small>
+      </div>
+
       <!-- Upload PDFs -->
       <div class="form-group">
         <label class="form-label">
