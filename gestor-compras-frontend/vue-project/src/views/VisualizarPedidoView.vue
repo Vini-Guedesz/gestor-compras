@@ -107,12 +107,22 @@
                 </div>
               </div>
             </div>
+            <div v-if="pedido?.objetivo" class="observacao-box" style="background: #eff6ff; border-color: #3b82f6;">
+              <div class="observacao-header" style="color: #1e40af;">
+                <svg class="observacao-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                  <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                </svg>
+                <span>Objetivo do Pedido</span>
+              </div>
+              <p class="observacao-text">{{ pedido.objetivo }}</p>
+            </div>
             <div v-if="pedido?.observacao" class="observacao-box">
               <div class="observacao-header">
                 <svg class="observacao-icon" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                 </svg>
-                <span>Observação</span>
+                <span>Observações Adicionais</span>
               </div>
               <p class="observacao-text">{{ pedido.observacao }}</p>
             </div>
@@ -190,6 +200,25 @@
                       <div class="info-box-content">
                         <span class="info-box-label">Validade</span>
                         <span class="info-box-value">{{ formatarData(cotacao.dataLimite) }}</span>
+                      </div>
+                    </div>
+                    <div class="info-box">
+                      <svg class="info-box-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                      </svg>
+                      <div class="info-box-content">
+                        <span class="info-box-label">Gasto Previsto</span>
+                        <span class="info-box-value">{{ cotacao.gastoPrevisto ? 'Sim' : 'Não' }}</span>
+                      </div>
+                    </div>
+                    <div v-if="cotacao.gastoPrevisto && cotacao.projeto" class="info-box">
+                      <svg class="info-box-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                      </svg>
+                      <div class="info-box-content">
+                        <span class="info-box-label">Projeto</span>
+                        <span class="info-box-value">{{ cotacao.projeto }}</span>
                       </div>
                     </div>
                   </div>

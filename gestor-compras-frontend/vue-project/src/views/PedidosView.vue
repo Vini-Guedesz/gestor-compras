@@ -292,8 +292,12 @@
                     {{ getStatusLabel(pedidoSelecionado.status) }}
                   </span>
                 </div>
+                <div v-if="pedidoSelecionado.objetivo" class="info-item full-width">
+                  <span class="info-label">Objetivo do Pedido</span>
+                  <span class="info-value">{{ pedidoSelecionado.objetivo }}</span>
+                </div>
                 <div v-if="pedidoSelecionado.observacao" class="info-item full-width">
-                  <span class="info-label">Descrição/Observações</span>
+                  <span class="info-label">Observações Adicionais</span>
                   <span class="info-value">{{ pedidoSelecionado.observacao }}</span>
                 </div>
               </div>
