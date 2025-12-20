@@ -25,14 +25,30 @@
 
       <div class="form-group">
         <label for="objetivo" class="form-label">
-          Observação / Descrição do Pedido
+          Objetivo do Pedido
         </label>
         <textarea
           id="objetivo"
+          v-model="formData.objetivo"
+          class="form-textarea"
+          placeholder="Descreva o objetivo ou finalidade do pedido (ex: Compra de materiais para reforma do escritório)"
+          rows="3"
+          maxlength="5000"
+          @input="markAsUnsaved"
+        ></textarea>
+        <span class="form-hint">{{ formData.objetivo?.length || 0 }}/5000 caracteres</span>
+      </div>
+
+      <div class="form-group">
+        <label for="observacao" class="form-label">
+          Observações Adicionais
+        </label>
+        <textarea
+          id="observacao"
           v-model="formData.observacao"
           class="form-textarea"
-          placeholder="Descreva o objetivo do pedido, justificativa, observações gerais..."
-          rows="4"
+          placeholder="Observações, justificativas ou informações complementares..."
+          rows="3"
           maxlength="1000"
           @input="markAsUnsaved"
         ></textarea>
@@ -268,6 +284,10 @@ export default {
     const validationErrors = computed(() => {
       const errors = []
 
+      if (formData.value.objetivo && formData.value.objetivo.length > 5000) {
+        errors.push('Objetivo deve ter no máximo 5000 caracteres')
+      }
+
       if (formData.value.observacao && formData.value.observacao.length > 1000) {
         errors.push('Observação deve ter no máximo 1000 caracteres')
       }
@@ -320,6 +340,7 @@ export default {
     const criarRascunhoComItem = async (itemData) => {
       const novoRascunho = await rascunhoService.criar({
         observacao: formData.value.observacao || '',
+        objetivo: formData.value.objetivo || '',
         itens: [itemData]
       })
       formData.value.id = novoRascunho.id
@@ -431,10 +452,11 @@ export default {
           itensSalvosComSucesso++
         }
 
-        // Atualizar observação se houver rascunho
-        if (formData.value.id && formData.value.observacao !== undefined) {
+        // Atualizar observação e objetivo se houver rascunho
+        if (formData.value.id && (formData.value.observacao !== undefined || formData.value.objetivo !== undefined)) {
           await rascunhoService.atualizar(formData.value.id, {
-            observacao: formData.value.observacao || ''
+            observacao: formData.value.observacao || '',
+            objetivo: formData.value.objetivo || ''
           })
         }
 

@@ -176,6 +176,36 @@
                   </small>
                 </div>
 
+                <!-- Gasto Previsto -->
+                <div class="form-group">
+                  <label class="form-label checkbox-label">
+                    <input
+                      type="checkbox"
+                      v-model="formData.gastoPrevisto"
+                      class="form-checkbox"
+                    />
+                    Gasto Previsto no Orçamento
+                  </label>
+                  <small class="form-hint">
+                    Marque se este gasto já estava previsto no orçamento
+                  </small>
+                </div>
+
+                <!-- Projeto (apenas se gasto previsto) -->
+                <div v-if="formData.gastoPrevisto" class="form-group">
+                  <label class="form-label">Projeto</label>
+                  <input
+                    type="text"
+                    v-model="formData.projeto"
+                    class="form-input"
+                    placeholder="Nome do projeto (ex: Projeto Expansão 2025)"
+                    maxlength="255"
+                  />
+                  <small class="form-hint">
+                    Informe o nome do projeto ao qual este gasto pertence
+                  </small>
+                </div>
+
                 <!-- Upload de PDF -->
                 <div class="form-group">
                   <label class="form-label">PDF da Cotação</label>
@@ -307,7 +337,9 @@ const formData = ref({
   preco: null,
   prazoEmDiasUteis: null,
   dataLimite: null,
-  arquivoPdf: null
+  arquivoPdf: null,
+  gastoPrevisto: false,
+  projeto: null
 })
 
 // Lista de fornecedores, itens e pedidos
@@ -609,7 +641,9 @@ const handleSubmit = async () => {
       preco: parseFloat(formData.value.preco),
       prazoEmDiasUteis: formData.value.prazoEmDiasUteis ? parseInt(formData.value.prazoEmDiasUteis) : null,
       dataLimite: formData.value.dataLimite || null,
-      arquivoPdf: formData.value.arquivoPdf || null
+      arquivoPdf: formData.value.arquivoPdf || null,
+      gastoPrevisto: formData.value.gastoPrevisto || false,
+      projeto: formData.value.projeto || null
     }
 
     if (dadosParaSalvar.arquivoPdf) {
@@ -737,7 +771,9 @@ const inicializarFormulario = async () => {
       itemPedidoId: props.cotacao.itemPedidoId,
       preco: props.cotacao.preco,
       prazoEmDiasUteis: props.cotacao.prazoEmDiasUteis,
-      dataLimite: props.cotacao.dataLimite
+      dataLimite: props.cotacao.dataLimite,
+      gastoPrevisto: props.cotacao.gastoPrevisto || false,
+      projeto: props.cotacao.projeto || null
     }
 
     // Formatar preço existente
@@ -779,7 +815,9 @@ const inicializarFormulario = async () => {
       preco: null,
       prazoEmDiasUteis: null,
       dataLimite: null,
-      arquivoPdf: null
+      arquivoPdf: null,
+      gastoPrevisto: false,
+      projeto: null
     }
     tipoFornecedor.value = ''
     pedidoSelecionado.value = ''
