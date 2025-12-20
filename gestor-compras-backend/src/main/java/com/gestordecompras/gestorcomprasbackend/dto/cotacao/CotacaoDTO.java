@@ -89,6 +89,12 @@ public record CotacaoDTO(
         String motivoUltimaEdicao,
 
         @Schema(description = "Nome do usuário que realizou a última edição", example = "Admin")
-        String editadoPor
+        String editadoPor,
+
+        @Schema(description = "Indica se o gasto estava previsto no orçamento", example = "true")
+        Boolean gastoPrevisto,
+
+        @Schema(description = "Nome do projeto ao qual o gasto pertence", example = "Projeto Expansão 2025")
+        String projeto
 ) {
 }

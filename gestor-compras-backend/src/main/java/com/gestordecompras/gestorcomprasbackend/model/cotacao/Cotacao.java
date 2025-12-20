@@ -143,6 +143,21 @@ public class Cotacao {
     private String editadoPor;
 
     /**
+     * Indica se o gasto estava previsto no orçamento.
+     */
+    @Column(name = "gasto_previsto")
+    private Boolean gastoPrevisto = false;
+
+    /**
+     * Nome do projeto ao qual o gasto pertence.
+     * <p>
+     * Obrigatório quando gastoPrevisto = true.
+     * </p>
+     */
+    @Column(name = "projeto", length = 255)
+    private String projeto;
+
+    /**
      * Validações executadas antes de persistir a entidade.
      */
     @PrePersist

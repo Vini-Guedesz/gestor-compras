@@ -25,6 +25,9 @@ public record RascunhoDTO(
     @Schema(description = "Observações ou anotações sobre o rascunho", example = "Revisar preços antes de converter")
     String observacao,
 
+    @Schema(description = "Objetivo ou finalidade do pedido", example = "Compra de materiais para reforma do escritório")
+    String objetivo,
+
     @Schema(description = "Data e hora de criação", example = "2025-10-01T10:00:00")
     LocalDateTime dataCriacao,
 

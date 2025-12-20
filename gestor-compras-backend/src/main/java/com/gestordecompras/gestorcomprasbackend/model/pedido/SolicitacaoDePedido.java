@@ -78,6 +78,16 @@ public class SolicitacaoDePedido {
     private String observacao;
 
     /**
+     * Objetivo ou finalidade do pedido.
+     * <p>
+     * Copiado do rascunho quando o pedido é criado a partir dele.
+     * Exemplo: "Compra de materiais para reforma do escritório"
+     * </p>
+     */
+    @Column(name = "objetivo", columnDefinition = "TEXT")
+    private String objetivo;
+
+    /**
      * Data e hora em que a solicitação foi criada.
      */
     private LocalDateTime dataCriacao;

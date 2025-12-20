@@ -36,6 +36,9 @@ public record SolicitacaoDePedidoDTO(
     @Size(max = 1000, message = "A observação deve ter no máximo 1000 caracteres")
     String observacao,
 
+    @Schema(description = "Objetivo ou finalidade do pedido", example = "Compra de materiais para reforma do escritório")
+    String objetivo,
+
     @Schema(description = "Data e hora em que o pedido foi criado", example = "2025-10-01T10:00:00")
     LocalDateTime dataCriacao
 ) {}

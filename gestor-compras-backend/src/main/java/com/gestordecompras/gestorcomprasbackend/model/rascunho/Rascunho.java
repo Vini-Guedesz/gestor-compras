@@ -59,6 +59,15 @@ public class Rascunho {
     private String observacao;
 
     /**
+     * Objetivo ou finalidade do pedido que será criado a partir deste rascunho.
+     * <p>
+     * Exemplo: "Compra de materiais para reforma do escritório"
+     * </p>
+     */
+    @Column(name = "objetivo", columnDefinition = "TEXT")
+    private String objetivo;
+
+    /**
      * Data de criação do rascunho.
      */
     @Column(name = "data_criacao", nullable = false)

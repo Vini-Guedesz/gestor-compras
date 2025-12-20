@@ -83,7 +83,13 @@ public record CotacaoCreateDTO(
         @Deprecated
         @Schema(description = "Arquivo PDF anexo (Deprecated - Use endpoint específico de upload)", deprecated = true)
         @PdfSize(maxBytes = 10485760L, message = "PDF deve ter no máximo 10MB")
-        byte[] anexoPdf
+        byte[] anexoPdf,
+
+        @Schema(description = "Indica se o gasto estava previsto no orçamento", example = "true")
+        Boolean gastoPrevisto,
+
+        @Schema(description = "Nome do projeto ao qual o gasto pertence (obrigatório quando gastoPrevisto = true)", example = "Projeto Expansão 2025")
+        String projeto
 ) {
     /**
      * Verifica se está usando o novo formato com itens individuais.
