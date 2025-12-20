@@ -115,6 +115,7 @@
 <script>
 import { ref, watch } from 'vue'
 import { useToast } from '@/composables/useToast.js'
+import { useErrorModal } from '@/composables/useErrorModal.js'
 import pedidoService from '@/services/pedidoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoService from '@/services/cotacaoService.js'
@@ -303,10 +304,17 @@ export default {
       })
 
       if (itensSemCotacao.length > 0) {
-        const confirmacao = confirm(
-          `${itensSemCotacao.length} item(ns) ainda não possui(em) cotações. Deseja finalizar mesmo assim?`
-        )
-        if (!confirmacao) return
+        const { showWarning } = useErrorModal()
+        showWarning(`${itensSemCotacao.length} item(ns) ainda não possui(em) cotações.`, {
+          title: 'Finalizar Pedido Sem Cotações?',
+          confirmText: 'Sim, finalizar',
+          cancelText: 'Voltar',
+          onConfirm: () => {
+            emit('save', wizardData.value.pedido)
+            fecharModal()
+          }
+        })
+        return
       }
 
       emit('save', wizardData.value.pedido)
@@ -315,8 +323,14 @@ export default {
 
     const tentarFechar = () => {
       if (hasUnsavedChanges.value) {
-        const confirmacao = confirm('Você possui alterações não salvas. Deseja realmente sair?')
-        if (!confirmacao) return
+        const { showWarning } = useErrorModal()
+        showWarning('Você possui alterações não salvas. Deseja realmente sair?', {
+          title: 'Alterações Não Salvas',
+          confirmText: 'Sim, sair',
+          cancelText: 'Continuar editando',
+          onConfirm: fecharModal
+        })
+        return
       }
       fecharModal()
     }

@@ -417,6 +417,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast.js'
+import { useErrorModal } from '@/composables/useErrorModal.js'
 import logger from '@/utils/logger.js'
 import pedidoService from '@/services/pedidoService.js'
 import rascunhoService from '@/services/rascunhoService.js'
@@ -770,26 +771,31 @@ export default {
     }
 
     const excluirCotacao = async (cotacao) => {
-      if (!confirm(`Tem certeza que deseja excluir a cotação de ${cotacao.nomeFornecedor}?`)) {
-        return
-      }
+      const { showWarning } = useErrorModal()
 
-      try {
-        const rascunhoId = pedido.value.rascunhoId || route.params.id
+      showWarning(`Tem certeza que deseja excluir a cotação de ${cotacao.nomeFornecedor}?`, {
+        title: 'Excluir Cotação?',
+        confirmText: 'Sim, excluir',
+        cancelText: 'Cancelar',
+        onConfirm: async () => {
+          try {
+            const rascunhoId = pedido.value.rascunhoId || route.params.id
 
-        if (isRascunho.value) {
-          await cotacaoRascunhoService.deletar(rascunhoId, cotacao.id)
-        } else {
-          await cotacaoService.deleteCotacao(cotacao.id)
+            if (isRascunho.value) {
+              await cotacaoRascunhoService.deletar(rascunhoId, cotacao.id)
+            } else {
+              await cotacaoService.deleteCotacao(cotacao.id)
+            }
+
+            // Recarregar a página para atualizar as cotações
+            await carregarPedido()
+            success('Cotação excluída com sucesso!')
+          } catch (error) {
+            logger.error('Erro ao excluir cotação:', error)
+            showError('Erro ao excluir cotação. Tente novamente.')
+          }
         }
-
-        // Recarregar a página para atualizar as cotações
-        await carregarPedido()
-        success('Cotação excluída com sucesso!')
-      } catch (error) {
-        logger.error('Erro ao excluir cotação:', error)
-        showError('Erro ao excluir cotação. Tente novamente.')
-      }
+      })
     }
 
     // Métodos para edição de cotação (nova funcionalidade)

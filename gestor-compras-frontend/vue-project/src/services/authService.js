@@ -28,6 +28,7 @@
  */
 
 import api from './api.js'
+import { isTokenValid, extractUserInfo } from '../utils/jwtUtils.js'
 
 /**
  * @typedef {Object} LoginResponse
@@ -183,37 +184,21 @@ export const authService = {
    */
   async validateToken(token) {
     try {
-      // Verifica se o token está no formato correto
-      if (!token || !token.includes('.')) {
-        throw new Error('Token inválido')
+      // Usa utilitário centralizado para validar token
+      if (!isTokenValid(token)) {
+        throw new Error('Token inválido ou expirado')
       }
 
-      // Decodifica o payload do JWT (sem verificar assinatura, apenas para pegar informações)
-      const payload = JSON.parse(atob(token.split('.')[1]))
+      // Extrai informações do usuário usando utilitário centralizado
+      const userInfo = extractUserInfo(token)
 
-      // Verifica se o token não expirou
-      const now = Math.floor(Date.now() / 1000)
-      if (payload.exp && payload.exp < now) {
-        throw new Error('Token expirado')
-      }
-
-      // Extrai role do JWT (formato: [{"authority": "ROLE_ADMIN"}])
-      let userRole = 'USER'
-      if (payload.roles && Array.isArray(payload.roles)) {
-        const roleObj = payload.roles[0]
-        if (roleObj && roleObj.authority) {
-          // Remove o prefixo "ROLE_" se existir
-          userRole = roleObj.authority.replace('ROLE_', '')
-        }
+      if (!userInfo) {
+        throw new Error('Não foi possível extrair informações do token')
       }
 
       return {
         success: true,
-        user: {
-          email: payload.sub,           // Subject é o email (usado para login)
-          nome: payload.nome || payload.sub,  // Nome completo da pessoa (fallback para email se não existir)
-          role: userRole                // ADMIN ou USER
-        }
+        user: userInfo
       }
     } catch (error) {
       return {
@@ -351,17 +336,18 @@ export const authService = {
     if (!token) return false
 
     try {
-      // Verifica se o token não expirou
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const now = Math.floor(Date.now() / 1000)
+      // Usa utilitário centralizado para validar token
+      const valid = isTokenValid(token)
 
-      if (payload.exp && payload.exp < now) {
-        this.logout() // Remove token expirado
+      if (!valid) {
+        console.warn('Token inválido ou expirado')
+        this.logout() // Remove token inválido
         return false
       }
 
       return true
-    } catch {
+    } catch (error) {
+      console.warn('Erro ao validar token:', error.message)
       this.logout() // Remove token inválido
       return false
     }

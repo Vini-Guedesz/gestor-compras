@@ -42,11 +42,11 @@ import logger from '../utils/logger.js'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
 
 /**
- * Flag para evitar múltiplos redirects simultâneos para login
+ * Promise para evitar múltiplos redirects simultâneos para login
  * @private
- * @type {boolean}
+ * @type {Promise|null}
  */
-let isRedirecting = false
+let redirectPromise = null
 
 /**
  * Instância configurada do Axios
@@ -111,28 +111,30 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 ||
         (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('JWT expired'))) {
 
-      // Evitar múltiplos redirects simultâneos
-      if (isRedirecting) {
-        return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
+      // Evitar múltiplos redirects simultâneos usando Promise
+      if (redirectPromise) {
+        return redirectPromise
       }
 
-      isRedirecting = true
+      redirectPromise = new Promise((resolve, reject) => {
+        // Token provavelmente expirado: limpa dados de autenticação do sessionStorage
+        sessionStorage.removeItem('authToken')
 
-      // Token provavelmente expirado: limpa dados de autenticação do sessionStorage
-      sessionStorage.removeItem('authToken')
+        // Emite evento customizado para notificar a aplicação sobre logout
+        // O router guard irá detectar a falta de autenticação e redirecionar suavemente
+        window.dispatchEvent(new CustomEvent('auth:logout', {
+          detail: { reason: 'token_expired' }
+        }))
 
-      // Emite evento customizado para notificar a aplicação sobre logout
-      // O router guard irá detectar a falta de autenticação e redirecionar suavemente
-      window.dispatchEvent(new CustomEvent('auth:logout', {
-        detail: { reason: 'token_expired' }
-      }))
+        // Reseta a promise após processar
+        setTimeout(() => {
+          redirectPromise = null
+        }, 500)
 
-      // Reseta a flag após um pequeno delay
-      setTimeout(() => {
-        isRedirecting = false
-      }, 1000)
+        reject(new Error('Sessão expirada. Faça login novamente.'))
+      })
 
-      return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
+      return redirectPromise
     }
 
     // Tratamento de outros erros HTTP
@@ -141,17 +143,22 @@ apiClient.interceptors.response.use(
 
       // Verifica se é um erro de JWT expirado (verificação adicional)
       if (typeof error.response.data === 'string' && error.response.data.includes('JWT expired')) {
-        if (!isRedirecting) {
-          isRedirecting = true
+        if (redirectPromise) {
+          return redirectPromise
+        }
+
+        redirectPromise = new Promise((resolve, reject) => {
           sessionStorage.removeItem('authToken')
           window.dispatchEvent(new CustomEvent('auth:logout', {
             detail: { reason: 'token_expired' }
           }))
           setTimeout(() => {
-            isRedirecting = false
-          }, 1000)
-        }
-        return Promise.reject(new Error('Sessão expirada. Faça login novamente.'))
+            redirectPromise = null
+          }, 500)
+          reject(new Error('Sessão expirada. Faça login novamente.'))
+        })
+
+        return redirectPromise
       }
 
       // Tenta extrair mensagem de erro de diferentes formatos possíveis

@@ -435,6 +435,7 @@
 import { ref, onMounted, computed, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import { useErrorModal } from '@/composables/useErrorModal'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
@@ -1009,34 +1010,42 @@ export default {
     }
 
     const alterarStatus = async (pedido, novoStatus) => {
-      try {
-        isLoading.value = true
+      const { showWarning } = useErrorModal()
 
-        // ConfirmaÃ§Ã£o antes de alterar
-        const confirmacao = confirm(
-          `Tem certeza que deseja alterar o status do pedido #${pedido.id} para "${getStatusLabel(novoStatus)}"?`
-        )
+      showWarning(
+        `Tem certeza que deseja alterar o status do pedido #${pedido.id} para "${getStatusLabel(novoStatus)}"?`,
+        {
+          title: 'Alterar Status do Pedido?',
+          confirmText: 'Sim, alterar',
+          cancelText: 'Cancelar',
+          onConfirm: async () => {
+            try {
+              isLoading.value = true
 
-        if (!confirmacao) {
-          // Reset do select
-          document.querySelector(`select[value="${novoStatus}"]`).value = pedido.status
-          return
+              await pedidoService.alterarStatus(pedido.id, novoStatus)
+
+              const index = pedidos.value.findIndex(p => p.id === pedido.id)
+              if (index !== -1) {
+                pedidos.value[index].status = novoStatus
+              }
+
+              success(`Status do pedido alterado para "${getStatusLabel(novoStatus)}" com sucesso!`)
+            } catch (error) {
+              logger.error('Erro ao alterar status do pedido:', error)
+              toastError('Erro ao alterar status do pedido. Tente novamente.')
+            } finally {
+              isLoading.value = false
+            }
+          },
+          onCancel: () => {
+            // Reset do select
+            const selectElement = document.querySelector(`select[value="${novoStatus}"]`)
+            if (selectElement) {
+              selectElement.value = pedido.status
+            }
+          }
         }
-
-        await pedidoService.alterarStatus(pedido.id, novoStatus)
-
-        const index = pedidos.value.findIndex(p => p.id === pedido.id)
-        if (index !== -1) {
-          pedidos.value[index].status = novoStatus
-        }
-
-        success(`Status do pedido alterado para "${getStatusLabel(novoStatus)}" com sucesso!`)
-      } catch (error) {
-        logger.error('Erro ao alterar status do pedido:', error)
-        toastError('Erro ao alterar status do pedido. Tente novamente.')
-      } finally {
-        isLoading.value = false
-      }
+      )
     }
 
     // Lifecycle

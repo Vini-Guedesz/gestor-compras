@@ -102,9 +102,9 @@ const gerandoRelatorio = ref(false)
 // Estado para controlar se o menu está colapsado
 const isNavCollapsed = ref(false)
 
-// Recupera estado do localStorage ao montar
+// Recupera estado do sessionStorage ao montar (consistente com autenticação)
 const loadNavState = () => {
-  const saved = localStorage.getItem('navCollapsed')
+  const saved = sessionStorage.getItem('navCollapsed')
   if (saved !== null) {
     isNavCollapsed.value = saved === 'true'
   }
@@ -113,7 +113,7 @@ const loadNavState = () => {
 // Alterna estado do menu
 const toggleNav = () => {
   isNavCollapsed.value = !isNavCollapsed.value
-  localStorage.setItem('navCollapsed', isNavCollapsed.value.toString())
+  sessionStorage.setItem('navCollapsed', isNavCollapsed.value.toString())
 }
 
 const username = computed(() => {

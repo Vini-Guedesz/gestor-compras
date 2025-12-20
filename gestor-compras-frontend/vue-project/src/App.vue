@@ -11,9 +11,12 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+import { useErrorModal } from './composables/useErrorModal'
+import ErrorModal from './components/ui/modals/ErrorModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { modalState, hideModal } = useErrorModal()
 
 // Handler para o evento de logout emitido pelo interceptor da API
 const handleAuthLogout = () => {
@@ -43,6 +46,22 @@ onUnmounted(() => {
     <!-- RouterView renderiza o componente correspondente à rota atual -->
     <!-- Cada página (Login, Dashboard, etc.) será exibida aqui -->
     <RouterView />
+
+    <!-- Modal de erro global -->
+    <ErrorModal
+      :isVisible="modalState.isVisible"
+      :type="modalState.type"
+      :title="modalState.title"
+      :message="modalState.message"
+      :details="modalState.details"
+      :confirmText="modalState.confirmText"
+      :cancelText="modalState.cancelText"
+      :closeText="modalState.closeText"
+      :onConfirm="modalState.onConfirm"
+      :onCancel="modalState.onCancel"
+      :onClose="modalState.onClose"
+      @close="hideModal"
+    />
   </div>
 </template>
 

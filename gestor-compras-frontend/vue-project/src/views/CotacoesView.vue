@@ -520,6 +520,7 @@
 import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import { useErrorModal } from '@/composables/useErrorModal'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componente pesado
@@ -917,57 +918,58 @@ const deletarCotacao = async (id) => {
     return
   }
 
-  // Confirmação mais detalhada
-  const confirmacao = confirm(
-    'Tem certeza que deseja excluir esta cotação?\n\n' +
-    'Esta ação não pode ser desfeita e todos os dados da cotação serão perdidos permanentemente.'
-  )
+  const { showWarning } = useErrorModal()
 
-  if (confirmacao) {
-    try {
-      operacaoEmAndamento.value = true
+  showWarning('Esta ação não pode ser desfeita e todos os dados da cotação serão perdidos permanentemente.', {
+    title: 'Excluir Cotação?',
+    confirmText: 'Sim, excluir',
+    cancelText: 'Cancelar',
+    onConfirm: async () => {
+      try {
+        operacaoEmAndamento.value = true
 
-      // Validar se o ID é válido
-      if (!id || isNaN(id)) {
-        throw new Error('ID da cotação inválido')
-      }
-
-      await cotacaoService.deletar(id)
-
-      // Recarregar lista após exclusão
-      await carregarCotacoes()
-
-      success('Cotação excluída com sucesso!')
-    } catch (error) {
-      logger.error('❌ Erro ao excluir cotação:', error)
-
-      // Mensagens de erro mais específicas
-      let mensagemErro = 'Erro ao excluir cotação.'
-
-      if (error.response) {
-        // Erro do servidor
-        switch (error.response.status) {
-          case 404:
-            mensagemErro = 'Cotação não encontrada. Pode já ter sido excluída.'
-            break
-          case 403:
-            mensagemErro = 'Você não tem permissão para excluir esta cotação.'
-            break
-          case 409:
-            mensagemErro = 'Não é possível excluir esta cotação pois ela possui dependências.'
-            break
-          default:
-            mensagemErro = `Erro no servidor: ${error.response.status}. Tente novamente.`
+        // Validar se o ID é válido
+        if (!id || isNaN(id)) {
+          throw new Error('ID da cotação inválido')
         }
-      } else if (error.message) {
-        mensagemErro = error.message
-      }
 
-      toastError(mensagemErro, { duration: 7000 })
-    } finally {
-      operacaoEmAndamento.value = false
+        await cotacaoService.deletar(id)
+
+        // Recarregar lista após exclusão
+        await carregarCotacoes()
+
+        success('Cotação excluída com sucesso!')
+      } catch (error) {
+        logger.error('❌ Erro ao excluir cotação:', error)
+
+        // Mensagens de erro mais específicas
+        let mensagemErro = 'Erro ao excluir cotação.'
+
+        if (error.response) {
+          // Erro do servidor
+          switch (error.response.status) {
+            case 404:
+              mensagemErro = 'Cotação não encontrada. Pode já ter sido excluída.'
+              break
+            case 403:
+              mensagemErro = 'Você não tem permissão para excluir esta cotação.'
+              break
+            case 409:
+              mensagemErro = 'Não é possível excluir esta cotação pois ela possui dependências.'
+              break
+            default:
+              mensagemErro = `Erro no servidor: ${error.response.status}. Tente novamente.`
+          }
+        } else if (error.message) {
+          mensagemErro = error.message
+        }
+
+        toastError(mensagemErro, { duration: 7000 })
+      } finally {
+        operacaoEmAndamento.value = false
+      }
     }
-  }
+  })
 }
 
 // Função para visualizar PDF da cotação

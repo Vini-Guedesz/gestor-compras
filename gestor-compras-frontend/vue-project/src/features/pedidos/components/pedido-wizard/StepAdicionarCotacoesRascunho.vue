@@ -464,6 +464,7 @@
 <script>
 import { ref, computed, onBeforeUnmount, nextTick } from 'vue'
 import { useToast } from '@/composables/useToast.js'
+import { useErrorModal } from '@/composables/useErrorModal.js'
 import { useModal } from '@/composables/useModal.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import relatorioService from '@/services/relatorioService.js'
@@ -792,11 +793,17 @@ export default {
     }
 
     const confirmarDeleteCotacao = (cotacao) => {
+      const { showWarning } = useErrorModal()
       const nomeFornecedor = cotacao.nomeFornecedor || 'Fornecedor'
-      const confirmado = confirm(`Tem certeza que deseja remover a cotação de "${nomeFornecedor}"?\n\nEsta ação não pode ser desfeita.`)
-      if (confirmado) {
-        emit('delete-cotacao', cotacao.id)
-      }
+
+      showWarning(`Tem certeza que deseja remover a cotação de "${nomeFornecedor}"?\n\nEsta ação não pode ser desfeita.`, {
+        title: 'Remover Cotação?',
+        confirmText: 'Sim, remover',
+        cancelText: 'Cancelar',
+        onConfirm: () => {
+          emit('delete-cotacao', cotacao.id)
+        }
+      })
     }
 
     const salvarCotacao = async () => {

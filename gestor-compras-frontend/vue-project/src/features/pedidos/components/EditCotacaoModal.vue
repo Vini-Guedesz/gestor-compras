@@ -193,6 +193,7 @@
 import { ref, computed, watch } from 'vue'
 import { useModal } from '@/composables/useModal'
 import { useAuthStore } from '@/stores/auth'
+import { useErrorModal } from '@/composables/useErrorModal'
 import logger from '@/utils/logger.js'
 
 export default {
@@ -341,20 +342,31 @@ export default {
 
       const arquivosValidos = []
 
+      const { showError } = useErrorModal()
+      const erros = []
+
       for (const file of files) {
         // Validar tipo
         if (file.type !== 'application/pdf') {
-          alert(`${file.name} não é um arquivo PDF válido`)
+          erros.push(`${file.name}: não é um arquivo PDF válido`)
           continue
         }
 
         // Validar tamanho (10MB)
         if (file.size > 10 * 1024 * 1024) {
-          alert(`${file.name} excede o tamanho máximo de 10MB`)
+          erros.push(`${file.name}: excede o tamanho máximo de 10MB`)
           continue
         }
 
         arquivosValidos.push(file)
+      }
+
+      // Mostrar erros se houver
+      if (erros.length > 0) {
+        showError('Alguns arquivos não puderam ser adicionados', {
+          title: 'Arquivos Inválidos',
+          details: erros
+        })
       }
 
       // Adicionar arquivos válidos à lista

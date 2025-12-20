@@ -206,6 +206,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import { useErrorModal } from '@/composables/useErrorModal'
 import rascunhoService from '@/services/rascunhoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
@@ -298,33 +299,38 @@ export default {
       }
 
       // Confirmar antes de finalizar
+      const { showWarning } = useErrorModal()
       const totalItens = wizardData.value.rascunho.itens?.length || 0
-      const confirmado = confirm(
-        `Deseja finalizar o rascunho e prosseguir para adicionar cotações?\n\n` +
-        `Total de itens: ${totalItens}\n\n` +
-        `Após finalizar, o rascunho terá o status "Em Cotação".`
+
+      showWarning(
+        `Total de itens: ${totalItens}\n\nApós finalizar, o rascunho terá o status "Em Cotação".`,
+        {
+          title: 'Finalizar Rascunho?',
+          confirmText: 'Sim, finalizar',
+          cancelText: 'Cancelar',
+          onConfirm: async () => {
+            try {
+              isLoading.value = true
+
+              // Atualizar status para EM_COTACAO
+              await rascunhoService.atualizarStatus(wizardData.value.rascunho.id, 'EM_COTACAO')
+
+              const rascunhoSalvo = await rascunhoService.obterPorId(wizardData.value.rascunho.id);
+              wizardData.value.rascunho = rascunhoSalvo
+
+              await carregarDadosParaCotacao()
+              editState.value = 'GERENCIANDO_COTACOES'
+              router.replace({ query: { state: 'quotes' } })
+            } catch (error) {
+              logger.error('Erro ao finalizar rascunho:', error)
+              const mensagem = error.message || 'Erro ao salvar. Tente novamente.'
+              toastError(`Erro ao finalizar rascunho: ${mensagem}`, { duration: 7000 })
+            } finally {
+              isLoading.value = false
+            }
+          }
+        }
       )
-      if (!confirmado) return
-
-      try {
-        isLoading.value = true
-
-        // Atualizar status para EM_COTACAO
-        await rascunhoService.atualizarStatus(wizardData.value.rascunho.id, 'EM_COTACAO')
-
-        const rascunhoSalvo = await rascunhoService.obterPorId(wizardData.value.rascunho.id);
-        wizardData.value.rascunho = rascunhoSalvo
-
-        await carregarDadosParaCotacao()
-        editState.value = 'GERENCIANDO_COTACOES'
-        router.replace({ query: { state: 'quotes' } })
-      } catch (error) {
-        logger.error('Erro ao finalizar rascunho:', error)
-        const mensagem = error.message || 'Erro ao salvar. Tente novamente.'
-        toastError(`Erro ao finalizar rascunho: ${mensagem}`, { duration: 7000 })
-      } finally {
-        isLoading.value = false
-      }
     }
 
     const editarRascunho = async () => {
@@ -635,11 +641,14 @@ export default {
       const temSelecoes = cotacoesSelecionadas.value.length > 0 || totalItensSelecionados.value > 0
 
       if (temSelecoes) {
-        const confirmacao = confirm(
-          'Você tem seleções não salvas. Tem certeza que deseja cancelar?\n\n' +
-          'Todas as seleções serão perdidas.'
-        )
-        if (!confirmacao) return
+        const { showWarning } = useErrorModal()
+        showWarning('Você tem seleções não salvas. Todas as seleções serão perdidas.', {
+          title: 'Cancelar Alterações?',
+          confirmText: 'Sim, cancelar',
+          cancelText: 'Continuar editando',
+          onConfirm: () => router.push('/pedidos')
+        })
+        return
       }
 
       router.push('/pedidos')

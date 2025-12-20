@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
 const props = defineProps({
   message: {
@@ -78,7 +78,15 @@ const emit = defineEmits(['close'])
 const show = ref(false)
 let timer = null
 
+const clearTimer = () => {
+  if (timer) {
+    clearTimeout(timer)
+    timer = null
+  }
+}
+
 const close = () => {
+  clearTimer()
   show.value = false
   setTimeout(() => {
     emit('close')
@@ -102,10 +110,12 @@ onMounted(() => {
   }
 })
 
+onBeforeUnmount(() => {
+  clearTimer()
+})
+
 watch(() => props.message, () => {
-  if (timer) {
-    clearTimeout(timer)
-  }
+  clearTimer()
   if (props.duration > 0) {
     timer = setTimeout(() => {
       close()

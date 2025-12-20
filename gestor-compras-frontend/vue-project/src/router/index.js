@@ -220,13 +220,26 @@ const router = createRouter({
  *   meta: { requiresGuest: true } // Guard redireciona se já logado
  * }
  */
+/**
+ * Flag para evitar múltiplas chamadas checkAuth simultâneas
+ * @private
+ */
+let isCheckingAuth = false
+let lastAuthCheck = null
+
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // Verificar sessão salva no sessionStorage
-  // authStore.checkAuth() tem proteção interna contra chamadas duplicadas
-  if (!authStore.isAuthenticated) {
-    await authStore.checkAuth()
+  // Verificar sessão salva no sessionStorage apenas se necessário
+  // Otimização: só verifica auth se não estiver autenticado E não estiver verificando
+  if (!authStore.isAuthenticated && !isCheckingAuth) {
+    isCheckingAuth = true
+    try {
+      await authStore.checkAuth()
+      lastAuthCheck = Date.now()
+    } finally {
+      isCheckingAuth = false
+    }
   }
 
   // CASO 1: Rota requer autenticação (meta.requiresAuth)

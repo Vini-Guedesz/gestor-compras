@@ -206,6 +206,7 @@
 <script>
 import { ref, computed, watch } from 'vue'
 import { useToast } from '@/composables/useToast.js'
+import { useErrorModal } from '@/composables/useErrorModal.js'
 import rascunhoService from '@/services/rascunhoService.js'
 import logger from '@/utils/logger.js'
 
@@ -451,45 +452,62 @@ export default {
 
     const removerItem = async (index) => {
       const item = formData.value.itens[index]
+      const { showWarning } = useErrorModal()
 
-      if (item.id && formData.value.id) {
-        // Item já salvo no servidor - remover via API
-        if (!confirm('Deseja remover este item do rascunho?')) return
+      const executarRemocao = async () => {
+        if (item.id && formData.value.id) {
+          // Item já salvo no servidor - remover via API
+          try {
+            // Guardar os itens não salvos antes de atualizar
+            const itensNaoSalvos = formData.value.itens.filter(i => !i.id || i._unsaved)
 
-        try {
-          // Guardar os itens não salvos antes de atualizar
-          const itensNaoSalvos = formData.value.itens.filter(i => !i.id || i._unsaved)
+            const rascunhoAtualizado = await rascunhoService.removerItem(
+              formData.value.id,
+              item.id
+            )
 
-          const rascunhoAtualizado = await rascunhoService.removerItem(
-            formData.value.id,
-            item.id
-          )
+            // Mesclar itens do servidor com itens não salvos que ainda existem localmente
+            const itensDoServidor = rascunhoAtualizado.itens.map(serverItem => ({
+              ...serverItem,
+              _unsaved: false,
+              _saving: false
+            }))
 
-          // Mesclar itens do servidor com itens não salvos que ainda existem localmente
-          const itensDoServidor = rascunhoAtualizado.itens.map(serverItem => ({
-            ...serverItem,
-            _unsaved: false,
-            _saving: false
-          }))
+            // Adicionar de volta os itens que não estavam salvos (exceto o item removido)
+            const itensNaoSalvosRestantes = itensNaoSalvos.filter(i =>
+              !i.id && i !== item
+            )
 
-          // Adicionar de volta os itens que não estavam salvos (exceto o item removido)
-          const itensNaoSalvosRestantes = itensNaoSalvos.filter(i =>
-            !i.id && i !== item
-          )
+            formData.value.itens = [...itensDoServidor, ...itensNaoSalvosRestantes]
 
-          formData.value.itens = [...itensDoServidor, ...itensNaoSalvosRestantes]
-
-        } catch (error) {
-          logger.error('Erro ao remover item:', error)
-          showError(error.message || 'Erro ao remover item')
+          } catch (error) {
+            logger.error('Erro ao remover item:', error)
+            showError(error.message || 'Erro ao remover item')
+          }
+        } else {
+          // Item não salvo - remover localmente
+          formData.value.itens.splice(index, 1)
         }
-      } else {
-        // Item não salvo - remover localmente
-        if (!confirm('Deseja remover este item não salvo?')) return
-        formData.value.itens.splice(index, 1)
+
+        hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
       }
 
-      hasUnsavedChanges.value = formData.value.itens.some(i => i._unsaved)
+      // Mostrar confirmação
+      if (item.id && formData.value.id) {
+        showWarning('Esta ação removerá o item permanentemente do rascunho.', {
+          title: 'Remover Item do Rascunho?',
+          confirmText: 'Sim, remover',
+          cancelText: 'Cancelar',
+          onConfirm: executarRemocao
+        })
+      } else {
+        showWarning('Deseja remover este item?', {
+          title: 'Remover Item Não Salvo?',
+          confirmText: 'Sim, remover',
+          cancelText: 'Cancelar',
+          onConfirm: executarRemocao
+        })
+      }
     }
 
     // Watchers
