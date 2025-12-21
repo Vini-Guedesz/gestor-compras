@@ -464,6 +464,9 @@ public class RascunhoService {
             }
 
             if (!itensPedidoCotacao.isEmpty()) {
+                log.info("DEBUG: Convertendo cotação rascunho {} - gastoPrevisto: {}, projeto: {}",
+                        cotacaoRascunho.getId(), cotacaoRascunho.getGastoPrevisto(), cotacaoRascunho.getProjeto());
+
                 Cotacao cotacao = new Cotacao();
                 cotacao.setSolicitacaoDePedido(pedidoSalvo);
                 cotacao.setFornecedorProduto(cotacaoRascunho.getFornecedorProduto());
@@ -471,6 +474,12 @@ public class RascunhoService {
                 cotacao.setPreco(cotacaoRascunho.getPreco()); // Legacy - será ignorado, calculado dos itens
                 cotacao.setPrazoEmDiasUteis(cotacaoRascunho.getPrazoEmDiasUteis());
                 cotacao.setDataLimite(cotacaoRascunho.getDataLimite());
+                cotacao.setGastoPrevisto(cotacaoRascunho.getGastoPrevisto());
+                cotacao.setProjeto(cotacaoRascunho.getProjeto());
+
+                log.info("DEBUG: Cotação pedido criada - gastoPrevisto: {}, projeto: {}",
+                        cotacao.getGastoPrevisto(), cotacao.getProjeto());
+
                 // REMOVIDO: anexoPdf e caminhoAnexo (campos legados) - gerenciados via AnexoCotacao com deduplificação
 
                 // Criar CotacaoItem para cada ItemPedido (nova estrutura Bug #5)

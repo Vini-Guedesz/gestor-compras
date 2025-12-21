@@ -34,6 +34,10 @@ public record CotacaoRascunhoCreateDTO(
     @FutureOrPresent(message = "A data limite não pode ser no passado")
     LocalDate dataLimite,
 
+    Boolean gastoPrevisto,
+
+    String projeto,
+
     @PdfSize(maxBytes = 10485760L, message = "PDF deve ter no máximo 10MB")
     byte[] anexoPdf,
 

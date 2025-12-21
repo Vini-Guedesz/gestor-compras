@@ -15,6 +15,8 @@ public record CotacaoRascunhoDTO(
     BigDecimal preco,
     Integer prazoEmDiasUteis,
     LocalDate dataLimite,
+    Boolean gastoPrevisto,
+    String projeto,
     boolean temAnexoPdf,
     int quantidadeAnexos,
     LocalDateTime dataCriacao

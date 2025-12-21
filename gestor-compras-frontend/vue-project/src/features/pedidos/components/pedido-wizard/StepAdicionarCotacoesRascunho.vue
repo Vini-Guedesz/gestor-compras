@@ -392,6 +392,41 @@
             </div>
           </div>
 
+          <!-- Gasto Previsto -->
+          <div class="form-group">
+            <label>Gasto Previsto no Orçamento?</label>
+            <div class="toggle-button-group">
+              <button
+                type="button"
+                class="toggle-option"
+                :class="{ 'active': !novaCotacao.gastoPrevisto }"
+                @click="novaCotacao.gastoPrevisto = false"
+              >
+                Não
+              </button>
+              <button
+                type="button"
+                class="toggle-option"
+                :class="{ 'active': novaCotacao.gastoPrevisto }"
+                @click="novaCotacao.gastoPrevisto = true"
+              >
+                Sim
+              </button>
+            </div>
+          </div>
+
+          <!-- Projeto (apenas se gasto previsto) -->
+          <div v-if="novaCotacao.gastoPrevisto" class="form-group">
+            <label>Projeto</label>
+            <input
+              type="text"
+              v-model="novaCotacao.projeto"
+              @click.stop
+              placeholder="Nome do projeto (ex: Projeto Expansão 2025)"
+              maxlength="255"
+            />
+          </div>
+
           <!-- Anexos PDF -->
           <div class="form-group">
             <label>Anexos PDF</label>
@@ -522,7 +557,9 @@ export default {
       preco: null,
       prazoEmDiasUteis: null,
       dataLimite: null,
-      anexosPdf: []
+      anexosPdf: [],
+      gastoPrevisto: false,
+      projeto: null
     })
 
     const validarTeclaPreco = (event) => {
@@ -719,7 +756,9 @@ export default {
         preco: null,
         prazoEmDiasUteis: null,
         dataLimite: null,
-        anexosPdf: []
+        anexosPdf: [],
+        gastoPrevisto: false,
+        projeto: null
       }
       showFormulario.value = true
     }
@@ -818,6 +857,8 @@ export default {
           preco: parseFloat(novaCotacao.value.preco),
           prazoEmDiasUteis: novaCotacao.value.prazoEmDiasUteis ? parseInt(novaCotacao.value.prazoEmDiasUteis) : null,
           dataLimite: novaCotacao.value.dataLimite || null,
+          gastoPrevisto: novaCotacao.value.gastoPrevisto,
+          projeto: novaCotacao.value.projeto || null,
           // Manter compatibilidade: enviar primeiro PDF como anexoPdf e todos como anexosPdf
           anexoPdf: novaCotacao.value.anexosPdf.length > 0 ? novaCotacao.value.anexosPdf[0] : null,
           anexosPdf: novaCotacao.value.anexosPdf.length > 0 ? novaCotacao.value.anexosPdf : null
@@ -1396,7 +1437,23 @@ export default {
   margin-bottom: 6px;
 }
 
-.form-group input,
+.form-group label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.form-group input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.form-group input:not([type="checkbox"]),
 .form-group select {
   width: 100%;
   padding: 10px 12px;
@@ -1982,8 +2039,34 @@ export default {
   background: #f9fafb;
 }
 
-.checkbox-label {
+.toggle-button-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.toggle-option {
+  flex: 1;
+  padding: 10px 20px;
+  border: 2px solid #d1d5db;
+  background: white;
+  color: #6b7280;
   font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-option:hover {
+  border-color: #1F285F;
+  color: #1F285F;
+}
+
+.toggle-option.active {
+  background: #1F285F;
+  border-color: #1F285F;
+  color: white;
 }
 
 .modal-footer {

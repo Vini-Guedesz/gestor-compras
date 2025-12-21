@@ -14,6 +14,7 @@ import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeServicoRe
 import com.gestordecompras.gestorcomprasbackend.repository.ItemRascunhoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.RascunhoRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
  * @author Gestor de Compras
  * @since 1.0
  */
+@Slf4j
 @Service
 public class CotacaoRascunhoService {
 
@@ -111,6 +113,14 @@ public class CotacaoRascunhoService {
         cotacao.setPreco(dto.preco());
         cotacao.setPrazoEmDiasUteis(dto.prazoEmDiasUteis());
         cotacao.setDataLimite(dto.dataLimite());
+        cotacao.setGastoPrevisto(dto.gastoPrevisto() != null ? dto.gastoPrevisto() : false);
+        cotacao.setProjeto(dto.projeto());
+
+        log.info("DEBUG: Criando cotação rascunho - gastoPrevisto recebido: {}, projeto: {}",
+                dto.gastoPrevisto(), dto.projeto());
+        log.info("DEBUG: Cotação após set - gastoPrevisto: {}, projeto: {}",
+                cotacao.getGastoPrevisto(), cotacao.getProjeto());
+
         // Não usar mais anexoPdf legado - usar apenas a nova estrutura de anexos múltiplos
 
         // Definir fornecedor
@@ -256,6 +266,8 @@ public class CotacaoRascunhoService {
                 cotacao.getPreco(),
                 cotacao.getPrazoEmDiasUteis(),
                 cotacao.getDataLimite(),
+                cotacao.getGastoPrevisto(),
+                cotacao.getProjeto(),
                 temAnexo,
                 quantidadeAnexos,
                 cotacao.getDataCriacao()

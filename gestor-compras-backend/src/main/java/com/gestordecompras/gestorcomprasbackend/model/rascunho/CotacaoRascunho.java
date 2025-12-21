@@ -56,6 +56,12 @@ public class CotacaoRascunho {
 
     private LocalDate dataLimite;
 
+    @Column(name = "gasto_previsto")
+    private Boolean gastoPrevisto = false;
+
+    @Column(name = "projeto", length = 255)
+    private String projeto;
+
     /**
      * Anexos PDF desta cotação de rascunho com deduplificação via hash SHA-256
      * Evita armazenar o mesmo PDF múltiplas vezes
