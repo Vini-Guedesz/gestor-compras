@@ -103,6 +103,11 @@ export const tipoModificacaoConfig = {
   EDICAO_COTACAO: { label: 'Cotação Editada', icon: 'pencil', color: '#f59e0b' },
   CANCELAMENTO: { label: 'Cancelamento', icon: 'x-circle', color: '#ef4444' },
   APROVACAO: { label: 'Aprovação', icon: 'check-circle', color: '#10b981' },
+  // Novos tipos do workflow
+  ENVIO_PARA_APROVACAO: { label: 'Enviado para Aprovação', icon: 'paper-airplane', color: '#6366f1' },
+  DEVOLUCAO_PARA_EDICAO: { label: 'Devolvido para Edição', icon: 'arrow-uturn-left', color: '#f59e0b' },
+  DEVOLUCAO_EDICAO: { label: 'Devolvido para Edição', icon: 'arrow-uturn-left', color: '#f59e0b' },
+  FINALIZACAO_NEGOCIACAO: { label: 'Negociação Finalizada', icon: 'check', color: '#10b981' },
   // Tipos de rascunho
   CRIACAO_RASCUNHO: { label: 'Rascunho Criado', icon: 'plus', color: '#10b981' },
   ATUALIZACAO_OBSERVACAO: { label: 'Observação Atualizada', icon: 'edit', color: '#3b82f6' },

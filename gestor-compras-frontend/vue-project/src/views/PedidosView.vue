@@ -684,15 +684,20 @@ export default {
 
     const getStatusLabel = (status) => {
       const labels = {
+        // Novos status do workflow
+        'EM_NEGOCIACAO': 'Em Negociação',
+        'PENDENTE_APROVACAO': 'Pendente de Aprovação',
+        'APROVADO': 'Aprovado',
+        'CANCELADO': 'Cancelado',
         // Status do backend (uppercase)
         'RASCUNHO': 'Rascunho',
+        'ATIVO': 'Ativo',
         'EM_COTACAO': 'Em Cotação',
+        'FINALIZADO': 'Rascunho Finalizado',
         'RASCUNHO_FINALIZADO': 'Rascunho Finalizado',
         'PENDENTE': 'Pendente',
         'EM_ANALISE': 'Em Análise',
         'EM_ANDAMENTO': 'Em Andamento',
-        'APROVADO': 'Aprovado',
-        'CANCELADO': 'Cancelado',
         // Status antigos (lowercase) - compatibilidade
         'rascunho': 'Rascunho',
         'pendente': 'Pendente',
@@ -706,15 +711,20 @@ export default {
 
     const getStatusClass = (status) => {
       const classes = {
+        // Novos status do workflow
+        'EM_NEGOCIACAO': 'status-negotiating',
+        'PENDENTE_APROVACAO': 'status-pending-approval',
+        'APROVADO': 'status-approved',
+        'CANCELADO': 'status-canceled',
         // Status do backend (uppercase)
         'RASCUNHO': 'status-draft',
+        'ATIVO': 'status-active',
         'EM_COTACAO': 'status-quoting',
+        'FINALIZADO': 'status-draft-finished',
         'RASCUNHO_FINALIZADO': 'status-draft-finished',
         'PENDENTE': 'status-pending',
         'EM_ANALISE': 'status-progress',
         'EM_ANDAMENTO': 'status-progress',
-        'APROVADO': 'status-approved',
-        'CANCELADO': 'status-canceled',
         // Status antigos (lowercase) - compatibilidade
         'rascunho': 'status-draft',
         'pendente': 'status-pending',
@@ -1537,6 +1547,26 @@ export default {
   color: #3730a3;
 }
 
+/* Novos status do workflow */
+.status-negotiating {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.status-pending-approval {
+  background: #fef3c7;
+  color: #d97706;
+  font-weight: 600;
+}
+
+.status-active {
+  background: #d1fae5;
+  color: #047857;
+  font-weight: 600;
+}
+
+/* Status antigos */
 .status-pending {
   background: #fef3c7;
   color: #d97706;

@@ -32,40 +32,103 @@
         <div v-else class="view-container">
           <!-- Header -->
           <div class="view-header">
-            <div class="header-content">
-              <h2 class="view-title">{{ getTitulo() }}</h2>
-              <p class="view-subtitle">Detalhes completos do {{ isRascunho ? 'rascunho' : 'pedido' }}</p>
-              <!-- Resumo Rápido -->
-              <div class="header-resumo">
-                <div class="resumo-item">
-                  <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
-                    <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-                  </svg>
-                  <span>{{ pedido?.itens?.length || 0 }} {{ pedido?.itens?.length === 1 ? 'item' : 'itens' }}</span>
-                </div>
-                <span class="resumo-separator">•</span>
-                <div class="resumo-item">
-                  <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
-                    <path fill="currentColor" d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 1.99 2H19c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
-                  </svg>
-                  <span>{{ cotacoes.length }} {{ cotacoes.length === 1 ? 'cotação' : 'cotações' }}</span>
-                </div>
-                <span class="resumo-separator" v-if="getTotalCotacoes() > 0">•</span>
-                <div class="resumo-item resumo-total" v-if="getTotalCotacoes() > 0">
-                  <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
-                    <path fill="currentColor" d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                  </svg>
-                  <span class="total-valor">Total: R$ {{ formatarPreco(getTotalCotacoes()) }}</span>
+            <!-- Status Badge no topo -->
+            <div class="header-status-row">
+              <span class="status-badge" :class="getStatusClass()">
+                {{ getStatusLabel() }}
+              </span>
+            </div>
+
+            <!-- Conteúdo e Ações na mesma linha -->
+            <div class="header-main-row">
+              <div class="header-content">
+                <h2 class="view-title">{{ getTitulo() }}</h2>
+                <p class="view-subtitle">Detalhes completos do {{ isRascunho ? 'rascunho' : 'pedido' }}</p>
+                <!-- Resumo Rápido -->
+                <div class="header-resumo">
+                  <div class="resumo-item">
+                    <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
+                      <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                    </svg>
+                    <span>{{ pedido?.itens?.length || 0 }} {{ pedido?.itens?.length === 1 ? 'item' : 'itens' }}</span>
+                  </div>
+                  <span class="resumo-separator">•</span>
+                  <div class="resumo-item">
+                    <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
+                      <path fill="currentColor" d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 1.99 2H19c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+                    </svg>
+                    <span>{{ cotacoes.length }} {{ cotacoes.length === 1 ? 'cotação' : 'cotações' }}</span>
+                  </div>
+                  <span class="resumo-separator" v-if="getTotalCotacoes() > 0">•</span>
+                  <div class="resumo-item resumo-total" v-if="getTotalCotacoes() > 0">
+                    <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
+                      <path fill="currentColor" d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                    </svg>
+                    <span class="total-valor">Total: R$ {{ formatarPreco(getTotalCotacoes()) }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="header-actions">
-              <span class="status-badge" :class="getStatusClass()">
-                {{ pedido?.status || 'RASCUNHO' }}
-              </span>
-              <button v-if="isRascunho && !isFinalizado" @click="editarRascunho" class="btn-success">
-                Editar Rascunho
-              </button>
+
+              <!-- Action Buttons Container alinhado com o resumo -->
+              <div class="action-buttons-group">
+                <!-- Ações para Rascunhos -->
+                <template v-if="isRascunho">
+                  <button v-if="pedido?.status === 'EM_COTACAO'" @click="abrirModalDevolucao" class="btn-warning">
+                    Devolver para Edição
+                  </button>
+                  <button v-if="!isFinalizado && pedido?.status === 'ATIVO'" @click="editarRascunho" class="btn-success">
+                    Editar Rascunho
+                  </button>
+                </template>
+
+                <!-- Ações para Pedidos -->
+                <template v-if="!isRascunho">
+                  <!-- EM_NEGOCIACAO ou PENDENTE (legado): Ação primária + secundária -->
+                  <template v-if="pedido?.status === 'EM_NEGOCIACAO' || pedido?.status === 'PENDENTE'">
+                    <button @click="abrirModalEnviarAprovacao" class="btn-action btn-action-primary">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 2L11 13"></path>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+                      </svg>
+                      Enviar para Aprovação
+                    </button>
+                    <button @click="abrirModalCancelar" class="btn-action btn-action-secondary">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                      </svg>
+                      Cancelar
+                    </button>
+                  </template>
+
+                  <!-- PENDENTE_APROVACAO: Ações de aprovação -->
+                  <template v-if="pedido?.status === 'PENDENTE_APROVACAO'">
+                    <button @click="abrirModalAprovar" class="btn-action btn-action-success">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                      </svg>
+                      Aprovar Pedido
+                    </button>
+                    <button @click="abrirModalDevolverPedido" class="btn-action btn-action-warning">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 14 4 9 9 4"></polyline>
+                        <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
+                      </svg>
+                      Devolver
+                    </button>
+                    <button @click="abrirModalCancelar" class="btn-action btn-action-secondary">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                      </svg>
+                      Cancelar
+                    </button>
+                  </template>
+                </template>
+              </div>
             </div>
           </div>
 
@@ -103,7 +166,7 @@
                 </div>
                 <div class="info-card-content">
                   <span class="info-card-label">Status</span>
-                  <span class="info-card-value">{{ pedido.status }}</span>
+                  <span class="info-card-value">{{ getStatusLabel() }}</span>
                 </div>
               </div>
             </div>
@@ -439,6 +502,180 @@
       :cotacao="cotacaoSelecionadaParaEdicao || {}"
       @close="fecharModalHistorico"
     />
+
+    <!-- Modal Devolução Rascunho para Edição -->
+    <div v-if="modalDevolucaoAberto" class="modal-overlay" @click="fecharModalDevolucao">
+      <div class="modal-container-small" @click.stop>
+        <div class="modal-header">
+          <h3>Devolver Rascunho para Edição</h3>
+          <button @click="fecharModalDevolucao" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            ⚠️ Ao devolver o rascunho para edição, o status voltará para ATIVO e o criador poderá fazer alterações novamente.
+            <br><br>
+            <strong>ATENÇÃO:</strong> Todas as cotações existentes serão <strong>removidas permanentemente</strong> para evitar inconsistências com possíveis edições nos itens.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Motivo da Devolução *</label>
+            <textarea
+              v-model="motivoDevolucao"
+              class="form-textarea"
+              rows="4"
+              placeholder="Descreva o motivo da devolução (mínimo 10 caracteres)..."
+              maxlength="500"
+              required
+            ></textarea>
+            <small class="form-hint">{{ motivoDevolucao.length }}/500 caracteres</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="fecharModalDevolucao" class="btn-cancel">Cancelar</button>
+          <button
+            @click="confirmarDevolucao"
+            class="btn-warning"
+            :disabled="motivoDevolucao.length < 10 || devolvendo"
+          >
+            {{ devolvendo ? 'Devolvendo...' : 'Devolver para Edição' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Enviar para Aprovação -->
+    <div v-if="modalEnviarAprovacaoAberto" class="modal-overlay" @click="fecharModalEnviarAprovacao">
+      <div class="modal-container-small" @click.stop>
+        <div class="modal-header">
+          <h3>Enviar Pedido para Aprovação</h3>
+          <button @click="fecharModalEnviarAprovacao" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            📋 Ao enviar o pedido para aprovação, você não poderá mais editá-lo.<br>
+            O aprovador poderá aprovar, devolver para edição ou cancelar.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Observações (opcional)</label>
+            <textarea
+              v-model="observacaoPedido"
+              class="form-textarea"
+              rows="3"
+              placeholder="Adicione observações sobre este envio (opcional)..."
+              maxlength="1000"
+            ></textarea>
+            <small class="form-hint">{{ observacaoPedido.length }}/1000 caracteres</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="fecharModalEnviarAprovacao" class="btn-cancel">Cancelar</button>
+          <button @click="confirmarEnviarAprovacao" class="btn-primary" :disabled="processando">
+            {{ processando ? 'Enviando...' : 'Enviar para Aprovação' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Aprovar Pedido -->
+    <div v-if="modalAprovarAberto" class="modal-overlay" @click="fecharModalAprovar">
+      <div class="modal-container-small" @click.stop>
+        <div class="modal-header">
+          <h3>Aprovar Pedido</h3>
+          <button @click="fecharModalAprovar" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            ✅ Ao aprovar este pedido, ele será marcado como <strong>APROVADO</strong> e não poderá mais ser alterado.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Observações (opcional)</label>
+            <textarea
+              v-model="observacaoPedido"
+              class="form-textarea"
+              rows="3"
+              placeholder="Adicione observações sobre a aprovação (opcional)..."
+              maxlength="1000"
+            ></textarea>
+            <small class="form-hint">{{ observacaoPedido.length }}/1000 caracteres</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="fecharModalAprovar" class="btn-cancel">Cancelar</button>
+          <button @click="confirmarAprovar" class="btn-success" :disabled="processando">
+            {{ processando ? 'Aprovando...' : 'Aprovar Pedido' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Devolver Pedido para Edição -->
+    <div v-if="modalDevolverPedidoAberto" class="modal-overlay" @click="fecharModalDevolverPedido">
+      <div class="modal-container-small" @click.stop>
+        <div class="modal-header">
+          <h3>Devolver Pedido para Edição</h3>
+          <button @click="fecharModalDevolverPedido" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            ⚠️ Ao devolver o pedido para edição, o status voltará para <strong>EM_NEGOCIACAO</strong> e o comprador poderá fazer ajustes.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Motivo da Devolução *</label>
+            <textarea
+              v-model="motivoDevolucaoPedido"
+              class="form-textarea"
+              rows="4"
+              placeholder="Descreva o motivo da devolução (mínimo 10 caracteres)..."
+              maxlength="1000"
+              required
+            ></textarea>
+            <small class="form-hint">{{ motivoDevolucaoPedido.length }}/1000 caracteres</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="fecharModalDevolverPedido" class="btn-cancel">Cancelar</button>
+          <button
+            @click="confirmarDevolverPedido"
+            class="btn-warning"
+            :disabled="motivoDevolucaoPedido.length < 10 || processando"
+          >
+            {{ processando ? 'Devolvendo...' : 'Devolver para Edição' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Cancelar Pedido -->
+    <div v-if="modalCancelarAberto" class="modal-overlay" @click="fecharModalCancelar">
+      <div class="modal-container-small" @click.stop>
+        <div class="modal-header">
+          <h3>Cancelar Pedido</h3>
+          <button @click="fecharModalCancelar" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            ❌ Ao cancelar este pedido, ele será marcado como <strong>CANCELADO</strong> permanentemente.<br>
+            <strong>Esta ação não pode ser desfeita!</strong>
+          </p>
+          <div class="form-group">
+            <label class="form-label">Motivo do Cancelamento (opcional)</label>
+            <textarea
+              v-model="observacaoPedido"
+              class="form-textarea"
+              rows="4"
+              placeholder="Descreva o motivo do cancelamento (opcional)..."
+              maxlength="1000"
+            ></textarea>
+            <small class="form-hint">{{ observacaoPedido.length }}/1000 caracteres</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="fecharModalCancelar" class="btn-cancel">Cancelar</button>
+          <button @click="confirmarCancelar" class="btn-danger" :disabled="processando">
+            {{ processando ? 'Cancelando...' : 'Confirmar Cancelamento' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -491,6 +728,11 @@ export default {
     const modalHistoricoAberto = ref(false)
     const cotacaoSelecionadaParaEdicao = ref(null)
 
+    // Devolução para Edição
+    const modalDevolucaoAberto = ref(false)
+    const motivoDevolucao = ref('')
+    const devolvendo = ref(false)
+
     // PDF Viewer
     const pdfAberto = ref(null)
     const carregandoPdf = ref(false)
@@ -503,14 +745,48 @@ export default {
       return `Pedido #${pedido.value?.id || ''}`
     }
 
+    const getStatusLabel = () => {
+      const status = pedido.value?.status || 'RASCUNHO'
+      const labels = {
+        // Novos status do workflow
+        'EM_NEGOCIACAO': 'Em Negociação',
+        'PENDENTE_APROVACAO': 'Pendente de Aprovação',
+        'APROVADO': 'Aprovado',
+        'CANCELADO': 'Cancelado',
+        // Status do backend
+        'RASCUNHO': 'Rascunho',
+        'ATIVO': 'Ativo',
+        'EM_COTACAO': 'Em Cotação',
+        'FINALIZADO': 'Rascunho Finalizado',
+        'RASCUNHO_FINALIZADO': 'Rascunho Finalizado',
+        'PENDENTE': 'Pendente',
+        'EM_ANALISE': 'Em Análise',
+        'EM_ANDAMENTO': 'Em Andamento',
+        'REJEITADO': 'Rejeitado'
+      }
+      return labels[status] || status || 'Indefinido'
+    }
+
     const getStatusClass = () => {
       const status = pedido.value?.status || 'RASCUNHO'
-      return {
-        'status-pendente': status === 'PENDENTE',
-        'status-aprovado': status === 'APROVADO',
-        'status-rejeitado': status === 'REJEITADO' || status === 'CANCELADO',
-        'status-rascunho': status === 'RASCUNHO'
+      const classes = {
+        // Novos status do workflow
+        'EM_NEGOCIACAO': 'status-negotiating',
+        'PENDENTE_APROVACAO': 'status-pending-approval',
+        'APROVADO': 'status-approved',
+        'CANCELADO': 'status-canceled',
+        // Status do backend
+        'RASCUNHO': 'status-draft',
+        'ATIVO': 'status-active',
+        'EM_COTACAO': 'status-quoting',
+        'FINALIZADO': 'status-draft-finished',
+        'RASCUNHO_FINALIZADO': 'status-draft-finished',
+        'PENDENTE': 'status-pending',
+        'EM_ANALISE': 'status-progress',
+        'EM_ANDAMENTO': 'status-progress',
+        'REJEITADO': 'status-rejected'
       }
+      return classes[status] || 'status-default'
     }
 
     const formatarData = (data) => {
@@ -848,6 +1124,61 @@ export default {
       cotacaoSelecionadaParaEdicao.value = null
     }
 
+    const abrirModalDevolucao = async () => {
+      try {
+        // Verificar quantas cotações existem
+        const quantidadeCotacoes = await rascunhoService.contarCotacoes(pedido.value.rascunhoId)
+
+        if (quantidadeCotacoes > 0) {
+          const confirmacao = window.confirm(
+            `ATENÇÃO: Este rascunho possui ${quantidadeCotacoes} cotação(ões).\n\n` +
+            `Ao devolver para edição, TODAS as cotações serão REMOVIDAS permanentemente.\n\n` +
+            `Deseja continuar?`
+          )
+
+          if (!confirmacao) {
+            return
+          }
+        }
+
+        motivoDevolucao.value = ''
+        modalDevolucaoAberto.value = true
+      } catch (err) {
+        logger.error('Erro ao verificar cotações:', err)
+        error('Erro ao verificar cotações do rascunho')
+      }
+    }
+
+    const fecharModalDevolucao = () => {
+      modalDevolucaoAberto.value = false
+      motivoDevolucao.value = ''
+    }
+
+    const confirmarDevolucao = async () => {
+      if (motivoDevolucao.value.length < 10) {
+        error('O motivo deve ter pelo menos 10 caracteres')
+        return
+      }
+
+      devolvendo.value = true
+      try {
+        await rascunhoService.devolverParaEdicao(pedido.value.rascunhoId, {
+          motivo: motivoDevolucao.value
+        })
+
+        success('Rascunho devolvido para edição com sucesso!')
+        fecharModalDevolucao()
+
+        // Recarregar o rascunho para atualizar o status
+        await carregarPedido()
+      } catch (err) {
+        logger.error('Erro ao devolver rascunho:', err)
+        error(err.message || 'Erro ao devolver rascunho para edição')
+      } finally {
+        devolvendo.value = false
+      }
+    }
+
     const salvarEdicaoCotacao = async (dadosEdicao) => {
       try {
         // Preparar DTO para o backend (SEM PDFs - serão enviados separadamente)
@@ -894,6 +1225,152 @@ export default {
       }
     }
 
+    // ========================================
+    // AÇÕES DE PEDIDO - Enviar, Aprovar, Devolver, Cancelar
+    // ========================================
+
+    // Modais de Pedido
+    const modalEnviarAprovacaoAberto = ref(false)
+    const modalAprovarAberto = ref(false)
+    const modalDevolverPedidoAberto = ref(false)
+    const modalCancelarAberto = ref(false)
+    const observacaoPedido = ref('')
+    const motivoDevolucaoPedido = ref('')
+    const processando = ref(false)
+
+    // Enviar para Aprovação
+    const abrirModalEnviarAprovacao = () => {
+      observacaoPedido.value = ''
+      modalEnviarAprovacaoAberto.value = true
+    }
+
+    const fecharModalEnviarAprovacao = () => {
+      modalEnviarAprovacaoAberto.value = false
+      observacaoPedido.value = ''
+    }
+
+    const confirmarEnviarAprovacao = async () => {
+      processando.value = true
+      try {
+        console.log('pedidoService:', pedidoService)
+        console.log('enviarParaAprovacao:', pedidoService.enviarParaAprovacao)
+        console.log('Todas as funções:', Object.keys(pedidoService))
+
+        await pedidoService.enviarParaAprovacao(pedido.value.id, {
+          observacao: observacaoPedido.value || undefined
+        })
+
+        success('Pedido enviado para aprovação com sucesso!')
+        fecharModalEnviarAprovacao()
+
+        // Recarregar o pedido para atualizar o status
+        await carregarPedido()
+      } catch (err) {
+        logger.error('Erro ao enviar pedido para aprovação:', err)
+        showError(err.message || 'Erro ao enviar pedido para aprovação')
+      } finally {
+        processando.value = false
+      }
+    }
+
+    // Aprovar Pedido
+    const abrirModalAprovar = () => {
+      observacaoPedido.value = ''
+      modalAprovarAberto.value = true
+    }
+
+    const fecharModalAprovar = () => {
+      modalAprovarAberto.value = false
+      observacaoPedido.value = ''
+    }
+
+    const confirmarAprovar = async () => {
+      processando.value = true
+      try {
+        await pedidoService.aprovarPedidoWorkflow(pedido.value.id, {
+          observacao: observacaoPedido.value || undefined
+        })
+
+        success('Pedido aprovado com sucesso!')
+        fecharModalAprovar()
+
+        // Recarregar o pedido para atualizar o status
+        await carregarPedido()
+      } catch (err) {
+        logger.error('Erro ao aprovar pedido:', err)
+        showError(err.message || 'Erro ao aprovar pedido')
+      } finally {
+        processando.value = false
+      }
+    }
+
+    // Devolver Pedido para Edição
+    const abrirModalDevolverPedido = () => {
+      motivoDevolucaoPedido.value = ''
+      modalDevolverPedidoAberto.value = true
+    }
+
+    const fecharModalDevolverPedido = () => {
+      modalDevolverPedidoAberto.value = false
+      motivoDevolucaoPedido.value = ''
+    }
+
+    const confirmarDevolverPedido = async () => {
+      if (motivoDevolucaoPedido.value.length < 10) {
+        showError('O motivo da devolução deve ter pelo menos 10 caracteres')
+        return
+      }
+
+      processando.value = true
+      try {
+        await pedidoService.devolverParaEdicao(pedido.value.id, {
+          motivo: motivoDevolucaoPedido.value
+        })
+
+        success('Pedido devolvido para edição com sucesso!')
+        fecharModalDevolverPedido()
+
+        // Recarregar o pedido para atualizar o status
+        await carregarPedido()
+      } catch (err) {
+        logger.error('Erro ao devolver pedido para edição:', err)
+        showError(err.message || 'Erro ao devolver pedido para edição')
+      } finally {
+        processando.value = false
+      }
+    }
+
+    // Cancelar Pedido
+    const abrirModalCancelar = () => {
+      observacaoPedido.value = ''
+      modalCancelarAberto.value = true
+    }
+
+    const fecharModalCancelar = () => {
+      modalCancelarAberto.value = false
+      observacaoPedido.value = ''
+    }
+
+    const confirmarCancelar = async () => {
+      processando.value = true
+      try {
+        await pedidoService.cancelarPedidoWorkflow(pedido.value.id, {
+          observacao: observacaoPedido.value || undefined
+        })
+
+        success('Pedido cancelado com sucesso!')
+        fecharModalCancelar()
+
+        // Recarregar o pedido para atualizar o status
+        await carregarPedido()
+      } catch (err) {
+        logger.error('Erro ao cancelar pedido:', err)
+        showError(err.message || 'Erro ao cancelar pedido')
+      } finally {
+        processando.value = false
+      }
+    }
+
     onMounted(() => {
       carregarPedido()
     })
@@ -933,6 +1410,7 @@ export default {
 
       // Methods
       getTitulo,
+      getStatusLabel,
       getStatusClass,
       formatarData,
       formatarDataHora,
@@ -956,7 +1434,36 @@ export default {
       salvarEdicaoCotacao,
       modalEditarCotacaoAberto,
       modalHistoricoAberto,
-      cotacaoSelecionadaParaEdicao
+      cotacaoSelecionadaParaEdicao,
+
+      // Devolução para Edição (Rascunho)
+      modalDevolucaoAberto,
+      motivoDevolucao,
+      devolvendo,
+      abrirModalDevolucao,
+      fecharModalDevolucao,
+      confirmarDevolucao,
+
+      // Ações de Pedido
+      modalEnviarAprovacaoAberto,
+      modalAprovarAberto,
+      modalDevolverPedidoAberto,
+      modalCancelarAberto,
+      observacaoPedido,
+      motivoDevolucaoPedido,
+      processando,
+      abrirModalEnviarAprovacao,
+      fecharModalEnviarAprovacao,
+      confirmarEnviarAprovacao,
+      abrirModalAprovar,
+      fecharModalAprovar,
+      confirmarAprovar,
+      abrirModalDevolverPedido,
+      fecharModalDevolverPedido,
+      confirmarDevolverPedido,
+      abrirModalCancelar,
+      fecharModalCancelar,
+      confirmarCancelar
     }
   }
 }
@@ -1070,13 +1577,25 @@ export default {
 
 .view-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
   padding: 24px 28px;
   background: #1F285F;
   color: white;
   border-radius: 16px 16px 0 0;
   margin-bottom: 0;
+}
+
+.header-status-row {
+  display: flex;
+  align-items: center;
+}
+
+.header-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
 }
 
 .view-title {
@@ -1126,10 +1645,16 @@ export default {
   font-weight: 600;
 }
 
-.header-actions {
+.action-buttons-group {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 6px;
+  background: linear-gradient(135deg, rgba(139, 149, 255, 0.15) 0%, rgba(99, 102, 241, 0.12) 100%);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(139, 149, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
 .status-badge {
@@ -1150,6 +1675,11 @@ export default {
   color: #065f46;
 }
 
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .status-rejeitado {
   background: #fee2e2;
   color: #991b1b;
@@ -1158,6 +1688,57 @@ export default {
 .status-rascunho {
   background: #e0e7ff;
   color: #3730a3;
+}
+
+.status-draft {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+/* Novos status do workflow */
+.status-negotiating {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.status-pending-approval {
+  background: #fef3c7;
+  color: #d97706;
+  font-weight: 600;
+}
+
+.status-canceled {
+  background: #fee2e2;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.status-active {
+  background: #d1fae5;
+  color: #047857;
+  font-weight: 600;
+}
+
+.status-quoting {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-draft-finished {
+  background: #e0e7ff;
+  color: #3730a3;
+  font-weight: 600;
+}
+
+.status-progress {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-default {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 /* Section Cards */
@@ -3143,6 +3724,585 @@ export default {
   .contato-item-new {
     font-size: 0.75rem;
     padding: 6px 10px;
+  }
+}
+
+/* Estilos para Devolução */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeInDevolucao 0.2s ease-out;
+}
+
+@keyframes fadeInDevolucao {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-container-small {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 540px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUpDevolucao 0.3s ease-out;
+}
+
+@keyframes slideUpDevolucao {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.75rem;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.btn-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-description {
+  color: #6b7280;
+  font-size: 0.9375rem;
+  margin-bottom: 24px;
+  line-height: 1.6;
+  background: #f9fafb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 3px solid #f59e0b;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  transition: all 0.2s;
+  line-height: 1.5;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.form-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  text-align: right;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 12px 12px;
+}
+
+.btn-cancel {
+  padding: 12px 28px;
+  background: white;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+
+.btn-cancel::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(107, 114, 128, 0.1);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease-out, height 0.6s ease-out;
+}
+
+.btn-cancel:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-cancel:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn-cancel:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn-danger {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 14px rgba(239, 68, 68, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+
+.btn-danger::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease-out, height 0.6s ease-out;
+}
+
+.btn-danger:active::before {
+  width: 400px;
+  height: 400px;
+}
+
+.btn-danger::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+  border-radius: 10px 10px 0 0;
+  pointer-events: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+  box-shadow:
+    0 8px 24px rgba(239, 68, 68, 0.5),
+    0 4px 12px rgba(239, 68, 68, 0.3),
+    0 0 0 4px rgba(239, 68, 68, 0.1),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    0 4px 14px rgba(239, 68, 68, 0.4),
+    inset 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  filter: grayscale(0.3);
+}
+
+.btn-danger:disabled:hover {
+  transform: none;
+}
+
+.btn-warning {
+  padding: 11px 24px;
+  background: #f59e0b;
+  color: white;
+  border: 2px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: #d97706;
+  border-color: #d97706;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn-warning:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-warning:disabled {
+  background: #d1d5db;
+  border-color: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-danger-outline {
+  padding: 11px 24px;
+  background: white;
+  color: #dc2626;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn-danger-outline:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-danger-outline:disabled {
+  background: white;
+  color: #d1d5db;
+  border-color: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ========================================
+   BOTÕES DE AÇÃO - Workflow de Pedidos
+   ======================================== */
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+  min-width: 180px;
+  backdrop-filter: blur(8px);
+}
+
+/* Efeito ripple ao clicar */
+.btn-action::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease-out, height 0.6s ease-out;
+  pointer-events: none;
+}
+
+.btn-action:active::before {
+  width: 400px;
+  height: 400px;
+}
+
+/* Brilho sutil no topo */
+.btn-action::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+  border-radius: 12px 12px 0 0;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.btn-action:hover::after {
+  opacity: 0.8;
+}
+
+.btn-action svg {
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  z-index: 1;
+}
+
+.btn-action:hover svg {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: grayscale(0.3);
+}
+
+.btn-action:disabled:hover {
+  transform: none;
+}
+
+.btn-action:disabled svg {
+  transform: none;
+}
+
+/* Primary - Enviar para Aprovação */
+.btn-action-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%);
+  color: white;
+  box-shadow:
+    0 4px 14px rgba(99, 102, 241, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.btn-action-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #4f46e5 100%);
+  box-shadow:
+    0 8px 24px rgba(99, 102, 241, 0.6),
+    0 4px 12px rgba(99, 102, 241, 0.4),
+    0 0 0 4px rgba(99, 102, 241, 0.1),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.btn-action-primary:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow:
+    0 4px 14px rgba(99, 102, 241, 0.5),
+    inset 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Success - Aprovar Pedido */
+.btn-action-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  color: white;
+  box-shadow:
+    0 4px 14px rgba(16, 185, 129, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.btn-action-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%);
+  box-shadow:
+    0 8px 24px rgba(16, 185, 129, 0.5),
+    0 4px 12px rgba(16, 185, 129, 0.3),
+    0 0 0 4px rgba(16, 185, 129, 0.1),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.btn-action-success:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow:
+    0 4px 14px rgba(16, 185, 129, 0.4),
+    inset 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Warning - Devolver para Edição */
+.btn-action-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+  color: white;
+  box-shadow:
+    0 4px 14px rgba(245, 158, 11, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.btn-action-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  box-shadow:
+    0 8px 24px rgba(245, 158, 11, 0.5),
+    0 4px 12px rgba(245, 158, 11, 0.3),
+    0 0 0 4px rgba(245, 158, 11, 0.1),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.btn-action-warning:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow:
+    0 4px 14px rgba(245, 158, 11, 0.4),
+    inset 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Secondary (Ghost) - Cancelar */
+.btn-action-secondary {
+  background: linear-gradient(135deg, rgba(165, 180, 252, 0.18) 0%, rgba(139, 149, 255, 0.15) 100%);
+  color: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(165, 180, 252, 0.3);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+}
+
+.btn-action-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.35) 0%, rgba(239, 68, 68, 0.3) 100%);
+  color: #fef2f2;
+  border-color: rgba(248, 113, 113, 0.5);
+  box-shadow:
+    0 6px 20px rgba(239, 68, 68, 0.35),
+    0 2px 8px rgba(239, 68, 68, 0.2),
+    0 0 0 4px rgba(239, 68, 68, 0.08),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn-action-secondary:active:not(:disabled) {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(220, 38, 38, 0.35) 100%);
+  transform: translateY(-1px) scale(0.98);
+  box-shadow:
+    0 3px 12px rgba(239, 68, 68, 0.3),
+    inset 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.btn-action-secondary svg {
+  opacity: 0.95;
+  transition: opacity 0.3s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-action-secondary:hover:not(:disabled) svg {
+  opacity: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Responsividade dos botões de ação */
+@media (max-width: 768px) {
+  .btn-action {
+    padding: 12px 20px;
+    font-size: 0.875rem;
+    gap: 8px;
+    min-width: 150px;
+  }
+
+  .btn-action svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .btn-action:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.01);
   }
 }
 </style>
