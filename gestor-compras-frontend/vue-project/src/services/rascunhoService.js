@@ -442,6 +442,57 @@ const rascunhoService = {
       logger.error('Erro ao atualizar status:', error.message)
       throw error
     }
+  },
+
+  /**
+   * Conta quantas cotações existem para um rascunho
+   *
+   * @async
+   * @function contarCotacoes
+   * @memberof rascunhoService
+   * @param {number} rascunhoId - ID do rascunho
+   * @returns {Promise<number>} Quantidade de cotações
+   * @throws {Error} Erro de comunicação
+   *
+   * @example
+   * const quantidade = await rascunhoService.contarCotacoes(5)
+   */
+  async contarCotacoes(rascunhoId) {
+    try {
+      const data = await api.get(`/api/v1/rascunhos/${rascunhoId}/cotacoes/count`)
+      return data.quantidade
+    } catch (error) {
+      logger.error('Erro ao contar cotações:', error.message)
+      throw error
+    }
+  },
+
+  /**
+   * Devolve um rascunho em cotação para edição
+   * ATENÇÃO: Remove TODAS as cotações existentes
+   *
+   * @async
+   * @function devolverParaEdicao
+   * @memberof rascunhoService
+   * @param {number} rascunhoId - ID do rascunho
+   * @param {Object} dto - Dados da devolução
+   * @param {string} dto.motivo - Motivo da devolução (mínimo 10 caracteres)
+   * @returns {Promise<Rascunho>} Rascunho com status atualizado para ATIVO
+   * @throws {Error} Erro se rascunho não estiver em EM_COTACAO ou comunicação
+   *
+   * @example
+   * await rascunhoService.devolverParaEdicao(5, {
+   *   motivo: 'Necessário ajustar quantidades dos itens'
+   * })
+   */
+  async devolverParaEdicao(rascunhoId, dto) {
+    try {
+      const data = await api.post(`/api/v1/rascunhos/${rascunhoId}/devolver-para-edicao`, dto)
+      return data
+    } catch (error) {
+      logger.error('Erro ao devolver rascunho para edição:', error.message)
+      throw error
+    }
   }
 }
 

@@ -180,6 +180,24 @@ public class HistoricoRascunhoService {
     }
 
     /**
+     * Registra a devolução de um rascunho em cotação para edição.
+     *
+     * @param rascunho O rascunho devolvido.
+     * @param usuario O usuário que realizou a devolução.
+     * @param motivo Motivo da devolução.
+     */
+    @Transactional
+    public void registrarDevolucaoParaEdicao(Rascunho rascunho, User usuario, String motivo) {
+        HistoricoRascunho historico = new HistoricoRascunho();
+        historico.setRascunho(rascunho);
+        historico.setUsuario(usuario);
+        historico.setTipoAcao(TipoAcaoRascunho.DEVOLUCAO_EDICAO);
+        historico.setDescricao("Rascunho devolvido para edição");
+        historico.setDetalhes("Motivo: " + motivo);
+        historicoRascunhoRepository.save(historico);
+    }
+
+    /**
      * Lista o histórico completo de um rascunho.
      *
      * @param rascunhoId ID do rascunho.

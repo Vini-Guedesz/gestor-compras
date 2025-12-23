@@ -1,6 +1,8 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
 import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
+import com.gestordecompras.gestorcomprasbackend.dto.pedido.AcaoPedidoDTO;
+import com.gestordecompras.gestorcomprasbackend.dto.pedido.DevolverPedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.solicitacaodepedido.SolicitacaoDePedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.service.SolicitacaoDePedidoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -175,5 +177,95 @@ public class SolicitacaoDePedidoController {
     public ResponseEntity<Void> deleteSolicitacao(@PathVariable Long id) {
         solicitacaoDePedidoService.deleteSolicitacao(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ===== ENDPOINTS DE TRANSIÇÃO DE ESTADO =====
+
+    /**
+     * Envia pedido para aprovação (EM_NEGOCIACAO → PENDENTE_APROVACAO).
+     * Finaliza a negociação e encaminha para o aprovador.
+     */
+    @PostMapping("/{id}/enviar-para-aprovacao")
+    @Operation(
+            summary = "Enviar pedido para aprovação",
+            description = "Finaliza a negociação e envia o pedido para aprovação (EM_NEGOCIACAO → PENDENTE_APROVACAO)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido enviado para aprovação com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Status inválido para envio"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado")
+    })
+    public ResponseEntity<SolicitacaoDePedidoDTO> enviarParaAprovacao(
+            @PathVariable Long id,
+            @RequestBody(required = false) @Valid AcaoPedidoDTO dto
+    ) {
+        AcaoPedidoDTO dtoNonNull = dto != null ? dto : new AcaoPedidoDTO(null);
+        return ResponseEntity.ok(solicitacaoDePedidoService.enviarParaAprovacao(id, dtoNonNull));
+    }
+
+    /**
+     * Aprova um pedido (PENDENTE_APROVACAO → APROVADO).
+     * Ação restrita ao aprovador.
+     */
+    @PostMapping("/{id}/aprovar")
+    @Operation(
+            summary = "Aprovar pedido",
+            description = "Aprova o pedido permitindo prosseguir com a compra (PENDENTE_APROVACAO → APROVADO)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido aprovado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Status inválido para aprovação"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado")
+    })
+    public ResponseEntity<SolicitacaoDePedidoDTO> aprovarPedido(
+            @PathVariable Long id,
+            @RequestBody(required = false) @Valid AcaoPedidoDTO dto
+    ) {
+        AcaoPedidoDTO dtoNonNull = dto != null ? dto : new AcaoPedidoDTO(null);
+        return ResponseEntity.ok(solicitacaoDePedidoService.aprovarPedido(id, dtoNonNull));
+    }
+
+    /**
+     * Cancela um pedido.
+     * Pode ser feito em EM_NEGOCIACAO ou PENDENTE_APROVACAO.
+     */
+    @PostMapping("/{id}/cancelar")
+    @Operation(
+            summary = "Cancelar pedido",
+            description = "Cancela o pedido (EM_NEGOCIACAO ou PENDENTE_APROVACAO → CANCELADO)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido cancelado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Pedido não pode ser cancelado"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado")
+    })
+    public ResponseEntity<SolicitacaoDePedidoDTO> cancelarPedido(
+            @PathVariable Long id,
+            @RequestBody(required = false) @Valid AcaoPedidoDTO dto
+    ) {
+        AcaoPedidoDTO dtoNonNull = dto != null ? dto : new AcaoPedidoDTO(null);
+        return ResponseEntity.ok(solicitacaoDePedidoService.cancelarPedido(id, dtoNonNull));
+    }
+
+    /**
+     * Devolve pedido para edição (PENDENTE_APROVACAO → EM_NEGOCIACAO).
+     * Aprovador devolve para o comprador fazer ajustes.
+     * Requer motivo obrigatório.
+     */
+    @PostMapping("/{id}/devolver-para-edicao")
+    @Operation(
+            summary = "Devolver pedido para edição",
+            description = "Devolve o pedido para o comprador fazer ajustes (PENDENTE_APROVACAO → EM_NEGOCIACAO). Requer motivo."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido devolvido para edição com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Status inválido para devolução ou motivo inválido"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado")
+    })
+    public ResponseEntity<SolicitacaoDePedidoDTO> devolverParaEdicao(
+            @PathVariable Long id,
+            @RequestBody @Valid DevolverPedidoDTO dto
+    ) {
+        return ResponseEntity.ok(solicitacaoDePedidoService.devolverParaEdicao(id, dto));
     }
 }

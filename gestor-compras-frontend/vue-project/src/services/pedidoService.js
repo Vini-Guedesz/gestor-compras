@@ -558,6 +558,116 @@ const pedidoService = {
       logger.error('❌ Erro ao salvar pedido:', error)
       throw error
     }
+  },
+
+  /**
+   * Envia pedido para aprovação (EM_NEGOCIACAO → PENDENTE_APROVACAO)
+   *
+   * @async
+   * @function enviarParaAprovacao
+   * @memberof pedidoService
+   * @param {number} pedidoId - ID do pedido
+   * @param {Object} [dados] - Dados opcionais
+   * @param {string} [dados.observacao] - Observações sobre o envio
+   * @returns {Promise<Pedido>} Pedido com status atualizado
+   * @throws {Error} Erro se pedido não estiver em EM_NEGOCIACAO
+   *
+   * @example
+   * await pedidoService.enviarParaAprovacao(5, { observacao: 'Pedido urgente' })
+   */
+  async enviarParaAprovacao(pedidoId, dados = {}) {
+    try {
+      const response = await api.post(`/api/v1/solicitacoes-pedido/${pedidoId}/enviar-para-aprovacao`, dados)
+      logger.info('Pedido enviado para aprovação:', pedidoId)
+      return response
+    } catch (error) {
+      logger.error('Erro ao enviar pedido para aprovação:', error.message)
+      throw error
+    }
+  },
+
+  /**
+   * Aprova um pedido (PENDENTE_APROVACAO → APROVADO)
+   *
+   * @async
+   * @function aprovarPedido
+   * @memberof pedidoService
+   * @param {number} pedidoId - ID do pedido
+   * @param {Object} [dados] - Dados opcionais
+   * @param {string} [dados.observacao] - Observações sobre a aprovação
+   * @returns {Promise<Pedido>} Pedido aprovado
+   * @throws {Error} Erro se pedido não estiver em PENDENTE_APROVACAO
+   *
+   * @example
+   * await pedidoService.aprovarPedido(5, { observacao: 'Aprovado conforme orçamento' })
+   */
+  async aprovarPedidoWorkflow(pedidoId, dados = {}) {
+    try {
+      const response = await api.post(`/api/v1/solicitacoes-pedido/${pedidoId}/aprovar`, dados)
+      logger.info('Pedido aprovado:', pedidoId)
+      return response
+    } catch (error) {
+      logger.error('Erro ao aprovar pedido:', error.message)
+      throw error
+    }
+  },
+
+  /**
+   * Cancela um pedido (EM_NEGOCIACAO ou PENDENTE_APROVACAO → CANCELADO)
+   *
+   * @async
+   * @function cancelarPedidoWorkflow
+   * @memberof pedidoService
+   * @param {number} pedidoId - ID do pedido
+   * @param {Object} [dados] - Dados opcionais
+   * @param {string} [dados.observacao] - Motivo do cancelamento
+   * @returns {Promise<Pedido>} Pedido cancelado
+   * @throws {Error} Erro se pedido já estiver APROVADO ou CANCELADO
+   *
+   * @example
+   * await pedidoService.cancelarPedidoWorkflow(5, { observacao: 'Fornecedor não disponível' })
+   */
+  async cancelarPedidoWorkflow(pedidoId, dados = {}) {
+    try {
+      const response = await api.post(`/api/v1/solicitacoes-pedido/${pedidoId}/cancelar`, dados)
+      logger.info('Pedido cancelado:', pedidoId)
+      return response
+    } catch (error) {
+      logger.error('Erro ao cancelar pedido:', error.message)
+      throw error
+    }
+  },
+
+  /**
+   * Devolve pedido para edição (PENDENTE_APROVACAO → EM_NEGOCIACAO)
+   * ATENÇÃO: Requer motivo obrigatório
+   *
+   * @async
+   * @function devolverParaEdicao
+   * @memberof pedidoService
+   * @param {number} pedidoId - ID do pedido
+   * @param {Object} dados - Dados da devolução
+   * @param {string} dados.motivo - Motivo da devolução (10-1000 caracteres) - OBRIGATÓRIO
+   * @returns {Promise<Pedido>} Pedido devolvido
+   * @throws {Error} Erro se pedido não estiver em PENDENTE_APROVACAO ou motivo inválido
+   *
+   * @example
+   * await pedidoService.devolverParaEdicao(5, {
+   *   motivo: 'Necessário ajustar quantidades dos itens solicitados'
+   * })
+   */
+  async devolverParaEdicao(pedidoId, dados) {
+    try {
+      if (!dados || !dados.motivo || dados.motivo.length < 10) {
+        throw new Error('Motivo da devolução é obrigatório e deve ter no mínimo 10 caracteres')
+      }
+      const response = await api.post(`/api/v1/solicitacoes-pedido/${pedidoId}/devolver-para-edicao`, dados)
+      logger.info('Pedido devolvido para edição:', pedidoId)
+      return response
+    } catch (error) {
+      logger.error('Erro ao devolver pedido para edição:', error.message)
+      throw error
+    }
   }
 }
 
@@ -663,17 +773,22 @@ export const pedidoUtils = {
    * - CANCELADO/cancelado: Pedido cancelado
    */
   statusConfig: {
-    PENDENTE: { label: 'Pendente', class: 'warning' },
+    // Novos status do fluxo
+    EM_NEGOCIACAO: { label: 'Em Negociação', class: 'info' },
+    PENDENTE_APROVACAO: { label: 'Pendente de Aprovação', class: 'warning' },
     APROVADO: { label: 'Aprovado', class: 'success' },
+    CANCELADO: { label: 'Cancelado', class: 'danger' },
+    // Status antigos (deprecated - mantidos para compatibilidade)
+    PENDENTE: { label: 'Pendente', class: 'warning' },
     EM_ANDAMENTO: { label: 'Em Andamento', class: 'info' },
-    CANCELADO: { label: 'Cancelado', class: 'secondary' },
+    EM_ANALISE: { label: 'Em Análise', class: 'info' },
     // Manter compatibilidade com status antigos (lowercase)
     pendente: { label: 'Pendente', class: 'warning' },
     aprovado: { label: 'Aprovado', class: 'success' },
     rejeitado: { label: 'Rejeitado', class: 'danger' },
     em_andamento: { label: 'Em Andamento', class: 'info' },
     finalizado: { label: 'Finalizado', class: 'success' },
-    cancelado: { label: 'Cancelado', class: 'secondary' }
+    cancelado: { label: 'Cancelado', class: 'danger' }
   },
 
   /**
@@ -696,6 +811,116 @@ export const pedidoUtils = {
    */
   obterStatusInfo(status) {
     return this.statusConfig[status] || { label: status, class: 'secondary' }
+  },
+
+  /**
+   * Envia pedido para aprovação (EM_NEGOCIACAO → PENDENTE_APROVACAO)
+   *
+   * @async
+   * @function enviarParaAprovacao
+   * @memberof pedidoService
+   * @param {number} pedidoId - ID do pedido
+   * @param {Object} [dados] - Dados opcionais
+   * @param {string} [dados.observacao] - Observações sobre o envio
+   * @returns {Promise<Pedido>} Pedido com status atualizado
+   * @throws {Error} Erro se pedido não estiver em EM_NEGOCIACAO
+   *
+   * @example
+   * await pedidoService.enviarParaAprovacao(5, { observacao: 'Pedido urgente' })
+   */
+  async enviarParaAprovacao(pedidoId, dados = {}) {
+    try {
+      const response = await api.post(`/api/v1/solicitacoes-pedido/${pedidoId}/enviar-para-aprovacao`, dados)
+      logger.info('Pedido enviado para aprovação:', pedidoId)
+      return response
+    } catch (error) {
+      logger.error('Erro ao enviar pedido para aprovação:', error.message)
+      throw error
+    }
+  },
+
+  /**
+   * Aprova um pedido (PENDENTE_APROVACAO → APROVADO)
+   *
+   * @async
+   * @function aprovarPedido
+   * @memberof pedidoService
+   * @param {number} pedidoId - ID do pedido
+   * @param {Object} [dados] - Dados opcionais
+   * @param {string} [dados.observacao] - Observações sobre a aprovação
+   * @returns {Promise<Pedido>} Pedido aprovado
+   * @throws {Error} Erro se pedido não estiver em PENDENTE_APROVACAO
+   *
+   * @example
+   * await pedidoService.aprovarPedido(5, { observacao: 'Aprovado conforme orçamento' })
+   */
+  async aprovarPedido(pedidoId, dados = {}) {
+    try {
+      const response = await api.post(`/api/v1/solicitacoes-pedido/${pedidoId}/aprovar`, dados)
+      logger.info('Pedido aprovado:', pedidoId)
+      return response
+    } catch (error) {
+      logger.error('Erro ao aprovar pedido:', error.message)
+      throw error
+    }
+  },
+
+  /**
+   * Cancela um pedido (EM_NEGOCIACAO ou PENDENTE_APROVACAO → CANCELADO)
+   *
+   * @async
+   * @function cancelarPedido
+   * @memberof pedidoService
+   * @param {number} pedidoId - ID do pedido
+   * @param {Object} [dados] - Dados opcionais
+   * @param {string} [dados.observacao] - Motivo do cancelamento
+   * @returns {Promise<Pedido>} Pedido cancelado
+   * @throws {Error} Erro se pedido já estiver APROVADO ou CANCELADO
+   *
+   * @example
+   * await pedidoService.cancelarPedido(5, { observacao: 'Fornecedor não disponível' })
+   */
+  async cancelarPedido(pedidoId, dados = {}) {
+    try {
+      const response = await api.post(`/api/v1/solicitacoes-pedido/${pedidoId}/cancelar`, dados)
+      logger.info('Pedido cancelado:', pedidoId)
+      return response
+    } catch (error) {
+      logger.error('Erro ao cancelar pedido:', error.message)
+      throw error
+    }
+  },
+
+  /**
+   * Devolve pedido para edição (PENDENTE_APROVACAO → EM_NEGOCIACAO)
+   * ATENÇÃO: Requer motivo obrigatório
+   *
+   * @async
+   * @function devolverParaEdicao
+   * @memberof pedidoService
+   * @param {number} pedidoId - ID do pedido
+   * @param {Object} dados - Dados da devolução
+   * @param {string} dados.motivo - Motivo da devolução (10-1000 caracteres) - OBRIGATÓRIO
+   * @returns {Promise<Pedido>} Pedido devolvido
+   * @throws {Error} Erro se pedido não estiver em PENDENTE_APROVACAO ou motivo inválido
+   *
+   * @example
+   * await pedidoService.devolverParaEdicao(5, {
+   *   motivo: 'Necessário ajustar quantidades dos itens solicitados'
+   * })
+   */
+  async devolverParaEdicao(pedidoId, dados) {
+    try {
+      if (!dados || !dados.motivo || dados.motivo.length < 10) {
+        throw new Error('Motivo da devolução é obrigatório e deve ter no mínimo 10 caracteres')
+      }
+      const response = await api.post(`/api/v1/solicitacoes-pedido/${pedidoId}/devolver-para-edicao`, dados)
+      logger.info('Pedido devolvido para edição:', pedidoId)
+      return response
+    } catch (error) {
+      logger.error('Erro ao devolver pedido para edição:', error.message)
+      throw error
+    }
   }
 }
 

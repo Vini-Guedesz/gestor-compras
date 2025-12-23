@@ -69,6 +69,7 @@ public class HistoricoRascunho {
         ADICAO_COTACAO,
         REMOCAO_COTACAO,
         EDICAO_COTACAO,
-        CONVERSAO_PEDIDO
+        CONVERSAO_PEDIDO,
+        DEVOLUCAO_EDICAO
     }
 }

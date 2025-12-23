@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controller REST para gerenciar Rascunhos de Pedidos.
@@ -176,5 +177,26 @@ public class RascunhoController {
             @RequestParam String status
     ) {
         return ResponseEntity.ok(rascunhoService.atualizarStatus(id, status));
+    }
+
+    /**
+     * Verifica quantas cotações existem para um rascunho.
+     * Útil para avisar o usuário antes de devolver para edição.
+     */
+    @GetMapping("/{id}/cotacoes/count")
+    @Operation(summary = "Contar cotações do rascunho", description = "Retorna quantidade de cotações existentes para o rascunho")
+    public ResponseEntity<Map<String, Integer>> contarCotacoes(@PathVariable Long id) {
+        int quantidade = rascunhoService.contarCotacoes(id);
+        return ResponseEntity.ok(Map.of("quantidade", quantidade));
+    }
+
+    /** Devolve rascunho de EM_COTACAO para ATIVO para permitir edição pelo criador. */
+    @PostMapping("/{id}/devolver-para-edicao")
+    @Operation(summary = "Devolver rascunho para edição", description = "Devolve rascunho em cotação para edição pelo criador (status volta para ATIVO). ATENÇÃO: Remove todas as cotações existentes.")
+    public ResponseEntity<RascunhoDTO> devolverParaEdicao(
+            @PathVariable Long id,
+            @Valid @RequestBody DevolverRascunhoDTO dto
+    ) {
+        return ResponseEntity.ok(rascunhoService.devolverParaEdicao(id, dto));
     }
 }

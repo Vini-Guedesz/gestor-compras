@@ -181,6 +181,9 @@
 
                 <!-- Ações para o estado GERENCIANDO_COTACOES -->
                 <template v-if="editState === 'GERENCIANDO_COTACOES'">
+                  <button type="button" @click="abrirModalDevolucao" class="btn-warning">
+                    Devolver para Edição
+                  </button>
                   <button type="button" @click="editarRascunho" class="btn-secondary">
                     Editar Rascunho
                   </button>
@@ -196,6 +199,45 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Devolução para Edição -->
+    <div v-if="modalDevolucaoAberto" class="modal-overlay" @click="fecharModalDevolucao">
+      <div class="modal-container-small" @click.stop>
+        <div class="modal-header">
+          <h3>Devolver Rascunho para Edição</h3>
+          <button @click="fecharModalDevolucao" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            ⚠️ Ao devolver o rascunho para edição, o status voltará para ATIVO e o criador poderá fazer alterações novamente.
+            <br><br>
+            <strong>ATENÇÃO:</strong> Todas as cotações existentes serão <strong>removidas permanentemente</strong> para evitar inconsistências com possíveis edições nos itens.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Motivo da Devolução *</label>
+            <textarea
+              v-model="motivoDevolucao"
+              class="form-textarea"
+              rows="4"
+              placeholder="Descreva o motivo da devolução (mínimo 10 caracteres)..."
+              maxlength="500"
+              required
+            ></textarea>
+            <small class="form-hint">{{ motivoDevolucao.length }}/500 caracteres</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="fecharModalDevolucao" class="btn-cancel">Cancelar</button>
+          <button
+            @click="confirmarDevolucao"
+            class="btn-warning"
+            :disabled="motivoDevolucao.length < 10 || devolvendo"
+          >
+            {{ devolvendo ? 'Devolvendo...' : 'Devolver para Edição' }}
+          </button>
         </div>
       </div>
     </div>
@@ -248,6 +290,11 @@ export default {
     const carregandoCotacoes = ref(false)
     const cotacoesSelecionadas = ref([]) // IDs das cotações selecionadas
     const itensPorCotacao = ref({}) // { cotacaoId: [itemId1, itemId2, ...] }
+
+    // Devolução para Edição
+    const modalDevolucaoAberto = ref(false)
+    const motivoDevolucao = ref('')
+    const devolvendo = ref(false)
 
     // Computed properties
     const temCotacoes = computed(() => todasCotacoes.value.length > 0)
@@ -331,6 +378,66 @@ export default {
           }
         }
       )
+    }
+
+    const abrirModalDevolucao = async () => {
+      try {
+        // Verificar quantas cotações existem
+        const quantidadeCotacoes = await rascunhoService.contarCotacoes(wizardData.value.rascunho.id)
+
+        if (quantidadeCotacoes > 0) {
+          const confirmacao = window.confirm(
+            `ATENÇÃO: Este rascunho possui ${quantidadeCotacoes} cotação(ões).\n\n` +
+            `Ao devolver para edição, TODAS as cotações serão REMOVIDAS permanentemente.\n\n` +
+            `Deseja continuar?`
+          )
+
+          if (!confirmacao) {
+            return
+          }
+        }
+
+        motivoDevolucao.value = ''
+        modalDevolucaoAberto.value = true
+      } catch (err) {
+        logger.error('Erro ao verificar cotações:', err)
+        toastError('Erro ao verificar cotações do rascunho')
+      }
+    }
+
+    const fecharModalDevolucao = () => {
+      modalDevolucaoAberto.value = false
+      motivoDevolucao.value = ''
+    }
+
+    const confirmarDevolucao = async () => {
+      if (motivoDevolucao.value.length < 10) {
+        toastError('O motivo deve ter pelo menos 10 caracteres')
+        return
+      }
+
+      devolvendo.value = true
+      try {
+        await rascunhoService.devolverParaEdicao(wizardData.value.rascunho.id, {
+          motivo: motivoDevolucao.value
+        })
+
+        success('Rascunho devolvido para edição com sucesso!')
+        fecharModalDevolucao()
+
+        // Atualizar estado e redirecionar para edição
+        editState.value = 'EDITANDO_RASCUNHO'
+        router.replace({ query: { state: 'edit' } })
+
+        // Recarregar dados do rascunho
+        const rascunho = await rascunhoService.obterPorId(wizardData.value.rascunho.id)
+        wizardData.value.rascunho = { ...rascunho, itens: rascunho.itens || [] }
+      } catch (err) {
+        logger.error('Erro ao devolver rascunho:', err)
+        toastError(err.message || 'Erro ao devolver rascunho para edição')
+      } finally {
+        devolvendo.value = false
+      }
     }
 
     const editarRascunho = async () => {
@@ -741,7 +848,14 @@ export default {
       formatarPreco,
       cancelar,
       voltar,
-      onRascunhoCreated
+      onRascunhoCreated,
+      // Devolução para Edição
+      modalDevolucaoAberto,
+      motivoDevolucao,
+      devolvendo,
+      abrirModalDevolucao,
+      fecharModalDevolucao,
+      confirmarDevolucao
     }
   }
 }
@@ -1329,5 +1443,209 @@ export default {
   .footer-actions button {
     flex: 1;
   }
+}
+
+/* Estilos para Devolução */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-container-small {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 540px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.75rem;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.btn-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-description {
+  color: #6b7280;
+  font-size: 0.9375rem;
+  margin-bottom: 24px;
+  line-height: 1.6;
+  background: #f9fafb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 3px solid #f59e0b;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  transition: all 0.2s;
+  line-height: 1.5;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.form-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  text-align: right;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 0 0 12px 12px;
+}
+
+.btn-cancel {
+  padding: 11px 24px;
+  background: white;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.btn-warning {
+  padding: 11px 24px;
+  background: #f59e0b;
+  color: white;
+  border: 2px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: #d97706;
+  border-color: #d97706;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn-warning:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn-warning:disabled {
+  background: #d1d5db;
+  border-color: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 </style>

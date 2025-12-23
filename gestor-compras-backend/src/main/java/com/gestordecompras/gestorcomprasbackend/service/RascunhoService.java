@@ -149,6 +149,77 @@ public class RascunhoService {
     }
 
     /**
+     * Conta quantas cotações existem para um rascunho.
+     * Útil para avisar o usuário antes de devolver para edição.
+     *
+     * @param rascunhoId ID do rascunho.
+     * @return Quantidade de cotações.
+     */
+    @Transactional(readOnly = true)
+    public int contarCotacoes(Long rascunhoId) {
+        List<CotacaoRascunho> cotacoes = cotacaoRascunhoRepository.findByRascunhoIdWithItens(rascunhoId);
+        return cotacoes.size();
+    }
+
+    /**
+     * Devolve um rascunho em cotação para edição (status volta para ATIVO).
+     * Registra a ação no histórico com o motivo fornecido.
+     * ATENÇÃO: Remove TODAS as cotações existentes para evitar inconsistências.
+     *
+     * @param rascunhoId ID do rascunho.
+     * @param dto DTO contendo o motivo da devolução.
+     * @return DTO do rascunho atualizado.
+     * @throws EntityNotFoundException Se o rascunho não for encontrado.
+     * @throws IllegalStateException Se o rascunho não estiver em EM_COTACAO.
+     */
+    @Transactional
+    public RascunhoDTO devolverParaEdicao(Long rascunhoId, com.gestordecompras.gestorcomprasbackend.dto.rascunho.DevolverRascunhoDTO dto) {
+        Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
+                .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId));
+
+        // Validar que o rascunho está em cotação
+        if (rascunho.getStatus() != StatusRascunho.EM_COTACAO) {
+            throw new IllegalStateException("Apenas rascunhos em cotação podem ser devolvidos para edição. Status atual: " + rascunho.getStatus());
+        }
+
+        // Verificar se há cotações existentes
+        List<CotacaoRascunho> cotacoesExistentes = cotacaoRascunhoRepository.findByRascunhoIdWithItens(rascunhoId);
+
+        if (!cotacoesExistentes.isEmpty()) {
+            // Registrar no histórico a remoção das cotações
+            User usuario = getUsuarioAutenticado();
+
+            log.warn("Rascunho {} possui {} cotação(ões) que serão removidas ao devolver para edição",
+                    rascunhoId, cotacoesExistentes.size());
+
+            // Remover todas as cotações existentes para evitar inconsistências
+            for (CotacaoRascunho cotacao : cotacoesExistentes) {
+                historicoRascunhoService.registrarRemocaoCotacao(
+                    rascunho,
+                    usuario,
+                    "Cotação ID " + cotacao.getId() + " removida automaticamente devido à devolução para edição"
+                );
+            }
+
+            cotacaoRascunhoRepository.deleteByRascunhoId(rascunhoId);
+            cotacaoRascunhoRepository.flush(); // Garante que a remoção seja efetivada antes de continuar
+        }
+
+        // Atualizar status para ATIVO
+        rascunho.setStatus(StatusRascunho.ATIVO);
+        Rascunho rascunhoSalvo = rascunhoRepository.save(rascunho);
+
+        // Registrar no histórico
+        User usuario = getUsuarioAutenticado();
+        historicoRascunhoService.registrarDevolucaoParaEdicao(rascunho, usuario, dto.motivo());
+
+        log.info("Rascunho {} devolvido para edição por {}. Motivo: {}. Cotações removidas: {}",
+                rascunhoId, usuario.getUsername(), dto.motivo(), cotacoesExistentes.size());
+
+        return rascunhoMapper.toDTO(rascunhoSalvo);
+    }
+
+    /**
      * Adiciona um novo item ao rascunho.
      *
      * @param rascunhoId ID do rascunho.
@@ -418,7 +489,7 @@ public class RascunhoService {
         SolicitacaoDePedido pedido = new SolicitacaoDePedido();
         pedido.setObservacao(rascunho.getObservacao());
         pedido.setObjetivo(rascunho.getObjetivo()); // Copiar objetivo do rascunho
-        pedido.setStatus(StatusPedido.PENDENTE);
+        pedido.setStatus(StatusPedido.EM_NEGOCIACAO); // Inicia em negociação com fornecedores
         pedido.setItens(new ArrayList<>());
 
         // Converter itens selecionados do rascunho para itens do pedido

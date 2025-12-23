@@ -71,6 +71,9 @@ public class HistoricoPedido {
         REMOCAO_COTACAO,
         EDICAO_COTACAO,
         CANCELAMENTO,
-        APROVACAO
+        APROVACAO,
+        ENVIO_PARA_APROVACAO,
+        DEVOLUCAO_PARA_EDICAO,
+        FINALIZACAO_NEGOCIACAO
     }
 }
