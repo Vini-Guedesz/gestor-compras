@@ -1412,36 +1412,145 @@ export default {
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+  .wizard-container {
+    max-width: 900px;
+  }
+}
+
 @media (max-width: 1024px) {
   .content-area {
     margin-left: 0;
+    padding: 20px;
+  }
+
+  .wizard-container {
+    max-width: 100%;
   }
 }
 
 @media (max-width: 768px) {
   .content-area {
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .wizard-container {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .wizard-card {
+    border-radius: 12px;
   }
 
   .wizard-header {
-    padding: 20px;
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .wizard-title {
+    font-size: 1.25rem;
+  }
+
+  .wizard-subtitle {
+    font-size: 0.875rem;
   }
 
   .wizard-body {
-    padding: 20px;
+    padding: 16px;
   }
 
   .wizard-footer {
-    padding: 16px;
+    padding: 12px;
+    flex-direction: column-reverse;
+    gap: 8px;
   }
 
   .footer-actions {
     width: 100%;
-    justify-content: stretch;
+    flex-direction: column-reverse;
+    gap: 8px;
   }
 
   .footer-actions button {
-    flex: 1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Cotações em mobile */
+  .cotacoes-lista-selecao {
+    gap: 12px;
+  }
+
+  .cotacao-selecao-card {
+    padding: 12px;
+  }
+
+  .cotacao-fornecedor-nome {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  /* Resumo em mobile */
+  .resumo-final-container {
+    padding: 12px;
+  }
+
+  .resumo-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Breadcrumb em mobile */
+  .breadcrumb {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn-voltar {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-area {
+    padding: 8px;
+  }
+
+  .wizard-card {
+    border-radius: 8px;
+  }
+
+  .wizard-header {
+    padding: 12px;
+  }
+
+  .wizard-body {
+    padding: 12px;
+  }
+
+  .wizard-footer {
+    padding: 10px;
+  }
+
+  .wizard-title {
+    font-size: 1.125rem;
+  }
+
+  .wizard-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .cotacao-selecao-card {
+    padding: 10px;
+  }
+
+  .footer-actions button {
+    padding: 12px 16px;
+    font-size: 0.875rem;
   }
 }
 

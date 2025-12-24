@@ -1447,11 +1447,11 @@ export default {
 
 /* Larguras específicas das colunas */
 .pedidos-table .col-pedido {
-  width: 120px;
+  width: 100px;
 }
 
 .pedidos-table .col-status {
-  width: 140px;
+  width: 200px;
 }
 
 .pedidos-table .col-data {
@@ -2268,55 +2268,132 @@ export default {
 
 /* Responsividade */
 @media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+  }
+
   .welcome-header {
     flex-direction: column;
     align-items: stretch;
     text-align: center;
+    gap: 16px;
+  }
+
+  .action-buttons {
+    justify-content: center;
   }
 
   .search-container {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 
   .search-input-container {
     min-width: auto;
+    width: 100%;
   }
 
   .search-actions {
     justify-content: stretch;
+    flex-direction: column;
   }
 
   .form-select {
     flex: 1;
     min-width: auto;
+    width: 100%;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .pedidos-table .col-status {
+    width: 180px;
   }
 }
 
 @media (max-width: 768px) {
+  .main-content {
+    padding: 12px;
+  }
+
   .welcome-content h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
+  }
+
+  .welcome-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .action-button {
+    padding: 10px 18px;
+    font-size: 0.875rem;
   }
 
   .metrics-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: 2rem;
   }
 
   .table-container {
-    overflow-x: scroll;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .pedidos-table {
-    min-width: 800px;
+    min-width: 650px;
+  }
+
+  .pedidos-table .col-pedido {
+    width: 80px;
+  }
+
+  .pedidos-table .col-status {
+    width: 160px;
+  }
+
+  .pedidos-table .col-data {
+    width: 120px;
+  }
+
+  .pedidos-table th,
+  .pedidos-table td {
+    padding: 12px 8px;
+    font-size: 0.8125rem;
+  }
+
+  .status-badge {
+    padding: 3px 10px;
+    font-size: 0.6875rem;
+  }
+
+  .action-btn {
+    padding: 6px;
   }
 
   .detalhes-modal {
     margin: 1rem;
     max-width: none;
+    width: calc(100% - 2rem);
+  }
+
+  .detalhes-header h2 {
+    font-size: 1.25rem;
   }
 
   .info-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .cotacao-valores-grid {
@@ -2330,7 +2407,7 @@ export default {
 
 @media (max-width: 640px) {
   .main-content {
-    padding: 0.5rem;
+    padding: 8px;
   }
 
   .welcome-section,

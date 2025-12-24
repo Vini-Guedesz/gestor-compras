@@ -3624,6 +3624,11 @@ export default {
 @media (max-width: 1024px) {
   .content-area {
     margin-left: 0;
+    padding: 20px;
+  }
+
+  .view-container {
+    max-width: 100%;
   }
 
   .cotacao-header-padrao {
@@ -3635,17 +3640,71 @@ export default {
   .preco-destaque-box {
     align-items: flex-start;
   }
+
+  .info-grid-enhanced {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
   .content-area {
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .breadcrumb {
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.8125rem;
+  }
+
+  .btn-voltar {
+    font-size: 0.8125rem;
+    padding: 6px 10px;
   }
 
   .view-header {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .header-status-row {
+    margin-bottom: 12px;
+  }
+
+  .header-main-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .action-buttons-group {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-buttons-group .btn-action {
+    width: 100%;
+    justify-content: center;
+    min-width: auto;
+  }
+
+  .header-resumo {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 8px;
+  }
+
+  .resumo-separator {
+    display: none;
+  }
+
+  .view-title {
+    font-size: 1.5rem;
+  }
+
+  .view-subtitle {
+    font-size: 0.875rem;
   }
 
   .header-actions {
@@ -3655,6 +3714,20 @@ export default {
 
   .section-card {
     padding: 16px;
+    border-radius: 12px;
+  }
+
+  .section-title {
+    font-size: 1.125rem;
+  }
+
+  .info-grid-enhanced {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .info-card {
+    padding: 12px;
   }
 
   .modal-container {
@@ -3696,6 +3769,7 @@ export default {
     padding: 16px;
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
 
   .pdf-buttons {
@@ -3706,9 +3780,58 @@ export default {
     width: 100%;
     justify-content: center;
   }
+
+  /* Histórico responsive */
+  .timeline-item {
+    padding-left: 32px;
+  }
+
+  .timeline-dot {
+    width: 10px;
+    height: 10px;
+    left: -5px;
+  }
 }
 
 @media (max-width: 480px) {
+  .content-area {
+    padding: 8px;
+  }
+
+  .view-header {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .view-title {
+    font-size: 1.25rem;
+  }
+
+  .view-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .section-card {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
+
+  .info-card {
+    padding: 10px;
+  }
+
+  .info-card-label {
+    font-size: 0.75rem;
+  }
+
+  .info-card-value {
+    font-size: 0.875rem;
+  }
+
   .fornecedor-nome {
     font-size: 0.9375rem;
   }
@@ -3720,6 +3843,16 @@ export default {
   .info-box {
     padding: 10px 12px;
   }
+
+  .btn-action {
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+  }
+
+  .observacao-box {
+    padding: 10px;
+  }
+}
 
   .contato-item-new {
     font-size: 0.75rem;
