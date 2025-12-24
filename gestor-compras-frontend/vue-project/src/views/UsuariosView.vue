@@ -136,7 +136,8 @@
 
       <!-- Lista de Usuários (Tabela) -->
       <div v-else class="table-section">
-        <div class="table-container">
+        <!-- Versão Desktop: Tabela -->
+        <div class="table-container desktop-only">
           <table class="users-table" v-if="usuariosFiltrados.length > 0">
             <thead>
               <tr>
@@ -194,6 +195,67 @@
           </table>
 
           <!-- Estado vazio -->
+          <div v-else class="empty-state">
+            <svg class="empty-icon" viewBox="0 0 24 24" width="64" height="64">
+              <path fill="currentColor"
+                d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z" />
+            </svg>
+            <h3>Nenhum usuário encontrado</h3>
+            <p>Não há usuários que correspondam aos filtros aplicados.</p>
+            <button class="btn-primary" @click="abrirFormularioNovo">
+              Cadastrar Primeiro Usuário
+            </button>
+          </div>
+        </div>
+
+        <!-- Versão Mobile: Cards -->
+        <div class="usuarios-cards mobile-only">
+          <div v-if="usuariosFiltrados.length > 0" class="cards-container">
+            <div v-for="usuario in usuariosFiltrados" :key="usuario.id" class="usuario-card">
+              <div class="card-header">
+                <div class="card-header-left">
+                  <span class="usuario-nome-mobile">{{ usuario.nome }}</span>
+                  <span class="email-mobile">{{ usuario.email }}</span>
+                </div>
+                <div class="card-header-right">
+                  <span class="role-tag" :class="getRoleClass(usuario.role)">
+                    {{ getRoleLabel(usuario.role) }}
+                  </span>
+                  <span class="status-badge" :class="getStatusClass(usuario.ativo)">
+                    {{ getStatusLabel(usuario.ativo) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="action-btn-mobile edit" @click="editarUsuario(usuario)" title="Editar">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor"
+                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                  </svg>
+                  Editar
+                </button>
+
+                <button v-if="usuario.ativo" class="action-btn-mobile delete" @click="confirmarDesativacao(usuario)" title="Desativar">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor"
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z" />
+                  </svg>
+                  Desativar
+                </button>
+
+                <button v-else class="action-btn-mobile reactivate" @click="confirmarReativacao(usuario)" title="Reativar">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor"
+                      d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+                  </svg>
+                  Reativar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado vazio mobile -->
           <div v-else class="empty-state">
             <svg class="empty-icon" viewBox="0 0 24 24" width="64" height="64">
               <path fill="currentColor"
@@ -915,6 +977,127 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
+/* Mobile Cards Layout */
+.usuarios-cards {
+  display: none;
+}
+
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.usuario-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.card-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.card-header-right {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.usuario-nome-mobile {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.email-mobile {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn-mobile {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.action-btn-mobile:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.action-btn-mobile.edit {
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.action-btn-mobile.edit:hover {
+  background: #fef3c7;
+}
+
+.action-btn-mobile.delete {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.action-btn-mobile.delete:hover {
+  background: #fee2e2;
+}
+
+.action-btn-mobile.reactivate {
+  color: #10b981;
+  border-color: #10b981;
+}
+
+.action-btn-mobile.reactivate:hover {
+  background: #d1fae5;
+}
+
+/* Visibility toggles */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
 /* Responsividade */
 @media (max-width: 1024px) {
   .welcome-header {
@@ -941,6 +1124,15 @@ onMounted(() => {
 @media (max-width: 768px) {
   .metrics-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Toggle entre table e cards */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
   }
 }
 </style>

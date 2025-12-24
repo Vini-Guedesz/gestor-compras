@@ -1573,6 +1573,7 @@ export default {
 /* View Container */
 .view-container {
   max-width: 1000px;
+  margin: 0 auto;
 }
 
 .view-header {

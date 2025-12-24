@@ -139,7 +139,8 @@
 
       <!-- Lista de Pedidos (Tabela) -->
       <div v-else class="table-section">
-        <div class="table-container">
+        <!-- Versão Desktop: Tabela -->
+        <div class="table-container desktop-only">
           <table class="pedidos-table" v-if="pedidosFiltrados.length > 0">
             <thead>
               <tr>
@@ -230,6 +231,100 @@
           </table>
 
           <!-- Estado vazio -->
+          <div v-else class="empty-state">
+            <svg class="empty-icon" viewBox="0 0 24 24" width="64" height="64">
+              <path fill="currentColor"
+                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 16H9V7h9v14z" />
+            </svg>
+            <h3>Nenhum pedido encontrado</h3>
+            <p>Não há pedidos cadastrados ou que correspondam aos filtros aplicados.</p>
+            <button class="btn-primary" @click="abrirFormularioNovo">
+              Criar Primeiro Pedido
+            </button>
+          </div>
+        </div>
+
+        <!-- Versão Mobile: Cards -->
+        <div class="pedidos-cards mobile-only">
+          <div v-if="pedidosFiltrados.length > 0" class="cards-container">
+            <div v-for="pedido in pedidosFiltrados" :key="pedido.id" class="pedido-card">
+              <div class="card-header">
+                <div class="card-header-left">
+                  <span class="pedido-numero-mobile">#{{ pedido.id }}</span>
+                  <span class="status-badge" :class="getStatusClass(pedido.status)">
+                    {{ getStatusLabel(pedido.status) }}
+                  </span>
+                </div>
+                <span class="data-criacao-mobile">{{ formatarData(pedido.dataCriacao || pedido.dataPedido) }}</span>
+              </div>
+
+              <div class="card-actions">
+                <div class="status-actions-mobile" v-if="podeAlterarStatus(pedido)">
+                  <select
+                    @change="alterarStatus(pedido, $event.target.value)"
+                    class="status-select-mobile"
+                    :value="pedido.status"
+                    title="Alterar Status"
+                  >
+                    <option :value="pedido.status" disabled>{{ getStatusLabel(pedido.status) }}</option>
+                    <option v-for="status in getStatusDisponiveis(pedido.status)"
+                            :key="status.value"
+                            :value="status.value">
+                      {{ status.label }}
+                    </option>
+                  </select>
+                </div>
+
+                <button
+                  class="action-btn-mobile approve"
+                  @click="aprovarPedido(pedido)"
+                  v-if="podeAprovar(pedido) && !podeAlterarStatus(pedido)"
+                  title="Aprovar"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                  Aprovar
+                </button>
+
+                <button class="action-btn-mobile view" @click="visualizarPedido(pedido)" title="Visualizar">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor"
+                      d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                  </svg>
+                  Ver
+                </button>
+
+                <button
+                  class="action-btn-mobile edit"
+                  @click="editarPedido(pedido)"
+                  v-if="podeEditar(pedido)"
+                  title="Editar"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor"
+                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                  </svg>
+                  Editar
+                </button>
+
+                <button
+                  class="action-btn-mobile delete"
+                  @click="confirmarExclusao(pedido)"
+                  v-if="podeExcluir(pedido)"
+                  title="Excluir"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor"
+                      d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                  </svg>
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado vazio mobile -->
           <div v-else class="empty-state">
             <svg class="empty-icon" viewBox="0 0 24 24" width="64" height="64">
               <path fill="currentColor"
@@ -2266,6 +2361,154 @@ export default {
   opacity: 0.5;
 }
 
+/* Mobile Cards Layout */
+.pedidos-cards {
+  display: none;
+}
+
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pedido-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.card-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pedido-numero-mobile {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #1f2937;
+}
+
+.data-criacao-mobile {
+  font-size: 0.875rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-actions-mobile {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.status-select-mobile {
+  width: 100%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-select-mobile:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.action-btn-mobile {
+  flex: 1;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.action-btn-mobile:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.action-btn-mobile.view {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.action-btn-mobile.view:hover {
+  background: #dbeafe;
+}
+
+.action-btn-mobile.edit {
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.action-btn-mobile.edit:hover {
+  background: #fef3c7;
+}
+
+.action-btn-mobile.approve {
+  color: #10b981;
+  border-color: #10b981;
+}
+
+.action-btn-mobile.approve:hover {
+  background: #d1fae5;
+}
+
+.action-btn-mobile.delete {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.action-btn-mobile.delete:hover {
+  background: #fee2e2;
+}
+
+/* Visibility toggles */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
 /* Responsividade */
 @media (max-width: 1024px) {
   .main-content {
@@ -2352,6 +2595,15 @@ export default {
 
   .metric-header {
     margin-bottom: 8px;
+  }
+
+  /* Toggle entre table e cards */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
   }
 
   .table-container {

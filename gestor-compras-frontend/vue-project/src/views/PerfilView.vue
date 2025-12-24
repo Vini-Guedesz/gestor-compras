@@ -232,8 +232,9 @@ onMounted(() => {
     border-radius: 12px;
     border: 1px solid #e5e7eb;
     padding: 24px;
-    margin-bottom: 24px;
+    margin: 0 auto 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    max-width: 1000px;
 }
 
 .header-content {
@@ -273,6 +274,8 @@ onMounted(() => {
     border: 1px solid #e5e7eb;
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    max-width: 1000px;
+    margin: 0 auto 24px;
 }
 
 .avatar-section {
@@ -339,6 +342,8 @@ onMounted(() => {
     border: 1px solid #e5e7eb;
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .section-header {

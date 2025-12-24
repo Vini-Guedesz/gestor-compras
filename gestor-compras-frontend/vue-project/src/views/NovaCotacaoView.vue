@@ -462,6 +462,8 @@ onMounted(() => {
   border-radius: 12px;
   padding: 24px;
   border: 1px solid #e5e7eb;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .progress-steps {
@@ -553,7 +555,8 @@ onMounted(() => {
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
-  margin-bottom: 32px;
+  margin: 0 auto 32px;
+  max-width: 1000px;
 }
 
 .etapa {

@@ -126,8 +126,8 @@
           <h2 class="section-title">Lista de Cotações</h2>
         </div>
 
-        <!-- Tabela -->
-        <div class="table-container">
+        <!-- Versão Desktop: Tabela -->
+        <div class="table-container desktop-only">
           <table class="data-table">
             <thead>
               <tr>
@@ -237,6 +237,80 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Versão Mobile: Cards -->
+        <div class="cotacoes-cards mobile-only">
+          <!-- Loading State -->
+          <div v-if="carregandoCotacoes" class="loading-content">
+            <span class="loading-spinner"></span>
+            <span>Carregando cotações...</span>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else-if="cotacoes.length === 0" class="empty-content">
+            <svg viewBox="0 0 24 24" width="48" height="48" class="empty-icon">
+              <path fill="#9CA3AF" d="M9,12L11,14L15,10M20,6C20.58,6 21.05,6.2 21.42,6.59C21.8,7 22,7.45 22,8V16C22,16.55 21.8,17 21.42,17.41C21.05,17.8 20.58,18 20,18H4C3.42,18 2.95,17.8 2.58,17.41C2.2,17 2,16.55 2,16V8C2,7.45 2.2,7 2.58,6.59C2.95,6.2 3.42,6 4,6H20M20,8H4V16H20V8Z"/>
+            </svg>
+            <h3>Nenhuma cotação encontrada</h3>
+            <p>Crie sua primeira cotação clicando no botão "Nova Cotação"</p>
+          </div>
+
+          <!-- Cards -->
+          <div v-else class="cards-container">
+            <div v-for="cotacao in cotacoesPaginadas" :key="cotacao.id" class="cotacao-card">
+              <div class="card-header">
+                <div class="card-header-left">
+                  <span class="id-badge">{{ String(cotacao.id).padStart(3, '0') }}</span>
+                  <span class="fornecedor-nome-mobile">{{ getNomeFornecedor(cotacao.fornecedorId, cotacao.tipoFornecedor) }}</span>
+                </div>
+                <div class="card-header-right">
+                  <span class="price-value-mobile">R$ {{ formatarPreco(cotacao.preco) }}</span>
+                </div>
+              </div>
+
+              <div class="card-info">
+                <div class="info-row">
+                  <span class="info-label">Item:</span>
+                  <span class="info-value">{{ cotacao.itens?.[0]?.nomeItem || `Item #${cotacao.itens?.[0]?.itemPedidoId || 'N/A'}` }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Prazo:</span>
+                  <span class="info-value">{{ cotacao.prazoEmDiasUteis ? cotacao.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</span>
+                </div>
+                <div class="info-row" :class="{ 'deadline-expired': isDataLimiteVencida(cotacao.dataLimite) }">
+                  <span class="info-label">Validade:</span>
+                  <span class="info-value">
+                    {{ formatarData(cotacao.dataLimite) }}
+                    <span v-if="cotacao.dataLimite" class="deadline-remaining-mobile">{{ getDiasRestantes(cotacao.dataLimite) }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button @click="visualizarCotacao(cotacao.id)" class="action-btn-mobile view" title="Visualizar">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                  </svg>
+                  Visualizar
+                </button>
+
+                <button
+                  v-if="podeDeletar()"
+                  @click="deletarCotacao(cotacao.id)"
+                  class="action-btn-mobile delete"
+                  title="Excluir"
+                  :disabled="operacaoEmAndamento"
+                >
+                  <svg v-if="!operacaoEmAndamento" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+                  </svg>
+                  <span v-else class="loading-spinner-small"></span>
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Paginação -->
@@ -1838,6 +1912,158 @@ onMounted(async () => {
   background: #4b5563;
 }
 
+/* Mobile Cards Layout */
+.cotacoes-cards {
+  display: none;
+}
+
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cotacao-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.card-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.card-header-right {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+}
+
+.fornecedor-nome-mobile {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: #1f2937;
+}
+
+.price-value-mobile {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #10b981;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.info-row.deadline-expired {
+  color: #ef4444;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 70px;
+}
+
+.info-value {
+  color: #374151;
+  flex: 1;
+}
+
+.deadline-remaining-mobile {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn-mobile {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.action-btn-mobile:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.action-btn-mobile.view {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.action-btn-mobile.view:hover {
+  background: #dbeafe;
+}
+
+.action-btn-mobile.delete {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.action-btn-mobile.delete:hover {
+  background: #fee2e2;
+}
+
+.action-btn-mobile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Visibility toggles */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .pdf-viewer-modal {
@@ -1891,6 +2117,15 @@ onMounted(async () => {
 
   .table-container {
     overflow-x: auto;
+  }
+
+  /* Toggle entre table e cards */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
   }
 }
 
