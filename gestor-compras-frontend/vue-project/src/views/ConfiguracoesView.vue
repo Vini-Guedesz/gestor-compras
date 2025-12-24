@@ -15,7 +15,7 @@
                             <h1 class="page-title">Configurações</h1>
                             <p class="page-subtitle">Gerencie suas configurações de segurança e preferências do sistema</p>
                         </div>
-                        <div class="header-actions">
+                        <div class="header-actions" v-if="abaAtiva !== 'sobre'">
                             <button class="btn-secondary" @click="cancelarEdicao" v-if="isEditMode">
                                 Cancelar
                             </button>
@@ -26,9 +26,33 @@
                     </div>
                 </div>
 
+                <!-- Abas de Navegação -->
+                <div class="tabs-container">
+                    <button
+                        class="tab-button"
+                        :class="{ active: abaAtiva === 'geral' }"
+                        @click="abaAtiva = 'geral'"
+                    >
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+                        </svg>
+                        Geral
+                    </button>
+                    <button
+                        class="tab-button"
+                        :class="{ active: abaAtiva === 'sobre' }"
+                        @click="abaAtiva = 'sobre'"
+                    >
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="currentColor" d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/>
+                        </svg>
+                        Sobre
+                    </button>
+                </div>
+
                 <div class="configuracoes-content">
-                    <!-- Card Único com todas as configurações -->
-                    <div class="section-card">
+                    <!-- Aba Geral: Configurações -->
+                    <div v-if="abaAtiva === 'geral'" class="section-card">
                         <!-- Seção de Segurança -->
                         <div class="section-group">
                             <div class="section-header">
@@ -207,6 +231,121 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Aba Sobre: Informações do Sistema -->
+                    <div v-if="abaAtiva === 'sobre'" class="section-card">
+                        <div class="about-section">
+                            <div class="about-header">
+                                <div class="app-logo">
+                                    <svg viewBox="0 0 24 24" width="64" height="64">
+                                        <path fill="#1F285F" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 16H9V7h9v14z"/>
+                                    </svg>
+                                </div>
+                                <h2 class="app-name">Gestor de Compras</h2>
+                                <p class="app-tagline">Sistema de Gestão de Pedidos e Cotações</p>
+                            </div>
+
+                            <div class="about-info">
+                                <div class="info-grid-about">
+                                    <div class="info-item-about">
+                                        <span class="info-label-about">Versão</span>
+                                        <span class="info-value-about">{{ appVersion }}</span>
+                                    </div>
+                                    <div class="info-item-about">
+                                        <span class="info-label-about">Ambiente</span>
+                                        <span class="info-value-about">{{ environment }}</span>
+                                    </div>
+                                    <div class="info-item-about">
+                                        <span class="info-label-about">Framework</span>
+                                        <span class="info-value-about">Vue.js {{ vueVersion }}</span>
+                                    </div>
+                                    <div class="info-item-about">
+                                        <span class="info-label-about">Build Date</span>
+                                        <span class="info-value-about">{{ buildDate }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section-divider"></div>
+
+                            <div class="about-description">
+                                <h3 class="subsection-title">Sobre o Sistema</h3>
+                                <p class="description-text">
+                                    O Gestor de Compras é um sistema completo para gerenciamento de pedidos,
+                                    cotações e fornecedores. Desenvolvido com as mais modernas tecnologias web,
+                                    oferece uma interface intuitiva e responsiva para otimizar seus processos de compra.
+                                </p>
+                            </div>
+
+                            <div class="section-divider"></div>
+
+                            <div class="about-features">
+                                <h3 class="subsection-title">Recursos Principais</h3>
+                                <div class="features-grid">
+                                    <div class="feature-item">
+                                        <svg viewBox="0 0 24 24" width="24" height="24">
+                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                        </svg>
+                                        <span>Gestão de Pedidos de Compra</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <svg viewBox="0 0 24 24" width="24" height="24">
+                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                        </svg>
+                                        <span>Sistema de Cotações</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <svg viewBox="0 0 24 24" width="24" height="24">
+                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                        </svg>
+                                        <span>Cadastro de Fornecedores</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <svg viewBox="0 0 24 24" width="24" height="24">
+                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                        </svg>
+                                        <span>Workflow de Aprovações</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <svg viewBox="0 0 24 24" width="24" height="24">
+                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                        </svg>
+                                        <span>Controle de Usuários</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <svg viewBox="0 0 24 24" width="24" height="24">
+                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                        </svg>
+                                        <span>Dashboard e Relatórios</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section-divider"></div>
+
+                            <div class="about-tech">
+                                <h3 class="subsection-title">Tecnologias Utilizadas</h3>
+                                <div class="tech-stack">
+                                    <div class="tech-item">
+                                        <span class="tech-name">Frontend</span>
+                                        <span class="tech-value">Vue.js 3, Vite, Pinia</span>
+                                    </div>
+                                    <div class="tech-item">
+                                        <span class="tech-name">Backend</span>
+                                        <span class="tech-value">Java Spring Boot</span>
+                                    </div>
+                                    <div class="tech-item">
+                                        <span class="tech-name">Banco de Dados</span>
+                                        <span class="tech-value">PostgreSQL</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="about-footer">
+                                <p class="copyright">© 2025 Gestor de Compras. Todos os direitos reservados.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -232,16 +371,25 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { version } from 'vue'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import logger from '../utils/logger.js'
+import packageInfo from '../../package.json'
 
 // Estados reativo
+const abaAtiva = ref('geral')
 const isEditMode = ref(false)
 const showPasswordForm = ref(false)
 const showNotification = ref(false)
 const notificationType = ref('success')
 const notificationMessage = ref('')
+
+// Informações do sistema
+const appVersion = ref(packageInfo.version)
+const vueVersion = ref(version)
+const environment = ref(import.meta.env.MODE === 'production' ? 'Produção' : 'Desenvolvimento')
+const buildDate = ref(new Date().toLocaleDateString('pt-BR'))
 
 // Dados de senha
 const passwordData = ref({
@@ -745,6 +893,231 @@ input:disabled+.toggle-slider {
 
     .preference-control {
         justify-content: flex-end;
+    }
+}
+
+/* Abas de Navegação */
+.tabs-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tab-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab-button:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.tab-button.active {
+    background: #1F285F;
+    color: white;
+    border-color: #1F285F;
+}
+
+.tab-button.active svg path {
+    fill: white;
+}
+
+.tab-button svg {
+    flex-shrink: 0;
+}
+
+/* Seção Sobre */
+.about-section {
+    padding: 32px;
+}
+
+.about-header {
+    text-align: center;
+    padding-bottom: 32px;
+}
+
+.app-logo {
+    margin: 0 auto 16px;
+    width: 64px;
+    height: 64px;
+}
+
+.app-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1F285F;
+    margin: 0 0 8px 0;
+}
+
+.app-tagline {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.about-info {
+    margin-bottom: 32px;
+}
+
+.info-grid-about {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.info-item-about {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.info-label-about {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.info-value-about {
+    font-size: 1.125rem;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.subsection-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 16px 0;
+}
+
+.about-description {
+    margin-bottom: 32px;
+}
+
+.description-text {
+    font-size: 0.9375rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.about-features {
+    margin-bottom: 32px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.feature-item svg {
+    flex-shrink: 0;
+}
+
+.feature-item span {
+    font-size: 0.9375rem;
+    color: #374151;
+}
+
+.about-tech {
+    margin-bottom: 32px;
+}
+
+.tech-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tech-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.tech-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.tech-value {
+    font-size: 0.9375rem;
+    color: #6b7280;
+}
+
+.about-footer {
+    text-align: center;
+    padding-top: 32px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.copyright {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .tabs-container {
+        flex-direction: column;
+    }
+
+    .info-grid-about {
+        grid-template-columns: 1fr;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .about-section {
+        padding: 20px;
+    }
+
+    .app-name {
+        font-size: 1.5rem;
+    }
+
+    .tech-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
     }
 }
 </style>
