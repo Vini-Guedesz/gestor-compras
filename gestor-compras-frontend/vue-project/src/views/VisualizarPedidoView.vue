@@ -3852,7 +3852,6 @@ export default {
   .observacao-box {
     padding: 10px;
   }
-}
 
   .contato-item-new {
     font-size: 0.75rem;
