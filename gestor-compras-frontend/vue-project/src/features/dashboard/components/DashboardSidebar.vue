@@ -15,51 +15,20 @@
       <div class="nav-section">
         <h3 class="nav-title">Menu Principal</h3>
         <ul class="nav-list">
-          <li class="nav-item">
-            <router-link to="/dashboard" class="nav-link" :class="{ active: isActive('/dashboard') }" @click="handleNavClick">
+          <li v-for="item in visibleMenuItems" :key="item.id" class="nav-item">
+            <router-link
+              :to="item.route"
+              class="nav-link"
+              :class="{ active: isActive(item.route) }"
+              @click="handleNavClick"
+              :title="item.description"
+            >
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                <path fill="currentColor" :d="getIconPath(item.icon)"/>
               </svg>
-              <span>Dashboard</span>
+              <span>{{ item.label }}</span>
             </router-link>
           </li>
-
-          <li class="nav-item">
-            <router-link to="/pedidos" class="nav-link" :class="{ active: isActive('/pedidos') }" @click="handleNavClick">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7Z"/>
-              </svg>
-              <span>Pedidos de Compra</span>
-            </router-link>
-          </li>
-
-          <li class="nav-item">
-            <router-link to="/cotacoes" class="nav-link" :class="{ active: isActive('/cotacoes') }" @click="handleNavClick">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span>Cotações</span>
-            </router-link>
-          </li>
-
-          <li class="nav-item">
-            <router-link to="/fornecedores" class="nav-link" :class="{ active: isActive('/fornecedores') }" @click="handleNavClick">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A2 2 0 0 0 18.04 7H16c-.8 0-1.54.37-2.01.99L12 10l2.01-2.01C14.54 7.37 15.2 7 16 7h2.04c1.23 0 2.18 1.24 1.92 2.63l2.54 7.63H20v6h-4z"/>
-              </svg>
-              <span>Fornecedores</span>
-            </router-link>
-          </li>
-
-          <li class="nav-item">
-            <router-link to="/usuarios" class="nav-link" :class="{ active: isActive('/usuarios') }" @click="handleNavClick">
-              <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-              </svg>
-              <span>Usuários</span>
-            </router-link>
-          </li>
-
         </ul>
       </div>
     </nav>
@@ -71,15 +40,30 @@
  * Componente DashboardSidebar - Menu lateral da aplicação
  *
  * Funcionalidades:
- * - Navegação principal
- * - Filtros de status
+ * - Navegação principal com controle de acesso por roles
+ * - Menu dinâmico filtrado baseado em permissões
+ * - Suporte responsivo para mobile
+ *
+ * @version 3.0.0 - Adicionado sistema de permissões baseado em roles
  */
 
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMobileSidebar } from '@/composables/useMobileSidebar'
+import { usePermissions } from '@/composables/usePermissions'
+import { menuItems, getIconPath } from '@/config/menuConfig'
 
 const route = useRoute()
 const { isMobileSidebarOpen, closeSidebar } = useMobileSidebar()
+const { filterMenuByRole } = usePermissions()
+
+/**
+ * Menu items visíveis para o usuário atual
+ * Filtrado automaticamente baseado no role do usuário
+ */
+const visibleMenuItems = computed(() => {
+  return filterMenuByRole(menuItems)
+})
 
 /**
  * Verifica se uma rota está ativa
@@ -88,6 +72,9 @@ const isActive = (path) => {
   return route.path === path || route.path.startsWith(path + '/')
 }
 
+/**
+ * Fecha sidebar no mobile após navegação
+ */
 const handleNavClick = () => {
   if (isMobileSidebarOpen.value) {
     closeSidebar()

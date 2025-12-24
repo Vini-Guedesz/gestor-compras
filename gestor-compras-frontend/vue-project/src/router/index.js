@@ -54,6 +54,7 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { usePermissions } from '../composables/usePermissions'
 
 /**
  * Lazy loading de views para otimização de performance
@@ -82,6 +83,7 @@ const SobreView = () => import('../views/SobreView.vue')
  * @typedef {Object} RouteMeta
  * @property {boolean} [requiresAuth] - Se rota requer autenticação
  * @property {boolean} [requiresGuest] - Se rota é só para visitantes (não logados)
+ * @property {Array<string>} [requiredRoles] - Roles permitidos a acessar esta rota
  */
 
 /**
@@ -158,14 +160,20 @@ const router = createRouter({
       path: '/cotacoes',
       name: 'cotacoes',
       component: CotacoesView,
-      meta: { requiresAuth: true }
+      meta: {
+        requiresAuth: true,
+        requiredRoles: ['ADMIN', 'COMPRADOR']
+      }
     },
 
     {
       path: '/cotacoes/:id',
       name: 'detalhes-cotacao',
       component: CotacoesView, // Reutiliza view principal
-      meta: { requiresAuth: true }
+      meta: {
+        requiresAuth: true,
+        requiredRoles: ['ADMIN', 'COMPRADOR']
+      }
     },
     {
       path: '/perfil',
@@ -183,7 +191,10 @@ const router = createRouter({
       path: '/usuarios',
       name: 'usuarios',
       component: UsuariosView,
-      meta: { requiresAuth: true }
+      meta: {
+        requiresAuth: true,
+        requiredRoles: ['ADMIN']
+      }
     },
     {
       path: '/sobre',
@@ -270,7 +281,20 @@ router.beforeEach(async (to, from, next) => {
       next()
     }
   }
-  // CASO 3: Sem restrições
+  // CASO 3: Verifica permissões baseadas em role (meta.requiredRoles)
+  else if (to.meta.requiredRoles && authStore.isAuthenticated) {
+    const { canAccessRoute } = usePermissions()
+
+    if (!canAccessRoute(to)) {
+      // Usuário autenticado mas sem role necessária
+      // Redireciona para dashboard com mensagem (pode adicionar toast notification)
+      console.warn(`Acesso negado: usuário ${authStore.user?.role} tentou acessar ${to.path}`)
+      next('/dashboard')
+    } else {
+      next()
+    }
+  }
+  // CASO 4: Sem restrições
   else {
     next()
   }
