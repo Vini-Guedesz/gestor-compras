@@ -3657,6 +3657,11 @@ export default {
     font-size: 0.8125rem;
   }
 
+  /* Ocultar breadcrumb separator em mobile */
+  .breadcrumb-separator {
+    display: none;
+  }
+
   .btn-voltar {
     font-size: 0.8125rem;
     padding: 6px 10px;
@@ -3699,12 +3704,18 @@ export default {
     display: none;
   }
 
+  /* Ocultar ícones decorativos do resumo em mobile */
+  .resumo-item svg {
+    display: none;
+  }
+
   .view-title {
     font-size: 1.5rem;
   }
 
   .view-subtitle {
     font-size: 0.875rem;
+    display: none;
   }
 
   .header-actions {
@@ -3798,6 +3809,10 @@ export default {
     padding: 8px;
   }
 
+  .breadcrumb {
+    font-size: 0.75rem;
+  }
+
   .view-header {
     padding: 12px;
     border-radius: 8px;
@@ -3808,7 +3823,7 @@ export default {
   }
 
   .view-subtitle {
-    font-size: 0.8125rem;
+    display: none;
   }
 
   .section-card {
@@ -3818,6 +3833,11 @@ export default {
 
   .section-title {
     font-size: 1rem;
+  }
+
+  /* Ocultar emojis dos títulos em telas muito pequenas */
+  .section-title::before {
+    display: none;
   }
 
   .info-card {
@@ -3830,6 +3850,11 @@ export default {
 
   .info-card-value {
     font-size: 0.875rem;
+  }
+
+  /* Ocultar ícones dos info-cards em mobile */
+  .info-card-icon {
+    display: none;
   }
 
   .fornecedor-nome {
@@ -3856,6 +3881,16 @@ export default {
   .contato-item-new {
     font-size: 0.75rem;
     padding: 6px 10px;
+  }
+
+  /* Simplificar timeline do histórico */
+  .timeline-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .timeline-content {
+    font-size: 0.8125rem;
   }
 }
 

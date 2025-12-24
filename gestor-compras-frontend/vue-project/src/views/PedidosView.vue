@@ -2345,6 +2345,15 @@ export default {
     font-size: 2rem;
   }
 
+  /* Ocultar textos secundários das métricas em mobile */
+  .metric-growth {
+    display: none;
+  }
+
+  .metric-header {
+    margin-bottom: 8px;
+  }
+
   .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -2417,12 +2426,27 @@ export default {
     padding: 1rem;
   }
 
+  /* Ocultar métricas menos importantes em telas pequenas */
+  .metric-card:nth-child(3) {
+    display: none;
+  }
+
   .metric-card {
     padding: 1rem;
   }
 
   .metric-value {
     font-size: 2rem;
+  }
+
+  .metric-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .metric-icon svg {
+    width: 18px;
+    height: 18px;
   }
 
   .actions-cell .action-buttons {

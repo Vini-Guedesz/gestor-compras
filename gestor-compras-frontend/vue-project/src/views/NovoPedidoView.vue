@@ -1510,6 +1510,10 @@ export default {
     gap: 8px;
   }
 
+  .breadcrumb-separator {
+    display: none;
+  }
+
   .btn-voltar {
     font-size: 0.875rem;
   }
@@ -1518,6 +1522,10 @@ export default {
 @media (max-width: 480px) {
   .content-area {
     padding: 8px;
+  }
+
+  .breadcrumb {
+    font-size: 0.75rem;
   }
 
   .wizard-card {
@@ -1542,6 +1550,7 @@ export default {
 
   .wizard-subtitle {
     font-size: 0.8125rem;
+    display: none;
   }
 
   .cotacao-selecao-card {
@@ -1551,6 +1560,24 @@ export default {
   .footer-actions button {
     padding: 12px 16px;
     font-size: 0.875rem;
+  }
+
+  /* Ocultar informações secundárias */
+  .info-box p {
+    font-size: 0.8125rem;
+  }
+
+  /* Simplificar cards de cotação */
+  .cotacao-badge {
+    font-size: 0.6875rem;
+    padding: 2px 6px;
+  }
+
+  /* Simplificar badges de aviso */
+  .badge-warning,
+  .badge-success {
+    font-size: 0.6875rem;
+    padding: 2px 6px;
   }
 }
 
