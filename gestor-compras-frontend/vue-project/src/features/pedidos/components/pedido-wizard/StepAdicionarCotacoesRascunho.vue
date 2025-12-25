@@ -37,6 +37,7 @@
             <span v-if="!gerandoRelatorio">Gerar Relatório</span>
           </button>
           <button
+            v-if="permissions.canCotarRascunho"
             @click="abrirFormularioCotacao"
             class="btn-add-cotacao"
             aria-label="Adicionar nova cotação ao rascunho"
@@ -117,6 +118,7 @@
               {{ pdfAberto === `${cotacao.id}-0` ? 'Fechar PDF' : 'Ver PDF' }}
             </button>
             <button
+              v-if="permissions.canCotarRascunho"
               @click="confirmarDeleteCotacao(cotacao)"
               class="btn-delete"
               :aria-label="`Remover cotação de ${cotacao.nomeFornecedor || 'Fornecedor'}`"
@@ -501,6 +503,7 @@ import { ref, computed, onBeforeUnmount, nextTick } from 'vue'
 import { useToast } from '@/composables/useToast.js'
 import { useErrorModal } from '@/composables/useErrorModal.js'
 import { useModal } from '@/composables/useModal.js'
+import { usePermissions } from '@/composables/usePermissions.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import relatorioService from '@/services/relatorioService.js'
 import logger from '@/utils/logger.js'
@@ -528,6 +531,7 @@ export default {
   emits: ['save-cotacao', 'delete-cotacao', 'view-pdf'],
   setup(props, { emit }) {
     const { success, error: showError, warning } = useToast()
+    const { permissions } = usePermissions()
     const showFormulario = ref(false)
 
     // Bloqueia scroll do body quando modal está aberto
@@ -935,6 +939,7 @@ export default {
     })
 
     return {
+      permissions,
       showFormulario,
       salvando,
       gerandoRelatorio,

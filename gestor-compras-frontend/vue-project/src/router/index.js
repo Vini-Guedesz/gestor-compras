@@ -55,6 +55,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { usePermissions } from '../composables/usePermissions'
+import { useToast } from '../composables/useToast'
 
 /**
  * Lazy loading de views para otimização de performance
@@ -287,8 +288,13 @@ router.beforeEach(async (to, from, next) => {
 
     if (!canAccessRoute(to)) {
       // Usuário autenticado mas sem role necessária
-      // Redireciona para dashboard com mensagem (pode adicionar toast notification)
+      const { error: toastError } = useToast()
+
       console.warn(`Acesso negado: usuário ${authStore.user?.role} tentou acessar ${to.path}`)
+
+      // Mostra mensagem de erro amigável para o usuário
+      toastError('Você não tem permissão para acessar esta página')
+
       next('/dashboard')
     } else {
       next()

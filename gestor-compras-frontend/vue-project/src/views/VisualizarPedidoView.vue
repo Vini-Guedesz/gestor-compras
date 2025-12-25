@@ -85,14 +85,22 @@
                 <template v-if="!isRascunho">
                   <!-- EM_NEGOCIACAO ou PENDENTE (legado): Ação primária + secundária -->
                   <template v-if="pedido?.status === 'EM_NEGOCIACAO' || pedido?.status === 'PENDENTE'">
-                    <button @click="abrirModalEnviarAprovacao" class="btn-action btn-action-primary">
+                    <button
+                      v-if="permissions.canEnviarPedidoAprovacao"
+                      @click="abrirModalEnviarAprovacao"
+                      class="btn-action btn-action-primary"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 2L11 13"></path>
                         <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
                       </svg>
                       Enviar para Aprovação
                     </button>
-                    <button @click="abrirModalCancelar" class="btn-action btn-action-secondary">
+                    <button
+                      v-if="permissions.canEnviarPedidoAprovacao"
+                      @click="abrirModalCancelar"
+                      class="btn-action btn-action-secondary"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="15" y1="9" x2="9" y2="15"></line>
@@ -104,21 +112,33 @@
 
                   <!-- PENDENTE_APROVACAO: Ações de aprovação -->
                   <template v-if="pedido?.status === 'PENDENTE_APROVACAO'">
-                    <button @click="abrirModalAprovar" class="btn-action btn-action-success">
+                    <button
+                      v-if="permissions.canAprovarPedido"
+                      @click="abrirModalAprovar"
+                      class="btn-action btn-action-success"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                       </svg>
                       Aprovar Pedido
                     </button>
-                    <button @click="abrirModalDevolverPedido" class="btn-action btn-action-warning">
+                    <button
+                      v-if="permissions.canDevolverPedido"
+                      @click="abrirModalDevolverPedido"
+                      class="btn-action btn-action-warning"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 14 4 9 9 4"></polyline>
                         <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
                       </svg>
                       Devolver
                     </button>
-                    <button @click="abrirModalCancelar" class="btn-action btn-action-secondary">
+                    <button
+                      v-if="permissions.canCancelarPedido"
+                      @click="abrirModalCancelar"
+                      class="btn-action btn-action-secondary"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="15" y1="9" x2="9" y2="15"></line>
@@ -361,6 +381,7 @@
                   <!-- Botões de Edição e Histórico (apenas para pedidos) -->
                   <div v-if="!isRascunho" class="cotacao-edit-buttons">
                     <button
+                      v-if="permissions.canEditCotacao"
                       @click="abrirModalEditarCotacao(cotacao)"
                       class="btn-edit-cotacao"
                       title="Editar cotação"
@@ -684,6 +705,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast.js'
 import { useErrorModal } from '@/composables/useErrorModal.js'
+import { usePermissions } from '@/composables/usePermissions.js'
 import logger from '@/utils/logger.js'
 import pedidoService from '@/services/pedidoService.js'
 import rascunhoService from '@/services/rascunhoService.js'
@@ -707,6 +729,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const { permissions } = usePermissions()
     const { success, error: showError, warning } = useToast()
 
     // Sidebar
@@ -940,12 +963,19 @@ export default {
 
           // Carregar rascunho
           const rascunhoCompleto = await rascunhoService.obterPorId(id)
+          logger.info('Rascunho carregado:', rascunhoCompleto)
 
-          // Carregar cotações
-          const cotacoesRascunho = await cotacaoRascunhoService.listarPorRascunho(id)
+          // Carregar cotações (pode ser vazio se acabou de ser criado)
+          const cotacoesRascunho = await cotacaoRascunhoService.listarPorRascunho(id).catch(err => {
+            logger.warn('Erro ao carregar cotações do rascunho (pode não ter cotações ainda):', err)
+            return []
+          })
 
-          // Carregar histórico
-          const historicoRascunho = await rascunhoService.listarHistorico(id)
+          // Carregar histórico (pode ser vazio)
+          const historicoRascunho = await rascunhoService.listarHistorico(id).catch(err => {
+            logger.warn('Erro ao carregar histórico do rascunho:', err)
+            return []
+          })
 
           // Carregar fornecedores para nomes
           const [fornecedoresProduto, fornecedoresServico] = await Promise.all([
@@ -972,7 +1002,7 @@ export default {
           pedido.value = {
             ...rascunhoCompleto,
             rascunhoId: rascunhoCompleto.id,
-            status: 'RASCUNHO'
+            status: rascunhoCompleto.status || 'RASCUNHO'
           }
 
           // Atualizar isFinalizado baseado no status do rascunho
@@ -1013,8 +1043,15 @@ export default {
           })
         }
       } catch (error) {
-        logger.error('Erro ao carregar:', error)
-        showError('Erro ao carregar dados. Redirecionando...')
+        logger.error('❌ Erro ao carregar pedido/rascunho:', error)
+        logger.error('Detalhes do erro:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          id: id,
+          tipo: tipo
+        })
+        showError(`Erro ao carregar dados: ${error.message || 'Erro desconhecido'}`)
         router.push('/pedidos')
       } finally {
         isLoading.value = false
@@ -1380,6 +1417,9 @@ export default {
     })
 
     return {
+      // Permissions
+      permissions,
+
       // Sidebar
       isSidebarOpen,
       toggleSidebar,

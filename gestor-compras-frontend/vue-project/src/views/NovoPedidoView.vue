@@ -249,6 +249,7 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { useErrorModal } from '@/composables/useErrorModal'
+import { usePermissions } from '@/composables/usePermissions'
 import rascunhoService from '@/services/rascunhoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
@@ -269,6 +270,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const { permissions } = usePermissions()
     const { success, warning, error: toastError } = useToast()
 
     // State
@@ -365,9 +367,19 @@ export default {
               const rascunhoSalvo = await rascunhoService.obterPorId(wizardData.value.rascunho.id);
               wizardData.value.rascunho = rascunhoSalvo
 
-              await carregarDadosParaCotacao()
-              editState.value = 'GERENCIANDO_COTACOES'
-              router.replace({ query: { state: 'quotes' } })
+              // Se usuário pode cotar rascunho (COMPRADOR/ADMIN), vai para etapa de cotações
+              if (permissions.value.canCotarRascunho) {
+                await carregarDadosParaCotacao()
+                editState.value = 'GERENCIANDO_COTACOES'
+                router.replace({ query: { state: 'quotes' } })
+              } else {
+                // Se não pode cotar (USUARIO), redireciona para visualização do rascunho
+                success('Rascunho finalizado com sucesso!')
+                router.push({
+                  path: `/pedidos/visualizar/${wizardData.value.rascunho.id}`,
+                  query: { tipo: 'rascunho' }
+                })
+              }
             } catch (error) {
               logger.error('Erro ao finalizar rascunho:', error)
               const mensagem = error.message || 'Erro ao salvar. Tente novamente.'
@@ -799,12 +811,25 @@ export default {
     }
 
     onMounted(async () => {
+      // Verifica permissão antes de permitir acesso
+      if (!permissions.value.canCreateRascunho) {
+        toastError('Você não tem permissão para criar rascunhos')
+        router.push('/pedidos')
+        return
+      }
+
       const rascunhoId = route.params.id
       const initialState = route.query.state;
 
       if (rascunhoId) {
         await carregarRascunhoExistente(rascunhoId)
         if (initialState === 'quotes') {
+            // Verifica se usuário pode gerenciar cotações
+            if (!permissions.value.canCotarRascunho) {
+              toastError('Você não tem permissão para gerenciar cotações')
+              router.push('/pedidos')
+              return
+            }
             await carregarDadosParaCotacao();
             editState.value = 'GERENCIANDO_COTACOES';
         }
@@ -812,6 +837,9 @@ export default {
     })
 
     return {
+      // Permissions
+      permissions,
+      // Sidebar
       isSidebarOpen,
       toggleSidebar,
       closeSidebar,

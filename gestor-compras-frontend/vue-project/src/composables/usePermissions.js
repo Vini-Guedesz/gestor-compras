@@ -248,6 +248,13 @@ export function usePermissions() {
     canViewPedido: hasRole(['ADMIN', 'USUARIO', 'COMPRADOR', 'APROVADOR']),
 
     /**
+     * Permissão para enviar pedido para aprovação
+     * @type {boolean}
+     * @roles ADMIN, COMPRADOR
+     */
+    canEnviarPedidoAprovacao: hasRole(['ADMIN', 'COMPRADOR']),
+
+    /**
      * Permissão para aprovar pedidos
      * @type {boolean}
      * @roles ADMIN, APROVADOR
@@ -271,9 +278,9 @@ export function usePermissions() {
     /**
      * Permissão para excluir pedidos
      * @type {boolean}
-     * @roles ADMIN
+     * @roles ADMIN, COMPRADOR
      */
-    canDeletePedido: hasRole(['ADMIN']),
+    canDeletePedido: hasRole(['ADMIN', 'COMPRADOR']),
 
     // ==================== USUÁRIOS ====================
     /**

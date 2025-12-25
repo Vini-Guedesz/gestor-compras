@@ -18,7 +18,11 @@
             </p>
           </div>
           <div class="action-buttons">
-            <button class="action-button" @click="abrirFormularioNovo">
+            <button
+              v-if="permissions.canCreateRascunho"
+              class="action-button"
+              @click="abrirFormularioNovo"
+            >
               <svg class="action-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
               </svg>
@@ -238,7 +242,11 @@
             </svg>
             <h3>Nenhum pedido encontrado</h3>
             <p>Não há pedidos cadastrados ou que correspondam aos filtros aplicados.</p>
-            <button class="btn-primary" @click="abrirFormularioNovo">
+            <button
+              v-if="permissions.canCreatePedido"
+              class="btn-primary"
+              @click="abrirFormularioNovo"
+            >
               Criar Primeiro Pedido
             </button>
           </div>
@@ -332,7 +340,11 @@
             </svg>
             <h3>Nenhum pedido encontrado</h3>
             <p>Não há pedidos cadastrados ou que correspondam aos filtros aplicados.</p>
-            <button class="btn-primary" @click="abrirFormularioNovo">
+            <button
+              v-if="permissions.canCreatePedido"
+              class="btn-primary"
+              @click="abrirFormularioNovo"
+            >
               Criar Primeiro Pedido
             </button>
           </div>
@@ -535,6 +547,8 @@ import { ref, onMounted, computed, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { useErrorModal } from '@/composables/useErrorModal'
+import { usePermissions } from '@/composables/usePermissions'
+import { useAuthStore } from '@/stores/auth'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
@@ -562,6 +576,12 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const { success, warning, error: toastError } = useToast()
+
+    // Permissões baseadas em roles
+    const { permissions } = usePermissions()
+
+    // Auth store para verificar usuário logado
+    const authStore = useAuthStore()
 
     // Estados reativos
     const pedidos = ref([])
@@ -681,11 +701,21 @@ export default {
       try {
         isLoading.value = true
 
+        // Determinar como carregar rascunhos baseado no role
+        // USUARIO: carrega apenas seus próprios rascunhos
+        // ADMIN, COMPRADOR, APROVADOR: carrega todos os rascunhos
+        const carregarRascunhos = () => {
+          if (authStore.user?.role === 'USUARIO' && authStore.user?.id) {
+            return rascunhoService.listarPorUsuario(authStore.user.id)
+          }
+          return rascunhoService.listar()
+        }
+
         // Buscar pedidos, itens e rascunhos em paralelo
         const [response, todosItens, rascunhos] = await Promise.all([
           pedidoService.listarTodos(),
           itemPedidoService.listarTodos(),
-          rascunhoService.listar()
+          carregarRascunhos()
         ])
 
 
@@ -743,7 +773,8 @@ export default {
             descricao: rascunho.observacao || 'Sem descrição',
             itens: rascunho.itens || [],
             isRascunho: true,
-            isFinalizado: rascunho.status === 'FINALIZADO'
+            isFinalizado: rascunho.status === 'FINALIZADO',
+            usuarioId: rascunho.usuarioId // Adiciona ID do criador do rascunho
           }
         })
 
@@ -1069,11 +1100,30 @@ export default {
 
     // Métodos de permissão
     const podeEditar = (pedido) => {
-      // Permite editar rascunhos ATIVOS, EM_COTACAO ou pedidos PENDENTES
+      // Permite editar se finalizado
       if (pedido.isFinalizado) {
         return false
       }
-      return ['RASCUNHO', 'EM_COTACAO', 'PENDENTE'].includes(pedido.status)
+
+      // Verifica se é rascunho
+      const isRascunho = ['RASCUNHO', 'EM_COTACAO'].includes(pedido.status)
+
+      if (isRascunho) {
+        // Para rascunhos: COMPRADOR e ADMIN podem editar qualquer um
+        // USUARIO pode editar apenas os próprios rascunhos
+        if (permissions.value.canEditRascunho) {
+          return true // COMPRADOR e ADMIN podem editar qualquer rascunho
+        }
+        // USUARIO pode editar apenas seus próprios rascunhos
+        return pedido.usuarioId === authStore.user?.id
+      }
+
+      // Para pedidos (status PENDENTE): apenas COMPRADOR e ADMIN
+      if (pedido.status === 'PENDENTE') {
+        return permissions.value.canEditPedido
+      }
+
+      return false
     }
 
     const podeAprovar = (pedido) => {
@@ -1082,11 +1132,30 @@ export default {
     }
 
     const podeExcluir = (pedido) => {
-      // Pode excluir pedidos rascunho (não finalizados) ou pendentes
+      // Não pode excluir se finalizado
       if (pedido.isFinalizado) {
         return false
       }
-      return ['RASCUNHO', 'EM_COTACAO', 'PENDENTE'].includes(pedido.status)
+
+      // Verifica se é rascunho
+      const isRascunho = ['RASCUNHO', 'EM_COTACAO'].includes(pedido.status)
+
+      if (isRascunho) {
+        // Para rascunhos: COMPRADOR e ADMIN podem excluir qualquer um
+        // USUARIO pode excluir apenas os próprios rascunhos
+        if (permissions.value.canDeleteRascunho) {
+          return true // COMPRADOR e ADMIN podem excluir qualquer rascunho
+        }
+        // USUARIO pode excluir apenas seus próprios rascunhos
+        return pedido.usuarioId === authStore.user?.id
+      }
+
+      // Para pedidos (status PENDENTE): apenas COMPRADOR e ADMIN
+      if (pedido.status === 'PENDENTE') {
+        return permissions.value.canDeletePedido
+      }
+
+      return false
     }
 
     const podeAlterarStatus = (pedido) => {
@@ -1168,6 +1237,9 @@ export default {
     })
 
     return {
+      // Permissões
+      permissions,
+
       // Estados
       pedidos,
       isLoading,
