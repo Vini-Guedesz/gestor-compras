@@ -4,7 +4,8 @@ import com.gestordecompras.gestorcomprasbackend.model.storage.PdfStorage;
 import com.gestordecompras.gestorcomprasbackend.repository.PdfStorageRepository;
 import jakarta.persistence.PreRemove;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,17 +15,20 @@ import org.springframework.stereotype.Component;
  * - Decrementar contador de referências do PdfStorage quando anexo é deletado
  * - Remover PdfStorage órfão quando não há mais referências
  *
+ * IMPORTANTE: Entity Listeners não são gerenciados pelo Spring por padrão.
+ * Usamos ApplicationContextAware para obter beans do Spring manualmente.
+ *
  * @since 3.0.0
  */
 @Slf4j
 @Component
-public class AnexoCotacaoRascunhoListener {
+public class AnexoCotacaoRascunhoListener implements ApplicationContextAware {
 
-    private static PdfStorageRepository pdfStorageRepository;
+    private static ApplicationContext applicationContext;
 
-    @Autowired
-    public void setPdfStorageRepository(PdfStorageRepository repository) {
-        AnexoCotacaoRascunhoListener.pdfStorageRepository = repository;
+    @Override
+    public void setApplicationContext(ApplicationContext context) {
+        AnexoCotacaoRascunhoListener.applicationContext = context;
     }
 
     /**
@@ -37,7 +41,15 @@ public class AnexoCotacaoRascunhoListener {
             return; // Anexo usa arquitetura legada (conteudoLegacy), sem PdfStorage
         }
 
+        // Obter repository do Spring Context (Entity Listeners não são injetados automaticamente)
+        if (applicationContext == null) {
+            log.warn("ApplicationContext não inicializado. Não foi possível limpar PdfStorage órfão do anexo {}", anexo.getId());
+            return;
+        }
+
+        PdfStorageRepository pdfStorageRepository = applicationContext.getBean(PdfStorageRepository.class);
         PdfStorage pdfStorage = anexo.getPdfStorage();
+
         log.debug("Anexo {} sendo removido. PdfStorage: {} (refs: {})",
                 anexo.getId(), pdfStorage.getId(), pdfStorage.getContadorReferencias());
 
