@@ -1109,12 +1109,23 @@ export default {
       const isRascunho = ['RASCUNHO', 'EM_COTACAO'].includes(pedido.status)
 
       if (isRascunho) {
-        // Para rascunhos: COMPRADOR e ADMIN podem editar qualquer um
-        // USUARIO pode editar apenas os próprios rascunhos
-        if (permissions.value.canEditRascunho) {
-          return true // COMPRADOR e ADMIN podem editar qualquer rascunho
+        // NOVA REGRA: Se tem cotações, NINGUÉM pode editar (botão desaparece para todos)
+        const temCotacoes = pedido.itens?.some(item => item.cotacoes && item.cotacoes.length > 0)
+        if (temCotacoes) {
+          return false
         }
-        // USUARIO pode editar apenas seus próprios rascunhos
+
+        // COMPRADOR e ADMIN podem editar qualquer rascunho (inclusive EM_COTACAO)
+        if (permissions.value.canEditRascunho) {
+          return true
+        }
+
+        // USUARIO: pode editar apenas seus próprios rascunhos em status ATIVO
+        if (pedido.status === 'EM_COTACAO') {
+          return false // USUARIO não pode editar rascunhos em EM_COTACAO
+        }
+
+        // USUARIO pode editar seus próprios rascunhos ATIVO (já verificamos que não tem cotações acima)
         return pedido.usuarioId === authStore.user?.id
       }
 
@@ -1141,13 +1152,9 @@ export default {
       const isRascunho = ['RASCUNHO', 'EM_COTACAO'].includes(pedido.status)
 
       if (isRascunho) {
-        // Para rascunhos: COMPRADOR e ADMIN podem excluir qualquer um
-        // USUARIO pode excluir apenas os próprios rascunhos
-        if (permissions.value.canDeleteRascunho) {
-          return true // COMPRADOR e ADMIN podem excluir qualquer rascunho
-        }
-        // USUARIO pode excluir apenas seus próprios rascunhos
-        return pedido.usuarioId === authStore.user?.id
+        // Para rascunhos: apenas COMPRADOR e ADMIN podem excluir
+        // USUARIO NÃO pode excluir rascunhos
+        return permissions.value.canDeleteRascunho
       }
 
       // Para pedidos (status PENDENTE): apenas COMPRADOR e ADMIN
