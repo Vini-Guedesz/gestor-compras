@@ -73,10 +73,10 @@
               <div class="action-buttons-group">
                 <!-- Ações para Rascunhos -->
                 <template v-if="isRascunho">
-                  <button v-if="pedido?.status === 'EM_COTACAO'" @click="abrirModalDevolucao" class="btn-warning">
+                  <button v-if="podeDevolverParaEdicao" @click="abrirModalDevolucao" class="btn-warning">
                     Devolver para Edição
                   </button>
-                  <button v-if="!isFinalizado && pedido?.status === 'ATIVO'" @click="editarRascunho" class="btn-success">
+                  <button v-if="podeEditarRascunho" @click="editarRascunho" class="btn-success">
                     Editar Rascunho
                   </button>
                 </template>
@@ -524,6 +524,31 @@
       @close="fecharModalHistorico"
     />
 
+    <!-- Modal Confirmação Antes de Devolver (quando há cotações) -->
+    <div v-if="modalConfirmacaoDevolucaoAberto" class="modal-overlay" @click="fecharModalConfirmacaoDevolucao">
+      <div class="modal-container-small" @click.stop>
+        <div class="modal-header">
+          <h3>⚠️ Atenção</h3>
+          <button @click="fecharModalConfirmacaoDevolucao" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            <strong>ATENÇÃO:</strong> Este rascunho possui <strong>{{ quantidadeCotacoesParaDevolucao }} cotação(ões)</strong>.
+            <br><br>
+            Ao devolver para edição, <strong>TODAS as cotações serão REMOVIDAS permanentemente</strong>.
+            <br><br>
+            Deseja continuar?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button @click="fecharModalConfirmacaoDevolucao" class="btn-cancel">Cancelar</button>
+          <button @click="confirmarAbrirDevolucao" class="btn-warning">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal Devolução Rascunho para Edição -->
     <div v-if="modalDevolucaoAberto" class="modal-overlay" @click="fecharModalDevolucao">
       <div class="modal-container-small" @click.stop>
@@ -706,6 +731,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast.js'
 import { useErrorModal } from '@/composables/useErrorModal.js'
 import { usePermissions } from '@/composables/usePermissions.js'
+import { useAuthStore } from '@/stores/auth'
 import logger from '@/utils/logger.js'
 import pedidoService from '@/services/pedidoService.js'
 import rascunhoService from '@/services/rascunhoService.js'
@@ -729,6 +755,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const authStore = useAuthStore()
     const { permissions } = usePermissions()
     const { success, error: showError, warning } = useToast()
 
@@ -746,6 +773,47 @@ export default {
     const isFinalizado = ref(false)
     const isEditMode = ref(false)
 
+    // Computed: Verifica se o usuário pode editar o rascunho
+    const podeEditarRascunho = computed(() => {
+      if (!pedido.value || !isRascunho.value || isFinalizado.value) {
+        return false
+      }
+
+      // NOVA REGRA: Se tem cotações, NINGUÉM pode editar (botão desaparece para todos)
+      const temCotacoes = cotacoes.value && cotacoes.value.length > 0
+      if (temCotacoes) {
+        return false
+      }
+
+      // Rascunhos em EM_COTACAO: apenas COMPRADOR e ADMIN podem editar
+      if (pedido.value.status === 'EM_COTACAO') {
+        return permissions.value.canEditRascunho
+      }
+
+      // Rascunhos ATIVO: COMPRADOR e ADMIN podem editar qualquer um
+      // USUARIO pode editar apenas seus próprios rascunhos
+      if (pedido.value.status === 'ATIVO') {
+        if (permissions.value.canEditRascunho) {
+          return true // COMPRADOR e ADMIN podem editar qualquer rascunho
+        }
+        // USUARIO pode editar apenas seus próprios rascunhos
+        return pedido.value.usuarioId === authStore.user?.id
+      }
+
+      return false
+    })
+
+    // Computed: Verifica se pode devolver rascunho para edição
+    const podeDevolverParaEdicao = computed(() => {
+      if (!pedido.value || !isRascunho.value) {
+        return false
+      }
+
+      // Deve estar em EM_COTACAO e ter permissão para cotar
+      // NOTA: Pode ter cotações - ao devolver, as cotações serão apagadas
+      return pedido.value.status === 'EM_COTACAO' && permissions.value.canCotarRascunho
+    })
+
     // Modais de cotação
     const modalEditarCotacaoAberto = ref(false)
     const modalHistoricoAberto = ref(false)
@@ -753,6 +821,8 @@ export default {
 
     // Devolução para Edição
     const modalDevolucaoAberto = ref(false)
+    const modalConfirmacaoDevolucaoAberto = ref(false)
+    const quantidadeCotacoesParaDevolucao = ref(0)
     const motivoDevolucao = ref('')
     const devolvendo = ref(false)
 
@@ -1167,23 +1237,29 @@ export default {
         const quantidadeCotacoes = await rascunhoService.contarCotacoes(pedido.value.rascunhoId)
 
         if (quantidadeCotacoes > 0) {
-          const confirmacao = window.confirm(
-            `ATENÇÃO: Este rascunho possui ${quantidadeCotacoes} cotação(ões).\n\n` +
-            `Ao devolver para edição, TODAS as cotações serão REMOVIDAS permanentemente.\n\n` +
-            `Deseja continuar?`
-          )
-
-          if (!confirmacao) {
-            return
-          }
+          // Mostrar modal de confirmação estilizado
+          quantidadeCotacoesParaDevolucao.value = quantidadeCotacoes
+          modalConfirmacaoDevolucaoAberto.value = true
+        } else {
+          // Se não tem cotações, abrir direto o modal de devolução
+          motivoDevolucao.value = ''
+          modalDevolucaoAberto.value = true
         }
-
-        motivoDevolucao.value = ''
-        modalDevolucaoAberto.value = true
       } catch (err) {
         logger.error('Erro ao verificar cotações:', err)
         error('Erro ao verificar cotações do rascunho')
       }
+    }
+
+    const confirmarAbrirDevolucao = () => {
+      modalConfirmacaoDevolucaoAberto.value = false
+      motivoDevolucao.value = ''
+      modalDevolucaoAberto.value = true
+    }
+
+    const fecharModalConfirmacaoDevolucao = () => {
+      modalConfirmacaoDevolucaoAberto.value = false
+      quantidadeCotacoesParaDevolucao.value = 0
     }
 
     const fecharModalDevolucao = () => {
@@ -1419,6 +1495,8 @@ export default {
     return {
       // Permissions
       permissions,
+      podeEditarRascunho,
+      podeDevolverParaEdicao,
 
       // Sidebar
       isSidebarOpen,
@@ -1478,9 +1556,13 @@ export default {
 
       // Devolução para Edição (Rascunho)
       modalDevolucaoAberto,
+      modalConfirmacaoDevolucaoAberto,
+      quantidadeCotacoesParaDevolucao,
       motivoDevolucao,
       devolvendo,
       abrirModalDevolucao,
+      confirmarAbrirDevolucao,
+      fecharModalConfirmacaoDevolucao,
       fecharModalDevolucao,
       confirmarDevolucao,
 

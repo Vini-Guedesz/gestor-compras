@@ -181,10 +181,10 @@
 
                 <!-- Ações para o estado GERENCIANDO_COTACOES -->
                 <template v-if="editState === 'GERENCIANDO_COTACOES'">
-                  <button type="button" @click="abrirModalDevolucao" class="btn-warning">
+                  <button v-if="podeDevolverParaEdicao" type="button" @click="abrirModalDevolucao" class="btn-warning">
                     Devolver para Edição
                   </button>
-                  <button type="button" @click="editarRascunho" class="btn-secondary">
+                  <button v-if="podeEditarRascunho" type="button" @click="editarRascunho" class="btn-secondary">
                     Editar Rascunho
                   </button>
                   <button
@@ -327,6 +327,31 @@ export default {
       return wizardData.value.rascunho.id !== null
     })
 
+    // Computed: Verifica se pode devolver rascunho para edição
+    const podeDevolverParaEdicao = computed(() => {
+      // Pode devolver mesmo com cotações - ao devolver, as cotações serão apagadas
+      // Deve estar em EM_COTACAO e ter permissão para cotar
+      if (!wizardData.value.rascunho || !wizardData.value.rascunho.id) {
+        return false
+      }
+      const status = wizardData.value.rascunho.status
+      return status === 'EM_COTACAO' && permissions.value.canCotarRascunho
+    })
+
+    // Computed: Verifica se pode editar o rascunho
+    const podeEditarRascunho = computed(() => {
+      // NOVA REGRA: Se tem cotações, NINGUÉM pode editar (botão desaparece para todos)
+      if (temCotacoes.value) {
+        return false
+      }
+      // Se não tem cotações, verificar permissões normais
+      if (permissions.value.canEditRascunho) {
+        return true
+      }
+      // USUARIO pode editar se não tiver cotações
+      return true
+    })
+
     // Methods
     const toggleSidebar = () => { isSidebarOpen.value = !isSidebarOpen.value }
     const closeSidebar = () => { isSidebarOpen.value = false }
@@ -398,19 +423,24 @@ export default {
         const quantidadeCotacoes = await rascunhoService.contarCotacoes(wizardData.value.rascunho.id)
 
         if (quantidadeCotacoes > 0) {
-          const confirmacao = window.confirm(
-            `ATENÇÃO: Este rascunho possui ${quantidadeCotacoes} cotação(ões).\n\n` +
-            `Ao devolver para edição, TODAS as cotações serão REMOVIDAS permanentemente.\n\n` +
-            `Deseja continuar?`
+          const { showWarning } = useErrorModal()
+          showWarning(
+            `Este rascunho possui ${quantidadeCotacoes} cotação(ões).\n\n` +
+            `Ao devolver para edição, TODAS as cotações serão REMOVIDAS permanentemente.`,
+            {
+              title: '⚠️ ATENÇÃO',
+              confirmText: 'Sim, continuar',
+              cancelText: 'Cancelar',
+              onConfirm: () => {
+                motivoDevolucao.value = ''
+                modalDevolucaoAberto.value = true
+              }
+            }
           )
-
-          if (!confirmacao) {
-            return
-          }
+        } else {
+          motivoDevolucao.value = ''
+          modalDevolucaoAberto.value = true
         }
-
-        motivoDevolucao.value = ''
-        modalDevolucaoAberto.value = true
       } catch (err) {
         logger.error('Erro ao verificar cotações:', err)
         toastError('Erro ao verificar cotações do rascunho')
@@ -579,14 +609,49 @@ export default {
     }
 
     const salvarCotacao = async (dadosCotacao) => {
+      // Verificar se é a primeira cotação sendo adicionada
+      const ehPrimeiraCotacao = todasCotacoes.value.length === 0
+
+      // Se for a primeira cotação, mostrar aviso de confirmação
+      if (ehPrimeiraCotacao) {
+        const { showWarning } = useErrorModal()
+        showWarning(
+          'Após adicionar a primeira cotação ao rascunho, não será mais possível editar os itens do rascunho.\n\n' +
+          'A única forma de editar os itens novamente seria devolver o rascunho para edição, ' +
+          'mas isso excluirá TODAS as cotações adicionadas.\n\n' +
+          'Certifique-se de que todos os itens estão corretos antes de continuar.',
+          {
+            title: '⚠️ ATENÇÃO: Primeira Cotação',
+            confirmText: 'Sim, adicionar cotação',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+              await processarSalvamentoCotacao(dadosCotacao, ehPrimeiraCotacao)
+            }
+          }
+        )
+      } else {
+        // Se não for a primeira cotação, salvar diretamente
+        await processarSalvamentoCotacao(dadosCotacao, ehPrimeiraCotacao)
+      }
+    }
+
+    const processarSalvamentoCotacao = async (dadosCotacao, ehPrimeiraCotacao) => {
       try {
         isLoading.value = true
+
         await cotacaoRascunhoService.criar(wizardData.value.rascunho.id, dadosCotacao)
 
         // Pequeno delay para garantir que o backend persistiu completamente
         await new Promise(resolve => setTimeout(resolve, 100))
 
         await carregarCotacoesDoRascunho()
+
+        // Atualizar o rascunho com os dados mais recentes do backend (incluindo status)
+        const rascunhoAtualizado = await rascunhoService.obterPorId(wizardData.value.rascunho.id)
+        wizardData.value.rascunho = rascunhoAtualizado
+
+        // Mostrar mensagem de sucesso
+        success('Cotação adicionada com sucesso!')
       } catch (error) {
         logger.error('Erro ao salvar cotação:', error)
         const mensagem = error.message || 'Erro ao salvar cotação. Tente novamente.'
@@ -877,6 +942,9 @@ export default {
       cancelar,
       voltar,
       onRascunhoCreated,
+      // Computed properties de permissão
+      podeDevolverParaEdicao,
+      podeEditarRascunho,
       // Devolução para Edição
       modalDevolucaoAberto,
       motivoDevolucao,

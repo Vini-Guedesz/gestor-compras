@@ -11,6 +11,7 @@ import lombok.Setter;
     @Index(name = "idx_anexo_cotacao_rascunho_hash", columnList = "hash_sha256"),
     @Index(name = "idx_anexo_cotacao_rascunho_storage", columnList = "pdf_storage_id")
 })
+@EntityListeners(AnexoCotacaoRascunhoListener.class)
 @Getter
 @Setter
 @NoArgsConstructor

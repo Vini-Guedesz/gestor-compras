@@ -8,6 +8,7 @@ import com.gestordecompras.gestorcomprasbackend.model.rascunho.AnexoCotacaoRascu
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.CotacaoRascunho;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.ItemRascunho;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.Rascunho;
+import com.gestordecompras.gestorcomprasbackend.model.rascunho.StatusRascunho;
 import com.gestordecompras.gestorcomprasbackend.repository.CotacaoRascunhoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeProdutoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeServicoRepository;
@@ -178,6 +179,14 @@ public class CotacaoRascunhoService {
         }
 
         CotacaoRascunho salva = cotacaoRascunhoRepository.save(cotacao);
+
+        // Atualizar status do rascunho para EM_COTACAO automaticamente
+        // quando a primeira cotação for adicionada
+        if (rascunho.getStatus() == StatusRascunho.ATIVO) {
+            rascunho.setStatus(StatusRascunho.EM_COTACAO);
+            rascunhoRepository.save(rascunho);
+        }
+
         return toDTO(salva);
     }
 

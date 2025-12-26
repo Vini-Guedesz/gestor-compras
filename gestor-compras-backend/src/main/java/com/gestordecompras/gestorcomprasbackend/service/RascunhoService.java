@@ -9,6 +9,7 @@ import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido
 import com.gestordecompras.gestorcomprasbackend.model.pedido.StatusPedido;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.model.user.User;
+import com.gestordecompras.gestorcomprasbackend.model.user.UserRole;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.AnexoCotacao;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
 import com.gestordecompras.gestorcomprasbackend.repository.*;
@@ -438,14 +439,25 @@ public class RascunhoService {
             throw new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId);
         }
 
-        // Validação de ownership: Verificar se o rascunho pertence ao usuário autenticado
+        // Validação de permissão: Verificar se o usuário pode converter o rascunho
+        // ADMIN e COMPRADOR podem converter qualquer rascunho
+        // USUARIO pode converter apenas seus próprios rascunhos
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             String emailUsuarioAutenticado = authentication.getName();
-            String emailCriadorRascunho = rascunho.getCriador() != null ? rascunho.getCriador().getEmail() : null;
+            User usuarioAutenticado = userRepository.findByEmail(emailUsuarioAutenticado)
+                    .orElseThrow(() -> new EntityNotFoundException("Usuário autenticado não encontrado"));
 
-            if (emailCriadorRascunho == null || !emailCriadorRascunho.equals(emailUsuarioAutenticado)) {
-                throw new SecurityException("Você não tem permissão para converter este rascunho. Apenas o criador pode converter.");
+            boolean isAdminOuComprador = usuarioAutenticado.getRole() == UserRole.ADMIN ||
+                                          usuarioAutenticado.getRole() == UserRole.COMPRADOR;
+
+            // Se não for ADMIN nem COMPRADOR, verificar ownership
+            if (!isAdminOuComprador) {
+                String emailCriadorRascunho = rascunho.getCriador() != null ? rascunho.getCriador().getEmail() : null;
+
+                if (emailCriadorRascunho == null || !emailCriadorRascunho.equals(emailUsuarioAutenticado)) {
+                    throw new SecurityException("Você não tem permissão para converter este rascunho. Apenas o criador, ADMIN ou COMPRADOR podem converter.");
+                }
             }
         }
 
