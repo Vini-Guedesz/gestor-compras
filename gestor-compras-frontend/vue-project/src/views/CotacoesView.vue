@@ -1471,11 +1471,12 @@ onMounted(async () => {
 
 .id-badge {
   background: #f3f4f6;
-  color: #374151;
+  color: #1F285F;
   padding: 4px 12px;
   border-radius: 6px;
   font-weight: 600;
   font-size: 0.875rem;
+  font-family: 'Courier New', monospace;
 }
 
 .description-cell {

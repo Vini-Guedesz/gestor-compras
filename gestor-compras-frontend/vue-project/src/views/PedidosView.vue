@@ -1804,8 +1804,9 @@ export default {
 
 .pedido-numero {
   font-weight: 600;
-  color: #111827;
+  color: #1F285F;
   font-size: 0.875rem;
+  font-family: 'Courier New', monospace;
 }
 
 .data-cell {
@@ -2600,7 +2601,8 @@ export default {
 .pedido-numero-mobile {
   font-weight: 600;
   font-size: 1.125rem;
-  color: #1f2937;
+  color: #1F285F;
+  font-family: 'Courier New', monospace;
 }
 
 .data-criacao-mobile {
