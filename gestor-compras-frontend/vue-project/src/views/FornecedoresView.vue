@@ -380,12 +380,17 @@ const fornecedoresFiltrados = computed(() => {
   // Filtro por texto
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase().trim()
-    resultado = resultado.filter(f =>
-      f.razaoSocial?.toLowerCase().includes(query) ||
-      f.cnpj?.includes(query) ||
-      f.contato?.email?.toLowerCase().includes(query) ||
-      f.endereco?.cidade?.toLowerCase().includes(query)
-    )
+    resultado = resultado.filter(f => {
+      const idPadronizado = `f-${f.id}`.toLowerCase()
+      const idNumerico = f.id?.toString()
+      // Permite buscar por: "1", "F-1", razão social, CNPJ, email ou cidade
+      return idNumerico?.includes(query) ||
+             idPadronizado.includes(query) ||
+             f.razaoSocial?.toLowerCase().includes(query) ||
+             f.cnpj?.includes(query) ||
+             f.contato?.email?.toLowerCase().includes(query) ||
+             f.endereco?.cidade?.toLowerCase().includes(query)
+    })
   }
 
   // Filtro por tipo

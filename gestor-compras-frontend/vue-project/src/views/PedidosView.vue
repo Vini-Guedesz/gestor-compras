@@ -684,10 +684,13 @@ export default {
 
       // Filtro por texto
       if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase()
-        resultado = resultado.filter(pedido =>
-          (pedido.id?.toString().includes(query))
-        )
+        const query = searchQuery.value.toLowerCase().trim()
+        resultado = resultado.filter(pedido => {
+          const idPadronizado = formatarIdPadronizado(pedido).toLowerCase()
+          const idNumerico = pedido.id?.toString()
+          // Permite buscar por: "1", "P-1", "R-1"
+          return idNumerico?.includes(query) || idPadronizado.includes(query)
+        })
       }
 
       // Filtro por status

@@ -730,14 +730,18 @@ const cotacoesFiltradas = computed(() => {
 
   // Aplicar busca textual
   if (termoBusca.value) {
-    const termo = termoBusca.value.toLowerCase()
-    resultado = resultado.filter(c =>
-      c.id.toString().includes(termo) ||
-      c.fornecedorId?.toString().includes(termo) ||
-      c.itens?.[0]?.itemPedidoId?.toString().includes(termo) ||
-      c.itens?.[0]?.nomeItem?.toLowerCase().includes(termo) ||
-      c.preco?.toString().includes(termo)
-    )
+    const termo = termoBusca.value.toLowerCase().trim()
+    resultado = resultado.filter(c => {
+      const idPadronizado = `c-${c.id}`.toLowerCase()
+      const idNumerico = c.id?.toString()
+      // Permite buscar por: "1", "C-1", fornecedor, item, nome ou preço
+      return idNumerico?.includes(termo) ||
+             idPadronizado.includes(termo) ||
+             c.fornecedorId?.toString().includes(termo) ||
+             c.itens?.[0]?.itemPedidoId?.toString().includes(termo) ||
+             c.itens?.[0]?.nomeItem?.toLowerCase().includes(termo) ||
+             c.preco?.toString().includes(termo)
+    })
   }
 
   // Aplicar filtros

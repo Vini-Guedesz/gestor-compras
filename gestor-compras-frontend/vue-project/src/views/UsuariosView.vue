@@ -349,10 +349,15 @@ const usuariosFiltrados = computed(() => {
   // Filtro por texto
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase().trim()
-    resultado = resultado.filter(u =>
-      u.nome?.toLowerCase().includes(query) ||
-      u.email?.toLowerCase().includes(query)
-    )
+    resultado = resultado.filter(u => {
+      const idPadronizado = `u-${u.id}`.toLowerCase()
+      const idNumerico = u.id?.toString()
+      // Permite buscar por: "1", "U-1", nome ou email
+      return idNumerico?.includes(query) ||
+             idPadronizado.includes(query) ||
+             u.nome?.toLowerCase().includes(query) ||
+             u.email?.toLowerCase().includes(query)
+    })
   }
 
   // Filtro por role
