@@ -143,6 +143,7 @@
           <table class="suppliers-table" v-if="fornecedoresFiltrados.length > 0">
             <thead>
               <tr>
+                <th class="col-id">ID</th>
                 <th>Fornecedor</th>
                 <th>Tipo</th>
                 <th>Documento</th>
@@ -152,6 +153,9 @@
             </thead>
             <tbody>
               <tr v-for="fornecedor in fornecedoresFiltrados" :key="fornecedor.id" class="table-row">
+                <td class="id-cell">
+                  <span class="fornecedor-id">F-{{ fornecedor.id }}</span>
+                </td>
                 <td class="supplier-cell">
                   <div class="supplier-info">
                     <span class="supplier-name">{{ fornecedor.razaoSocial }}</span>
@@ -231,6 +235,7 @@
             <div v-for="fornecedor in fornecedoresFiltrados" :key="fornecedor.id" class="fornecedor-card">
               <div class="card-header">
                 <div class="card-header-left">
+                  <span class="fornecedor-id-mobile">F-{{ fornecedor.id }}</span>
                   <span class="fornecedor-nome-mobile">{{ fornecedor.razaoSocial }}</span>
                   <span class="document-mobile">{{ formatarDocumento(fornecedor) }}</span>
                 </div>
@@ -948,6 +953,22 @@ onMounted(() => {
   background: #f9fafb;
 }
 
+/* Coluna de ID */
+.col-id {
+  width: 100px;
+}
+
+.id-cell {
+  padding-right: 12px;
+}
+
+.fornecedor-id {
+  font-weight: 600;
+  color: #1F285F;
+  font-size: 0.875rem;
+  font-family: 'Courier New', monospace;
+}
+
 .supplier-info {
   display: flex;
   flex-direction: column;
@@ -1134,6 +1155,14 @@ onMounted(() => {
   flex-direction: column;
   gap: 6px;
   align-items: flex-end;
+}
+
+.fornecedor-id-mobile {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1F285F;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 4px;
 }
 
 .fornecedor-nome-mobile {

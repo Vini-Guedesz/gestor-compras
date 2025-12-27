@@ -185,7 +185,7 @@
               <!-- Data Rows -->
               <tr v-else v-for="cotacao in cotacoesPaginadas" :key="cotacao.id" class="table-row">
                 <td>
-                  <span class="id-badge">{{ String(cotacao.id).padStart(3, '0') }}</span>
+                  <span class="id-badge cotacao-id">C-{{ cotacao.id }}</span>
                 </td>
                 <td>
                   <div class="fornecedor-cell">
@@ -261,7 +261,7 @@
             <div v-for="cotacao in cotacoesPaginadas" :key="cotacao.id" class="cotacao-card">
               <div class="card-header">
                 <div class="card-header-left">
-                  <span class="id-badge">{{ String(cotacao.id).padStart(3, '0') }}</span>
+                  <span class="id-badge cotacao-id-mobile">C-{{ cotacao.id }}</span>
                   <span class="fornecedor-nome-mobile">{{ getNomeFornecedor(cotacao.fornecedorId, cotacao.tipoFornecedor) }}</span>
                 </div>
                 <div class="card-header-right">
@@ -537,7 +537,7 @@
                       :class="{ 'cotacao-atual': cotacao.id === cotacaoSelecionada?.id, 'melhor-preco': index === 0 }"
                     >
                       <td>
-                        <span class="cotacao-id">#{{ String(cotacao.id).padStart(3, '0') }}</span>
+                        <span class="cotacao-id">C-{{ cotacao.id }}</span>
                       </td>
                       <td>{{ getNomeFornecedor(cotacao.fornecedorId, cotacao.tipoFornecedor) }}</td>
                       <td>
@@ -2833,8 +2833,15 @@ onMounted(async () => {
   padding: 4px 10px;
   border-radius: 4px;
   font-weight: 600;
-  font-family: Arial, sans-serif;
+  font-family: 'Courier New', monospace;
   font-size: 0.8125rem;
+}
+
+.cotacao-id-mobile {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1F285F;
+  font-family: 'Courier New', monospace;
 }
 
 .preco-comparativo {

@@ -141,6 +141,7 @@
           <table class="users-table" v-if="usuariosFiltrados.length > 0">
             <thead>
               <tr>
+                <th class="col-id">ID</th>
                 <th>Usuário</th>
                 <th>E-mail</th>
                 <th>Função</th>
@@ -150,6 +151,9 @@
             </thead>
             <tbody>
               <tr v-for="usuario in usuariosFiltrados" :key="usuario.id" class="table-row">
+                <td class="id-cell">
+                  <span class="usuario-id">U-{{ usuario.id }}</span>
+                </td>
                 <td class="user-cell">
                   <div class="user-info">
                     <span class="user-name">{{ usuario.nome }}</span>
@@ -214,6 +218,7 @@
             <div v-for="usuario in usuariosFiltrados" :key="usuario.id" class="usuario-card">
               <div class="card-header">
                 <div class="card-header-left">
+                  <span class="usuario-id-mobile">U-{{ usuario.id }}</span>
                   <span class="usuario-nome-mobile">{{ usuario.nome }}</span>
                   <span class="email-mobile">{{ usuario.email }}</span>
                 </div>
@@ -834,6 +839,17 @@ onMounted(() => {
   gap: 4px;
 }
 
+.col-id {
+  width: 100px;
+}
+
+.usuario-id {
+  font-weight: 600;
+  color: #1F285F;
+  font-size: 0.875rem;
+  font-family: 'Courier New', monospace;
+}
+
 .user-name {
   font-weight: 600;
   color: #111827;
@@ -1019,6 +1035,14 @@ onMounted(() => {
   flex-direction: column;
   gap: 6px;
   align-items: flex-end;
+}
+
+.usuario-id-mobile {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1F285F;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 4px;
 }
 
 .usuario-nome-mobile {
