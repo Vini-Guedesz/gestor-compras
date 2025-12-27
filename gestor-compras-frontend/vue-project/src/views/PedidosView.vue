@@ -96,6 +96,34 @@
         </div>
       </div>
 
+      <!-- Tabs: Rascunhos e Pedidos -->
+      <div class="tabs-section">
+        <div class="tabs-container">
+          <button
+            class="tab-button"
+            :class="{ active: abaAtiva === 'rascunhos' }"
+            @click="abaAtiva = 'rascunhos'"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+            </svg>
+            Rascunhos
+            <span v-if="totalRascunhos > 0" class="tab-badge">{{ totalRascunhos }}</span>
+          </button>
+          <button
+            class="tab-button"
+            :class="{ active: abaAtiva === 'pedidos' }"
+            @click="abaAtiva = 'pedidos'"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            Pedidos
+            <span v-if="totalPedidosFinais > 0" class="tab-badge">{{ totalPedidosFinais }}</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Filtros de Pesquisa -->
       <div class="search-section">
         <div class="search-container">
@@ -589,6 +617,7 @@ export default {
     const searchQuery = ref('')
     const filtroStatus = ref('')
     const filtroPeriodo = ref('')
+    const abaAtiva = ref('rascunhos') // 'rascunhos' ou 'pedidos'
 
     // Como simplificamos o formulário, não precisamos mais de extração complexa
 
@@ -631,6 +660,14 @@ export default {
       if (totalPedidos.value === 0) return 0
       return Math.round((pedidosPendentes.value / totalPedidos.value) * 100)
     })
+
+    const totalRascunhos = computed(() =>
+      pedidos.value.filter(p => p.isRascunho).length
+    )
+
+    const totalPedidosFinais = computed(() =>
+      pedidos.value.filter(p => !p.isRascunho).length
+    )
 
     // REMOVIDO: Valor simulado/mockado - implementar cálculo real baseado nos itens
     /*
@@ -684,6 +721,13 @@ export default {
             return dataPedido >= dataLimite
           })
         }
+      }
+
+      // Filtro por aba ativa (Rascunhos ou Pedidos)
+      if (abaAtiva.value === 'rascunhos') {
+        resultado = resultado.filter(p => p.isRascunho)
+      } else if (abaAtiva.value === 'pedidos') {
+        resultado = resultado.filter(p => !p.isRascunho)
       }
 
       // Ordenar por data de criação (mais recentes primeiro)
@@ -1253,6 +1297,7 @@ export default {
       searchQuery,
       filtroStatus,
       filtroPeriodo,
+      abaAtiva,
 
       // Modais
       showConfirmModal,
@@ -1277,6 +1322,8 @@ export default {
       pedidosPendentes,
       pedidosAprovados,
       percentualPendentes,
+      totalRascunhos,
+      totalPedidosFinais,
       // valorTotalFormatado, // REMOVIDO - valor simulado
       pedidosFiltrados,
 
@@ -1480,6 +1527,67 @@ export default {
 .metric-growth.positive { color: #10b981; }
 .metric-growth.negative { color: #ef4444; }
 .metric-growth.neutral { color: #6b7280; }
+
+/* Tabs: Rascunhos e Pedidos */
+.tabs-section {
+  margin-bottom: 32px;
+}
+
+.tabs-container {
+  display: flex;
+  gap: 8px;
+  background: white;
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-button.active {
+  background: #1F285F;
+  color: white;
+  box-shadow: 0 2px 4px rgba(31, 40, 95, 0.1);
+}
+
+.tab-button:hover:not(.active) {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: #e5e7eb;
+  color: #374151;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tab-button.active .tab-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
 
 /* SeÃ§Ã£o de Pesquisa */
 .search-section {
