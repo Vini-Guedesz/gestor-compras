@@ -186,7 +186,7 @@
               <tr v-for="pedido in pedidosFiltrados" :key="pedido.id" class="table-row">
                 <td class="pedido-cell">
                   <div class="pedido-info">
-                    <span class="pedido-numero">#{{ pedido.id }}</span>
+                    <span class="pedido-numero">{{ formatarIdPadronizado(pedido) }}</span>
                   </div>
                 </td>
                 <td>
@@ -286,7 +286,7 @@
             <div v-for="pedido in pedidosFiltrados" :key="pedido.id" class="pedido-card">
               <div class="card-header">
                 <div class="card-header-left">
-                  <span class="pedido-numero-mobile">#{{ pedido.id }}</span>
+                  <span class="pedido-numero-mobile">{{ formatarIdPadronizado(pedido) }}</span>
                   <span class="status-badge" :class="getStatusClass(pedido.status)">
                     {{ getStatusLabel(pedido.status) }}
                   </span>
@@ -852,6 +852,18 @@ export default {
       }
     }
 
+    const formatarIdPadronizado = (pedido) => {
+      if (!pedido || !pedido.id) return 'N/A'
+
+      // Se é rascunho, o ID já vem como "R-1", "R-2", etc.
+      if (typeof pedido.id === 'string' && pedido.id.startsWith('R-')) {
+        return pedido.id
+      }
+
+      // Se é pedido normal, adicionar prefixo P-
+      return `P-${pedido.id}`
+    }
+
     const getStatusLabel = (status) => {
       const labels = {
         // Novos status do workflow
@@ -1331,6 +1343,7 @@ export default {
       carregarPedidos,
       formatarData,
       formatarDataCompleta,
+      formatarIdPadronizado,
       getStatusLabel,
       getStatusClass,
       getQuantidadeItens,

@@ -15,20 +15,9 @@
         </div>
       </div>
 
-      <!-- Barra de Busca Central -->
+      <!-- Barra de Busca Global -->
       <div class="search-section">
-        <div class="search-container">
-          <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
-            <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-          </svg>
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Pesquisar pedidos e fornecedores..."
-            class="search-input"
-            @keyup.enter="handleSearch"
-          />
-        </div>
+        <GlobalSearch />
       </div>
 
       <!-- Ícones e Usuário -->
@@ -110,12 +99,12 @@ import { useToast } from '@/composables/useToast'
 import { getUserRole } from '@/utils/genderUtils'
 import { useMobileSidebar } from '@/composables/useMobileSidebar'
 import LogoutModal from '@/components/ui/modals/LogoutModal.vue'
+import GlobalSearch from '@/components/ui/GlobalSearch.vue'
 import logger from '@/utils/logger.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { error: toastError } = useToast()
-const searchQuery = ref('')
 const isUserMenuOpen = ref(false)
 const showLogoutModal = ref(false)
 
@@ -137,13 +126,6 @@ const userAvatar = computed(() => {
     </svg>
   `)}`
 })
-
-/**
- * Manipula a busca quando o usuário pressiona Enter
- */
-const handleSearch = () => {
-  // TODO: Implementar lógica de busca
-}
 
 /**
  * Abre/fecha o menu dropdown do usuário
@@ -301,46 +283,9 @@ const vClickOutside = {
 /* Search Section */
 .search-section {
   flex: 1;
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 40px;
   min-width: 0; /* Permite que o flex item encolha */
-}
-
-.search-container {
-  position: relative;
-  width: 100%;
-}
-
-.search-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
-  z-index: 1;
-}
-
-.search-input {
-  width: 100%;
-  height: 44px;
-  padding: 0 20px 0 50px;
-  border: 1px solid #e0e6ed;
-  border-radius: 25px;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  background: #f8f9fa;
-  transition: all 0.2s ease;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #1F285F;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(31, 40, 95, 0.1);
-}
-
-.search-input::placeholder {
-  color: #9ca3af;
 }
 
 /* User Section */
