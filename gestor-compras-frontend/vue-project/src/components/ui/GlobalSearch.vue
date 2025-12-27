@@ -145,6 +145,15 @@ export default {
           subtitle: 'Digite C-[número] para abrir a cotação (abre em modal)',
           badge: 'Cotação'
         })
+      } else if (query.startsWith('u-')) {
+        results.push({
+          id: 'usuario-hint',
+          type: 'usuario',
+          icon: '👤',
+          title: 'Usuário',
+          subtitle: 'Digite U-[número] para ir à lista de usuários',
+          badge: 'Usuário'
+        })
       }
 
       return results
@@ -168,7 +177,7 @@ export default {
         pedido: `/pedidos/visualizar/${parsed.id}`,
         rascunho: `/pedidos/visualizar/${parsed.id}?tipo=rascunho`,
         fornecedor: `/fornecedores/visualizar/${parsed.id}`,
-        usuario: `/usuarios/visualizar/${parsed.id}`,
+        usuario: `/usuarios`, // Usuários não têm view individual, vai para lista
         item: `/pedidos` // Itens não têm view própria, vai para pedidos
       }
 
