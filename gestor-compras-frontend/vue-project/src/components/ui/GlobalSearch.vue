@@ -142,7 +142,7 @@ export default {
           type: 'cotacao',
           icon: '💰',
           title: 'Cotação',
-          subtitle: 'Digite C-[número] para buscar uma cotação',
+          subtitle: 'Digite C-[número] para abrir a cotação (abre em modal)',
           badge: 'Cotação'
         })
       }
@@ -152,11 +152,22 @@ export default {
 
     // Navegar para a entidade encontrada
     const navigateToEntity = (parsed) => {
+      // Rotas especiais que usam query params
+      if (parsed.type === 'cotacao') {
+        // Cotações abrem em modal na página de cotações
+        router.push({
+          path: '/cotacoes',
+          query: { openCotacao: parsed.id }
+        })
+        searchQuery.value = ''
+        showSuggestions.value = false
+        return
+      }
+
       const routes = {
         pedido: `/pedidos/visualizar/${parsed.id}`,
         rascunho: `/pedidos/visualizar/${parsed.id}?tipo=rascunho`,
         fornecedor: `/fornecedores/visualizar/${parsed.id}`,
-        cotacao: `/cotacoes/visualizar/${parsed.id}`,
         usuario: `/usuarios/visualizar/${parsed.id}`,
         item: `/pedidos` // Itens não têm view própria, vai para pedidos
       }
