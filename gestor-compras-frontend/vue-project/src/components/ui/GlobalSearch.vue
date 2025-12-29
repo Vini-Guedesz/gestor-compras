@@ -173,11 +173,21 @@ export default {
         return
       }
 
+      if (parsed.type === 'usuario') {
+        // Usuários filtram na lista por ID
+        router.push({
+          path: '/usuarios',
+          query: { filtrarUsuario: parsed.id }
+        })
+        searchQuery.value = ''
+        showSuggestions.value = false
+        return
+      }
+
       const routes = {
         pedido: `/pedidos/visualizar/${parsed.id}`,
         rascunho: `/pedidos/visualizar/${parsed.id}?tipo=rascunho`,
-        fornecedor: `/fornecedores/visualizar/${parsed.id}`,
-        usuario: `/usuarios`, // Usuários não têm view individual, vai para lista
+        fornecedor: `/fornecedores/${parsed.id}`,
         item: `/pedidos` // Itens não têm view própria, vai para pedidos
       }
 

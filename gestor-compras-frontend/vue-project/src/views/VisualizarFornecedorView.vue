@@ -73,10 +73,7 @@
               :class="{ active: abaAtiva === 'informacoes' }"
               @click="abaAtiva = 'informacoes'"
             >
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
-              </svg>
+              <Icon name="info" type="tab" :size="18" />
               Informações Gerais
             </button>
             <button
@@ -84,9 +81,7 @@
               :class="{ active: abaAtiva === 'historico' }"
               @click="abaAtiva = 'historico'"
             >
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
-              </svg>
+              <Icon name="history" type="tab" :size="18" />
               Histórico de Cotações
               <span class="tab-badge" v-if="historicoCompras.total > 0">{{ historicoCompras.total }}</span>
             </button>
@@ -375,6 +370,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
+import Icon from '@/components/ui/Icon.vue'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
@@ -556,9 +552,23 @@ const carregarFornecedor = async () => {
     if (tipo === 'produto') {
       fornecedor.value = await fornecedorService.obterFornecedorProdutoPorId(fornecedorId)
       fornecedor.value.tipo = 'produto'
-    } else {
+    } else if (tipo === 'servico') {
       fornecedor.value = await fornecedorService.obterFornecedorServicoPorId(fornecedorId)
       fornecedor.value.tipo = 'servico'
+    } else {
+      // Se não especificou o tipo, tentar buscar em ambos
+      try {
+        fornecedor.value = await fornecedorService.obterFornecedorProdutoPorId(fornecedorId)
+        fornecedor.value.tipo = 'produto'
+      } catch (erroProduto) {
+        // Se não encontrou em produtos, tentar em serviços
+        try {
+          fornecedor.value = await fornecedorService.obterFornecedorServicoPorId(fornecedorId)
+          fornecedor.value.tipo = 'servico'
+        } catch (erroServico) {
+          throw new Error('Fornecedor não encontrado em produtos nem em serviços')
+        }
+      }
     }
 
     // Carregar histórico

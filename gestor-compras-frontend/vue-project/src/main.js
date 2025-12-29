@@ -18,8 +18,14 @@ import router from './router'
 import './assets/css/layout.css'
 import './assets/css/accessibility.css'
 
+// Importar componente Icon globalmente
+import Icon from './components/ui/Icon.vue'
+
 // Cria a instância principal da aplicação Vue
 const app = createApp(App)
+
+// Registra o componente Icon globalmente
+app.component('Icon', Icon)
 
 // Configura o Pinia para gerenciamento de estado global
 // Pinia é o substituto oficial do Vuex para Vue 3

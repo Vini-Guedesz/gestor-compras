@@ -35,10 +35,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon total">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white"
-                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                </svg>
+                <Icon name="users" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Total de Usuários</span>
             </div>
@@ -50,10 +47,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon active">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white"
-                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
+                <Icon name="active" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Usuários Ativos</span>
             </div>
@@ -65,10 +59,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon rating">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white"
-                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                </svg>
+                <Icon name="admin" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Administradores</span>
             </div>
@@ -80,10 +71,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon value">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white"
-                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                </svg>
+                <Icon name="clipboard" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Compradores e Aprovadores</span>
             </div>
@@ -310,11 +298,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
+import Icon from '@/components/ui/Icon.vue'
 import UserForm from '@/features/users/components/UserForm.vue'
 import ConfirmModal from '@/components/ui/modals/ConfirmModal.vue'
 import userService, { userUtils } from '@/services/userService.js'
@@ -542,6 +531,23 @@ const limparFiltros = () => {
 // Lifecycle
 onMounted(() => {
   carregarUsuarios()
+
+  // Verificar se veio de uma busca global por ID de usuário
+  const filtrarUsuarioId = route.query.filtrarUsuario
+  if (filtrarUsuarioId) {
+    searchQuery.value = filtrarUsuarioId
+    // Limpar o query parameter da URL após aplicar o filtro
+    router.replace({ query: {} })
+  }
+})
+
+// Watch para mudanças na query string
+watch(() => route.query.filtrarUsuario, (novoId) => {
+  if (novoId) {
+    searchQuery.value = novoId
+    // Limpar o query parameter da URL após aplicar o filtro
+    router.replace({ query: {} })
+  }
 })
 </script>
 
@@ -657,6 +663,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.metric-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .metric-icon.total {

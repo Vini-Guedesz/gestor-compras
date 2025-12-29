@@ -27,9 +27,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon total">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                </svg>
+                <Icon name="quote" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Cotações Abertas</span>
             </div>
@@ -41,9 +39,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon active">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+                <Icon name="clock" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Em Análise</span>
             </div>
@@ -55,9 +51,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon rating">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+                <Icon name="check" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Finalizadas</span>
             </div>
@@ -69,9 +63,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon value">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
+                <Icon name="warning" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Vencidas</span>
             </div>
@@ -614,12 +606,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch, nextTick, defineAsyncComponent } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { useErrorModal } from '@/composables/useErrorModal'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
+import Icon from '@/components/ui/Icon.vue'
 // Lazy loading para componente pesado
 const CotacaoForm = defineAsyncComponent(() => import('@/features/cotacoes/components/CotacaoForm.vue'))
 import { cotacaoService } from '../services/cotacaoService.js'
@@ -628,6 +621,7 @@ import logger from '../utils/logger.js'
 
 // Router
 const route = useRoute()
+const router = useRouter()
 const { success, warning, error: toastError } = useToast()
 
 // Estado reativo
@@ -1141,6 +1135,26 @@ onMounted(async () => {
     carregarCotacoes(),
     carregarFornecedores()
   ])
+
+  // Verificar se veio de uma busca global por ID de cotação
+  const cotacaoIdParam = route.query.openCotacao
+  if (cotacaoIdParam) {
+    // Aguardar próximo tick para garantir que os dados foram carregados
+    await nextTick()
+    visualizarCotacao(parseInt(cotacaoIdParam))
+    // Limpar o query parameter da URL após abrir o modal
+    router.replace({ query: {} })
+  }
+})
+
+// Watch para mudanças na query string (caso navegue de volta com o parâmetro)
+watch(() => route.query.openCotacao, async (novaCotacaoId) => {
+  if (novaCotacaoId) {
+    await nextTick()
+    visualizarCotacao(parseInt(novaCotacaoId))
+    // Limpar o query parameter da URL após abrir o modal
+    router.replace({ query: {} })
+  }
 })
 </script>
 
@@ -1283,6 +1297,11 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.metric-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .metric-icon.total {

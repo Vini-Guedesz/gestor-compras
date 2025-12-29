@@ -39,10 +39,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon total">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white"
-                    d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A2 2 0 0 0 18.04 7H16c-.8 0-1.54.37-2.01.99L12 10l2.01-2.01C14.54 7.37 15.2 7 16 7h2.04c1.23 0 2.18 1.24 1.92 2.63l2.54 7.63H20v6h-4z" />
-                </svg>
+                <Icon name="users" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Total de Fornecedores</span>
             </div>
@@ -54,10 +51,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon active">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white"
-                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
+                <Icon name="active" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Fornecedores Ativos</span>
             </div>
@@ -69,10 +63,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon rating">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white"
-                    d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,5.11 21.1,4 20,4Z" />
-                </svg>
+                <Icon name="product" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Fornecedores de Produto</span>
             </div>
@@ -84,9 +75,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon value">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M19,6.41L17.59,5L7,15.59V9H5V19H15V17H8.41L19,6.41Z" />
-                </svg>
+                <Icon name="service" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Fornecedores de Serviço</span>
             </div>
@@ -336,6 +325,7 @@ import { useToast } from '@/composables/useToast'
 import { usePermissions } from '@/composables/usePermissions'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
+import Icon from '@/components/ui/Icon.vue'
 // Lazy loading para componentes pesados
 const FornecedorForm = defineAsyncComponent(() => import('@/features/fornecedores/components/FornecedorForm.vue'))
 const ConfirmModal = defineAsyncComponent(() => import('@/components/ui/modals/ConfirmModal.vue'))
@@ -777,6 +767,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.metric-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .metric-icon.total {

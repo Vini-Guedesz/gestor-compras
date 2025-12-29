@@ -2,7 +2,7 @@
   <div class="metric-card" :class="cardClass">
     <div class="card-header">
       <div class="card-icon" :style="{ backgroundColor: iconColor }">
-        <component :is="iconComponent" />
+        <Icon :name="iconName" type="metric" :size="24" fill="white" />
       </div>
       <div class="card-actions">
         <button class="action-btn" @click="$emit('action')">
@@ -37,6 +37,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import Icon from '@/components/ui/Icon.vue'
 
 const props = defineProps({
   title: {
@@ -68,23 +69,17 @@ const cardClass = computed(() => {
   return `variant-${props.variant}`
 })
 
-// Ícones para diferentes tipos de cards
-const iconComponent = computed(() => {
+// Mapeia títulos de cards para nomes de ícones
+const iconName = computed(() => {
   switch (props.title.toLowerCase()) {
     case 'pedidos de compra':
-      return 'PedidosIcon'
+      return 'cart'
     case 'cotações':
-      return 'CotacoesIcon'
+      return 'clipboard'
     case 'fornecedores':
-      return 'FornecedoresIcon'
-    case 'aprovações':
-      return 'AprovacoesIcon'
-    case 'financeiro':
-      return 'FinanceiroIcon'
-    case 'relatórios':
-      return 'RelatoriosIcon'
+      return 'users'
     default:
-      return 'DefaultIcon'
+      return 'total'
   }
 })
 </script>

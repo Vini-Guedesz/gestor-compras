@@ -39,9 +39,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon total">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 16H9V7h9v14z"/>
-                </svg>
+                <Icon name="total" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Total de Pedidos</span>
             </div>
@@ -53,9 +51,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon pending">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
+                <Icon name="pending" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Aguardando Aprovação</span>
             </div>
@@ -67,9 +63,7 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon approved">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
+                <Icon name="approved" type="metric" :size="24" fill="white" />
               </div>
               <span class="metric-label">Pedidos Aprovados</span>
             </div>
@@ -104,9 +98,7 @@
             :class="{ active: abaAtiva === 'rascunhos' }"
             @click="abaAtiva = 'rascunhos'"
           >
-            <svg viewBox="0 0 24 24" width="18" height="18">
-              <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-            </svg>
+            <Icon name="draft" type="tab" :size="18" />
             Rascunhos
             <span v-if="totalRascunhos > 0" class="tab-badge">{{ totalRascunhos }}</span>
           </button>
@@ -115,9 +107,7 @@
             :class="{ active: abaAtiva === 'pedidos' }"
             @click="abaAtiva = 'pedidos'"
           >
-            <svg viewBox="0 0 24 24" width="18" height="18">
-              <path fill="currentColor" d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-            </svg>
+            <Icon name="orders" type="tab" :size="18" />
             Pedidos
             <span v-if="totalPedidosFinais > 0" class="tab-badge">{{ totalPedidosFinais }}</span>
           </button>
@@ -579,6 +569,7 @@ import { usePermissions } from '@/composables/usePermissions'
 import { useAuthStore } from '@/stores/auth'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
+import Icon from '@/components/ui/Icon.vue'
 // Lazy loading para componentes pesados
 // PedidoForm removido - usando navegação para views dedicadas
 const ConfirmModal = defineAsyncComponent(() => import('@/components/ui/modals/ConfirmModal.vue'))
@@ -1515,6 +1506,11 @@ export default {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.metric-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .metric-icon.total { background: #1F285F; }
