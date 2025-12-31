@@ -1161,8 +1161,8 @@ export default {
         return pedido.usuarioId === authStore.user?.id
       }
 
-      // Para pedidos (status PENDENTE): apenas COMPRADOR e ADMIN
-      if (pedido.status === 'PENDENTE') {
+      // Para pedidos (status PENDENTE ou EM_NEGOCIACAO): apenas COMPRADOR e ADMIN
+      if (pedido.status === 'PENDENTE' || pedido.status === 'EM_NEGOCIACAO') {
         return permissions.value.canEditPedido
       }
 

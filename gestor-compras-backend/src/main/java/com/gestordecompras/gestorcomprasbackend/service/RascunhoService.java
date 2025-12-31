@@ -565,24 +565,14 @@ public class RascunhoService {
 
                 // REMOVIDO: anexoPdf e caminhoAnexo (campos legados) - gerenciados via AnexoCotacao com deduplificação
 
-                // Criar CotacaoItem para cada ItemPedido (nova estrutura Bug #5)
-                int totalItens = itensPedidoCotacao.size();
-                java.math.BigDecimal precoTotal = cotacaoRascunho.getPreco();
-                java.math.BigDecimal precoUnitario = precoTotal.divide(
-                        java.math.BigDecimal.valueOf(totalItens),
-                        2,
-                        java.math.RoundingMode.HALF_UP
-                );
-
-                for (ItemPedido itemPedido : itensPedidoCotacao) {
-                    com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem cotacaoItem =
-                            new com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem();
-                    cotacaoItem.setItemPedido(itemPedido);
-                    cotacaoItem.setPrecoUnitario(precoUnitario);
-                    cotacaoItem.setQuantidade(itemPedido.getQuantidade());
-                    cotacaoItem.setObservacao("Convertido de rascunho - preço dividido igualmente");
-                    cotacao.addItem(cotacaoItem);
-                }
+                // Criar um único CotacaoItem com o primeiro item e o valor total
+                ItemPedido primeiroItem = itensPedidoCotacao.iterator().next();
+                com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem cotacaoItem =
+                        new com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem();
+                cotacaoItem.setItemPedido(primeiroItem);
+                cotacaoItem.setPrecoUnitario(cotacaoRascunho.getPreco());
+                cotacaoItem.setQuantidade(1);
+                cotacao.addItem(cotacaoItem);
 
                 // Copiar anexos múltiplos com deduplificação
                 if (cotacaoRascunho.getAnexos() != null && !cotacaoRascunho.getAnexos().isEmpty()) {
