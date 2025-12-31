@@ -6,8 +6,8 @@
  * até aprovação, incluindo anexos PDF, histórico de edições e relatórios comparativos.
  *
  * @module services/cotacaoService
- * @requires ./api
- * @requires axios
+ * @requires ./api - Cliente HTTP principal para operações CRUD
+ * @requires axios - Usado para relatorioClient (downloads PDF com responseType: blob)
  * @requires ../utils/logger
  *
  * @description

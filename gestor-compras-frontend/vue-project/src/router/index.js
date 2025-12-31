@@ -98,6 +98,19 @@ const SobreView = () => import('../views/SobreView.vue')
  */
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  /**
+   * Configuração de Rotas
+   *
+   * Níveis de acesso:
+   * - requiresGuest: Apenas não autenticados (ex: login)
+   * - requiresAuth: Qualquer usuário autenticado
+   * - requiredRoles: Restringe a roles específicos (ADMIN, COMPRADOR, USER)
+   *
+   * Rotas com controle granular de permissões:
+   * - /cotacoes: ADMIN, COMPRADOR
+   * - /usuarios: ADMIN
+   * - Demais rotas: qualquer usuário autenticado (controle fino no backend/componentes)
+   */
   routes: [
     {
       path: '/',
