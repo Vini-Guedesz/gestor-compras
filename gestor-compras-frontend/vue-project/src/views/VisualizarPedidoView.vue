@@ -378,10 +378,10 @@
                     </button>
                   </div>
 
-                  <!-- Botões de Edição e Histórico (apenas para pedidos) -->
+                  <!-- Botões de Edição e Histórico (apenas para pedidos em negociação) -->
                   <div v-if="!isRascunho" class="cotacao-edit-buttons">
                     <button
-                      v-if="permissions.canEditCotacao"
+                      v-if="permissions.canEditCotacao && pedido?.status === 'EM_NEGOCIACAO'"
                       @click="abrirModalEditarCotacao(cotacao)"
                       class="btn-edit-cotacao"
                       title="Editar cotação"
