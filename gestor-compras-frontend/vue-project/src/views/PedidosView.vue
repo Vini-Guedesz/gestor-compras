@@ -39,7 +39,9 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon total">
-                <Icon name="total" type="metric" :size="24" fill="white" />
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                  <path fill="white" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 16H9V7h9v14z"/>
+                </svg>
               </div>
               <span class="metric-label">Total de Pedidos</span>
             </div>
@@ -51,7 +53,9 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon pending">
-                <Icon name="pending" type="metric" :size="24" fill="white" />
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                  <path fill="white" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
               </div>
               <span class="metric-label">Aguardando Aprovação</span>
             </div>
@@ -63,7 +67,9 @@
           <div class="metric-card">
             <div class="metric-header">
               <div class="metric-icon approved">
-                <Icon name="approved" type="metric" :size="24" fill="white" />
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                  <path fill="white" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
               </div>
               <span class="metric-label">Pedidos Aprovados</span>
             </div>
@@ -176,10 +182,10 @@
               <tr v-for="pedido in pedidosFiltrados" :key="pedido.id" class="table-row">
                 <td class="pedido-cell">
                   <div class="pedido-info">
-                    <span class="pedido-numero">{{ formatarIdPadronizado(pedido) }}</span>
+                    <span class="pedido-numero">{{ formatarIdPedido(pedido) }}</span>
                   </div>
                 </td>
-                <td>
+                <td class="status-cell">
                   <span class="status-badge" :class="getStatusClass(pedido.status)">
                     {{ getStatusLabel(pedido.status) }}
                   </span>
@@ -189,34 +195,23 @@
                 </td>
                 <td class="actions-td">
                   <div class="actions-cell">
-                    <div class="status-actions" :class="{ 'btn-hidden': !podeAlterarStatus(pedido) }">
-                      <select
-                        @change="alterarStatus(pedido, $event.target.value)"
-                        class="status-select"
-                        :value="pedido.status"
-                        title="Alterar Status"
-                        :disabled="!podeAlterarStatus(pedido)"
-                      >
-                        <option :value="pedido.status" disabled>{{ getStatusLabel(pedido.status) }}</option>
-                        <option v-for="status in getStatusDisponiveis(pedido.status)"
-                                :key="status.value"
-                                :value="status.value">
-                          {{ status.label }}
-                        </option>
-                      </select>
-                    </div>
                     <button
                       class="action-btn approve"
                       @click="aprovarPedido(pedido)"
                       title="Aprovar"
-                      :class="{ 'btn-hidden': !podeAprovar(pedido) || podeAlterarStatus(pedido) }"
-                      :disabled="!podeAprovar(pedido) || podeAlterarStatus(pedido)"
+                      :disabled="!podeAprovar(pedido)"
                     >
                       <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        <path fill="currentColor"
+                          d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                       </svg>
                     </button>
-                    <button class="action-btn view" @click="visualizarPedido(pedido)" title="Visualizar">
+                    <button
+                      class="action-btn view"
+                      @click="visualizarPedido(pedido)"
+                      title="Visualizar"
+                      :disabled="!podeVisualizar(pedido)"
+                    >
                       <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor"
                           d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
@@ -226,7 +221,6 @@
                       class="action-btn edit"
                       @click="editarPedido(pedido)"
                       title="Editar"
-                      :class="{ 'btn-hidden': !podeEditar(pedido) }"
                       :disabled="!podeEditar(pedido)"
                     >
                       <svg viewBox="0 0 24 24" width="16" height="16">
@@ -238,7 +232,6 @@
                       class="action-btn delete"
                       @click="confirmarExclusao(pedido)"
                       title="Excluir"
-                      :class="{ 'btn-hidden': !podeExcluir(pedido) }"
                       :disabled="!podeExcluir(pedido)"
                     >
                       <svg viewBox="0 0 24 24" width="16" height="16">
@@ -276,7 +269,7 @@
             <div v-for="pedido in pedidosFiltrados" :key="pedido.id" class="pedido-card">
               <div class="card-header">
                 <div class="card-header-left">
-                  <span class="pedido-numero-mobile">{{ formatarIdPadronizado(pedido) }}</span>
+                  <span class="pedido-numero-mobile">{{ formatarIdPedido(pedido) }}</span>
                   <span class="status-badge" :class="getStatusClass(pedido.status)">
                     {{ getStatusLabel(pedido.status) }}
                   </span>
@@ -569,7 +562,6 @@ import { usePermissions } from '@/composables/usePermissions'
 import { useAuthStore } from '@/stores/auth'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
-import Icon from '@/components/ui/Icon.vue'
 // Lazy loading para componentes pesados
 // PedidoForm removido - usando navegação para views dedicadas
 const ConfirmModal = defineAsyncComponent(() => import('@/components/ui/modals/ConfirmModal.vue'))
@@ -630,6 +622,14 @@ export default {
     // Computed properties para métricas
     const totalPedidos = computed(() => pedidos.value.length)
 
+    const totalRascunhos = computed(() =>
+      pedidos.value.filter(p => p.isRascunho).length
+    )
+
+    const totalPedidosFinais = computed(() =>
+      pedidos.value.filter(p => !p.isRascunho).length
+    )
+
     const novosPedidosMes = computed(() => {
       const agora = new Date()
       const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1)
@@ -652,14 +652,6 @@ export default {
       return Math.round((pedidosPendentes.value / totalPedidos.value) * 100)
     })
 
-    const totalRascunhos = computed(() =>
-      pedidos.value.filter(p => p.isRascunho).length
-    )
-
-    const totalPedidosFinais = computed(() =>
-      pedidos.value.filter(p => !p.isRascunho).length
-    )
-
     // REMOVIDO: Valor simulado/mockado - implementar cálculo real baseado nos itens
     /*
     const valorTotalFormatado = computed(() => {
@@ -673,15 +665,19 @@ export default {
     const pedidosFiltrados = computed(() => {
       let resultado = [...pedidos.value]
 
+      // Filtro por aba ativa (Rascunhos ou Pedidos)
+      if (abaAtiva.value === 'rascunhos') {
+        resultado = resultado.filter(p => p.isRascunho)
+      } else if (abaAtiva.value === 'pedidos') {
+        resultado = resultado.filter(p => !p.isRascunho)
+      }
+
       // Filtro por texto
       if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase().trim()
-        resultado = resultado.filter(pedido => {
-          const idPadronizado = formatarIdPadronizado(pedido).toLowerCase()
-          const idNumerico = pedido.id?.toString()
-          // Permite buscar por: "1", "P-1", "R-1"
-          return idNumerico?.includes(query) || idPadronizado.includes(query)
-        })
+        const query = searchQuery.value.toLowerCase()
+        resultado = resultado.filter(pedido =>
+          (pedido.id?.toString().includes(query))
+        )
       }
 
       // Filtro por status
@@ -689,7 +685,7 @@ export default {
         resultado = resultado.filter(pedido => pedido.status === filtroStatus.value)
       }
 
-      // Filtro por perÃ­odo
+      // Filtro por período
       if (filtroPeriodo.value) {
         const agora = new Date()
         let dataLimite
@@ -715,13 +711,6 @@ export default {
             return dataPedido >= dataLimite
           })
         }
-      }
-
-      // Filtro por aba ativa (Rascunhos ou Pedidos)
-      if (abaAtiva.value === 'rascunhos') {
-        resultado = resultado.filter(p => p.isRascunho)
-      } else if (abaAtiva.value === 'pedidos') {
-        resultado = resultado.filter(p => !p.isRascunho)
       }
 
       // Ordenar por data de criação (mais recentes primeiro)
@@ -800,7 +789,7 @@ export default {
           }
 
           return {
-            id: `R-${rascunho.id}`,
+            id: rascunho.id,
             rascunhoId: rascunho.id,
             status: status,
             statusRascunho: rascunho.status || 'ATIVO',
@@ -844,18 +833,6 @@ export default {
       } catch {
         return 'Data inválida'
       }
-    }
-
-    const formatarIdPadronizado = (pedido) => {
-      if (!pedido || !pedido.id) return 'N/A'
-
-      // Se é rascunho, o ID já vem como "R-1", "R-2", etc.
-      if (typeof pedido.id === 'string' && pedido.id.startsWith('R-')) {
-        return pedido.id
-      }
-
-      // Se é pedido normal, adicionar prefixo P-
-      return `P-${pedido.id}`
     }
 
     const getStatusLabel = (status) => {
@@ -910,6 +887,11 @@ export default {
         'cancelado': 'status-canceled'
       }
       return classes[status] || 'status-default'
+    }
+
+    const formatarIdPedido = (pedido) => {
+      const prefixo = pedido.isRascunho ? 'R' : 'P'
+      return `${prefixo}-${pedido.id}`
     }
 
     const getQuantidadeItens = (pedido) => {
@@ -1150,19 +1132,19 @@ export default {
 
     // Métodos de permissão
     const podeEditar = (pedido) => {
-      // Permite editar se finalizado
-      if (pedido.isFinalizado) {
-        return false
-      }
-
       // Verifica se é rascunho
       const isRascunho = ['RASCUNHO', 'EM_COTACAO'].includes(pedido.status)
 
       if (isRascunho) {
-        // NOVA REGRA: Se tem cotações, NINGUÉM pode editar (botão desaparece para todos)
+        // Se está finalizado, apenas COMPRADOR e ADMIN podem editar (na fase de compra/cotação)
+        if (pedido.isFinalizado) {
+          return permissions.value.canEditRascunho
+        }
+
+        // Se tem cotações, apenas COMPRADOR e ADMIN podem editar
         const temCotacoes = pedido.itens?.some(item => item.cotacoes && item.cotacoes.length > 0)
         if (temCotacoes) {
-          return false
+          return permissions.value.canEditRascunho
         }
 
         // COMPRADOR e ADMIN podem editar qualquer rascunho (inclusive EM_COTACAO)
@@ -1190,6 +1172,11 @@ export default {
     const podeAprovar = (pedido) => {
       // Só pode aprovar pedidos pendentes ou em análise
       return ['PENDENTE', 'EM_ANALISE'].includes(pedido.status)
+    }
+
+    const podeVisualizar = (pedido) => {
+      // Todos podem visualizar
+      return true
     }
 
     const podeExcluir = (pedido) => {
@@ -1324,12 +1311,12 @@ export default {
 
       // Computed
       totalPedidos,
+      totalRascunhos,
+      totalPedidosFinais,
       novosPedidosMes,
       pedidosPendentes,
       pedidosAprovados,
       percentualPendentes,
-      totalRascunhos,
-      totalPedidosFinais,
       // valorTotalFormatado, // REMOVIDO - valor simulado
       pedidosFiltrados,
 
@@ -1337,9 +1324,9 @@ export default {
       carregarPedidos,
       formatarData,
       formatarDataCompleta,
-      formatarIdPadronizado,
       getStatusLabel,
       getStatusClass,
+      formatarIdPedido,
       getQuantidadeItens,
       filtrarPedidos,
       limparFiltros,
@@ -1352,6 +1339,7 @@ export default {
       aprovarPedido,
       podeEditar,
       podeAprovar,
+      podeVisualizar,
       podeExcluir,
       podeAlterarStatus,
       getStatusDisponiveis,
@@ -1508,11 +1496,6 @@ export default {
   flex-shrink: 0;
 }
 
-.metric-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
 .metric-icon.total { background: #1F285F; }
 .metric-icon.pending { background: #f59e0b; }
 .metric-icon.approved { background: #10b981; }
@@ -1540,68 +1523,85 @@ export default {
 .metric-growth.negative { color: #ef4444; }
 .metric-growth.neutral { color: #6b7280; }
 
-/* Tabs: Rascunhos e Pedidos */
+/* Seção de Tabs */
 .tabs-section {
-  margin-bottom: 32px;
+  margin-bottom: 0;
 }
 
 .tabs-container {
   display: flex;
   gap: 8px;
   background: white;
-  border-radius: 12px;
-  padding: 8px;
-  border: 1px solid #e5e7eb;
+  padding: 16px 24px 0;
+  border-top: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .tab-button {
-  flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 12px 24px;
-  border: none;
+  padding: 12px 20px;
   background: transparent;
-  border-radius: 8px;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  border: none;
+  border-bottom: 3px solid transparent;
   color: #6b7280;
+  font-weight: 500;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+}
+
+.tab-button svg {
+  flex-shrink: 0;
+  display: block;
+  min-width: 18px;
+  min-height: 18px;
+}
+
+.tab-button svg path {
+  fill: #6b7280 !important;
+}
+
+.tab-button.active svg path {
+  fill: #1F285F !important;
+}
+
+.tab-button:hover {
+  color: #1F285F;
+  background: #f9fafb;
+}
+
+.tab-button:hover svg path {
+  fill: #1F285F !important;
 }
 
 .tab-button.active {
-  background: #1F285F;
-  color: white;
-  box-shadow: 0 2px 4px rgba(31, 40, 95, 0.1);
-}
-
-.tab-button:hover:not(.active) {
-  background: #f3f4f6;
-  color: #374151;
+  color: #1F285F;
+  border-bottom-color: #1F285F;
+  font-weight: 600;
 }
 
 .tab-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 8px;
-  background: #e5e7eb;
-  color: #374151;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.tab-button.active .tab-badge {
-  background: rgba(255, 255, 255, 0.2);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #1F285F;
   color: white;
+  border-radius: 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
-/* SeÃ§Ã£o de Pesquisa */
+/* Seção de Pesquisa */
 .search-section {
   background: white;
   border-radius: 12px;
@@ -1723,9 +1723,12 @@ export default {
 /* Tabela */
 .table-section {
   background: white;
-  border-radius: 12px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .table-container {
@@ -1736,39 +1739,41 @@ export default {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
-  table-layout: fixed;
 }
 
-/* Larguras específicas das colunas */
-.pedidos-table .col-pedido {
-  width: 100px;
+.pedidos-table thead {
+  border-top: 1px solid #e5e7eb;
 }
 
-.pedidos-table .col-status {
-  width: 200px;
+/* Larguras específicas para alinhamento perfeito */
+.pedidos-table th:nth-child(1),
+.pedidos-table td:nth-child(1) {
+  width: 15%;
 }
 
-.pedidos-table .col-data {
-  width: 140px;
+.pedidos-table th:nth-child(2),
+.pedidos-table td:nth-child(2) {
+  width: 25%;
 }
 
-.pedidos-table .col-acoes {
-  width: auto;
+.pedidos-table th:nth-child(3),
+.pedidos-table td:nth-child(3) {
+  width: 20%;
+}
+
+.pedidos-table th:nth-child(4),
+.pedidos-table td:nth-child(4) {
+  width: 40%;
 }
 
 .pedidos-table th {
-  background: #f8fafc;
-  color: #374151;
+  background: #f9fafb;
   padding: 16px;
   text-align: left;
   font-weight: 600;
-  font-size: 0.875rem;
+  color: #374151;
   border-bottom: 1px solid #e5e7eb;
-}
-
-.pedidos-table th.col-acoes {
-  text-align: right;
-  padding: 16px;
+  font-size: 0.875rem;
 }
 
 .pedidos-table td {
@@ -1777,10 +1782,6 @@ export default {
   vertical-align: middle;
 }
 
-.pedidos-table td.actions-td {
-  text-align: right;
-  padding: 16px;
-}
 
 .table-row {
   transition: all 0.2s ease;
@@ -1817,12 +1818,12 @@ export default {
   font-size: 0.875rem;
 }
 
-/* Status badges */
+/* Status badges - Padrão UsuáriosView */
 .status-badge {
   padding: 4px 12px;
-  border-radius: 6px;
+  border-radius: 20px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   display: inline-block;
   white-space: nowrap;
 }
@@ -1896,24 +1897,46 @@ export default {
 .actions-cell {
   display: flex;
   gap: 8px;
-  align-items: center;
-  justify-content: flex-end;
-  width: 100%;
 }
 
 .action-btn {
-  background: none;
-  border: 1px solid #e5e7eb;
-  padding: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
   border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-  color: #6b7280;
   flex-shrink: 0;
 }
 
-.action-btn:hover {
-  background: #f3f4f6;
+.action-btn.view {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.action-btn.view:hover {
+  background: #bfdbfe;
+}
+
+.action-btn.edit {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.action-btn.edit:hover {
+  background: #bfdbfe;
+}
+
+.action-btn.delete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.action-btn.delete:hover {
+  background: #fecaca;
   color: #374151;
 }
 
@@ -1935,10 +1958,17 @@ export default {
   border-color: #f87171;
 }
 
-/* Ocultar botões mas manter o espaço */
-.btn-hidden {
-  visibility: hidden;
-  pointer-events: none;
+/* Botões desabilitados ficam em cinza */
+.action-btn:disabled {
+  background: #f3f4f6 !important;
+  color: #9ca3af !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.action-btn:disabled:hover {
+  background: #f3f4f6 !important;
+  transform: none;
 }
 
 /* Status Actions */
@@ -2600,8 +2630,7 @@ export default {
 .pedido-numero-mobile {
   font-weight: 600;
   font-size: 1.125rem;
-  color: #1F285F;
-  font-family: 'Courier New', monospace;
+  color: #1f2937;
 }
 
 .data-criacao-mobile {
@@ -3797,3 +3826,4 @@ export default {
   }
 }
 </style>
+

@@ -1257,17 +1257,12 @@ onMounted(() => {
   }
 
   .search-actions {
-    justify-content: stretch;
+    flex-wrap: wrap;
   }
 
   .filter-select {
     flex: 1;
-  }
-}
-
-@media (max-width: 768px) {
-  .metrics-grid {
-    grid-template-columns: 1fr;
+    min-width: 140px;
   }
 
   /* Toggle entre table e cards */
@@ -1277,6 +1272,527 @@ onMounted(() => {
 
   .mobile-only {
     display: block !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .welcome-section {
+    margin-bottom: 24px;
+    padding: 16px 0;
+  }
+
+  .welcome-title {
+    font-size: 22px;
+  }
+
+  .welcome-subtitle {
+    font-size: 14px;
+  }
+
+  .action-button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .metrics-section {
+    margin-bottom: 24px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 14px;
+  }
+
+  .metric-header {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .metric-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .metric-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .metric-value {
+    font-size: 1.375rem;
+  }
+
+  .metric-label {
+    font-size: 0.6875rem;
+  }
+
+  .metric-growth {
+    font-size: 0.6875rem;
+  }
+
+  .search-section {
+    margin-bottom: 24px;
+  }
+
+  .search-container {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .search-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .filter-select {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .filter-button {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Cards mobile */
+  .fornecedores-cards {
+    padding: 0;
+  }
+
+  .cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .fornecedor-card {
+    padding: 14px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-header-left {
+    gap: 6px;
+  }
+
+  .card-header-right {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .card-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .action-btn-mobile {
+    flex: 1;
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-section {
+    margin-bottom: 16px;
+    padding: 12px 0;
+  }
+
+  .welcome-title {
+    font-size: 20px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .metric-card {
+    padding: 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .metric-header {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .metric-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .metric-label {
+    display: block;
+    font-size: 0.75rem;
+  }
+
+  .metric-value {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+  }
+
+  .metric-growth {
+    margin-top: 2px;
+  }
+
+  .search-container {
+    padding: 12px;
+  }
+
+  .search-input {
+    padding: 10px 10px 10px 40px;
+  }
+
+  .search-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-select {
+    padding: 10px;
+  }
+
+  .fornecedores-cards {
+    padding: 0;
+  }
+
+  .fornecedor-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .fornecedor-id-mobile {
+    font-size: 0.75rem;
+  }
+
+  .fornecedor-nome-mobile {
+    font-size: 0.875rem;
+  }
+
+  .document-mobile {
+    font-size: 0.75rem;
+  }
+
+  .type-tag,
+  .status-badge {
+    padding: 3px 8px;
+    font-size: 0.65rem;
+  }
+
+  .card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-btn-mobile {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 0.8125rem;
+    justify-content: center;
+  }
+
+  .empty-state {
+    padding: 32px 16px;
+  }
+
+  .empty-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .empty-state h3 {
+    font-size: 1rem;
+  }
+
+  .empty-state p {
+    font-size: 0.875rem;
+  }
+}
+
+/* Ajustes para telas muito pequenas (360px e menor) */
+@media (max-width: 380px) {
+  /* Welcome Section - Compacto */
+  .welcome-section {
+    margin-bottom: 12px;
+    padding: 6px 0;
+  }
+
+  .welcome-header {
+    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .welcome-content {
+    min-width: 0;
+  }
+
+  .welcome-title {
+    font-size: 15px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.2;
+  }
+
+  .welcome-subtitle {
+    font-size: 11px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .action-buttons {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .action-button {
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+    min-width: auto !important;
+    min-height: 40px !important;
+    width: 100% !important;
+    gap: 6px !important;
+    border-radius: 6px !important;
+  }
+
+  .action-icon {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0;
+  }
+
+  /* Métricas - Layout horizontal compacto */
+  .metrics-section {
+    margin-bottom: 12px;
+  }
+
+  .metrics-grid {
+    gap: 8px;
+  }
+
+  .metric-card {
+    padding: 10px;
+    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .metric-header {
+    flex-shrink: 0;
+    margin-bottom: 0;
+    gap: 8px;
+  }
+
+  .metric-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .metric-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .metric-label {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    max-width: 80px;
+  }
+
+  .metric-value {
+    font-size: 1.125rem;
+    margin-bottom: 0;
+  }
+
+  .metric-growth {
+    font-size: 0.65rem;
+    margin-top: 2px;
+  }
+
+  /* Busca - Compacto */
+  .search-section {
+    margin-bottom: 12px;
+  }
+
+  .search-container {
+    padding: 10px;
+    gap: 10px;
+    border-radius: 8px;
+  }
+
+  .search-input-container {
+    width: 100%;
+  }
+
+  .search-input {
+    padding: 10px 10px 10px 36px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+
+  .search-icon {
+    width: 16px;
+    height: 16px;
+    left: 10px;
+  }
+
+  .search-actions {
+    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filter-select {
+    padding: 10px 8px;
+    font-size: 12px;
+    min-width: auto;
+    width: 100%;
+    border-radius: 6px;
+  }
+
+  .filter-button {
+    padding: 10px 12px;
+    font-size: 12px;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+    border-radius: 6px;
+  }
+
+  .filter-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Table Section */
+  .table-section {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  /* Cards de Fornecedores - Layout Otimizado */
+  .cards-container {
+    gap: 10px;
+  }
+
+  .fornecedor-card {
+    padding: 12px;
+    gap: 10px;
+    border-radius: 8px;
+  }
+
+  .card-header {
+    gap: 8px;
+    padding-bottom: 10px;
+    flex-direction: column;
+  }
+
+  .card-header-left {
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .card-header-right {
+    gap: 6px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .fornecedor-id-mobile {
+    font-size: 0.7rem;
+  }
+
+  .fornecedor-nome-mobile {
+    font-size: 0.8125rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.3;
+  }
+
+  .document-mobile {
+    font-size: 0.7rem;
+    word-break: break-all;
+  }
+
+  .type-tag,
+  .status-badge {
+    padding: 3px 8px;
+    font-size: 0.65rem;
+    white-space: nowrap;
+  }
+
+  /* Botões de Ação - Grid de 2 colunas */
+  .card-actions {
+    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .action-btn-mobile {
+    padding: 10px 8px;
+    font-size: 0.75rem;
+    gap: 4px;
+    min-width: 0;
+    flex: none;
+    width: 100%;
+    border-radius: 6px;
+  }
+
+  .action-btn-mobile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .action-btn-mobile svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* Empty State */
+  .empty-state {
+    padding: 24px 12px;
+  }
+
+  .empty-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .empty-state h3 {
+    font-size: 0.875rem;
+  }
+
+  .empty-state p {
+    font-size: 0.75rem;
+    margin-bottom: 16px;
+  }
+
+  .btn-primary {
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+    width: 100%;
   }
 }
 </style>

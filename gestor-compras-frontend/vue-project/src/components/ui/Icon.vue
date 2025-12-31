@@ -1,5 +1,11 @@
 <template>
-  <svg :viewBox="viewBox" :width="size" :height="size" :class="iconClass">
+  <svg
+    :viewBox="viewBox"
+    :width="size + 'px'"
+    :height="size + 'px'"
+    :class="iconClass"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <path :fill="fill" :d="iconPath" />
   </svg>
 </template>

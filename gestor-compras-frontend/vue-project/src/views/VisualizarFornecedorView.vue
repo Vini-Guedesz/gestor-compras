@@ -629,8 +629,8 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
           const itensValidos = itensDetalhados.filter(item => item !== null)
           const primeiroItem = itensValidos[0] || null
 
-          // Se houver múltiplos itens, vamos concatenar as descrições (nome real do produto)
-          const nomesItens = itensValidos.map(item => item.descricao || item.nome).join(', ')
+          // Se houver múltiplos itens, vamos concatenar os nomes dos produtos (nome tem prioridade sobre descrição)
+          const nomesItens = itensValidos.map(item => item.nome || item.descricao || 'Item sem nome').join(', ')
           const quantidadeTotal = itensValidos.reduce((sum, item) => sum + (item.quantidade || 0), 0)
 
           return {
@@ -1631,6 +1631,12 @@ onBeforeUnmount(() => {
 }
 
 /* Responsividade */
+@media (max-width: 1024px) {
+  .content-area {
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .content-area {
     margin-left: 0;
@@ -1670,6 +1676,589 @@ onBeforeUnmount(() => {
   .info-grid,
   .info-grid-enhanced {
     grid-template-columns: 1fr;
+  }
+
+  .resumo-separator {
+    display: none;
+  }
+
+  .tabs-container {
+    padding: 12px 16px 0;
+    gap: 4px;
+  }
+
+  .tab-button {
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-area {
+    padding: 12px;
+  }
+
+  .breadcrumb {
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.8125rem;
+  }
+
+  .btn-voltar {
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+  }
+
+  .view-header {
+    padding: 18px 16px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .view-title {
+    font-size: 1.25rem;
+    word-break: break-word;
+  }
+
+  .view-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .header-resumo {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .resumo-item {
+    font-size: 0.8125rem;
+  }
+
+  .section-card {
+    padding: 20px 16px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    margin-bottom: 16px;
+  }
+
+  .info-card {
+    padding: 12px;
+  }
+
+  .info-card-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .info-card-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .info-card-label {
+    font-size: 0.625rem;
+  }
+
+  .info-card-value {
+    font-size: 0.875rem;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .stat-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.8125rem;
+  }
+
+  .tabs-container {
+    padding: 10px 12px 0;
+    overflow-x: auto;
+  }
+
+  .tab-button {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .tab-badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+  }
+
+  .cotacao-card {
+    border-radius: 10px;
+  }
+
+  .cotacao-header-padrao {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .fornecedor-nome {
+    font-size: 1rem;
+  }
+
+  .preco-destaque-box {
+    width: 100%;
+    align-items: flex-start;
+    padding: 10px 14px;
+  }
+
+  .preco-valor-grande {
+    font-size: 1.25rem;
+  }
+
+  .cotacao-body {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .cotacao-info-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .info-box {
+    padding: 12px;
+  }
+
+  .cotacao-itens-section {
+    padding: 12px;
+  }
+
+  .item-chip {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  .cotacao-actions {
+    padding: 14px 16px;
+  }
+
+  .btn-pdf-primary {
+    padding: 8px 14px;
+    font-size: 0.8125rem;
+  }
+
+  .pdf-viewer-wrapper {
+    height: 350px;
+  }
+}
+
+/* Telas muito pequenas (380px e menor) */
+@media (max-width: 380px) {
+  .content-area {
+    padding: 8px;
+  }
+
+  .breadcrumb {
+    gap: 6px;
+    margin-bottom: 16px;
+    font-size: 0.75rem;
+  }
+
+  .btn-voltar {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+
+  .btn-voltar svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .breadcrumb-link,
+  .breadcrumb-current {
+    font-size: 0.75rem;
+  }
+
+  .breadcrumb-current {
+    display: none;
+  }
+
+  .view-container {
+    max-width: 100%;
+  }
+
+  .view-header {
+    padding: 14px 12px;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .view-title {
+    font-size: 1rem;
+    line-height: 1.3;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .view-subtitle {
+    font-size: 0.7rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .status-badge {
+    padding: 4px 8px;
+    font-size: 0.65rem;
+  }
+
+  .header-resumo {
+    margin-top: 8px;
+    padding-top: 8px;
+    gap: 6px;
+  }
+
+  .resumo-item {
+    font-size: 0.7rem;
+    gap: 4px;
+  }
+
+  .resumo-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .total-valor {
+    font-size: 0.75rem;
+  }
+
+  /* Tabs */
+  .tabs-container {
+    padding: 8px 8px 0;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-button {
+    padding: 8px 10px;
+    font-size: 0.7rem;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .tab-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .tab-badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 0.6rem;
+    padding: 0 4px;
+  }
+
+  /* Section Card */
+  .section-card {
+    padding: 14px 10px;
+  }
+
+  .section-card:last-child {
+    border-radius: 0 0 10px 10px;
+    padding-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+
+  .section-title::after {
+    width: 40px;
+    height: 2px;
+  }
+
+  /* Info Cards */
+  .info-grid-enhanced {
+    gap: 10px;
+  }
+
+  .info-card {
+    padding: 10px;
+    gap: 10px;
+    border-radius: 6px;
+  }
+
+  .info-card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+
+  .info-card-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .info-card-label {
+    font-size: 0.5625rem;
+    letter-spacing: 0.3px;
+  }
+
+  .info-card-value {
+    font-size: 0.8125rem;
+    word-break: break-word;
+  }
+
+  .info-card.full-width .info-card-value {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  /* Histórico Stats */
+  .historico-stats {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    padding: 12px;
+    gap: 12px;
+    border-radius: 8px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+
+  .stat-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .stat-value {
+    font-size: 1.125rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+
+  /* Cotação Card */
+  .historico-lista {
+    gap: 16px;
+  }
+
+  .cotacao-card {
+    border-radius: 8px;
+  }
+
+  .cotacao-header-padrao {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .fornecedor-linha {
+    gap: 8px;
+  }
+
+  .fornecedor-nome {
+    font-size: 0.875rem;
+    line-height: 1.3;
+  }
+
+  .tipo-tag {
+    padding: 3px 6px;
+    font-size: 0.6rem;
+    border-radius: 3px;
+  }
+
+  .preco-destaque-box {
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+
+  .preco-label-small {
+    font-size: 0.55rem;
+  }
+
+  .preco-valor-grande {
+    font-size: 1.125rem;
+  }
+
+  .cotacao-body {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .info-box {
+    padding: 10px;
+    gap: 10px;
+    border-radius: 6px;
+  }
+
+  .info-box-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .info-box-label {
+    font-size: 0.5625rem;
+  }
+
+  .info-box-value {
+    font-size: 0.8125rem;
+  }
+
+  .cotacao-itens-section {
+    padding: 10px;
+    border-radius: 6px;
+  }
+
+  .itens-section-title {
+    font-size: 0.65rem;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+
+  .itens-chips {
+    gap: 6px;
+  }
+
+  .item-chip {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 12px;
+  }
+
+  .observacoes-section {
+    padding: 10px;
+    border-radius: 6px;
+  }
+
+  .observacao-content p {
+    font-size: 0.75rem;
+  }
+
+  .cotacao-actions {
+    padding: 10px 12px;
+  }
+
+  .pdf-buttons {
+    gap: 6px;
+    width: 100%;
+  }
+
+  .btn-pdf-primary {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    gap: 6px;
+    flex: 1;
+    justify-content: center;
+    border-radius: 6px;
+  }
+
+  .btn-pdf-primary .btn-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .pdf-viewer-container {
+    margin-top: 12px;
+    border-radius: 6px;
+  }
+
+  .pdf-viewer-wrapper {
+    height: 280px;
+  }
+
+  .pdf-loading {
+    padding: 30px;
+    font-size: 0.8125rem;
+    gap: 10px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    padding: 40px 16px;
+    gap: 12px;
+  }
+
+  .empty-state svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .empty-state h3 {
+    font-size: 1rem;
+  }
+
+  .empty-state p {
+    font-size: 0.8125rem;
+  }
+
+  /* Loading */
+  .loading-container {
+    padding: 40px 16px;
+    gap: 12px;
+  }
+
+  .loading-spinner {
+    width: 28px;
+    height: 28px;
+  }
+
+  .loading-message {
+    padding: 30px 16px;
+    font-size: 0.8125rem;
+  }
+
+  .loading-spinner-small {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Error Container */
+  .error-container svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .error-container h3 {
+    font-size: 1rem;
+  }
+
+  .error-container p {
+    font-size: 0.8125rem;
+  }
+
+  .btn-primary {
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+    width: 100%;
   }
 }
 </style>

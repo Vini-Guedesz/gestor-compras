@@ -1284,6 +1284,10 @@ const handleSubmit = () => {
 
 /* Responsividade */
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0;
+  }
+
   .modal-container {
     width: 100%;
     height: 100vh;
@@ -1292,15 +1296,49 @@ const handleSubmit = () => {
   }
 
   .modal-header {
+    padding: 20px 16px;
     border-radius: 0;
   }
 
-  .modal-footer {
-    border-radius: 0;
+  .modal-title {
+    font-size: 1.25rem;
+  }
+
+  .modal-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .form-section {
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .section-title svg {
+    width: 18px;
+    height: 18px;
   }
 
   .form-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-input,
+  .form-select {
+    padding: 10px 12px;
+    font-size: 16px; /* Evita zoom no iOS */
+  }
+
+  .form-label {
+    font-size: 0.8125rem;
   }
 
   .radio-group {
@@ -1308,7 +1346,233 @@ const handleSubmit = () => {
     gap: 12px;
   }
 
+  .radio-group-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 
+  .radio-card {
+    padding: 16px;
+  }
+
+  .radio-card-content {
+    gap: 10px;
+  }
+
+  .radio-card-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .radio-card-label {
+    font-size: 0.875rem;
+  }
+
+  .radio-card-description {
+    font-size: 0.75rem;
+  }
+
+  .modal-footer {
+    padding: 16px;
+    border-radius: 0;
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    padding: 12px 20px;
+    justify-content: center;
+  }
+
+  .error-message {
+    font-size: 0.7rem;
+  }
+
+  .form-hint {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header {
+    padding: 16px 12px;
+  }
+
+  .modal-title {
+    font-size: 1.125rem;
+  }
+
+  .modal-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .close-button {
+    width: 28px;
+    height: 28px;
+    font-size: 1.25rem;
+  }
+
+  .modal-body {
+    padding: 12px;
+  }
+
+  .form-section {
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-size: 0.9375rem;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+  }
+
+  .form-grid {
+    gap: 10px;
+  }
+
+  .form-input,
+  .form-select {
+    padding: 10px;
+  }
+
+  .form-label {
+    font-size: 0.75rem;
+    margin-bottom: 3px;
+  }
+
+  .radio-card {
+    padding: 14px;
+  }
+
+  .radio-card-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .radio-card-label {
+    font-size: 0.8125rem;
+    margin-bottom: 2px;
+  }
+
+  .radio-card-description {
+    font-size: 0.6875rem;
+  }
+
+  .modal-footer {
+    padding: 12px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Ajustes para telas muito pequenas (360px e menor) */
+@media (max-width: 380px) {
+  .modal-header {
+    padding: 14px 10px;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  .modal-subtitle {
+    font-size: 0.6875rem;
+    line-height: 1.3;
+  }
+
+  .close-button {
+    width: 26px;
+    height: 26px;
+    font-size: 1.125rem;
+  }
+
+  .modal-body {
+    padding: 10px;
+  }
+
+  .form-section {
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 0.875rem;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+  }
+
+  .section-title svg {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px !important;
+  }
+
+  .form-grid {
+    gap: 8px;
+  }
+
+  .form-input,
+  .form-select {
+    padding: 9px 8px;
+    font-size: 14px;
+  }
+
+  .form-label {
+    font-size: 0.6875rem;
+    margin-bottom: 2px;
+  }
+
+  .radio-group-cards {
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .radio-card {
+    padding: 12px 10px;
+  }
+
+  .radio-card-content {
+    gap: 8px;
+  }
+
+  .radio-card-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .radio-card-label {
+    font-size: 0.75rem;
+    margin-bottom: 1px;
+  }
+
+  .radio-card-description {
+    font-size: 0.625rem;
+    line-height: 1.3;
+  }
+
+  .modal-footer {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 9px 14px;
+    font-size: 0.75rem;
+  }
+
+  .error-message {
+    font-size: 0.625rem;
+  }
+
+  .form-hint {
+    font-size: 0.625rem;
+  }
 }
 
 /* Transições Vue */

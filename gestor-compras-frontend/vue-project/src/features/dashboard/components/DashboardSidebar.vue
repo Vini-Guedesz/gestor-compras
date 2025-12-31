@@ -237,6 +237,8 @@ const handleNavClick = () => {
     z-index: 1000;
     top: 0;
     height: 100vh;
+    width: 280px;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   }
 
   .sidebar.mobile-open {
@@ -245,6 +247,28 @@ const handleNavClick = () => {
 
   .main-nav {
     padding-top: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .nav-link {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  .nav-title {
+    margin-left: 20px;
+    font-size: 14px;
+  }
+
+  .close-sidebar-btn {
+    top: 12px;
+    right: 12px;
   }
 }
 </style>

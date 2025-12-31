@@ -1493,11 +1493,8 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 }
 
 .id-badge {
-  background: #f3f4f6;
-  color: #1F285F;
-  padding: 4px 12px;
-  border-radius: 6px;
   font-weight: 600;
+  color: #1F285F;
   font-size: 0.875rem;
   font-family: 'Courier New', monospace;
 }
@@ -1666,30 +1663,42 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 }
 
 .action-btn {
-  background: none;
-  border: 1px solid #e5e7eb;
-  padding: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
   border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
-  color: #6b7280;
 }
 
-.action-btn:hover {
-  background: #f3f4f6;
-  color: #374151;
+.action-btn.view {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.action-btn.view:hover {
+  background: #bfdbfe;
+}
+
+.action-btn.edit {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .action-btn.edit:hover {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #3b82f6;
+  background: #bfdbfe;
+}
+
+.action-btn.delete {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .action-btn.delete:hover {
-  background: #fee2e2;
-  color: #dc2626;
-  border-color: #f87171;
+  background: #fecaca;
 }
 
 /* Loading Spinner Pequeno */
@@ -2089,6 +2098,21 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 }
 
 /* Responsividade */
+@media (max-width: 1024px) {
+  .controls-section {
+    flex-wrap: wrap;
+  }
+
+  .filter-controls {
+    flex-wrap: wrap;
+  }
+
+  .filter-select {
+    min-width: 140px;
+    flex: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .pdf-viewer-modal {
     width: 100%;
@@ -2105,38 +2129,120 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
     min-height: 400px;
   }
 
+  .welcome-section {
+    margin-bottom: 24px;
+    padding: 16px 0;
+  }
+
   .welcome-header {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
 
+  .welcome-title {
+    font-size: 22px;
+  }
+
+  .welcome-subtitle {
+    font-size: 14px;
+  }
+
+  .metrics-section {
+    margin-bottom: 24px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 14px;
+  }
+
+  .metric-header {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .metric-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .metric-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .metric-value {
+    font-size: 1.375rem;
+  }
+
+  .metric-label {
+    font-size: 0.6875rem;
+  }
+
+  .metric-growth {
+    font-size: 0.6875rem;
+  }
+
   .controls-section {
     flex-direction: column;
     align-items: stretch;
+    padding: 16px;
+    margin-bottom: 24px;
+    gap: 12px;
   }
 
   .search-container {
     min-width: auto;
+    width: 100%;
   }
 
   .filter-controls {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
   }
 
   .filter-select {
-    min-width: 120px;
+    min-width: auto;
+    width: 100%;
+  }
+
+  .clear-filters-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
   }
 
   .section-header {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
+    padding: 16px;
+  }
+
+  .section-title {
+    font-size: 1.125rem;
   }
 
   .pagination {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .pagination-info {
+    font-size: 0.8125rem;
+    text-align: center;
+  }
+
+  .pagination-controls {
+    justify-content: center;
   }
 
   .table-container {
@@ -2151,6 +2257,25 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   .mobile-only {
     display: block !important;
   }
+
+  /* Cards mobile */
+  .cotacoes-cards {
+    padding: 12px;
+  }
+
+  .cotacao-card {
+    padding: 14px;
+  }
+
+  .card-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .action-btn-mobile {
+    flex: 1;
+    min-width: 100px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2164,8 +2289,321 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
     gap: 4px;
   }
 
-  .main-content {
-    padding: 16px;
+  .welcome-section {
+    margin-bottom: 16px;
+    padding: 12px 0;
+  }
+
+  .welcome-title {
+    font-size: 20px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .metric-card {
+    padding: 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .metric-header {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .metric-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .metric-label {
+    display: block;
+    font-size: 0.75rem;
+  }
+
+  .metric-value {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+  }
+
+  .metric-growth {
+    margin-top: 2px;
+  }
+
+  .controls-section {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  .search-input {
+    padding: 10px 10px 10px 40px;
+  }
+
+  .filter-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-select {
+    padding: 10px;
+  }
+
+  .section-header {
+    padding: 12px;
+  }
+
+  .cotacoes-cards {
+    padding: 8px;
+  }
+
+  .cotacao-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .card-header {
+    padding-bottom: 10px;
+    gap: 8px;
+  }
+
+  .fornecedor-nome-mobile {
+    font-size: 0.875rem;
+  }
+
+  .price-value-mobile {
+    font-size: 1rem;
+  }
+
+  .card-info {
+    padding-bottom: 10px;
+    gap: 6px;
+  }
+
+  .info-row {
+    font-size: 0.8125rem;
+  }
+
+  .info-label {
+    min-width: 60px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .action-btn-mobile {
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+    width: 100%;
+  }
+
+  .pagination {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .pagination-info {
+    font-size: 0.75rem;
+  }
+
+  .pagination-number {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8125rem;
+  }
+
+  .pagination-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Ajustes para telas muito pequenas (360px e menor) */
+@media (max-width: 380px) {
+  .welcome-section {
+    margin-bottom: 12px;
+    padding: 8px 0;
+  }
+
+  .welcome-title {
+    font-size: 18px;
+  }
+
+  .welcome-subtitle {
+    font-size: 12px;
+  }
+
+  .action-button {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .metrics-grid {
+    gap: 8px;
+  }
+
+  .metric-card {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .metric-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .metric-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .metric-label {
+    font-size: 0.6875rem;
+  }
+
+  .metric-value {
+    font-size: 1.125rem;
+  }
+
+  .metric-growth {
+    font-size: 0.625rem;
+  }
+
+  .controls-section {
+    padding: 10px;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .search-input {
+    padding: 9px 9px 9px 36px;
+    font-size: 14px;
+  }
+
+  .search-icon {
+    width: 18px;
+    height: 18px;
+    left: 10px;
+  }
+
+  .filter-select {
+    padding: 9px 8px;
+    font-size: 13px;
+    min-width: auto;
+  }
+
+  .clear-filters-btn {
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+
+  .section-header {
+    padding: 10px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
+
+  .data-section {
+    border-radius: 8px;
+  }
+
+  .cotacoes-cards {
+    padding: 6px;
+  }
+
+  .cotacao-card {
+    padding: 10px;
+    gap: 8px;
+    border-radius: 6px;
+  }
+
+  .card-header {
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .cotacao-id-mobile {
+    font-size: 0.6875rem;
+  }
+
+  .fornecedor-nome-mobile {
+    font-size: 0.8125rem;
+  }
+
+  .price-value-mobile {
+    font-size: 0.9375rem;
+  }
+
+  .card-info {
+    padding-bottom: 8px;
+    gap: 5px;
+  }
+
+  .info-row {
+    font-size: 0.75rem;
+  }
+
+  .info-label {
+    min-width: 55px;
+    font-size: 0.6875rem;
+  }
+
+  .info-value {
+    font-size: 0.75rem;
+  }
+
+  .status-badge {
+    padding: 3px 8px;
+    font-size: 0.6rem;
+  }
+
+  .card-actions {
+    gap: 6px;
+  }
+
+  .action-btn-mobile {
+    padding: 7px 10px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+
+  .action-btn-mobile svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pagination {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .pagination-info {
+    font-size: 0.6875rem;
+  }
+
+  .pagination-controls {
+    gap: 4px;
+  }
+
+  .pagination-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  .pagination-btn {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
   }
 }
 
@@ -2798,6 +3236,167 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 
   .detalhes-modal {
     max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .view-header-modal {
+    padding: 20px 16px;
+  }
+
+  .view-title {
+    font-size: 1.5rem;
+  }
+
+  .view-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .close-button {
+    font-size: 24px;
+    padding: 6px 10px;
+  }
+
+  .section-card {
+    padding: 16px;
+  }
+
+  .info-grid-enhanced {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .info-card {
+    padding: 12px;
+  }
+
+  .info-card-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .info-card-label {
+    font-size: 0.7rem;
+  }
+
+  .info-card-value {
+    font-size: 0.9375rem;
+  }
+
+  .fornecedor-info-box {
+    padding: 16px;
+  }
+
+  .fornecedor-nome-principal {
+    font-size: 1rem;
+  }
+
+  .item-detalhes-box {
+    padding: 14px;
+  }
+
+  .item-nome-destaque {
+    font-size: 1rem;
+  }
+
+  .item-info-linha {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .comparacao-table {
+    margin: 0 -16px;
+    width: calc(100% + 32px);
+  }
+
+  .cotacoes-comparativas th,
+  .cotacoes-comparativas td {
+    padding: 10px 12px;
+    font-size: 0.8125rem;
+  }
+
+  .btn-pdf {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  .anexo-item {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .btn-visualizar-pdf {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 0;
+  }
+
+  .detalhes-modal {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 0;
+    max-height: 100vh;
+    height: 100vh;
+  }
+
+  .view-header-modal {
+    padding: 16px;
+    border-radius: 0;
+  }
+
+  .view-title {
+    font-size: 1.25rem;
+  }
+
+  .detalhes-body {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .section-card {
+    padding: 14px;
+    border-radius: 8px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .info-card {
+    padding: 10px;
+  }
+
+  .info-card-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .info-card-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .cotacoes-comparativas th,
+  .cotacoes-comparativas td {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
+  .btn-pdf {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+  }
+
+  .btn-pdf svg {
+    width: 14px;
+    height: 14px;
   }
 }
 
@@ -2852,13 +3451,10 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 }
 
 .cotacao-id {
-  background: #f3f4f6;
-  color: #1F285F;
-  padding: 4px 10px;
-  border-radius: 4px;
   font-weight: 600;
+  color: #1F285F;
+  font-size: 0.875rem;
   font-family: 'Courier New', monospace;
-  font-size: 0.8125rem;
 }
 
 .cotacao-id-mobile {

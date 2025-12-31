@@ -37,21 +37,12 @@
   overflow-x: hidden;
   background: #f8fafc;
   min-height: calc(100vh - 70px);
+  box-sizing: border-box;
 }
 
-/* Responsividade para tablets */
+/* Responsividade para tablets e mobile (1024px e abaixo) */
+/* O sidebar vira menu mobile neste breakpoint */
 @media (max-width: 1024px) {
-  .dashboard-layout {
-    grid-template-columns: 220px 1fr;
-  }
-
-  .main-content {
-    padding: 24px 16px;
-  }
-}
-
-/* Responsividade para mobile */
-@media (max-width: 768px) {
   .dashboard-layout {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -60,12 +51,28 @@
   }
 
   .dashboard-sidebar {
-    display: none;
+    /* Sidebar fica oculto no grid mas ainda existe para o menu mobile */
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    display: block;
   }
 
   .main-content {
-    padding: 16px;
+    padding: 24px 16px;
     min-height: calc(100vh - 70px);
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 16px;
   }
 }
 
@@ -73,5 +80,19 @@
 @media (max-width: 480px) {
   .main-content {
     padding: 12px;
+  }
+}
+
+/* Ajustes para telas muito pequenas (360px e menor) */
+@media (max-width: 380px) {
+  .dashboard-layout {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  .main-content {
+    padding: 8px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }
