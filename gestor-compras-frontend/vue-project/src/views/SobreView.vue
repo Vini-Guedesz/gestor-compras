@@ -9,173 +9,132 @@
         <!-- Conteúdo Principal -->
         <div class="main-content">
             <div class="sobre-container">
-                <div class="sobre-header">
-                    <div class="header-content">
-                        <div class="header-info">
-                            <h1 class="page-title">Sobre o Sistema</h1>
-                            <p class="page-subtitle">Informações sobre a versão e tecnologias utilizadas</p>
+                <!-- Card Principal -->
+                <div class="about-main-card">
+                    <!-- Banner -->
+                    <div class="about-banner">
+                        <div class="banner-pattern"></div>
+                    </div>
+
+                    <!-- Conteúdo -->
+                    <div class="about-body">
+                        <!-- Logo -->
+                        <div class="logo-wrapper">
+                            <div class="logo-ring">
+                                <div class="logo-inner">
+                                    <svg viewBox="0 0 24 24" width="40" height="40">
+                                        <path fill="#1F285F" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 16H9V7h9v14z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info Principal -->
+                        <div class="about-info-section">
+                            <h1 class="app-name">Gestor de Compras</h1>
+                            <p class="app-tagline">Sistema de Gestão de Pedidos e Cotações</p>
+                            <span class="version-badge">v{{ appVersion }}</span>
+                        </div>
+
+                        <!-- Info Cards -->
+                        <div class="info-cards">
+                            <div class="info-card-item">
+                                <div class="info-card-icon">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                    </svg>
+                                </div>
+                                <div class="info-card-content">
+                                    <span class="info-card-value">{{ gitBranch }}</span>
+                                    <span class="info-card-label">Branch</span>
+                                </div>
+                            </div>
+
+                            <div class="info-card-item">
+                                <div class="info-card-icon">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 6v6l4 2"/>
+                                    </svg>
+                                </div>
+                                <div class="info-card-content">
+                                    <span class="info-card-value">{{ environment }}</span>
+                                    <span class="info-card-label">Ambiente</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="sobre-content">
-                    <div class="section-card">
-                        <div class="about-section">
-                            <div class="about-header-section">
-                                <div class="app-logo">
-                                    <svg viewBox="0 0 24 24" width="64" height="64">
-                                        <path fill="#1F285F" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-1 16H9V7h9v14z"/>
-                                    </svg>
-                                </div>
-                                <h2 class="app-name">Gestor de Compras</h2>
-                                <p class="app-tagline">Sistema de Gestão de Pedidos e Cotações</p>
-                                <div class="version-badge">Versão {{ appVersion }}</div>
+                <!-- Histórico de Versões -->
+                <div class="about-card">
+                    <div class="card-header">
+                        <div class="header-left">
+                            <div class="header-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
                             </div>
-
-                            <div class="about-info">
-                                <div class="info-grid-about">
-                                    <div class="info-item-about">
-                                        <span class="info-label-about">Versão</span>
-                                        <span class="info-value-about">{{ appVersion }}</span>
-                                    </div>
-                                    <div class="info-item-about">
-                                        <span class="info-label-about">Branch</span>
-                                        <span class="info-value-about">{{ gitBranch }}</span>
-                                    </div>
-                                    <div class="info-item-about">
-                                        <span class="info-label-about">Ambiente</span>
-                                        <span class="info-value-about">{{ environment }}</span>
-                                    </div>
-                                    <div class="info-item-about">
-                                        <span class="info-label-about">Framework</span>
-                                        <span class="info-value-about">Vue.js {{ vueVersion }}</span>
-                                    </div>
-                                    <div class="info-item-about">
-                                        <span class="info-label-about">Build Tool</span>
-                                        <span class="info-value-about">Vite</span>
-                                    </div>
-                                    <div class="info-item-about">
-                                        <span class="info-label-about">Data de Build</span>
-                                        <span class="info-value-about">{{ buildDate }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="section-divider"></div>
-
-                            <div class="about-description">
-                                <h3 class="subsection-title">Sobre o Sistema</h3>
-                                <p class="description-text">
-                                    O Gestor de Compras é um sistema completo para gerenciamento de pedidos,
-                                    cotações e fornecedores. Desenvolvido com as mais modernas tecnologias web,
-                                    oferece uma interface intuitiva e responsiva para otimizar seus processos de compra.
-                                </p>
-                            </div>
-
-                            <div class="section-divider"></div>
-
-                            <div class="about-features">
-                                <h3 class="subsection-title">Recursos Principais</h3>
-                                <div class="features-grid">
-                                    <div class="feature-item">
-                                        <svg viewBox="0 0 24 24" width="24" height="24">
-                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                        </svg>
-                                        <span>Gestão de Pedidos de Compra</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <svg viewBox="0 0 24 24" width="24" height="24">
-                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                        </svg>
-                                        <span>Sistema de Cotações</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <svg viewBox="0 0 24 24" width="24" height="24">
-                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                        </svg>
-                                        <span>Cadastro de Fornecedores</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <svg viewBox="0 0 24 24" width="24" height="24">
-                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                        </svg>
-                                        <span>Workflow de Aprovações</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <svg viewBox="0 0 24 24" width="24" height="24">
-                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                        </svg>
-                                        <span>Controle de Usuários</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <svg viewBox="0 0 24 24" width="24" height="24">
-                                            <path fill="#10b981" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                        </svg>
-                                        <span>Dashboard e Relatórios</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="section-divider"></div>
-
-                            <div class="about-tech">
-                                <h3 class="subsection-title">Stack Tecnológica</h3>
-                                <div class="tech-stack">
-                                    <div class="tech-category">
-                                        <h4 class="tech-category-title">Frontend</h4>
-                                        <div class="tech-items">
-                                            <span class="tech-tag">Vue.js 3</span>
-                                            <span class="tech-tag">Vite</span>
-                                            <span class="tech-tag">Pinia</span>
-                                            <span class="tech-tag">Vue Router</span>
-                                            <span class="tech-tag">Axios</span>
-                                        </div>
-                                    </div>
-                                    <div class="tech-category">
-                                        <h4 class="tech-category-title">Backend</h4>
-                                        <div class="tech-items">
-                                            <span class="tech-tag">Java 17</span>
-                                            <span class="tech-tag">Spring Boot 3</span>
-                                            <span class="tech-tag">Spring Security</span>
-                                            <span class="tech-tag">Spring Data JPA</span>
-                                        </div>
-                                    </div>
-                                    <div class="tech-category">
-                                        <h4 class="tech-category-title">Banco de Dados</h4>
-                                        <div class="tech-items">
-                                            <span class="tech-tag">PostgreSQL 14+</span>
-                                            <span class="tech-tag">Flyway</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="section-divider"></div>
-
-                            <div class="changelog">
-                                <h3 class="subsection-title">Changelog - V3</h3>
-                                <div class="changelog-content">
-                                    <div class="changelog-section">
-                                        <h4 class="changelog-version">Versão 3.0.0 (Atual)</h4>
-                                        <ul class="changelog-list">
-                                            <li>✨ Interface completamente redesenhada e responsiva</li>
-                                            <li>🎨 Sistema de abas nas configurações</li>
-                                            <li>📱 Layout de cards para mobile em todas as listas</li>
-                                            <li>🎯 Centralização de wizards e formulários</li>
-                                            <li>🔧 Correção de bugs de sobreposição da sidebar</li>
-                                            <li>📊 Melhorias no dashboard e visualizações</li>
-                                            <li>⚡ Otimizações de performance</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="about-footer">
-                                <p class="copyright">© 2025 Gestor de Compras V{{ appVersion }}. Todos os direitos reservados.</p>
-                                <p class="build-info">Build: {{ buildDate }} | Branch: {{ gitBranch }}</p>
+                            <div>
+                                <h2 class="card-title">Histórico de Versões</h2>
+                                <p class="card-subtitle">Atualizações recentes</p>
                             </div>
                         </div>
                     </div>
+
+                    <div class="card-body">
+                        <div class="releases-list">
+                            <!-- v3.1.0 -->
+                            <div class="release-item current">
+                                <div class="release-header">
+                                    <span class="release-version">v3.1.0</span>
+                                    <span class="release-badge current">Atual</span>
+                                </div>
+                                <p class="release-description">
+                                    Redesign das telas de Perfil, Configurações e Sobre.
+                                    Padronização visual e melhorias de responsividade.
+                                </p>
+                            </div>
+
+                            <!-- v3.0.0 -->
+                            <div class="release-item">
+                                <div class="release-header">
+                                    <span class="release-version">v3.0.0</span>
+                                    <span class="release-badge major">Major</span>
+                                </div>
+                                <p class="release-description">
+                                    Interface redesenhada, sistema de abas, layout responsivo
+                                    e controle granular de permissões.
+                                </p>
+                            </div>
+
+                            <!-- v2.0.0 -->
+                            <div class="release-item">
+                                <div class="release-header">
+                                    <span class="release-version">v2.0.0</span>
+                                </div>
+                                <p class="release-description">
+                                    Sistema de cotações, workflow de aprovações e
+                                    gestão de fornecedores.
+                                </p>
+                            </div>
+
+                            <!-- v1.0.0 -->
+                            <div class="release-item">
+                                <div class="release-header">
+                                    <span class="release-version">v1.0.0</span>
+                                </div>
+                                <p class="release-description">
+                                    Lançamento inicial com gestão básica de pedidos de compra.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="about-footer">
+                    <p class="copyright">© 2025 Gestor de Compras. Todos os direitos reservados.</p>
                 </div>
             </div>
         </div>
@@ -184,362 +143,343 @@
 
 <script setup>
 import { ref } from 'vue'
-import { version } from 'vue'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import packageInfo from '../../package.json'
 
 // Informações do sistema
 const appVersion = ref(packageInfo.version)
-const vueVersion = ref(version)
 const gitBranch = ref('V3')
 const environment = ref(import.meta.env.MODE === 'production' ? 'Produção' : 'Desenvolvimento')
-const buildDate = ref(new Date().toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-}))
 </script>
 
 <style scoped>
 .sobre-view {
-    display: flex;
-    flex-direction: column;
     min-height: 100vh;
-    background: #f5f7fa;
+    background: #f8fafc;
 }
 
 .main-content {
-    flex: 1;
-    margin-left: 280px;
+    margin-left: 240px;
     margin-top: 70px;
-    padding: 24px;
-    transition: margin-left 0.3s ease-in-out;
+    padding: 32px;
+    min-height: calc(100vh - 70px);
 }
 
 .sobre-container {
-    max-width: 1200px;
+    max-width: 600px;
     margin: 0 auto;
-}
-
-.sobre-header {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    padding: 24px;
-    margin: 0 auto 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    max-width: 1000px;
-}
-
-.header-content {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     gap: 24px;
 }
 
-.header-info {
-    flex: 1;
+/* Card Principal */
+.about-main-card {
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06),
+        0 20px 25px -5px rgba(0, 0, 0, 0.05);
 }
 
-.page-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1F285F;
-    margin: 0 0 8px 0;
+.about-banner {
+    height: 100px;
+    background: linear-gradient(135deg, #1F285F 0%, #2d3a7c 50%, #3d4d99 100%);
+    position: relative;
+    overflow: hidden;
 }
 
-.page-subtitle {
-    font-size: 1rem;
-    color: #6b7280;
-    margin: 0;
+.banner-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 40%),
+        radial-gradient(circle at 40% 80%, rgba(255,255,255,0.05) 0%, transparent 40%);
 }
 
-.sobre-content {
+.about-body {
+    padding: 0 32px 32px;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    margin-top: -40px;
+    position: relative;
 }
 
-.section-card {
+/* Logo */
+.logo-wrapper {
+    margin-bottom: 20px;
+}
+
+.logo-ring {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    padding: 4px;
+    background: linear-gradient(135deg, #1F285F, #3d4d99);
+    box-shadow: 0 8px 24px rgba(31, 40, 95, 0.3);
+}
+
+.logo-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
     background: white;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    padding: 32px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    max-width: 1000px;
-    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Seção Sobre */
-.about-section {
-    padding: 0;
-}
-
-.about-header-section {
+/* Info Principal */
+.about-info-section {
     text-align: center;
-    padding-bottom: 32px;
-}
-
-.app-logo {
-    margin: 0 auto 16px;
-    width: 64px;
-    height: 64px;
+    margin-bottom: 24px;
 }
 
 .app-name {
-    font-size: 2.5rem;
+    font-size: 26px;
     font-weight: 700;
-    color: #1F285F;
-    margin: 0 0 8px 0;
+    color: #1f2937;
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
 }
 
 .app-tagline {
-    font-size: 1.125rem;
+    font-size: 14px;
     color: #6b7280;
-    margin: 0 0 16px 0;
+    margin: 0 0 16px;
 }
 
 .version-badge {
-    display: inline-block;
-    background: linear-gradient(135deg, #1F285F 0%, #3b4a8f 100%);
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 18px;
+    background: linear-gradient(135deg, #1F285F, #3d4d99);
     color: white;
-    padding: 8px 20px;
     border-radius: 20px;
-    font-size: 0.875rem;
+    font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(31, 40, 95, 0.3);
+    box-shadow: 0 4px 12px rgba(31, 40, 95, 0.3);
 }
 
-.about-info {
-    margin-bottom: 32px;
-}
-
-.info-grid-about {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-}
-
-.info-item-about {
+/* Info Cards */
+.info-cards {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 16px;
-    background: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    text-align: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 350px;
 }
 
-.info-label-about {
-    font-size: 0.8125rem;
-    color: #6b7280;
-    font-weight: 500;
-}
-
-.info-value-about {
-    font-size: 1.125rem;
-    color: #1f2937;
-    font-weight: 600;
-}
-
-.section-divider {
-    height: 1px;
-    background: #e5e7eb;
-    margin: 32px 0;
-}
-
-.subsection-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0 0 16px 0;
-}
-
-.about-description {
-    margin-bottom: 32px;
-}
-
-.description-text {
-    font-size: 1rem;
-    color: #6b7280;
-    line-height: 1.6;
-    margin: 0;
-}
-
-.about-features {
-    margin-bottom: 32px;
-}
-
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 12px;
-}
-
-.feature-item {
+.info-card-item {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 16px;
     background: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    transition: all 0.2s;
+    border-radius: 14px;
+    border: 1px solid #f3f4f6;
 }
 
-.feature-item:hover {
-    background: #f3f4f6;
-    transform: translateX(4px);
+.info-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1F285F;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.feature-item svg {
-    flex-shrink: 0;
-}
-
-.feature-item span {
-    font-size: 0.9375rem;
-    color: #374151;
-    font-weight: 500;
-}
-
-.about-tech {
-    margin-bottom: 32px;
-}
-
-.tech-stack {
+.info-card-content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
 }
 
-.tech-category {
-    padding: 20px;
-    background: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-}
-
-.tech-category-title {
-    font-size: 1rem;
+.info-card-value {
+    font-size: 14px;
     font-weight: 600;
-    color: #1F285F;
-    margin: 0 0 12px 0;
+    color: #1f2937;
 }
 
-.tech-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+.info-card-label {
+    font-size: 11px;
+    color: #9ca3af;
 }
 
-.tech-tag {
-    display: inline-block;
-    padding: 6px 14px;
+/* Card de Releases */
+.about-card {
     background: white;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    color: #374151;
-    font-weight: 500;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.changelog {
-    margin-bottom: 32px;
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f3f4f6;
 }
 
-.changelog-content {
-    background: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    padding: 20px;
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
-.changelog-section {
-    margin-bottom: 0;
-}
-
-.changelog-version {
-    font-size: 1.125rem;
-    font-weight: 600;
+.header-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #EAF0FC, #d6e4f7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: #1F285F;
-    margin: 0 0 12px 0;
 }
 
-.changelog-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 2px;
 }
 
-.changelog-list li {
-    padding: 8px 0;
-    color: #374151;
-    font-size: 0.9375rem;
-    line-height: 1.6;
-}
-
-.about-footer {
-    text-align: center;
-    padding-top: 24px;
-}
-
-.copyright {
-    font-size: 0.9375rem;
-    color: #6b7280;
-    font-weight: 500;
-    margin: 0 0 4px 0;
-}
-
-.build-info {
-    font-size: 0.8125rem;
+.card-subtitle {
+    font-size: 12px;
     color: #9ca3af;
     margin: 0;
 }
 
+.card-body {
+    padding: 24px;
+}
+
+/* Lista de Releases */
+.releases-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.release-item {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 1px solid #f3f4f6;
+    transition: all 0.2s;
+}
+
+.release-item.current {
+    background: #EAF0FC;
+    border-color: #1F285F;
+}
+
+.release-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.release-version {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1F285F;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+}
+
+.release-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.release-badge.current {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.release-badge.major {
+    background: linear-gradient(135deg, #1F285F, #3d4d99);
+    color: white;
+}
+
+.release-description {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Footer */
+.about-footer {
+    text-align: center;
+    padding: 8px 0;
+}
+
+.copyright {
+    font-size: 12px;
+    color: #9ca3af;
+    margin: 0;
+}
+
+/* Responsividade */
 @media (max-width: 1024px) {
     .main-content {
         margin-left: 0;
+        padding: 20px;
     }
 }
 
 @media (max-width: 768px) {
     .main-content {
-        padding: 12px;
+        padding: 16px;
     }
 
-    .page-title {
-        font-size: 1.5rem;
+    .about-body {
+        padding: 0 20px 24px;
     }
 
     .app-name {
-        font-size: 1.75rem;
+        font-size: 22px;
     }
 
-    .info-grid-about {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .features-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .section-card {
-        padding: 20px;
+    .info-cards {
+        flex-direction: column;
+        max-width: 100%;
     }
 }
 
 @media (max-width: 480px) {
-    .info-grid-about {
-        grid-template-columns: 1fr;
+    .about-banner {
+        height: 80px;
     }
 
-    .header-content {
-        flex-direction: column;
-        align-items: flex-start;
+    .logo-ring {
+        width: 80px;
+        height: 80px;
+    }
+
+    .app-name {
+        font-size: 20px;
+    }
+
+    .release-item {
+        padding: 14px;
     }
 }
 </style>
