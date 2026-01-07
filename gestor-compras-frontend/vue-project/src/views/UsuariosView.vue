@@ -133,6 +133,7 @@
                 <th>Usuário</th>
                 <th>E-mail</th>
                 <th>Função</th>
+                <th>Cadastro</th>
                 <th>Status</th>
                 <th>Ações</th>
               </tr>
@@ -154,6 +155,9 @@
                   <span class="role-tag" :class="getRoleClass(usuario.role)">
                     {{ getRoleLabel(usuario.role) }}
                   </span>
+                </td>
+                <td class="date-cell">
+                  <span class="date-text">{{ formatarData(usuario.dataCadastro) }}</span>
                 </td>
                 <td>
                   <span class="status-badge" :class="getStatusClass(usuario.ativo)">
@@ -215,6 +219,7 @@
                   <span class="usuario-id-mobile">U-{{ usuario.id }}</span>
                   <span class="usuario-nome-mobile">{{ usuario.nome }}</span>
                   <span class="email-mobile">{{ usuario.email }}</span>
+                  <span class="date-mobile">Cadastro: {{ formatarData(usuario.dataCadastro) }}</span>
                 </div>
                 <div class="card-header-right">
                   <span class="role-tag" :class="getRoleClass(usuario.role)">
@@ -354,7 +359,7 @@
                   </div>
                   <div class="info-col">
                     <span class="info-label-new">Data de Cadastro</span>
-                    <span class="info-value-new">{{ formatarDataCompleta(usuarioSelecionado.dataCriacao) }}</span>
+                    <span class="info-value-new">{{ formatarDataCompleta(usuarioSelecionado.dataCadastro) }}</span>
                   </div>
                 </div>
               </div>
@@ -612,6 +617,15 @@ const editarUsuarioDetalhes = async () => {
   fecharDetalhes()
   await nextTick()
   editarUsuario(usuario)
+}
+
+const formatarData = (data) => {
+  if (!data) return 'N/A'
+  try {
+    return new Date(data).toLocaleDateString('pt-BR')
+  } catch {
+    return 'Data inválida'
+  }
 }
 
 const formatarDataCompleta = (data) => {
@@ -1076,6 +1090,15 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
   font-size: 0.875rem;
 }
 
+.date-cell {
+  white-space: nowrap;
+}
+
+.date-text {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
 .role-tag {
   display: inline-block;
   padding: 4px 12px;
@@ -1270,6 +1293,12 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
 .email-mobile {
   font-size: 0.8125rem;
   color: #6b7280;
+}
+
+.date-mobile {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 4px;
 }
 
 .card-actions {

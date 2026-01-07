@@ -75,6 +75,16 @@ public class User implements UserDetails {
     private Boolean ativo = true;
 
     /**
+     * Timestamp da criação do usuário no sistema.
+     * <p>
+     * Registrado automaticamente no momento da criação do usuário.
+     * Valor imutável após a criação.
+     * </p>
+     */
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    /**
      * Timestamp da última modificação nos dados do usuário.
      * <p>
      * Atualizado automaticamente sempre que qualquer dado do usuário é alterado

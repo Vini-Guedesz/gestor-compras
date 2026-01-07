@@ -125,8 +125,12 @@ public class UserService {
             throw new DataIntegrityConflictException("Nome já cadastrado");
         }
 
-        User user = new User(null, dto.nome(), encoder.encode(dto.senha()), dto.role(), dto.email(),
-                             dto.ativo() != null ? dto.ativo() : true, LocalDateTime.now());
+        User user = new User();
+        user.setNome(dto.nome());
+        user.setSenha(encoder.encode(dto.senha()));
+        user.setRole(dto.role());
+        user.setEmail(dto.email());
+        user.setAtivo(dto.ativo() != null ? dto.ativo() : true);
         User savedUser = repository.save(user);
         return new UserDTO(savedUser);
     }

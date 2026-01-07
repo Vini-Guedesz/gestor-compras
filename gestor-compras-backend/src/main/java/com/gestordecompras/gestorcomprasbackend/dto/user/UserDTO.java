@@ -4,6 +4,8 @@ import com.gestordecompras.gestorcomprasbackend.model.user.User;
 import com.gestordecompras.gestorcomprasbackend.model.user.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDateTime;
+
 @Schema(description = "DTO de resposta com dados do usuário")
 public record UserDTO(
         @Schema(description = "ID único do usuário", example = "1")
@@ -19,9 +21,12 @@ public record UserDTO(
         String email,
 
         @Schema(description = "Indica se o usuário está ativo no sistema", example = "true")
-        Boolean ativo
+        Boolean ativo,
+
+        @Schema(description = "Data e hora do cadastro do usuário", example = "2025-01-15T10:30:00")
+        LocalDateTime dataCadastro
 ) {
     public UserDTO(User user) {
-        this(user.getId(), user.getNome(), user.getRole(), user.getEmail(), user.getAtivo());
+        this(user.getId(), user.getNome(), user.getRole(), user.getEmail(), user.getAtivo(), user.getCreatedAt());
     }
 }
