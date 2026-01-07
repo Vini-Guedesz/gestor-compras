@@ -157,6 +157,8 @@ public class SecurityConfig {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder);
+        // Permite distinguir entre "usuário não encontrado" e "senha incorreta"
+        authProvider.setHideUserNotFoundExceptions(false);
         return authProvider;
     }
 

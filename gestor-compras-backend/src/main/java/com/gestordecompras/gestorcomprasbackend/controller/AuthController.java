@@ -9,14 +9,20 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Controller REST para autenticação de usuários.
@@ -97,15 +103,29 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Login realizado com sucesso, token JWT retornado"),
             @ApiResponse(responseCode = "401", description = "Credenciais inválidas")
     })
-    public ResponseEntity<TokenResponseDTO> login(@RequestBody @Valid LoginRequestDTO request) {
-        var authToken = new UsernamePasswordAuthenticationToken(request.email(), request.senha());
+    public ResponseEntity<?> login(@RequestBody @Valid LoginRequestDTO request) {
+        try {
+            var authToken = new UsernamePasswordAuthenticationToken(request.email(), request.senha());
+            var authentication = authManager.authenticate(authToken);
+            var usuario = (User) authentication.getPrincipal();
+            var jwt = jwtService.gerarToken(usuario);
+            return ResponseEntity.ok(new TokenResponseDTO(jwt));
+        } catch (UsernameNotFoundException ex) {
+            return buildErrorResponse("Email não cadastrado", "Este email não está cadastrado no sistema.");
+        } catch (BadCredentialsException ex) {
+            return buildErrorResponse("Senha incorreta", "A senha informada está incorreta.");
+        } catch (Exception ex) {
+            return buildErrorResponse("Erro de autenticação", "Falha na autenticação. Verifique suas credenciais.");
+        }
+    }
 
-        var authentication = authManager.authenticate(authToken);
-        var usuario = (User) authentication.getPrincipal();
-
-        var jwt = jwtService.gerarToken(usuario);
-
-        return ResponseEntity.ok(new TokenResponseDTO(jwt));
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(String error, String message) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("status", HttpStatus.UNAUTHORIZED.value());
+        body.put("error", error);
+        body.put("message", message);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 }
 

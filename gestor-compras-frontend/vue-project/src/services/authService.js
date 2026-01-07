@@ -118,17 +118,23 @@ export const authService = {
       let errorMessage = 'Erro ao fazer login'
 
       if (error.response) {
-        // Erro de resposta da API
-        switch (error.response.status) {
-          case 401:
-          case 403:
-            errorMessage = 'Email ou senha incorretos'
-            break
-          case 500:
-            errorMessage = 'Erro interno do servidor'
-            break
-          default:
-            errorMessage = error.response.data?.message || error.response.data?.error || 'Erro do servidor'
+        // Usa mensagem específica do backend se disponível
+        const backendMessage = error.response.data?.message
+        if (backendMessage) {
+          errorMessage = backendMessage
+        } else {
+          // Fallback para mensagens genéricas por status
+          switch (error.response.status) {
+            case 401:
+            case 403:
+              errorMessage = 'Email ou senha incorretos'
+              break
+            case 500:
+              errorMessage = 'Erro interno do servidor'
+              break
+            default:
+              errorMessage = error.response.data?.error || 'Erro do servidor'
+          }
         }
       } else if (error.request) {
         // Erro de conexão

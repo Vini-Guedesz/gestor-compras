@@ -107,9 +107,13 @@ apiClient.interceptors.response.use(
     return response
   },
   (error) => {
+    // Verifica se é uma requisição de login (não deve tratar como sessão expirada)
+    const isLoginRequest = error.config?.url?.includes('/auth/login')
+
     // Tratamento específico para erro 401 (Não Autorizado) ou JWT expirado
-    if (error.response?.status === 401 ||
-        (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('JWT expired'))) {
+    // Ignora erros de login - esses devem passar para o authService tratar
+    if (!isLoginRequest && (error.response?.status === 401 ||
+        (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('JWT expired')))) {
 
       // Evitar múltiplos redirects simultâneos usando Promise
       if (redirectPromise) {
