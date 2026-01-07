@@ -243,38 +243,22 @@ const rascunhoService = {
    * @function converterParaPedido
    * @memberof rascunhoService
    * @param {number} rascunhoId - ID do rascunho
-   * @param {Array<number>} [itemIds=null] - IDs dos itens (formato legado)
-   * @param {Object.<number, number>} [cotacaoParaItens=null] - Mapa itemId -> cotacaoId
+   * @param {Object.<number, Array<number>>} cotacaoParaItens - Mapa cotacaoId -> [itemIds]
    * @returns {Promise<Object>} Pedido criado
-   * @throws {Error} Erro se nenhum parâmetro fornecido
+   * @throws {Error} Erro se cotacaoParaItens não fornecido
    *
    * @example
-   * // Formato novo: vincular cotações aos itens
-   * await rascunhoService.converterParaPedido(5, null, { 1: 10, 2: 11 })
-   * // Item 1 usa cotação 10, Item 2 usa cotação 11
-   *
-   * @example
-   * // Formato legado: apenas IDs dos itens
-   * await rascunhoService.converterParaPedido(5, [1, 2, 3])
-   *
-   * @description
-   * Converte rascunho em pedido oficial. Preferível usar cotacaoParaItens
-   * para já vincular cotações aos itens do pedido.
+   * // Vincular cotações aos itens
+   * await rascunhoService.converterParaPedido(5, { 10: [1, 2], 11: [3] })
+   * // Cotação 10 contempla itens 1 e 2, Cotação 11 contempla item 3
    */
-  async converterParaPedido(rascunhoId, itemIds = null, cotacaoParaItens = null) {
+  async converterParaPedido(rascunhoId, cotacaoParaItens) {
     try {
-
-      const payload = {}
-
-      // Usar novo formato se disponível
-      if (cotacaoParaItens && Object.keys(cotacaoParaItens).length > 0) {
-        payload.cotacaoParaItens = cotacaoParaItens
-      } else if (itemIds) {
-        // Fallback para formato legado
-        payload.itemRascunhoIds = itemIds
-      } else {
-        throw new Error('Deve fornecer itemIds ou cotacaoParaItens')
+      if (!cotacaoParaItens || Object.keys(cotacaoParaItens).length === 0) {
+        throw new Error('Deve fornecer cotacaoParaItens com pelo menos uma cotação selecionada')
       }
+
+      const payload = { cotacaoParaItens }
 
       const data = await api.post(`/api/v1/rascunhos/${rascunhoId}/converter-para-pedido`, payload)
 

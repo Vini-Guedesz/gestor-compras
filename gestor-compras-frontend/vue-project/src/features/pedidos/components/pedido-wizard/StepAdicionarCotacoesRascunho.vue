@@ -661,7 +661,7 @@ export default {
     }
 
     const fornecedoresProduto = computed(() =>
-      props.fornecedores.filter(f => f.tipo === 'PRODUTO' || !f.tipo)
+      props.fornecedores.filter(f => f.tipo === 'PRODUTO')
     )
 
     const fornecedoresServico = computed(() =>

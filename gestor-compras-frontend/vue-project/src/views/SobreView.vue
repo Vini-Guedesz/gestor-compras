@@ -84,15 +84,26 @@
 
                     <div class="card-body">
                         <div class="releases-list">
-                            <!-- v3.1.0 -->
+                            <!-- v3.2.0 -->
                             <div class="release-item current">
                                 <div class="release-header">
-                                    <span class="release-version">v3.1.0</span>
+                                    <span class="release-version">v3.2.0</span>
                                     <span class="release-badge current">Atual</span>
                                 </div>
                                 <p class="release-description">
-                                    Redesign das telas de Perfil, Configurações e Sobre.
-                                    Padronização visual e melhorias de responsividade.
+                                    Corrigido bug de tipo de fornecedor no modal de cotacao.
+                                    Corrigido bug de cotacoes duplicadas na conversao de rascunho para pedido.
+                                </p>
+                            </div>
+
+                            <!-- v3.1.0 -->
+                            <div class="release-item">
+                                <div class="release-header">
+                                    <span class="release-version">v3.1.0</span>
+                                </div>
+                                <p class="release-description">
+                                    Redesign das telas de Perfil, Configuracoes e Sobre.
+                                    Padronizacao visual e melhorias de responsividade.
                                 </p>
                             </div>
 
@@ -104,7 +115,7 @@
                                 </div>
                                 <p class="release-description">
                                     Interface redesenhada, sistema de abas, layout responsivo
-                                    e controle granular de permissões.
+                                    e controle granular de permissoes.
                                 </p>
                             </div>
 

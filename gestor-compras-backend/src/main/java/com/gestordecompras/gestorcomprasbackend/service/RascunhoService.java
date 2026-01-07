@@ -524,24 +524,17 @@ public class RascunhoService {
         // Salvar pedido
         SolicitacaoDePedido pedidoSalvo = solicitacaoDePedidoRepository.save(pedido);
 
-        // Bug Fix #3: Converter cotações do rascunho para cotações do pedido com logging
+        // Converter cotações do rascunho para cotações do pedido
         int cotacoesConvertidas = 0;
         for (CotacaoRascunho cotacaoRascunho : cotacoesRascunho) {
             Set<ItemPedido> itensPedidoCotacao = new HashSet<>();
 
-            // NOVO: Usar mapeamento específico se disponível
-            if (dto.usaNovoPadrao() && dto.cotacaoParaItens().containsKey(cotacaoRascunho.getId())) {
+            // Apenas converter cotações que estão no mapeamento selecionado
+            if (dto.cotacaoParaItens().containsKey(cotacaoRascunho.getId())) {
                 List<Long> itensDestaCotacao = dto.cotacaoParaItens().get(cotacaoRascunho.getId());
                 for (Long itemId : itensDestaCotacao) {
                     if (mapaItens.containsKey(itemId)) {
                         itensPedidoCotacao.add(mapaItens.get(itemId));
-                    }
-                }
-            } else {
-                // LEGADO: Compatibilidade - adicionar todos os itens selecionados que estão na cotação
-                for (ItemRascunho itemRascunho : cotacaoRascunho.getItensRascunho()) {
-                    if (mapaItens.containsKey(itemRascunho.getId())) {
-                        itensPedidoCotacao.add(mapaItens.get(itemRascunho.getId()));
                     }
                 }
             }

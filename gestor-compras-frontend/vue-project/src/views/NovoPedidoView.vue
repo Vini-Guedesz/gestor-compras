@@ -558,8 +558,7 @@ export default {
 
         const pedidoCriado = await rascunhoService.converterParaPedido(
           wizardData.value.rascunho.id,
-          null,  // itemRascunhoIds (legado) = null
-          cotacaoParaItens  // Novo formato: mapeamento cotação → itens
+          cotacaoParaItens
         )
         success(`Pedido #${pedidoCriado.id} criado com sucesso!`)
         router.push('/pedidos')
@@ -845,9 +844,10 @@ export default {
     const carregarFornecedores = async () => {
       try {
         carregandoFornecedores.value = true
+        // Usar listarProdutos/listarServicos que adicionam a propriedade 'tipo'
         const [produtos, servicos] = await Promise.all([
-          fornecedorService.listarFornecedoresProduto(),
-          fornecedorService.listarFornecedoresServico()
+          fornecedorService.listarProdutos(),
+          fornecedorService.listarServicos()
         ])
         fornecedores.value = [...produtos, ...servicos]
       } catch (error) {
