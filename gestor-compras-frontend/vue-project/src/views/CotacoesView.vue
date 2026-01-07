@@ -98,7 +98,7 @@
 
           <select v-model="filtros.fornecedor" class="filter-select" @change="aplicarFiltros">
             <option value="">Todos os Fornecedores</option>
-            <option v-for="fornecedor in fornecedoresUnicos" :key="`${fornecedor.id}-${fornecedor.tipo}`" :value="fornecedor.id">
+            <option v-for="fornecedor in fornecedoresUnicos" :key="`${fornecedor.id}-${fornecedor.tipo}`" :value="`${fornecedor.id}-${fornecedor.tipo}`">
               {{ fornecedor.nome }}
             </option>
           </select>
@@ -539,12 +539,20 @@
                       </td>
                       <td>{{ cotacao.prazoEmDiasUteis ? cotacao.prazoEmDiasUteis + ' dias úteis' : 'N/A' }}</td>
                       <td>
-                        <button @click="visualizarPDFCotacao(cotacao.id)" class="btn-pdf" title="Visualizar PDF da Cotação">
+                        <button
+                          v-if="cotacao.temAnexoPdf && cotacao.quantidadeAnexos > 0"
+                          @click="visualizarPDFCotacao(cotacao.id)"
+                          class="btn-pdf"
+                          title="Visualizar PDF da Cotação"
+                        >
                           <svg viewBox="0 0 24 24" width="18" height="18">
                             <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                           </svg>
                           Ver PDF
                         </button>
+                        <span v-else class="sem-pdf" title="Esta cotação não possui PDF anexado">
+                          -
+                        </span>
                       </td>
                     </tr>
                   </tbody>
@@ -728,19 +736,27 @@ const cotacoesFiltradas = computed(() => {
     resultado = resultado.filter(c => {
       const idPadronizado = `c-${c.id}`.toLowerCase()
       const idNumerico = c.id?.toString()
-      // Permite buscar por: "1", "C-1", fornecedor, item, nome ou preço
+      // Buscar nome do fornecedor para filtrar
+      const nomeFornecedor = getNomeFornecedor(c.fornecedorId, c.tipoFornecedor)?.toLowerCase() || ''
+      // Permite buscar por: ID, fornecedor (ID ou nome), item, nome do item ou preço
       return idNumerico?.includes(termo) ||
              idPadronizado.includes(termo) ||
              c.fornecedorId?.toString().includes(termo) ||
+             nomeFornecedor.includes(termo) ||
              c.itens?.[0]?.itemPedidoId?.toString().includes(termo) ||
              c.itens?.[0]?.nomeItem?.toLowerCase().includes(termo) ||
              c.preco?.toString().includes(termo)
     })
   }
 
-  // Aplicar filtros
+  // Aplicar filtro de fornecedor (chave composta: id-tipo)
   if (filtros.value.fornecedor) {
-    resultado = resultado.filter(c => c.fornecedorId?.toString() === filtros.value.fornecedor)
+    const [fornecedorId, tipoFornecedor] = filtros.value.fornecedor.split('-')
+    resultado = resultado.filter(c => {
+      const idMatch = c.fornecedorId?.toString() === fornecedorId
+      const tipoMatch = !tipoFornecedor || c.tipoFornecedor === tipoFornecedor
+      return idMatch && tipoMatch
+    })
   }
 
   if (filtros.value.periodo) {
@@ -3521,6 +3537,11 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 
 .btn-pdf svg {
   flex-shrink: 0;
+}
+
+.sem-pdf {
+  color: #9ca3af;
+  font-size: 0.875rem;
 }
 
 /* Ações do Modal */
