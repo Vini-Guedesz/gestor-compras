@@ -30,8 +30,8 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Verificar se Docker Compose está instalado
-if ! command -v docker-compose &> /dev/null; then
+# Verificar se Docker Compose está instalado (plugin ou standalone)
+if ! docker compose version &> /dev/null && ! command -v docker-compose &> /dev/null; then
     echo -e "${RED}❌ Docker Compose não está instalado!${NC}"
     exit 1
 fi
@@ -69,7 +69,7 @@ fi
 # 3. PARAR CONTAINERS ANTIGOS
 # ==============================================================================
 echo "🛑 Parando containers antigos..."
-docker-compose -f docker-compose.prod.yml down || true
+docker compose -f docker-compose.prod.yml down || true
 echo -e "${GREEN}✅ Containers parados${NC}"
 echo ""
 
@@ -77,7 +77,7 @@ echo ""
 # 4. BUILD DAS IMAGENS
 # ==============================================================================
 echo "🔨 Construindo imagens Docker..."
-docker-compose -f docker-compose.prod.yml build --no-cache
+docker compose -f docker-compose.prod.yml build --no-cache
 
 echo -e "${GREEN}✅ Imagens construídas${NC}"
 echo ""
@@ -86,7 +86,7 @@ echo ""
 # 5. INICIAR CONTAINERS
 # ==============================================================================
 echo "🚀 Iniciando containers..."
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 
 echo -e "${GREEN}✅ Containers iniciados${NC}"
 echo ""
@@ -129,7 +129,7 @@ echo ""
 # 7. VERIFICAR STATUS
 # ==============================================================================
 echo "📊 Status dos containers:"
-docker-compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps
 
 echo ""
 echo "======================================================================"
@@ -143,10 +143,10 @@ echo "   Swagger:      http://45.55.186.12:8081/swagger-ui/index.html"
 echo "   Grafana:      http://45.55.186.12:3000 (admin/senha-do-.env)"
 echo ""
 echo "📝 Comandos úteis:"
-echo "   Ver logs:           docker-compose -f docker-compose.prod.yml logs -f"
-echo "   Parar:              docker-compose -f docker-compose.prod.yml down"
-echo "   Reiniciar:          docker-compose -f docker-compose.prod.yml restart"
-echo "   Status:             docker-compose -f docker-compose.prod.yml ps"
+echo "   Ver logs:           docker compose -f docker-compose.prod.yml logs -f"
+echo "   Parar:              docker compose -f docker-compose.prod.yml down"
+echo "   Reiniciar:          docker compose -f docker-compose.prod.yml restart"
+echo "   Status:             docker compose -f docker-compose.prod.yml ps"
 echo ""
 echo "🔐 Usuários padrão:"
 echo "   Admin: admin@gestor.com / admin123"
