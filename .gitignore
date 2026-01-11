@@ -1,3 +1,14 @@
 # Ignore Claude local settings
 .claude/
 Prints pra claude/
+
+# Environment variables - NUNCA commitar!
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Backups
+backups/
+*.sql
+*.dump
