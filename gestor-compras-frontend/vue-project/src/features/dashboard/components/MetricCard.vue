@@ -148,7 +148,7 @@ const iconName = computed(() => {
 }
 
 .card-title {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 18px;
   font-weight: 600;
   color: #1F285F;
@@ -156,7 +156,7 @@ const iconName = computed(() => {
 }
 
 .card-description {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 14px;
   color: #6b7280;
   margin: 0 0 20px 0;
@@ -176,14 +176,14 @@ const iconName = computed(() => {
 }
 
 .metric-value {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 24px;
   font-weight: 700;
   line-height: 1;
 }
 
 .metric-label {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 12px;
   color: #6b7280;
   text-transform: uppercase;

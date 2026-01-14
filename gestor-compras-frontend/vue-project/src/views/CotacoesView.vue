@@ -1196,7 +1196,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 }
 
 .welcome-title {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 28px;
   font-weight: 700;
   color: #1F285F;
@@ -1205,7 +1205,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 }
 
 .welcome-subtitle {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 16px;
   color: #6b7280;
   margin: 0;
@@ -1892,7 +1892,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   color: white;
   font-size: 1.25rem;
   font-weight: 600;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .pdf-viewer-body {
@@ -2667,14 +2667,14 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   font-weight: 700;
   margin: 0 0 8px 0;
   color: white;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .view-subtitle {
   font-size: 0.9375rem;
   color: rgba(255, 255, 255, 0.85);
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .close-button {
@@ -2718,7 +2718,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   margin: 0 0 16px 0;
   padding-bottom: 12px;
   border-bottom: 2px solid #e5e7eb;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 /* Info Cards Enhanced */
@@ -2767,14 +2767,14 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .info-card-value {
   font-size: 1rem;
   font-weight: 600;
   color: #1f2937;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .info-card-value.expired {
@@ -2796,7 +2796,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1F285F;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .fornecedor-tipo-tag {
@@ -2867,7 +2867,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .btn-visualizar-pdf:hover {
@@ -2912,7 +2912,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   font-size: 1.125rem;
   font-weight: 600;
   color: #1F285F;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .item-info-linha {
@@ -2970,7 +2970,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   font-weight: 600;
   padding-bottom: 12px;
   border-bottom: 2px solid #e5e7eb;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .info-grid {
@@ -2999,14 +2999,14 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .info-value {
   font-size: 0.9375rem;
   font-weight: 600;
   color: #1f2937;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .info-value.highlight {
@@ -3439,7 +3439,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   text-align: left;
   font-weight: 600;
   font-size: 0.875rem;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .cotacoes-comparativas tbody tr {
@@ -3463,7 +3463,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   padding: 12px 16px;
   font-size: 0.875rem;
   color: #374151;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .cotacao-id {
@@ -3564,7 +3564,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .btn-acao.primary {

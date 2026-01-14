@@ -1123,13 +1123,13 @@ watch(() => props.cotacao, () => {
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 0.875rem;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   transition: all 0.2s;
 }
 
 /* Garantir fonte Arial nos inputs de data */
 .form-input[type="date"] {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 .form-input:focus,

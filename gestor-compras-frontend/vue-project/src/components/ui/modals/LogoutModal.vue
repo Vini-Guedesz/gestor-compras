@@ -251,7 +251,7 @@ const handleCancel = () => {
 }
 
 .modal-title {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 20px;
   font-weight: 600;
   color: #1f2937;
@@ -275,7 +275,7 @@ const handleCancel = () => {
 }
 
 .modal-message {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 16px;
   font-weight: 500;
   color: #374151;
@@ -284,7 +284,7 @@ const handleCancel = () => {
 }
 
 .modal-submessage {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 14px;
   color: #6b7280;
   margin: 0;
@@ -305,7 +305,7 @@ const handleCancel = () => {
   padding: 12px 24px;
   border: none;
   border-radius: 8px;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;

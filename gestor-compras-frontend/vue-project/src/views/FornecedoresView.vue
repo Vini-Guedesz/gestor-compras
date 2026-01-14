@@ -643,7 +643,7 @@ onMounted(() => {
 }
 
 .welcome-title {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 28px;
   font-weight: 700;
   color: #1F285F;
@@ -652,7 +652,7 @@ onMounted(() => {
 }
 
 .welcome-subtitle {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 16px;
   color: #6b7280;
   margin: 0;
@@ -677,7 +677,7 @@ onMounted(() => {
   border-radius: 8px !important;
   font-size: 14px !important;
   font-weight: 500 !important;
-  font-family: Arial, sans-serif !important;
+  font-family: inherit !important;
   cursor: pointer !important;
   transition: all 0.2s !important;
   white-space: nowrap !important;

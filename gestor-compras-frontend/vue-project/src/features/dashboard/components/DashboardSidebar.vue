@@ -140,7 +140,7 @@ const handleNavClick = () => {
 }
 
 .nav-title {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 16px;
   font-weight: 600;
   color: #1F285F;
@@ -166,7 +166,7 @@ const handleNavClick = () => {
   padding: 12px 24px;
   color: #6b7280;
   text-decoration: none;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;

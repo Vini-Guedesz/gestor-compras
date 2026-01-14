@@ -274,7 +274,7 @@ const vClickOutside = {
 }
 
 .logo-text {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 20px;
   font-weight: bold;
   color: #1F285F;
@@ -333,7 +333,7 @@ const vClickOutside = {
 }
 
 .user-name {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   color: #1F285F;
@@ -345,7 +345,7 @@ const vClickOutside = {
 }
 
 .user-role {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 12px;
   color: #6b7280;
   line-height: 1.2;
@@ -401,7 +401,7 @@ const vClickOutside = {
   padding: 12px 16px;
   color: #374151;
   font-size: 14px;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   cursor: pointer;
   transition: background-color 0.15s ease;
   border: none;

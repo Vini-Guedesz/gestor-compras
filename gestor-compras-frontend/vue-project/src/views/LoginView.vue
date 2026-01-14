@@ -214,7 +214,7 @@ const handleForgotPassword = async () => {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 /* Caixa de login principal */
@@ -238,7 +238,7 @@ const handleForgotPassword = async () => {
   color: #1F285F;
   font-size: 24px;
   font-weight: 600;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 /* Estilo para mensagens de erro */
@@ -249,7 +249,7 @@ const handleForgotPassword = async () => {
   border-radius: 10px;
   margin-bottom: 20px;
   font-size: 14px;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   border: 1px solid #f5c6cb;
 }
 
@@ -272,7 +272,7 @@ const handleForgotPassword = async () => {
   margin-bottom: 5px;
   color: #1F285F;
   font-weight: 500;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
 }
 
 /* Campos de input */
@@ -282,7 +282,7 @@ const handleForgotPassword = async () => {
   border: 1px solid #ddd;
   border-radius: 10px;
   font-size: 16px;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   color: #1F285F;
   transition: border-color 0.3s;
   box-sizing: border-box;
@@ -304,7 +304,7 @@ const handleForgotPassword = async () => {
   border-radius: 25px;
   font-size: 16px;
   font-weight: 500;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   cursor: pointer;
   transition: background-color 0.3s;
   margin-bottom: 20px;
@@ -338,7 +338,7 @@ const handleForgotPassword = async () => {
   color: #1F285F;
   text-decoration: none;
   font-size: 14px;
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   transition: color 0.3s;
 }
 

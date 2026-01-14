@@ -5,10 +5,10 @@
               name="pedidos_fechados" pageWidth="595" pageHeight="842" columnWidth="535"
               leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
 
-    <style name="Title" forecolor="#1A237E" fontName="Arial" fontSize="24" isBold="true"/>
-    <style name="Header" forecolor="#FFFFFF" fontName="Arial" fontSize="10" isBold="true"/>
-    <style name="Detail" fontName="Arial" fontSize="9"/>
-    <style name="Footer" forecolor="#666666" fontName="Arial" fontSize="9"/>
+    <style name="Title" forecolor="#1A237E" fontName="SansSerif" fontSize="24" isBold="true"/>
+    <style name="Header" forecolor="#FFFFFF" fontName="SansSerif" fontSize="10" isBold="true"/>
+    <style name="Detail" fontName="SansSerif" fontSize="9"/>
+    <style name="Footer" forecolor="#666666" fontName="SansSerif" fontSize="9"/>
     <style name="Row" mode="Opaque">
         <conditionalStyle>
             <conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>

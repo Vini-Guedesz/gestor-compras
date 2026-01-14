@@ -140,7 +140,7 @@ public class SecurityConfig {
      * Permite criar usuário sem autenticação, mas GET/PUT/DELETE requerem ADMIN.
      */
     private static final String[] PUBLIC_POST_ENDPOINTS = {
-            ApiVersionConfig.API_V1 + "/users"
+            // Nenhum endpoint POST público (criação de usuário agora restrita a ADMIN)
     };
 
     /**

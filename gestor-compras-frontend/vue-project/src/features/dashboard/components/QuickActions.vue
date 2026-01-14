@@ -74,7 +74,7 @@ const getIconPath = (iconName) => {
 }
 
 .actions-title {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 20px;
   font-weight: 600;
   color: #1F285F;
@@ -125,7 +125,7 @@ const getIconPath = (iconName) => {
 }
 
 .action-title {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 16px;
   font-weight: 600;
   color: #1F285F;
@@ -133,7 +133,7 @@ const getIconPath = (iconName) => {
 }
 
 .action-description {
-  font-family: Arial, sans-serif;
+  font-family: inherit;
   font-size: 14px;
   color: #6b7280;
   line-height: 1.3;
