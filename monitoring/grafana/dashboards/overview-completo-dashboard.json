@@ -29,7 +29,7 @@
       "title": "Logs Details",
       "tooltip": "Ver dashboard completo de logs",
       "type": "link",
-      "url": "/d/gestor-compras-logs"
+      "url": "/d/loki-logs"
     },
     {
       "asDropdown": false,
@@ -649,6 +649,10 @@
         "type": "loki",
         "uid": "loki"
       },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -703,7 +707,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({application=\"gestor-compras-backend\", level=\"ERROR\"}[5m]))",
+          "expr": "sum(count_over_time({job=\"gestor-compras\", level=\"ERROR\"}[5m]))",
           "refId": "A"
         }
       ],
