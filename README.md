@@ -188,14 +188,44 @@ cd gestor-compras-backend
 # Abra o arquivo: target/site/apidocs/index.html
 ```
 
+### 🌐 Nginx (Reverse Proxy)
+
+O projeto inclui uma configuração completa do **Nginx** como reverse proxy para rotear requisições entre frontend e backend.
+
+#### ⚙️ Configurações Principais
+
+**Arquivos:**
+- [`nginx/nginx.conf`](nginx/nginx.conf) - Configuração global
+- [`nginx/conf.d/default.conf`](nginx/conf.d/default.conf) - Configuração de roteamento
+
+**Funcionalidades:**
+- ✅ **Compressão Gzip** para otimização de tráfego
+- ✅ **Connection Pooling** (keepalive) para backend/frontend
+- ✅ **Security Headers** (X-Frame-Options, X-XSS-Protection, etc.)
+- ✅ **Timeouts customizados** (relatórios têm 120s, API 60s)
+- ✅ **Upload de arquivos** até 10MB
+- ✅ **Preparado para SSL/HTTPS** (comentado no arquivo)
+
+Em ambiente de produção com Docker, o Nginx é executado automaticamente:
+
+```bash
+# Subir todo o sistema com Nginx
+docker-compose -f docker-compose.prod.yml up -d
+
+# Verificar logs do Nginx
+docker-compose -f docker-compose.prod.yml logs -f nginx
+```
+
 ## 🔌 Portas e Serviços
 
 Resumo das portas utilizadas pelo sistema:
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
-| **Frontend** | `5173` | Aplicação Web (Vue.js) |
+| **Frontend** | `5173` | Aplicação Web (Vue.js) - Dev |
 | **Backend** | `8081` | API REST (Spring Boot) |
 | **PostgreSQL**| `5432` | Banco de Dados |
+| **Nginx** | `80` | Reverse Proxy - Produção |
+| **Nginx (HTTPS)** | `443` | Reverse Proxy - SSL (Opcional) |
 | **Grafana** | `3000` | Dashboards |
 | **Prometheus**| `9090` | Métricas |
