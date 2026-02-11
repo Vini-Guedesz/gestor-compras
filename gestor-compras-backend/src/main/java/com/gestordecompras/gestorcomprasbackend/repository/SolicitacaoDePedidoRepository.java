@@ -103,7 +103,7 @@ public interface SolicitacaoDePedidoRepository extends JpaRepository<Solicitacao
      * @param pageable Parâmetros de paginação e ordenação
      * @return Página de solicitações com itens carregados
      */
-    @EntityGraph(attributePaths = {"itens"})
+    @EntityGraph(attributePaths = {"itens", "cotacoes", "cotacoes.fornecedorProduto", "cotacoes.fornecedorServico", "cotacoes.itens", "cotacoes.anexos"})
     @Query("SELECT s FROM SolicitacaoDePedido s WHERE s.status IN :statuses")
     Page<SolicitacaoDePedido> findByStatusIn(@Param("statuses") List<StatusPedido> statuses, Pageable pageable);
 
@@ -116,18 +116,18 @@ public interface SolicitacaoDePedidoRepository extends JpaRepository<Solicitacao
      * @param pageable Parâmetros de paginação e ordenação
      * @return Página de solicitações com itens carregados
      */
-    @EntityGraph(attributePaths = {"itens"})
+    @EntityGraph(attributePaths = {"itens", "cotacoes", "cotacoes.fornecedorProduto", "cotacoes.fornecedorServico", "cotacoes.itens", "cotacoes.anexos"})
     Page<SolicitacaoDePedido> findAll(Pageable pageable);
 
     /**
      * Busca solicitação por ID com otimização de lazy loading.
      * <p>
-     * EntityGraph carrega itens em uma única query.
+     * EntityGraph carrega itens, cotações e detalhes em uma única query.
      * </p>
      *
      * @param id ID da solicitação
-     * @return Optional contendo a solicitação com itens carregados
+     * @return Optional contendo a solicitação com todos os detalhes carregados
      */
-    @EntityGraph(attributePaths = {"itens"})
+    @EntityGraph(attributePaths = {"itens", "cotacoes", "cotacoes.fornecedorProduto", "cotacoes.fornecedorServico", "cotacoes.itens", "cotacoes.anexos"})
     Optional<SolicitacaoDePedido> findById(Long id);
 }

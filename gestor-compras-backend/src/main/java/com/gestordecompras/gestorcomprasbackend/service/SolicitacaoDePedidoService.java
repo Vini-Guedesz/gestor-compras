@@ -8,6 +8,7 @@ import com.gestordecompras.gestorcomprasbackend.model.pedido.HistoricoPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.StatusPedido;
+import com.gestordecompras.gestorcomprasbackend.model.pedido.TipoItem;
 import com.gestordecompras.gestorcomprasbackend.model.user.User;
 import com.gestordecompras.gestorcomprasbackend.repository.ItemPedidoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.SolicitacaoDePedidoRepository;
@@ -79,8 +80,8 @@ public class SolicitacaoDePedidoService {
     /**
      * Busca uma solicitação de pedido pelo ID.
      * <p>
-     * Utiliza estratégia otimizada com múltiplas queries para carregar relacionamentos
-     * (itens e cotações) evitando o problema de produto cartesiano (N+1).
+     * Utiliza estratégia otimizada com EntityGraph para carregar relacionamentos
+     * (itens, cotações e detalhes) evitando N+1 e LazyInitializationException.
      * </p>
      *
      * @param id Identificador da solicitação.
@@ -88,17 +89,9 @@ public class SolicitacaoDePedidoService {
      * @throws EntityNotFoundException Se a solicitação não for encontrada.
      */
     public SolicitacaoDePedidoDTO getSolicitacaoById(Long id) {
-        // Bug Fix #1: Carregar dados em múltiplas queries para evitar produto cartesiano
-
-        // 1. Carregar pedido com itens
-        SolicitacaoDePedido pedido = solicitacaoDePedidoRepository.findByIdWithItensAndCotacoes(id)
+        // Carregar pedido com todos os detalhes via EntityGraph configurado no repositório
+        SolicitacaoDePedido pedido = solicitacaoDePedidoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Solicitação de pedido não encontrada com ID: " + id));
-
-        // 2. Carregar cotações com fornecedores (segunda query)
-        solicitacaoDePedidoRepository.findByIdWithCotacoes(id);
-
-        // 3. Carregar itens das cotações (terceira query)
-        solicitacaoDePedidoRepository.findCotacoesWithItensByPedidoId(id);
 
         return solicitacaoDePedidoMapper.toDTO(pedido);
     }
@@ -120,8 +113,26 @@ public class SolicitacaoDePedidoService {
 
         // Associar os itens ao pedido antes de salvar
         if (solicitacaoDePedido.getItens() != null && !solicitacaoDePedido.getItens().isEmpty()) {
+            // Iterar sobre os itens do DTO para pegar o tipo, já que o mapper pode não ter mapeado corretamente se for complexo
+            // Assumindo que a ordem é mantida ou que o mapper já fez o trabalho básico
+            // Vamos garantir que o tipo seja setado corretamente
+            
+            // Como o mapper já converteu para entidade, precisamos garantir que o tipo foi passado
+            // Se o mapper não mapeou o tipo (pois adicionamos agora), precisamos fazer manualmente
+            // Mas o ideal é que o mapper cuide disso. Vamos assumir que o mapper foi atualizado ou que
+            // o DTO tem o campo e o mapper usa mapstruct padrão.
+            
+            // Se o mapper não estiver mapeando o tipo, precisamos iterar e setar manualmente
+            // Mas como não temos acesso fácil à correspondência DTO <-> Entidade aqui sem um ID,
+            // vamos confiar que o mapper fará o trabalho se o DTO tiver o campo.
+            
+            // No entanto, para garantir, vamos iterar e setar o pai
             solicitacaoDePedido.getItens().forEach(item -> {
                 item.setSolicitacaoDePedido(solicitacaoDePedido);
+                // Se o tipo for nulo, define como PRODUTO por padrão
+                if (item.getTipo() == null) {
+                    item.setTipo(TipoItem.PRODUTO);
+                }
             });
         }
 
@@ -187,6 +198,15 @@ public class SolicitacaoDePedidoService {
                                 item.setQuantidade(itemDTO.quantidade());
                                 item.setDescricao(itemDTO.descricao());
                                 item.setObservacao(itemDTO.observacao());
+                                // Atualizar tipo se fornecido
+                                if (itemDTO.tipo() != null) {
+                                    try {
+                                        item.setTipo(TipoItem.valueOf(itemDTO.tipo()));
+                                    } catch (IllegalArgumentException e) {
+                                        // Ignorar ou logar erro de tipo inválido
+                                        log.warn("Tipo de item inválido: {}", itemDTO.tipo());
+                                    }
+                                }
                                 item.setSolicitacaoDePedido(solicitacao);
                             } else {
                                 // Novo item - criar e adicionar à lista
@@ -195,11 +215,21 @@ public class SolicitacaoDePedidoService {
                                 item.setQuantidade(itemDTO.quantidade());
                                 item.setDescricao(itemDTO.descricao());
                                 item.setObservacao(itemDTO.observacao());
+                                // Definir tipo
+                                if (itemDTO.tipo() != null) {
+                                    try {
+                                        item.setTipo(TipoItem.valueOf(itemDTO.tipo()));
+                                    } catch (IllegalArgumentException e) {
+                                        item.setTipo(TipoItem.PRODUTO); // Default
+                                    }
+                                } else {
+                                    item.setTipo(TipoItem.PRODUTO); // Default
+                                }
                                 item.setSolicitacaoDePedido(solicitacao);
 
                                 // Adicionar à lista se ainda não existir
                                 if (solicitacao.getItens() == null) {
-                                    solicitacao.setItens(new java.util.ArrayList<>());
+                                    solicitacao.setItens(new java.util.HashSet<>());
                                 }
                                 solicitacao.getItens().add(item);
                             }

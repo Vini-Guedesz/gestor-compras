@@ -26,5 +26,8 @@ public record ItemRascunhoDTO(
     String descricao,
 
     @Schema(description = "Observações adicionais para o comprador", example = "Para uso no escritório administrativo")
-    String observacao
+    String observacao,
+
+    @Schema(description = "Tipo do item (PRODUTO ou SERVICO)", example = "PRODUTO", allowableValues = {"PRODUTO", "SERVICO"})
+    String tipo
 ) {}

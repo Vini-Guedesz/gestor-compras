@@ -102,6 +102,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())  // Email (usado para autenticação)
+                .claim("id", user.getId())              // ID do usuário
                 .claim("nome", user.getNome())          // Nome completo da pessoa
                 .claim("roles", userDetails.getAuthorities())
                 .setIssuedAt(new Date())

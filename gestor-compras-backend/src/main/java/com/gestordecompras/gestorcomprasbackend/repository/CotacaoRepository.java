@@ -71,4 +71,32 @@ public interface CotacaoRepository extends JpaRepository<Cotacao, Long> {
      */
     @EntityGraph(attributePaths = {"fornecedorProduto", "fornecedorServico", "solicitacaoDePedido"})
     Optional<Cotacao> findById(Long id);
+
+    /**
+     * Busca cotação por ID carregando também os anexos e o PdfStorage associado.
+     * Necessário para evitar LazyInitializationException ao acessar anexos fora da transação.
+     */
+    @EntityGraph(attributePaths = {"fornecedorProduto", "fornecedorServico", "solicitacaoDePedido", "anexos", "anexos.pdfStorage"})
+    @Query("SELECT c FROM Cotacao c WHERE c.id = :id")
+    Optional<Cotacao> findByIdWithAnexos(@Param("id") Long id);
+
+    /**
+     * Busca cotações de um fornecedor de produto específico.
+     *
+     * @param fornecedorId ID do fornecedor de produto
+     * @return Lista de cotações
+     */
+    @EntityGraph(attributePaths = {"solicitacaoDePedido"})
+    @Query("SELECT c FROM Cotacao c WHERE c.fornecedorProduto.id = :fornecedorId")
+    List<Cotacao> findByFornecedorProdutoId(@Param("fornecedorId") Integer fornecedorId);
+
+    /**
+     * Busca cotações de um fornecedor de serviço específico.
+     *
+     * @param fornecedorId ID do fornecedor de serviço
+     * @return Lista de cotações
+     */
+    @EntityGraph(attributePaths = {"solicitacaoDePedido"})
+    @Query("SELECT c FROM Cotacao c WHERE c.fornecedorServico.id = :fornecedorId")
+    List<Cotacao> findByFornecedorServicoId(@Param("fornecedorId") Integer fornecedorId);
 }

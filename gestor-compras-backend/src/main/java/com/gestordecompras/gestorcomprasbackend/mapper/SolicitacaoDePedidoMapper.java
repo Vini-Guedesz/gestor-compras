@@ -10,5 +10,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring", uses = {ItemPedidoMapper.class, CotacaoMapper.class})
 public interface SolicitacaoDePedidoMapper {
     SolicitacaoDePedidoDTO toDTO(SolicitacaoDePedido solicitacaoDePedido);
+
+    @org.mapstruct.Mapping(target = "version", ignore = true)
     SolicitacaoDePedido toEntity(SolicitacaoDePedidoDTO solicitacaoDePedidoDTO);
 }

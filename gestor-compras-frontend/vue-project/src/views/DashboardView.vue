@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-layout">
+  <div class="dashboard-layout" :class="{ 'sidebar-collapsed': isCollapsed }">
     <!-- Header -->
     <DashboardHeader />
 
@@ -8,6 +8,16 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+          </svg>
+        </router-link>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Dashboard</span>
+      </div>
       <!-- Mensagem de Boas-vindas -->
       <div class="welcome-section">
         <div class="welcome-header">
@@ -81,6 +91,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useSidebar } from '@/composables/useSidebar'
 import { getWelcomeMessage as getWelcomeMessageUtil } from '../utils/genderUtils'
 import logger from '../utils/logger.js'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
@@ -93,6 +104,7 @@ import cotacaoService from '../services/cotacaoService.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { isCollapsed } = useSidebar()
 
 // Estados reativos para métricas reais
 const metricas = ref({
@@ -107,7 +119,10 @@ const lastLoadTime = ref(0)
 const COOLDOWN_MS = 2000 // Mínimo 2 segundos entre chamadas
 
 const userName = computed(() => {
-  return authStore.user?.name || 'Usuário'
+  // authStore.user tem a propriedade 'nome' mapeada pelo jwtUtils
+  const fullName = authStore.user?.nome || authStore.user?.username || 'Usuário'
+  // Retorna apenas o primeiro nome
+  return fullName.split(' ')[0]
 })
 
 // Função para gerar mensagem de boas-vindas com gênero correto

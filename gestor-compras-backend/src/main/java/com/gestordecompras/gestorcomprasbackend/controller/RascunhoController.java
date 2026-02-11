@@ -7,6 +7,7 @@ import com.gestordecompras.gestorcomprasbackend.model.rascunho.HistoricoRascunho
 import com.gestordecompras.gestorcomprasbackend.service.HistoricoRascunhoService;
 import com.gestordecompras.gestorcomprasbackend.service.RascunhoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +37,7 @@ import java.util.Map;
  *   <li>Controle de status: ATIVO → EM_COTACAO → FINALIZADO</li>
  * </ul>
  *
- * <p><b>Autenticação:</b> Pública (sem JWT) | <b>Roles:</b> Todos</p>
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> ADMIN, COMPRADOR, USUARIO</p>
  *
  * @since 1.0.0
  * @see RascunhoService
@@ -46,6 +48,7 @@ import java.util.Map;
 @RequestMapping(ApiVersionConfig.API_V1 + "/rascunhos")
 @RequiredArgsConstructor
 @Tag(name = "Rascunhos", description = "Gerenciamento de rascunhos de pedidos (v1)")
+@SecurityRequirement(name = "bearerAuth")
 public class RascunhoController {
 
     private final RascunhoService rascunhoService;
@@ -89,9 +92,10 @@ public class RascunhoController {
         return ResponseEntity.ok(rascunhoService.updateRascunho(id, dto));
     }
 
-    /** Remove rascunho permanentemente. */
+    /** Remove rascunho permanentemente. Apenas ADMIN e COMPRADOR podem excluir. */
     @DeleteMapping("/{id}")
     @Operation(summary = "Deletar rascunho")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COMPRADOR')")
     public ResponseEntity<Void> deleteRascunho(@PathVariable Long id) {
         rascunhoService.deleteRascunho(id);
         return ResponseEntity.noContent().build();

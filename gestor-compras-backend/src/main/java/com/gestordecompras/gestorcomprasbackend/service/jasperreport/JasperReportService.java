@@ -400,7 +400,7 @@ public class JasperReportService {
             String itemDescricao = "";
 
             if (cotacao.getItens() != null && !cotacao.getItens().isEmpty()) {
-                var primeiroCotacaoItem = cotacao.getItens().get(0);
+                var primeiroCotacaoItem = cotacao.getItens().iterator().next();
                 var primeiroItem = primeiroCotacaoItem.getItemPedido();
                 itemId = primeiroItem.getId();
                 itemNome = primeiroItem.getNome();
@@ -488,7 +488,7 @@ public class JasperReportService {
                     .collect(Collectors.toList());
         } else {
             // Se nenhum ID foi fornecido, buscar todos os itens da solicitação
-            itens = solicitacao.getItens();
+            itens = new ArrayList<>(solicitacao.getItens());
         }
 
         if (itens == null || itens.isEmpty()) {

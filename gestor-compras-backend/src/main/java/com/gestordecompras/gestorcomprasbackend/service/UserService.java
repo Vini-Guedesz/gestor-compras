@@ -6,11 +6,14 @@ import com.gestordecompras.gestorcomprasbackend.dto.user.UserDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.user.UserUpdateDTO;
 import com.gestordecompras.gestorcomprasbackend.exception.DataIntegrityConflictException;
 import com.gestordecompras.gestorcomprasbackend.model.user.User;
+import com.gestordecompras.gestorcomprasbackend.model.user.UserRole;
 import com.gestordecompras.gestorcomprasbackend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -157,6 +160,22 @@ public class UserService {
         User user = repository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + dto.id()));
 
+        // Validação: Admin não pode remover seu próprio status de admin
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String currentUserEmail = authentication.getName();
+            // Verifica se o usuário logado é o mesmo que está sendo editado
+            if (currentUserEmail.equals(user.getEmail())) {
+                // A restrição se aplica SOMENTE se o usuário já for ADMIN
+                if (user.getRole() == UserRole.ADMIN) {
+                    // Se estiver tentando alterar a role e a nova role não for ADMIN
+                    if (dto.role() != null && dto.role() != UserRole.ADMIN) {
+                        throw new IllegalArgumentException("Você não pode remover seu próprio status de administrador.");
+                    }
+                }
+            }
+        }
+
         updateUserData(user, dto);
         user.setLastModifiedAt(LocalDateTime.now());
         return new UserDTO(repository.save(user));
@@ -201,6 +220,18 @@ public class UserService {
         User user = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + id));
 
+        // Validação: Admin não pode se desativar
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String currentUserEmail = authentication.getName();
+            if (currentUserEmail.equals(user.getEmail())) {
+                // A restrição se aplica SOMENTE se o usuário já for ADMIN
+                if (user.getRole() == UserRole.ADMIN) {
+                    throw new IllegalArgumentException("Você não pode desativar seu próprio usuário se for administrador.");
+                }
+            }
+        }
+
         user.setAtivo(false);
         user.setLastModifiedAt(LocalDateTime.now());
         repository.save(user);
@@ -227,6 +258,22 @@ public class UserService {
     public UserDTO updateUserRole(UpdateUserRoleDTO dto) {
         User user = repository.findById(dto.userId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + dto.userId()));
+
+        // Validação: Admin não pode remover seu próprio status de admin
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String currentUserEmail = authentication.getName();
+            // Verifica se o usuário logado é o mesmo que está sendo editado
+            if (currentUserEmail.equals(user.getEmail())) {
+                // A restrição se aplica SOMENTE se o usuário já for ADMIN
+                if (user.getRole() == UserRole.ADMIN) {
+                    // Se a nova role não for ADMIN
+                    if (dto.newRole() != UserRole.ADMIN) {
+                        throw new IllegalArgumentException("Você não pode remover seu próprio status de administrador.");
+                    }
+                }
+            }
+        }
 
         user.setRole(dto.newRole());
         user.setLastModifiedAt(LocalDateTime.now());

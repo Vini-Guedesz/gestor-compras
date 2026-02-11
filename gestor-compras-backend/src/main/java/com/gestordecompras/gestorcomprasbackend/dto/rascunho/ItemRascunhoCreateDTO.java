@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.dto.rascunho;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -20,5 +21,8 @@ public record ItemRascunhoCreateDTO(
     String descricao,
 
     @Size(max = 500, message = "A observação deve ter no máximo 500 caracteres")
-    String observacao
+    String observacao,
+
+    @Schema(description = "Tipo do item (PRODUTO ou SERVICO)", example = "PRODUTO", allowableValues = {"PRODUTO", "SERVICO"})
+    String tipo
 ) {}

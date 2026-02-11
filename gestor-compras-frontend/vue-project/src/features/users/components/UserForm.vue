@@ -120,6 +120,7 @@
                   v-model="formData.role"
                   class="form-select"
                   :class="{ 'error': errors.role }"
+                  :disabled="isEditingSelf"
                   required
                 >
                   <option value="">Selecione uma função</option>
@@ -129,19 +130,26 @@
                   <option value="APROVADOR">Aprovador</option>
                 </select>
                 <span v-if="errors.role" class="error-message">{{ errors.role }}</span>
-                <small class="form-hint">{{ getRoleDescription(formData.role) }}</small>
+                <small v-if="isEditingSelf" class="form-hint" style="color: #d97706;">
+                  Você não pode alterar sua própria função.
+                </small>
+                <small v-else class="form-hint">{{ getRoleDescription(formData.role) }}</small>
               </div>
 
               <!-- Status (apenas na edição) -->
               <div v-if="isEditMode" class="form-group">
-                <label class="checkbox-label">
+                <label class="checkbox-label" :class="{ 'disabled': isEditingSelf }">
                   <input
                     v-model="formData.ativo"
                     type="checkbox"
                     class="form-checkbox"
+                    :disabled="isEditingSelf"
                   />
                   <span>Usuário ativo (pode acessar o sistema)</span>
                 </label>
+                <small v-if="isEditingSelf" class="form-hint" style="color: #d97706; margin-left: 24px;">
+                  Você não pode desativar seu próprio usuário.
+                </small>
               </div>
             </form>
           </div>
@@ -167,6 +175,7 @@
 
 <script setup>
 import { ref, watch, computed, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
   isVisible: {
@@ -180,6 +189,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'save'])
+const authStore = useAuthStore()
 
 // Estado do formulário
 const formData = ref({
@@ -197,6 +207,9 @@ const mostrarCampoSenha = ref(false)
 const inputsReady = ref(false)
 
 const isEditMode = computed(() => !!props.usuario)
+const isEditingSelf = computed(() => {
+  return isEditMode.value && authStore.user && authStore.user.id === props.usuario?.id
+})
 
 // Previne autocomplete ao montar o componente
 onMounted(() => {
@@ -512,6 +525,11 @@ const handleClose = () => {
   font-size: 0.875rem;
   color: #374151;
   user-select: none;
+}
+
+.checkbox-label.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .form-checkbox {

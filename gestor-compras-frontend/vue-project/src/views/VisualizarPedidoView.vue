@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :class="{ 'sidebar-collapsed': isCollapsed }">
     <DashboardHeader @toggle-sidebar="toggleSidebar" />
 
     <div class="main-content">
@@ -14,7 +14,13 @@
             </svg>
             Voltar
           </button>
-          <span class="breadcrumb-separator">|</span>
+          <span class="breadcrumb-separator">/</span>
+          <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+            </svg>
+          </router-link>
+          <span class="breadcrumb-separator">/</span>
           <router-link to="/pedidos" class="breadcrumb-link">
             Pedidos de Compra
           </router-link>
@@ -732,6 +738,7 @@ import { useToast } from '@/composables/useToast.js'
 import { useErrorModal } from '@/composables/useErrorModal.js'
 import { usePermissions } from '@/composables/usePermissions.js'
 import { useAuthStore } from '@/stores/auth'
+import { useSidebar } from '@/composables/useSidebar'
 import logger from '@/utils/logger.js'
 import pedidoService from '@/services/pedidoService.js'
 import rascunhoService from '@/services/rascunhoService.js'
@@ -758,6 +765,7 @@ export default {
     const authStore = useAuthStore()
     const { permissions } = usePermissions()
     const { success, error: showError, warning } = useToast()
+    const { isCollapsed } = useSidebar()
 
     // Sidebar
     const isSidebarOpen = ref(false)
@@ -1585,13 +1593,15 @@ export default {
       confirmarDevolverPedido,
       abrirModalCancelar,
       fecharModalCancelar,
-      confirmarCancelar
+      confirmarCancelar,
+      isCollapsed
     }
   }
 }
 </script>
 
 <style scoped>
+@import '../assets/css/layout.css';
 .page-container {
   min-height: 100vh;
   background: #f5f7fa;
@@ -1606,69 +1616,23 @@ export default {
   flex: 1;
   padding: 24px;
   margin-left: 250px;
+  transition: margin-left 0.35s ease;
 }
 
-/* Loading */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  gap: 16px;
-  color: #6b7280;
+.page-container.sidebar-collapsed .content-area {
+  margin-left: 80px;
 }
 
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #1F285F;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Breadcrumb */
-.breadcrumb {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 24px;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow-x: auto;
-}
-
-.btn-voltar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.875rem;
+.breadcrumb > * {
   line-height: 1;
-  transition: all 0.2s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.btn-voltar:hover {
-  background: #e5e7eb;
+  display: inline-flex;
+  align-items: center;
 }
 
 .breadcrumb-link {
   color: #1F285F;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   line-height: 1;
   flex-shrink: 0;
@@ -1678,18 +1642,9 @@ export default {
   text-decoration: underline;
 }
 
-.breadcrumb-separator {
-  color: #d1d5db;
-  user-select: none;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.breadcrumb-current {
-  color: #6b7280;
-  white-space: nowrap;
-  line-height: 1;
-  flex-shrink: 0;
+.breadcrumb-home svg {
+  display: block;
+  vertical-align: middle;
 }
 
 /* View Container */
@@ -1697,6 +1652,7 @@ export default {
   max-width: 1000px;
   margin: 0 auto;
 }
+
 
 .view-header {
   display: flex;
@@ -3750,6 +3706,10 @@ export default {
     padding: 20px;
   }
 
+  .page-container.sidebar-collapsed .content-area {
+    margin-left: 0;
+  }
+
   .view-container {
     max-width: 100%;
   }
@@ -3778,11 +3738,6 @@ export default {
     flex-wrap: wrap;
     gap: 8px;
     font-size: 0.8125rem;
-  }
-
-  /* Ocultar breadcrumb separator em mobile */
-  .breadcrumb-separator {
-    display: none;
   }
 
   .btn-voltar {

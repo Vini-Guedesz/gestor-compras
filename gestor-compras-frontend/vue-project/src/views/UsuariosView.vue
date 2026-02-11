@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-layout">
+  <div class="dashboard-layout" :class="{ 'sidebar-collapsed': isCollapsed }">
     <!-- Header -->
     <DashboardHeader />
 
@@ -8,6 +8,16 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+          </svg>
+        </router-link>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Usuários</span>
+      </div>
       <!-- Mensagem de Boas-vindas -->
       <div class="welcome-section">
         <div class="welcome-header">
@@ -83,6 +93,38 @@
 
       <!-- Filtros de Pesquisa -->
       <div class="search-section">
+        <div class="chip-bar">
+          <div class="chip-group">
+            <span class="chip-label">Função</span>
+            <button class="chip" :class="{ active: filtroRole === '' }" @click="filtroRole = ''; filtrarUsuarios()" aria-pressed="filtroRole === ''">
+              Todas
+            </button>
+            <button class="chip" :class="{ active: filtroRole === 'ADMIN' }" @click="filtroRole = 'ADMIN'; filtrarUsuarios()" aria-pressed="filtroRole === 'ADMIN'">
+              Admin
+            </button>
+            <button class="chip" :class="{ active: filtroRole === 'USUARIO' }" @click="filtroRole = 'USUARIO'; filtrarUsuarios()" aria-pressed="filtroRole === 'USUARIO'">
+              Usuário
+            </button>
+            <button class="chip" :class="{ active: filtroRole === 'COMPRADOR' }" @click="filtroRole = 'COMPRADOR'; filtrarUsuarios()" aria-pressed="filtroRole === 'COMPRADOR'">
+              Comprador
+            </button>
+            <button class="chip" :class="{ active: filtroRole === 'APROVADOR' }" @click="filtroRole = 'APROVADOR'; filtrarUsuarios()" aria-pressed="filtroRole === 'APROVADOR'">
+              Aprovador
+            </button>
+          </div>
+          <div class="chip-group">
+            <span class="chip-label">Status</span>
+            <button class="chip" :class="{ active: filtroStatus === '' }" @click="filtroStatus = ''; filtrarUsuarios()" aria-pressed="filtroStatus === ''">
+              Todos
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'ativo' }" @click="filtroStatus = 'ativo'; filtrarUsuarios()" aria-pressed="filtroStatus === 'ativo'">
+              Ativo
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'inativo' }" @click="filtroStatus = 'inativo'; filtrarUsuarios()" aria-pressed="filtroStatus === 'inativo'">
+              Inativo
+            </button>
+          </div>
+        </div>
         <div class="search-container">
           <div class="search-input-container">
             <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -93,18 +135,6 @@
               class="search-input" @input="filtrarUsuarios" />
           </div>
           <div class="search-actions">
-            <select v-model="filtroRole" @change="filtrarUsuarios" class="filter-select">
-              <option value="">Todas as funções</option>
-              <option value="ADMIN">Administrador</option>
-              <option value="USUARIO">Usuário</option>
-              <option value="COMPRADOR">Comprador</option>
-              <option value="APROVADOR">Aprovador</option>
-            </select>
-            <select v-model="filtroStatus" @change="filtrarUsuarios" class="filter-select">
-              <option value="">Todos os status</option>
-              <option value="ativo">Ativo</option>
-              <option value="inativo">Inativo</option>
-            </select>
             <button class="filter-button" @click="limparFiltros">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor"
@@ -313,6 +343,18 @@
         @cancel="showConfirmReativacao = false"
       />
 
+      <!-- CTA mobile -->
+      <button
+        class="mobile-fab"
+        @click="abrirFormularioNovo"
+        aria-label="Novo Usuário"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+        </svg>
+        Novo Usuário
+      </button>
+
       <!-- Modal de Detalhes do Usuário -->
       <div v-if="showDetalhesModal" class="modal-overlay" @click="fecharDetalhes">
         <div class="detalhes-modal-usuario" @click.stop>
@@ -472,6 +514,7 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import { useSidebar } from '@/composables/useSidebar'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -484,6 +527,7 @@ import logger from '@/utils/logger.js'
 const route = useRoute()
 const router = useRouter()
 const { success, error: toastError } = useToast()
+const { isCollapsed } = useSidebar()
 
 // Estados reativos
 const isLoading = ref(true)
@@ -922,6 +966,10 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
 
 /* Seção de busca */
 .search-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
   margin-bottom: 32px;
 }
 
@@ -929,15 +977,13 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
   display: flex;
   gap: 16px;
   align-items: center;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  flex-wrap: wrap;
 }
 
 .search-input-container {
   flex: 1;
   position: relative;
+  min-width: 300px;
 }
 
 .search-icon {
@@ -955,6 +1001,8 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s;
+  background: white;
+  min-width: 0;
 }
 
 .search-input:focus {
@@ -1376,6 +1424,29 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
   display: none;
 }
 
+/* Floating Action Button (mobile) */
+.mobile-fab {
+  display: none;
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #1F285F;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 10px 20px rgba(31, 40, 95, 0.3);
+  z-index: 1000;
+  gap: 8px;
+  align-items: center;
+}
+
+.mobile-fab svg {
+  display: block;
+}
+
 /* Responsividade */
 @media (max-width: 1024px) {
   .welcome-header {
@@ -1400,6 +1471,10 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
 }
 
 @media (max-width: 768px) {
+  .main-content {
+    padding-bottom: 88px;
+  }
+
   .metrics-grid {
     grid-template-columns: 1fr;
   }
@@ -1421,6 +1496,10 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
     font-size: 14px;
   }
 
+  .mobile-fab {
+    display: inline-flex;
+  }
+
   .action-button {
     padding: 10px 16px !important;
     min-width: 140px !important;
@@ -1428,7 +1507,7 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
   }
 
   .search-container {
-    padding: 16px;
+    gap: 12px;
   }
 
   .search-actions {
@@ -1474,7 +1553,8 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
   }
 
   .search-section {
-    margin-bottom: 20px;
+    padding: 16px;
+    margin-bottom: 18px;
   }
 
   .usuario-card {
@@ -1492,6 +1572,11 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
 
 /* Ajustes para telas muito pequenas (360px e menor) */
 @media (max-width: 380px) {
+  .search-section {
+    padding: 6px;
+    margin-bottom: 8px;
+  }
+
   .welcome-section {
     margin-bottom: 12px;
     padding: 8px 0;
@@ -1542,11 +1627,11 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
   }
 
   .search-section {
-    margin-bottom: 16px;
+    padding: 10px;
+    margin-bottom: 12px;
   }
 
   .search-container {
-    padding: 10px;
     gap: 10px;
   }
 

@@ -11,8 +11,11 @@ import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Entidade que representa uma cotação de preços e prazos recebida de um fornecedor
@@ -77,7 +80,7 @@ public class Cotacao {
      */
     @OneToMany(mappedBy = "cotacao", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 25)
-    private List<CotacaoItem> itens = new ArrayList<>();
+    private Set<CotacaoItem> itens = new HashSet<>();
 
     /**
      * Preço total legado.
@@ -96,6 +99,19 @@ public class Cotacao {
      * Data de validade da proposta.
      */
     private LocalDate dataLimite;
+
+    /**
+     * Data de criação da cotação.
+     */
+    @Column(name = "data_criacao")
+    private LocalDateTime dataCriacao;
+
+    /**
+     * Status da cotação (EM_ANALISE, APROVADA, REJEITADA, CANCELADA).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private StatusCotacao status = StatusCotacao.EM_ANALISE;
 
     /**
      * Anexos PDF desta cotação com deduplificação via hash SHA-256.
@@ -163,6 +179,12 @@ public class Cotacao {
     @PrePersist
     public void prePersist() {
         validarFornecedor();
+        if (this.dataCriacao == null) {
+            this.dataCriacao = LocalDateTime.now();
+        }
+        if (this.status == null) {
+            this.status = StatusCotacao.EM_ANALISE;
+        }
     }
 
     /**
@@ -221,19 +243,28 @@ public class Cotacao {
     }
 
     /**
-     * Calcula o valor total da cotação somando o subtotal de todos os itens.
+     * Calcula o valor total da cotação.
      * <p>
-     * Se não houver itens, tenta retornar o valor legado para compatibilidade.
+     * Regra de Negócio (Flexibilidade Total):
+     * 1. Se houver um preço global definido explicitamente (precoLegacy), ele tem prioridade absoluta.
+     * 2. Se não houver preço global, tenta calcular a soma dos itens.
      * </p>
      * @return Valor total calculado.
      */
     public BigDecimal calcularPrecoTotal() {
-        if (itens == null || itens.isEmpty()) {
-            return precoLegacy != null ? precoLegacy : BigDecimal.ZERO;
+        // Prioridade 1: Preço global definido manualmente
+        if (precoLegacy != null && precoLegacy.compareTo(BigDecimal.ZERO) > 0) {
+            return precoLegacy;
         }
-        return itens.stream()
-                .map(CotacaoItem::calcularPrecoTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Prioridade 2: Soma dos itens (se houver itens com valor)
+        if (itens != null && !itens.isEmpty()) {
+            return itens.stream()
+                    .map(CotacaoItem::calcularPrecoTotal)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        return BigDecimal.ZERO;
     }
 
     /**

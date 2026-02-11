@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-layout">
+  <div class="dashboard-layout" :class="{ 'sidebar-collapsed': isCollapsed }">
     <!-- Header -->
     <DashboardHeader />
 
@@ -8,6 +8,16 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+          </svg>
+        </router-link>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Fornecedores</span>
+      </div>
       <!-- Mensagem de Boas-vindas -->
       <div class="welcome-section">
         <div class="welcome-header">
@@ -87,6 +97,35 @@
 
       <!-- Filtros de Pesquisa -->
       <div class="search-section">
+        <div class="chip-bar">
+          <div class="chip-group">
+            <span class="chip-label">Tipo</span>
+            <button class="chip" :class="{ active: filtroTipo === '' }" @click="filtroTipo = ''; filtrarFornecedores()" aria-pressed="filtroTipo === ''">
+              Todos
+            </button>
+            <button class="chip" :class="{ active: filtroTipo === 'produto' }" @click="filtroTipo = 'produto'; filtrarFornecedores()" aria-pressed="filtroTipo === 'produto'">
+              Produto
+            </button>
+            <button class="chip" :class="{ active: filtroTipo === 'servico' }" @click="filtroTipo = 'servico'; filtrarFornecedores()" aria-pressed="filtroTipo === 'servico'">
+              Serviço
+            </button>
+          </div>
+          <div class="chip-group">
+            <span class="chip-label">Status</span>
+            <button class="chip" :class="{ active: filtroStatus === '' }" @click="filtroStatus = ''; filtrarFornecedores()" aria-pressed="filtroStatus === ''">
+              Todos
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'ativo' }" @click="filtroStatus = 'ativo'; filtrarFornecedores()" aria-pressed="filtroStatus === 'ativo'">
+              Ativo
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'inativo' }" @click="filtroStatus = 'inativo'; filtrarFornecedores()" aria-pressed="filtroStatus === 'inativo'">
+              Inativo
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'suspenso' }" @click="filtroStatus = 'suspenso'; filtrarFornecedores()" aria-pressed="filtroStatus === 'suspenso'">
+              Suspenso
+            </button>
+          </div>
+        </div>
         <div class="search-container">
           <div class="search-input-container">
             <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -97,17 +136,6 @@
               class="search-input" @input="filtrarFornecedores" />
           </div>
           <div class="search-actions">
-            <select v-model="filtroTipo" @change="filtrarFornecedores" class="filter-select">
-              <option value="">Todos os tipos</option>
-              <option value="produto">Produto</option>
-              <option value="servico">Serviço</option>
-            </select>
-            <select v-model="filtroStatus" @change="filtrarFornecedores" class="filter-select">
-              <option value="">Todos os status</option>
-              <option value="ativo">Ativo</option>
-              <option value="inativo">Inativo</option>
-              <option value="suspenso">Suspenso</option>
-            </select>
             <button class="filter-button" @click="limparFiltros">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor"
@@ -296,6 +324,19 @@
         </div>
       </div>
 
+      <!-- CTA mobile -->
+      <button
+        v-if="permissions.canCreateFornecedor"
+        class="mobile-fab"
+        @click="abrirFormularioNovo"
+        aria-label="Novo Fornecedor"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+        </svg>
+        Novo Fornecedor
+      </button>
+
       <!-- Modal de Fornecedor -->
       <FornecedorForm
         :isVisible="showFornecedorForm"
@@ -323,6 +364,7 @@ import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { usePermissions } from '@/composables/usePermissions'
+import { useSidebar } from '@/composables/useSidebar'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -337,6 +379,7 @@ import logger from '@/utils/logger.js'
 const route = useRoute()
 const router = useRouter()
 const { success, error: toastError } = useToast()
+const { isCollapsed } = useSidebar()
 
 // Permissões baseadas em roles
 const { permissions } = usePermissions()
@@ -818,6 +861,10 @@ onMounted(() => {
 
 /* Seção de busca */
 .search-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
   margin-bottom: 32px;
 }
 
@@ -825,15 +872,13 @@ onMounted(() => {
   display: flex;
   gap: 16px;
   align-items: center;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  flex-wrap: wrap;
 }
 
 .search-input-container {
   flex: 1;
   position: relative;
+  min-width: 300px;
 }
 
 .search-icon {
@@ -851,6 +896,8 @@ onMounted(() => {
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s;
+  background: white;
+  min-width: 0;
 }
 
 .search-input:focus {
@@ -1242,6 +1289,29 @@ onMounted(() => {
   display: none;
 }
 
+/* Floating Action Button (mobile) */
+.mobile-fab {
+  display: none;
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #1F285F;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 10px 20px rgba(31, 40, 95, 0.3);
+  z-index: 1000;
+  gap: 8px;
+  align-items: center;
+}
+
+.mobile-fab svg {
+  display: block;
+}
+
 /* Responsividade */
 @media (max-width: 1024px) {
   .welcome-header {
@@ -1276,6 +1346,10 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .main-content {
+    padding-bottom: 88px;
+  }
+
   .welcome-section {
     margin-bottom: 24px;
     padding: 16px 0;
@@ -1301,6 +1375,10 @@ onMounted(() => {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+  }
+
+  .mobile-fab {
+    display: inline-flex;
   }
 
   .metric-card {
@@ -1335,11 +1413,11 @@ onMounted(() => {
   }
 
   .search-section {
-    margin-bottom: 24px;
+    padding: 16px;
+    margin-bottom: 20px;
   }
 
   .search-container {
-    padding: 16px;
     gap: 12px;
   }
 
@@ -1451,7 +1529,7 @@ onMounted(() => {
   }
 
   .search-container {
-    padding: 12px;
+    gap: 12px;
   }
 
   .search-input {
@@ -1526,6 +1604,11 @@ onMounted(() => {
 
 /* Ajustes para telas muito pequenas (360px e menor) */
 @media (max-width: 380px) {
+  .search-section {
+    padding: 6px;
+    margin-bottom: 8px;
+  }
+
   /* Welcome Section - Compacto */
   .welcome-section {
     margin-bottom: 12px;
@@ -1630,13 +1713,12 @@ onMounted(() => {
 
   /* Busca - Compacto */
   .search-section {
-    margin-bottom: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
   }
 
   .search-container {
-    padding: 10px;
     gap: 10px;
-    border-radius: 8px;
   }
 
   .search-input-container {

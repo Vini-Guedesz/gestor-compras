@@ -192,6 +192,7 @@ export function extractUserInfo(token) {
   }
 
   return {
+    id: payload.id,
     email: payload.sub,
     nome: payload.nome || payload.sub,
     role: userRole

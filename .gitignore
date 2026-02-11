@@ -67,5 +67,4 @@ Prints pra claude/
 
 # Backups
 backups/
-*.sql
 *.dump

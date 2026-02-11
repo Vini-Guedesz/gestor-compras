@@ -22,7 +22,7 @@ public class AdminUserSeeder {
                 log.info("Nenhum usuário encontrado. Criando usuário ADMIN padrão...");
 
                 User admin = new User();
-                admin.setNome("Administrador Padrão");
+                admin.setNome("Administrador Inicial");
                 admin.setEmail("admin@admin.com");
                 admin.setSenha(passwordEncoder.encode("admin"));
                 admin.setRole(UserRole.ADMIN);

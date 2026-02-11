@@ -1,10 +1,13 @@
 package com.gestordecompras.gestorcomprasbackend.service;
 
+import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeProdutoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeProdutoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeProdutoUpdateDTO;
+import com.gestordecompras.gestorcomprasbackend.mapper.CotacaoMapper;
 import com.gestordecompras.gestorcomprasbackend.mapper.FornecedorDeProdutoMapper;
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeProduto;
+import com.gestordecompras.gestorcomprasbackend.repository.CotacaoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeProdutoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
@@ -30,16 +33,25 @@ public class FornecedorDeProdutoService {
 
     private final FornecedorDeProdutoRepository repository;
     private final FornecedorDeProdutoMapper mapper;
+    private final CotacaoRepository cotacaoRepository;
+    private final CotacaoMapper cotacaoMapper;
 
     /**
      * Construtor com injeção de dependências.
      *
      * @param repository Repositório de fornecedores de produtos.
      * @param mapper Mapper para conversão entre entidade e DTO.
+     * @param cotacaoRepository Repositório de cotações.
+     * @param cotacaoMapper Mapper de cotações.
      */
-    public FornecedorDeProdutoService(FornecedorDeProdutoRepository repository, FornecedorDeProdutoMapper mapper) {
+    public FornecedorDeProdutoService(FornecedorDeProdutoRepository repository,
+                                      FornecedorDeProdutoMapper mapper,
+                                      CotacaoRepository cotacaoRepository,
+                                      CotacaoMapper cotacaoMapper) {
         this.repository = repository;
         this.mapper = mapper;
+        this.cotacaoRepository = cotacaoRepository;
+        this.cotacaoMapper = cotacaoMapper;
     }
 
     /**
@@ -129,5 +141,21 @@ public class FornecedorDeProdutoService {
             throw new EntityNotFoundException("Fornecedor de produto não encontrado com ID: " + id);
         }
         repository.deleteById(id);
+    }
+
+    /**
+     * Busca o histórico de cotações de um fornecedor de produto.
+     *
+     * @param id ID do fornecedor.
+     * @return Lista de DTOs de cotações.
+     */
+    @Transactional(readOnly = true)
+    public List<CotacaoDTO> getHistoricoCotacoes(Integer id) {
+        if (!repository.existsById(id)) {
+            throw new EntityNotFoundException("Fornecedor de produto não encontrado com ID: " + id);
+        }
+        return cotacaoRepository.findByFornecedorProdutoId(id).stream()
+                .map(cotacaoMapper::toDTO)
+                .collect(Collectors.toList());
     }
 }

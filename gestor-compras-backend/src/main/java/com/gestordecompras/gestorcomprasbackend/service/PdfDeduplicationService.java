@@ -255,10 +255,10 @@ public class PdfDeduplicationService {
 
         // Contar anexos usando nova vs antiga arquitetura
         Long anexosCotacaoNova = anexoCotacaoRepository.countByPdfStorageIsNotNull();
-        Long anexosCotacaoLegado = anexoCotacaoRepository.countByConteudoLegacyIsNotNull();
+        Long anexosCotacaoLegado = 0L;
 
         Long anexosRascunhoNova = anexoCotacaoRascunhoRepository.countByPdfStorageIsNotNull();
-        Long anexosRascunhoLegado = anexoCotacaoRascunhoRepository.countByConteudoLegacyIsNotNull();
+        Long anexosRascunhoLegado = 0L;
 
         Long totalAnexos = anexosCotacaoNova + anexosRascunhoNova;
 

@@ -41,7 +41,10 @@ public record HistoricoCotacaoDTO(
         Boolean temAnexoNovo,
 
         @Deprecated
-        String caminhoAnexoNovo
+        String caminhoAnexoNovo,
+
+        String nomeArquivoAnterior,
+        String nomeArquivoNovo
 ) {
     /**
      * Verifica se houve mudança de preço

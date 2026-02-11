@@ -7,6 +7,7 @@ import lombok.Data;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,7 +53,7 @@ public class SolicitacaoDePedido {
      */
     @OneToMany(mappedBy = "solicitacaoDePedido", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 25)
-    private List<ItemPedido> itens;
+    private Set<ItemPedido> itens = new HashSet<>();
 
     /**
      * Conjunto de cotações recebidas para esta solicitação.

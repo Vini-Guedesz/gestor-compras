@@ -15,5 +15,7 @@ public interface HistoricoCotacaoMapper {
     @Mapping(target = "temAnexoNovo", expression = "java(historico.getHashAnexoPdfNovo() != null)")
     @Mapping(target = "caminhoAnexoAnterior", constant = "null") // deprecated - sempre null
     @Mapping(target = "caminhoAnexoNovo", constant = "null") // deprecated - sempre null
+    @Mapping(target = "nomeArquivoAnterior", source = "nomeArquivoAnterior")
+    @Mapping(target = "nomeArquivoNovo", source = "nomeArquivoNovo")
     HistoricoCotacaoDTO toDTO(HistoricoCotacao historico);
 }

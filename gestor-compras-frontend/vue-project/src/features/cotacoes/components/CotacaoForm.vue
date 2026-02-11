@@ -98,45 +98,59 @@
                   <small class="form-hint">{{ pedidoSelecionadoLabel || (pedidosFiltrados.length + ' pedidos disponíveis') }}</small>
                 </div>
 
-                <!-- Item com pesquisa integrada -->
-                <div class="form-group">
-                  <label class="form-label">Item do Pedido *</label>
-                  <div class="custom-select-wrapper" :class="{ disabled: !pedidoSelecionado }">
-                    <div class="custom-select">
-                      <input
-                        v-model="pesquisaItem"
-                        type="text"
-                        class="custom-select-input"
-                        :placeholder="pedidoSelecionado ? 'Pesquisar item...' : 'Primeiro selecione um pedido'"
-                        @focus="openDropdown('item')"
-                        @input="openDropdown('item')"
-                        :disabled="!pedidoSelecionado"
-                      />
-                      <svg class="dropdown-icon" viewBox="0 0 24 24" width="20" height="20" @click="!pedidoSelecionado ? null : toggleDropdown('item')">
-                        <path fill="currentColor" d="M7 10l5 5 5-5z"/>
-                      </svg>
+                <!-- Lista de Itens do Pedido (Seleção Múltipla) -->
+                <div class="form-group" v-if="pedidoSelecionado">
+                  <div class="section-header">
+                    <label class="form-label">Itens do Pedido *</label>
+                    <button 
+                      type="button" 
+                      @click="toggleSelecionarTodos" 
+                      class="btn-text-action"
+                      v-if="itensFiltradosPorPedido.length > 0"
+                    >
+                      {{ todosItensMarcados ? 'Desmarcar Todos' : 'Selecionar Todos' }}
+                    </button>
+                  </div>
+                  <div class="itens-selecao-container">
+                    <div v-if="itensFiltradosPorPedido.length === 0" class="empty-items">
+                      Nenhum item disponível neste pedido.
                     </div>
-                    <div v-if="dropdownAberto === 'item'" class="dropdown-list">
-                      <div
-                        v-for="item in itensFiltradosComPesquisa"
-                        :key="item.id"
-                        class="dropdown-item"
-                        @click="selecionarItem(item)"
-                      >
-                        <div class="item-main">#{{ item.id }} - {{ item.nome || 'Item sem nome' }}</div>
-                        <div class="item-secondary">Qtd: {{ item.quantidade || 0 }}{{ item.descricao ? ' - ' + item.descricao : '' }}</div>
-                      </div>
-                      <div v-if="itensFiltradosComPesquisa.length === 0" class="dropdown-empty">
-                        {{ pedidoSelecionado ? 'Nenhum item encontrado neste pedido' : 'Selecione um pedido primeiro' }}
+                    <div v-else class="itens-list">
+                      <div v-for="item in itensFiltradosPorPedido" :key="item.id" class="item-checkbox-row">
+                        <div class="checkbox-wrapper">
+                          <input
+                            type="checkbox"
+                            :id="`item-${item.id}`"
+                            :value="item.id"
+                            v-model="formData.itensSelecionadosIds"
+                            class="form-checkbox"
+                          />
+                          <label :for="`item-${item.id}`" class="item-label">
+                            <span class="item-name">{{ item.nome }}</span>
+                            <span class="item-qtd"> (Qtd: {{ item.quantidade }})</span>
+                          </label>
+                        </div>
+                        
+                        <!-- Preço Unitário Opcional -->
+                        <div class="item-price-input" v-if="formData.itensSelecionadosIds.includes(item.id)">
+                          <span class="currency-symbol">R$</span>
+                          <input
+                            type="text"
+                            v-model="formData.precosUnitarios[item.id]"
+                            @input="(e) => formatarPrecoUnitario(e, item.id)"
+                            placeholder="Unitário (Opcional)"
+                            class="form-input-small"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <small class="form-hint">{{ itemSelecionadoNome || (itensFiltradosComPesquisa.length + ' itens disponíveis') }}</small>
+                  <small class="form-hint">Selecione os itens incluídos nesta cotação.</small>
                 </div>
 
-                <!-- Preço -->
+                <!-- Preço Total -->
                 <div class="form-group">
-                  <label class="form-label">Preço (R$) *</label>
+                  <label class="form-label">Preço Total da Cotação (R$) *</label>
                   <input
                     type="text"
                     v-model="precoFormatado"
@@ -146,6 +160,7 @@
                     placeholder="0,00"
                     inputmode="numeric"
                   />
+                  <small class="form-hint">Valor total da proposta (obrigatório).</small>
                 </div>
 
                 <!-- Prazo de Entrega -->
@@ -333,7 +348,8 @@ const fileInput = ref(null)
 // Dados do formulário - alinhado com CotacaoCreateDTO/CotacaoUpdateDTO
 const formData = ref({
   fornecedorId: null,
-  itemPedidoId: null,
+  itensSelecionadosIds: [], // Array de IDs
+  precosUnitarios: {}, // Mapa { itemId: valorFormatado }
   preco: null,
   prazoEmDiasUteis: null,
   dataLimite: null,
@@ -398,30 +414,25 @@ const itensFiltradosPorPedido = computed(() => {
   }
 
   // Retornar os itens do pedido
-  const itens = pedido.itens || []
-
-  return itens
+  return pedido.itens || []
 })
 
-// Itens filtrados por pedido E pesquisa
-const itensFiltradosComPesquisa = computed(() => {
-  let resultado = itensFiltradosPorPedido.value
+const todosItensMarcados = computed(() => {
+  return itensFiltradosPorPedido.value.length > 0 && 
+         formData.value.itensSelecionadosIds.length === itensFiltradosPorPedido.value.length
+})
 
-  if (pesquisaItem.value.trim()) {
-    const query = pesquisaItem.value.toLowerCase().trim()
-    resultado = resultado.filter(i =>
-      i.id?.toString().includes(query) ||
-      i.nome?.toLowerCase().includes(query) ||
-      i.descricao?.toLowerCase().includes(query)
-    )
+const toggleSelecionarTodos = () => {
+  if (todosItensMarcados.value) {
+    formData.value.itensSelecionadosIds = []
+  } else {
+    formData.value.itensSelecionadosIds = itensFiltradosPorPedido.value.map(i => i.id)
   }
-
-  return resultado
-})
+}
 
 const formularioValido = computed(() => {
   return formData.value.fornecedorId &&
-         formData.value.itemPedidoId &&
+         formData.value.itensSelecionadosIds.length > 0 && // Pelo menos um item
          formData.value.preco &&
          formData.value.preco > 0 &&
          pedidoSelecionado.value
@@ -448,6 +459,26 @@ const formatarPrecoInput = (event) => {
 
   // Atualiza o valor numérico no formData
   formData.value.preco = numero
+}
+
+const formatarPrecoUnitario = (event, itemId) => {
+  let valor = event.target.value.replace(/\D/g, '')
+  
+  if (!valor) {
+    formData.value.precosUnitarios[itemId] = ''
+    return
+  }
+
+  const numero = parseInt(valor) / 100
+  formData.value.precosUnitarios[itemId] = numero.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
+const parsePrecoBR = (valorFormatado) => {
+  if (!valorFormatado) return 0;
+  return parseFloat(valorFormatado.replace(/\./g, '').replace(',', '.'));
 }
 
 const formatarPrecoExistente = (preco) => {
@@ -553,22 +584,10 @@ const selecionarPedido = (pedido) => {
   pedidoSelecionadoLabel.value = `Pedido #${pedido.id} - ${getStatusLabel(pedido.status)}`
   pesquisaPedido.value = pedido.id.toString() // Apenas o número do ID
 
-  // Limpar item selecionado quando pedido muda
-  formData.value.itemPedidoId = null
-  itemSelecionadoNome.value = ''
-  pesquisaItem.value = ''
+  // Limpar seleção anterior
+  formData.value.itensSelecionadosIds = []
+  formData.value.precosUnitarios = {}
 
-  closeDropdown()
-
-  // Log para verificar os itens filtrados
-  setTimeout(() => {
-  }, 100)
-}
-
-const selecionarItem = (item) => {
-  formData.value.itemPedidoId = item.id
-  itemSelecionadoNome.value = item.nome || 'Item sem nome'
-  pesquisaItem.value = item.id.toString() // Apenas o número do ID
   closeDropdown()
 }
 
@@ -596,8 +615,8 @@ const gerarRelatorio = async () => {
   try {
     gerandoRelatorio.value = true
 
-    // Se houver um item selecionado, incluir apenas ele, senão incluir todos
-    const itensIds = formData.value.itemPedidoId ? [formData.value.itemPedidoId] : []
+    // Enviar todos os IDs selecionados
+    const itensIds = formData.value.itensSelecionadosIds
 
     await relatorioService.visualizarRelatorioItensParaCotacao(
       parseInt(pedidoSelecionado.value),
@@ -624,7 +643,7 @@ const handleSubmit = async () => {
 
     // Validações do formulário
     if (!formularioValido.value) {
-      mostrarAlerta('Por favor, preencha todos os campos obrigatórios', 'error')
+      mostrarAlerta('Por favor, preencha todos os campos obrigatórios e selecione pelo menos um item', 'error')
       return
     }
 
@@ -633,12 +652,29 @@ const handleSubmit = async () => {
       return
     }
 
+    // Montar lista de itens
+    const itens = formData.value.itensSelecionadosIds.map(itemId => {
+      const precoUnitarioStr = formData.value.precosUnitarios[itemId];
+      const precoUnitario = parsePrecoBR(precoUnitarioStr);
+      
+      // Encontrar quantidade original do item
+      const itemOriginal = itensFiltradosPorPedido.value.find(i => i.id === itemId);
+      const quantidade = itemOriginal ? itemOriginal.quantidade : 1;
+
+      return {
+        itemPedidoId: itemId,
+        precoUnitario: precoUnitario > 0 ? precoUnitario : 0, // Se não preenchido, envia 0
+        quantidade: quantidade,
+        observacao: null
+      };
+    });
 
     const dadosParaSalvar = {
       fornecedorId: parseInt(formData.value.fornecedorId),
       tipoFornecedor: tipoFornecedor.value,
-      itemPedidoId: parseInt(formData.value.itemPedidoId),
+      solicitacaoDePedidoId: parseInt(pedidoSelecionado.value),
       preco: parseFloat(formData.value.preco),
+      itens: itens, // Envia lista detalhada
       prazoEmDiasUteis: formData.value.prazoEmDiasUteis ? parseInt(formData.value.prazoEmDiasUteis) : null,
       dataLimite: formData.value.dataLimite || null,
       arquivoPdf: formData.value.arquivoPdf || null,
@@ -646,17 +682,9 @@ const handleSubmit = async () => {
       projeto: formData.value.projeto || null
     }
 
-    if (dadosParaSalvar.arquivoPdf) {
-    }
-
     // Validar conversões
     if (isNaN(dadosParaSalvar.fornecedorId) || dadosParaSalvar.fornecedorId <= 0) {
       mostrarAlerta('Fornecedor inválido', 'error')
-      return
-    }
-
-    if (isNaN(dadosParaSalvar.itemPedidoId) || dadosParaSalvar.itemPedidoId <= 0) {
-      mostrarAlerta('Item do pedido inválido', 'error')
       return
     }
 
@@ -766,9 +794,31 @@ const inicializarFormulario = async () => {
   if (props.cotacao) {
     // Editando cotação existente
 
+    // Preencher IDs dos itens selecionados
+    // Se cotacao.itens (novo formato) existir, usa ele. Se não, usa itensPedidoIds (legacy)
+    const idsSelecionados = props.cotacao.itens 
+        ? props.cotacao.itens.map(i => i.itemPedidoId)
+        : (props.cotacao.itensPedidoIds || []);
+
+    // Preencher preços unitários se existirem
+    const precosMap = {};
+    if (props.cotacao.itens) {
+        props.cotacao.itens.forEach(i => {
+            if (i.precoTotal > 0) {
+                // Calcular unitário (total / quantidade) ou usar direto se disponível
+                const unitario = i.precoUnitario || (i.quantidade > 0 ? i.precoTotal / i.quantidade : 0);
+                precosMap[i.itemPedidoId] = unitario.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+        });
+    }
+
     formData.value = {
       fornecedorId: props.cotacao.fornecedorId,
-      itemPedidoId: props.cotacao.itemPedidoId,
+      itensSelecionadosIds: idsSelecionados,
+      precosUnitarios: precosMap,
       preco: props.cotacao.preco,
       prazoEmDiasUteis: props.cotacao.prazoEmDiasUteis,
       dataLimite: props.cotacao.dataLimite,
@@ -791,27 +841,22 @@ const inicializarFormulario = async () => {
       pesquisaFornecedor.value = fornecedor.id.toString() // Apenas o número do ID
     }
 
-    // Preencher o pedido selecionado - precisa encontrar qual pedido contém o item
+    // Preencher o pedido selecionado - precisa encontrar qual pedido contém um dos itens
+    const primeiroItemId = idsSelecionados[0];
     const pedido = pedidosDisponiveis.value.find(p =>
-      p.itens?.some(item => item.id === props.cotacao.itemPedidoId)
+      p.itens?.some(item => item.id === primeiroItemId)
     )
     if (pedido) {
       pedidoSelecionado.value = pedido.id
       pedidoSelecionadoLabel.value = `Pedido #${pedido.id} - ${getStatusLabel(pedido.status)}`
-      pesquisaPedido.value = pedido.id.toString() // Apenas o número do ID
-
-      // Preencher o item selecionado
-      const item = pedido.itens?.find(i => i.id === props.cotacao.itemPedidoId)
-      if (item) {
-        itemSelecionadoNome.value = item.nome || 'Item sem nome'
-        pesquisaItem.value = item.id.toString() // Apenas o número do ID
-      }
+      pesquisaPedido.value = pedido.id.toString()
     }
   } else {
     // Nova cotação - resetar tudo
     formData.value = {
       fornecedorId: null,
-      itemPedidoId: null,
+      itensSelecionadosIds: [],
+      precosUnitarios: {},
       preco: null,
       prazoEmDiasUteis: null,
       dataLimite: null,
@@ -825,7 +870,6 @@ const inicializarFormulario = async () => {
     // Limpar labels e pesquisas
     fornecedorSelecionadoNome.value = ''
     pedidoSelecionadoLabel.value = ''
-    itemSelecionadoNome.value = ''
     pesquisaFornecedor.value = ''
     pesquisaPedido.value = ''
     pesquisaItem.value = ''
@@ -985,6 +1029,24 @@ watch(() => props.cotacao, () => {
   font-weight: 600;
   color: #374151;
   margin: 0 0 12px 0;
+}
+
+.btn-text-action {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.btn-text-action:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
 }
 
 .section-header {
@@ -1156,6 +1218,104 @@ watch(() => props.cotacao, () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Itens Seleção */
+.itens-selecao-container {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.itens-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.item-checkbox-row:last-child {
+  border-bottom: none;
+}
+
+.item-checkbox-row:hover {
+  background-color: #f9fafb;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.form-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.item-label {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.item-qtd {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.item-price-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 140px;
+}
+
+.currency-symbol {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.form-input-small {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.form-input-small:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.empty-items {
+  padding: 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.875rem;
 }
 
 .checkbox-option {

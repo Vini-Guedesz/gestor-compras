@@ -39,7 +39,7 @@ import java.util.List;
  *   <li>Vinculação dinâmica de itens de pedido via PATCH</li>
  * </ul>
  *
- * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> USER, ADMIN</p>
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> ADMIN, COMPRADOR</p>
  *
  * @since 1.0.0
  * @see CotacaoService

@@ -5,6 +5,7 @@ import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoItemDTO;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem;
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.StatusCotacao;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -27,6 +28,13 @@ public class CotacaoMapper {
     public CotacaoDTO toDTO(Cotacao cotacao) {
         if (cotacao == null) {
             return null;
+        }
+
+        // DEBUG: Verificar quantidade de itens antes do mapeamento
+        if (cotacao.getItens() != null) {
+            System.out.println("DEBUG: Mapeando Cotação ID " + cotacao.getId() + " - Total Itens no Set: " + cotacao.getItens().size());
+        } else {
+            System.out.println("DEBUG: Mapeando Cotação ID " + cotacao.getId() + " - Set de Itens é NULL");
         }
 
         // Determinar o tipo de fornecedor e nome
@@ -82,7 +90,9 @@ public class CotacaoMapper {
                 cotacao.getEditadoPor(),
                 // Campos de projeto
                 cotacao.getGastoPrevisto(),
-                cotacao.getProjeto()
+                cotacao.getProjeto(),
+                cotacao.getDataCriacao(),
+                cotacao.getStatus() != null ? cotacao.getStatus() : StatusCotacao.EM_ANALISE
         );
     }
 
@@ -102,9 +112,10 @@ public class CotacaoMapper {
         cotacao.setGastoPrevisto(cotacaoCreateDTO.gastoPrevisto() != null ? cotacaoCreateDTO.gastoPrevisto() : false);
         cotacao.setProjeto(cotacaoCreateDTO.projeto());
 
-        // Legacy: setPreco só é usado se estiver no formato antigo
-        if (!cotacaoCreateDTO.usaNovoFormato() && cotacaoCreateDTO.preco() != null) {
-            // Não faz nada - preço calculado automaticamente dos itens
+        // Preço Global: Sempre setar se disponível, independente do formato
+        // A lógica de cálculo do modelo dará prioridade a este valor se a soma dos itens for zero
+        if (cotacaoCreateDTO.preco() != null) {
+            cotacao.setPrecoLegacy(cotacaoCreateDTO.preco());
         }
 
         // Nota: itens, fornecedor e solicitacaoDePedido são setados manualmente no service

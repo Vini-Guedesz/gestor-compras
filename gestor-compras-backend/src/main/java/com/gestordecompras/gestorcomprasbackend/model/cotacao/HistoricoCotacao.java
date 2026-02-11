@@ -82,12 +82,24 @@ public class HistoricoCotacao {
     private String hashAnexoPdfAnterior;
 
     /**
+     * Nome do arquivo PDF anterior
+     */
+    @Column(name = "nome_arquivo_anterior")
+    private String nomeArquivoAnterior;
+
+    /**
      * Hash SHA-256 do PDF novo (para auditoria sem duplicação)
      * Armazena apenas 64 bytes ao invés de MB completos do PDF
      * Permite verificar qual PDF foi anexado comparando com anexo_cotacao.hash_sha256
      */
     @Column(name = "hash_anexo_pdf_novo", length = 64)
     private String hashAnexoPdfNovo;
+
+    /**
+     * Nome do arquivo PDF novo
+     */
+    @Column(name = "nome_arquivo_novo")
+    private String nomeArquivoNovo;
 
     // Getters explícitos para garantir compatibilidade (Lombok pode não gerar para campos novos)
     public String getHashAnexoPdfAnterior() {

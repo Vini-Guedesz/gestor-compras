@@ -29,5 +29,8 @@ public record ItemPedidoDTO(
 
     @Schema(description = "Observações adicionais", example = "Entregar no departamento de TI")
     @Size(max = 500, message = "A observação deve ter no máximo 500 caracteres")
-    String observacao
+    String observacao,
+
+    @Schema(description = "Tipo do item (PRODUTO ou SERVICO)", example = "PRODUTO", allowableValues = {"PRODUTO", "SERVICO"})
+    String tipo
 ) {}

@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.dto.cotacao;
 
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.StatusCotacao;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -63,7 +64,6 @@ public record CotacaoDTO(
          * Use AnexoCotacao com deduplificação SHA-256.
          * Sempre retorna null.
          */
-        @Deprecated
         @Schema(description = "Caminho do anexo (Deprecated)", deprecated = true)
         String caminhoAnexo,
 
@@ -95,6 +95,12 @@ public record CotacaoDTO(
         Boolean gastoPrevisto,
 
         @Schema(description = "Nome do projeto ao qual o gasto pertence", example = "Projeto Expansão 2025")
-        String projeto
+        String projeto,
+
+        @Schema(description = "Data de criação da cotação", example = "2025-01-01T10:00:00")
+        LocalDateTime dataCriacao,
+
+        @Schema(description = "Status da cotação (EM_ANALISE, APROVADA, REJEITADA, CANCELADA)", example = "APROVADA")
+        StatusCotacao status
 ) {
 }

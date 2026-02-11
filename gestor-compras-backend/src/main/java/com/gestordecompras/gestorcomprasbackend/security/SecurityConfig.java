@@ -21,7 +21,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Configuração de Segurança do Spring Security 6 com autenticação JWT.
@@ -112,8 +114,6 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/error",
             "/actuator/**",  // Permitir acesso ao Actuator para monitoramento (Prometheus/Grafana)
-            ApiVersionConfig.API_V1 + "/fornecedores-de-produto/**",
-            ApiVersionConfig.API_V1 + "/fornecedores-de-servico/**",
             ApiVersionConfig.API_V1 + "/cotacoes/deduplication-report"
     };
 
@@ -123,6 +123,13 @@ public class SecurityConfig {
      * permitindo acesso a ADMIN, USUARIO, COMPRADOR e APROVADOR.
      */
     private static final String[] USER_ENDPOINTS = {
+    };
+
+    /**
+     * Endpoints restritos para ADMIN e COMPRADOR.
+     */
+    private static final String[] COTACAO_ENDPOINTS = {
+            ApiVersionConfig.API_V1 + "/cotacoes/**"
     };
 
     /**
@@ -202,6 +209,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(USER_ENDPOINTS).hasAnyRole("USUARIO", "ADMIN", "COMPRADOR", "APROVADOR")
+                        .requestMatchers(COTACAO_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR")
                         .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                         .anyRequest().authenticated() // Permite qualquer role válida (ADMIN, USUARIO, COMPRADOR, APROVADOR)
                 )
@@ -247,9 +255,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        // Permite origens configuradas via property + portas comuns de desenvolvimento
+        List<String> origins = new ArrayList<>(Arrays.asList(allowedOrigins));
+        origins.add("http://localhost:3000"); // React/Next.js default
+        origins.add("http://localhost:5174"); // Vite alternate
+        origins.add("http://localhost:4173"); // Vite preview
+        origins.add("http://localhost:8080"); // Backend local (self)
+        configuration.setAllowedOrigins(origins);
+        
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "TRACE"));
+        configuration.setAllowedHeaders(Arrays.asList("*")); // Permite todos os headers
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L); // Cache preflight por 1 hora

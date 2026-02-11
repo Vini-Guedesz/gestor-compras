@@ -2,7 +2,7 @@
   <!-- Overlay para mobile -->
   <div v-if="isMobileSidebarOpen" class="sidebar-overlay" @click="closeSidebar"></div>
 
-  <aside class="sidebar" :class="{ 'mobile-open': isMobileSidebarOpen }">
+  <aside class="sidebar" :class="{ 'mobile-open': isMobileSidebarOpen, 'collapsed': isCollapsed }">
     <!-- Botão Fechar (Mobile) -->
     <button class="close-sidebar-btn" @click="closeSidebar" aria-label="Fechar menu">
       <svg viewBox="0 0 24 24" width="24" height="24">
@@ -13,7 +13,7 @@
     <!-- Menu Principal -->
     <nav class="main-nav">
       <div class="nav-section">
-        <h3 class="nav-title">Menu Principal</h3>
+        <h3 class="nav-title" v-if="showLabels">Menu Principal</h3>
         <ul class="nav-list">
           <li v-for="item in visibleMenuItems" :key="item.id" class="nav-item">
             <router-link
@@ -21,12 +21,14 @@
               class="nav-link"
               :class="{ active: isActive(item.route) }"
               @click="handleNavClick"
-              :title="item.description"
+              :title="isCollapsed ? item.label : item.description"
+              :data-tooltip="item.label"
+              :aria-label="item.label"
             >
               <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="currentColor" :d="getIconPath(item.icon)"/>
               </svg>
-              <span>{{ item.label }}</span>
+              <span v-if="showLabels">{{ item.label }}</span>
             </router-link>
           </li>
         </ul>
@@ -43,19 +45,22 @@
  * - Navegação principal com controle de acesso por roles
  * - Menu dinâmico filtrado baseado em permissões
  * - Suporte responsivo para mobile
+ * - Suporte a menu retrátil (collapsed)
  *
- * @version 3.0.0 - Adicionado sistema de permissões baseado em roles
+ * @version 3.1.0 - Adicionado suporte a menu retrátil
  */
 
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMobileSidebar } from '@/composables/useMobileSidebar'
 import { usePermissions } from '@/composables/usePermissions'
+import { useSidebar } from '@/composables/useSidebar'
 import { menuItems, getIconPath } from '@/config/menuConfig'
 
 const route = useRoute()
 const { isMobileSidebarOpen, closeSidebar } = useMobileSidebar()
 const { filterMenuByRole } = usePermissions()
+const { isCollapsed } = useSidebar()
 
 /**
  * Menu items visíveis para o usuário atual
@@ -63,6 +68,10 @@ const { filterMenuByRole } = usePermissions()
  */
 const visibleMenuItems = computed(() => {
   return filterMenuByRole(menuItems)
+})
+
+const showLabels = computed(() => {
+  return !isCollapsed.value || isMobileSidebarOpen.value
 })
 
 /**
@@ -127,7 +136,48 @@ const handleNavClick = () => {
   top: 70px;
   z-index: 100;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* Estado Colapsado */
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 12px;
+  position: relative;
+}
+
+.sidebar.collapsed .nav-icon {
+  margin: 0;
+}
+
+.sidebar.collapsed .nav-link::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 12px;
+  background: #111827;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.sidebar.collapsed .nav-link:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(2px);
 }
 
 /* Menu Principal */
@@ -147,6 +197,7 @@ const handleNavClick = () => {
   margin: 0 0 16px 24px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .nav-list {
@@ -172,6 +223,8 @@ const handleNavClick = () => {
   transition: all 0.2s ease;
   border-radius: 0;
   position: relative;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .nav-link:hover {
@@ -199,8 +252,6 @@ const handleNavClick = () => {
   flex-shrink: 0;
   color: inherit;
 }
-
-
 
 /* Scrollbar customizada */
 .sidebar::-webkit-scrollbar {
@@ -247,6 +298,24 @@ const handleNavClick = () => {
 
   .main-nav {
     padding-top: 60px;
+  }
+
+  /* Em mobile, ignorar estado collapsed */
+  .sidebar.collapsed {
+    width: 280px;
+  }
+
+  .sidebar.collapsed .nav-link {
+    justify-content: flex-start;
+    padding: 12px 24px;
+  }
+
+  .sidebar.collapsed .nav-title {
+    display: block;
+  }
+
+  .sidebar.collapsed .nav-link span {
+    display: inline;
   }
 }
 

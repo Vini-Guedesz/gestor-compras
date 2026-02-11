@@ -41,7 +41,7 @@ public class AnexoCotacao {
      * Novos anexos devem usar pdfStorage
      */
     @Deprecated
-    @Column(columnDefinition = "bytea")
+    @Transient
     private byte[] conteudoLegacy;
 
     @Column(name = "nome_arquivo")

@@ -6,10 +6,34 @@ O **Gestor de Compras** é uma solução completa para gerenciamento de processo
 
 O sistema permite:
 - **Gestão de Pedidos**: Criação, edição e acompanhamento de status.
-- **Cotações Inteligentes**: Comparativo de preços, upload de propostas e validação de itens.
+- **Cotações Inteligentes**: Comparativo de preços, upload de propostas com **deduplificação de PDFs** (economia de storage) e validação de itens.
 - **Fornecedores**: Cadastro completo (PF/PJ) e histórico de fornecimento.
-- **Relatórios**: Dashboards executivos e exportação em PDF.
-- **Auditoria**: Rastreamento completo de alterações (quem, quando, o quê).
+- **Relatórios**: Dashboards executivos e exportação em PDF via JasperReports.
+- **Auditoria e Segurança**: Rastreamento completo de alterações (quem, quando, o quê), controle de CORS aprimorado e permissões granulares por role.
+
+---
+
+## 📂 Estrutura de Diretórios
+
+```
+gestor-compras/
+├── docs/                       # Documentação (diagramas de classe, schemas de banco)
+├── gestor-compras-backend/     # API REST (Spring Boot 3.3.1 + Java 21)
+│   ├── src/main/java           # Código fonte Java
+│   ├── src/main/resources      # Configurações, migrations (Flyway) e relatórios (Jasper)
+│   └── Dockerfile              # Configuração de container do backend
+├── gestor-compras-frontend/    # Frontend SPA (Vue.js 3 + Vite)
+│   └── vue-project/
+│       ├── src/                # Componentes, views, stores (Pinia) e services
+│       └── public/             # Assets estáticos
+├── monitoring/                 # Stack de observabilidade
+│   ├── grafana/                # Dashboards e datasources provisionados
+│   ├── prometheus.yml          # Configuração de scraping de métricas
+│   └── loki-config.yml         # Agregação de logs
+└── nginx/                      # Reverse Proxy e API Gateway
+    ├── conf.d/                 # Regras de roteamento
+    └── nginx.conf              # Configuração global de performance e segurança
+```
 
 ---
 
@@ -137,7 +161,7 @@ chmod +x mvnw
 ```
 
 *Sucesso:* O servidor iniciará na porta **8081**.
-*Swagger:* Acesse [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+*Swagger (Documentação Completa):* Acesse [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html) para visualizar todos os endpoints, roles permitidas e fluxos de trabalho detalhados.
 
 ### Passo 3: Frontend (Web)
 
@@ -222,10 +246,10 @@ Resumo das portas utilizadas pelo sistema:
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
-| **Frontend** | `5173` | Aplicação Web (Vue.js) - Dev |
+| **Frontend** | `5173` | Aplicação Web (Vue.js) - Dev (CORS permitindo 5173, 5174, 4173) |
 | **Backend** | `8081` | API REST (Spring Boot) |
 | **PostgreSQL**| `5432` | Banco de Dados |
 | **Nginx** | `80` | Reverse Proxy - Produção |
 | **Nginx (HTTPS)** | `443` | Reverse Proxy - SSL (Opcional) |
-| **Grafana** | `3000` | Dashboards |
+| **Grafana** | `3000` | Dashboards (CORS permitindo porta 3000) |
 | **Prometheus**| `9090` | Métricas |

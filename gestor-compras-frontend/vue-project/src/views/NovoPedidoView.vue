@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :class="{ 'sidebar-collapsed': isCollapsed }">
     <DashboardHeader @toggle-sidebar="toggleSidebar" />
 
     <div class="main-content">
@@ -14,7 +14,13 @@
             </svg>
             Voltar
           </button>
-          <span class="breadcrumb-separator">|</span>
+          <span class="breadcrumb-separator">/</span>
+          <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+            </svg>
+          </router-link>
+          <span class="breadcrumb-separator">/</span>
           <router-link to="/pedidos" class="breadcrumb-link">
             Pedidos de Compra
           </router-link>
@@ -29,6 +35,18 @@
               <div class="header-content">
                 <h2 class="wizard-title">{{ getTitulo() }}</h2>
                 <p class="wizard-subtitle">{{ getSubtitulo() }}</p>
+              </div>
+              <div class="step-indicator">
+                <span class="step-title">
+                  Etapa {{ editState === 'EDITANDO_RASCUNHO' ? 1 : 2 }} de 2
+                </span>
+                <span class="step-pill" :class="{ active: editState === 'EDITANDO_RASCUNHO' }">
+                  Itens
+                </span>
+                <span class="step-separator">›</span>
+                <span class="step-pill" :class="{ active: editState === 'GERENCIANDO_COTACOES' }">
+                  Cotações
+                </span>
               </div>
             </div>
 
@@ -164,6 +182,18 @@
 
             <div class="wizard-footer">
               <div class="footer-actions">
+                <span
+                  v-if="editState === 'EDITANDO_RASCUNHO' && !page1Valid"
+                  class="footer-hint"
+                >
+                  Preencha os itens obrigatórios para finalizar o rascunho.
+                </span>
+                <span
+                  v-if="editState === 'GERENCIANDO_COTACOES' && totalItensSelecionados === 0"
+                  class="footer-hint"
+                >
+                  Selecione ao menos um item para gerar o pedido final.
+                </span>
                 <!-- Ações para o estado EDITANDO_RASCUNHO -->
                 <template v-if="editState === 'EDITANDO_RASCUNHO'">
                   <button type="button" @click="cancelar" class="btn-secondary">
@@ -250,6 +280,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { useErrorModal } from '@/composables/useErrorModal'
 import { usePermissions } from '@/composables/usePermissions'
+import { useSidebar } from '@/composables/useSidebar'
 import rascunhoService from '@/services/rascunhoService.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
@@ -272,6 +303,7 @@ export default {
     const route = useRoute()
     const { permissions } = usePermissions()
     const { success, warning, error: toastError } = useToast()
+    const { isCollapsed } = useSidebar()
 
     // State
     const isSidebarOpen = ref(false)
@@ -951,13 +983,15 @@ export default {
       devolvendo,
       abrirModalDevolucao,
       fecharModalDevolucao,
-      confirmarDevolucao
+      confirmarDevolucao,
+      isCollapsed
     }
   }
 }
 </script>
 
 <style scoped>
+@import '../assets/css/layout.css';
 .page-container {
   min-height: 100vh;
   background: #f5f7fa;
@@ -972,45 +1006,23 @@ export default {
   flex: 1;
   padding: 24px;
   margin-left: 250px;
+  transition: margin-left 0.35s ease;
 }
 
-/* Breadcrumb */
-.breadcrumb {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 24px;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow-x: auto;
+.page-container.sidebar-collapsed .content-area {
+  margin-left: 80px;
 }
 
-.btn-voltar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.875rem;
+.breadcrumb > * {
   line-height: 1;
-  transition: all 0.2s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.btn-voltar:hover {
-  background: #e5e7eb;
+  display: inline-flex;
+  align-items: center;
 }
 
 .breadcrumb-link {
   color: #1F285F;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   line-height: 1;
   flex-shrink: 0;
@@ -1020,18 +1032,9 @@ export default {
   text-decoration: underline;
 }
 
-.breadcrumb-separator {
-  color: #d1d5db;
-  user-select: none;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.breadcrumb-current {
-  color: #6b7280;
-  white-space: nowrap;
-  line-height: 1;
-  flex-shrink: 0;
+.breadcrumb-home svg {
+  display: block;
+  vertical-align: middle;
 }
 
 /* Wizard Container */
@@ -1055,6 +1058,42 @@ export default {
   border-bottom: 1px solid #e0e6ed;
   background: #1F285F;
   color: white;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.step-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.step-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.step-pill.active {
+  background: white;
+  color: #1F285F;
+  border-color: white;
+}
+
+.step-separator {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
 }
 
 .header-content {
@@ -1087,6 +1126,17 @@ export default {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.footer-hint {
+  margin-right: auto;
+  color: #d97706;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 8px 12px;
+  border-radius: 8px;
 }
 
 .footer-actions {
@@ -1520,6 +1570,10 @@ export default {
     padding: 20px;
   }
 
+  .page-container.sidebar-collapsed .content-area {
+    margin-left: 0;
+  }
+
   .wizard-container {
     max-width: 100%;
   }
@@ -1546,6 +1600,11 @@ export default {
     gap: 12px;
   }
 
+  .step-indicator {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
   .wizard-title {
     font-size: 1.25rem;
   }
@@ -1562,6 +1621,11 @@ export default {
     padding: 12px;
     flex-direction: column-reverse;
     gap: 8px;
+  }
+
+  .footer-hint {
+    width: 100%;
+    text-align: center;
   }
 
   .footer-actions {
@@ -1604,10 +1668,6 @@ export default {
   .breadcrumb {
     flex-wrap: wrap;
     gap: 8px;
-  }
-
-  .breadcrumb-separator {
-    display: none;
   }
 
   .btn-voltar {

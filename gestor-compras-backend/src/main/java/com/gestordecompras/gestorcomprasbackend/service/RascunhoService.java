@@ -7,6 +7,7 @@ import com.gestordecompras.gestorcomprasbackend.mapper.SolicitacaoDePedidoMapper
 import com.gestordecompras.gestorcomprasbackend.model.pedido.ItemPedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.SolicitacaoDePedido;
 import com.gestordecompras.gestorcomprasbackend.model.pedido.StatusPedido;
+import com.gestordecompras.gestorcomprasbackend.model.pedido.TipoItem;
 import com.gestordecompras.gestorcomprasbackend.model.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.model.user.User;
 import com.gestordecompras.gestorcomprasbackend.model.user.UserRole;
@@ -249,6 +250,16 @@ public class RascunhoService {
         item.setQuantidade(itemDTO.quantidade());
         item.setDescricao(itemDTO.descricao());
         item.setObservacao(itemDTO.observacao());
+        // Definir tipo
+        if (itemDTO.tipo() != null) {
+            try {
+                item.setTipo(TipoItem.valueOf(itemDTO.tipo()));
+            } catch (IllegalArgumentException e) {
+                item.setTipo(TipoItem.PRODUTO); // Default
+            }
+        } else {
+            item.setTipo(TipoItem.PRODUTO); // Default
+        }
         item.setRascunho(rascunho);
 
         rascunho.getItens().add(item);
@@ -481,20 +492,31 @@ public class RascunhoService {
         // Buscar cotações do rascunho
         List<CotacaoRascunho> cotacoesRascunho = cotacaoRascunhoRepository.findByRascunhoIdWithItens(rascunhoId);
 
-        // Validar que todos os itens selecionados possuem pelo menos uma cotação
-        Set<Long> itensCotados = new HashSet<>();
-        for (CotacaoRascunho cotacao : cotacoesRascunho) {
-            for (ItemRascunho item : cotacao.getItensRascunho()) {
-                itensCotados.add(item.getId());
-            }
+        // Identificar quais itens estão presentes em cotações que serão convertidas
+        // (Baseado no mapeamento enviado pelo DTO)
+        Set<Long> idsItensComCotacaoValida = new HashSet<>();
+        for (Map.Entry<Long, List<Long>> entry : dto.cotacaoParaItens().entrySet()) {
+            idsItensComCotacaoValida.addAll(entry.getValue());
         }
 
-        List<Long> itensSemCotacao = todosItensSelecionados.stream()
-                .filter(itemId -> !itensCotados.contains(itemId))
+        // Validação: Apenas itens que possuem cotação mapeada podem ir para o pedido
+        List<Long> itensSemCotacaoNoMapeamento = todosItensSelecionados.stream()
+                .filter(itemId -> !idsItensComCotacaoValida.contains(itemId))
                 .collect(Collectors.toList());
 
-        if (!itensSemCotacao.isEmpty()) {
-            throw new IllegalArgumentException("Os seguintes itens não possuem cotação: " + itensSemCotacao + ". Apenas itens cotados podem ser convertidos em pedido.");
+        List<Long> itensFinaisParaPedido;
+        if (!itensSemCotacaoNoMapeamento.isEmpty()) {
+            log.warn("Removendo itens selecionados que não possuem cotação mapeada: {}", itensSemCotacaoNoMapeamento);
+            // Filtrar apenas itens com cotação
+            itensFinaisParaPedido = todosItensSelecionados.stream()
+                    .filter(idsItensComCotacaoValida::contains)
+                    .collect(Collectors.toList());
+        } else {
+            itensFinaisParaPedido = new ArrayList<>(todosItensSelecionados);
+        }
+
+        if (itensFinaisParaPedido.isEmpty()) {
+            throw new IllegalArgumentException("Nenhum dos itens selecionados possui uma cotação válida mapeada. Não é possível criar um pedido sem itens cotados.");
         }
 
         // Criar novo pedido
@@ -502,20 +524,21 @@ public class RascunhoService {
         pedido.setObservacao(rascunho.getObservacao());
         pedido.setObjetivo(rascunho.getObjetivo()); // Copiar objetivo do rascunho
         pedido.setStatus(StatusPedido.EM_NEGOCIACAO); // Inicia em negociação com fornecedores
-        pedido.setItens(new ArrayList<>());
+        pedido.setItens(new HashSet<>());
 
-        // Converter itens selecionados do rascunho para itens do pedido
+        // Converter apenas itens que têm cotação para itens do pedido
         Map<Long, ItemPedido> mapaItens = new HashMap<>();
-        List<ItemRascunho> itensSelecionados = rascunho.getItens().stream()
-                .filter(item -> todosItensSelecionados.contains(item.getId()))
+        List<ItemRascunho> itensParaConverter = rascunho.getItens().stream()
+                .filter(item -> itensFinaisParaPedido.contains(item.getId()))
                 .collect(Collectors.toList());
 
-        for (ItemRascunho itemRascunho : itensSelecionados) {
+        for (ItemRascunho itemRascunho : itensParaConverter) {
             ItemPedido itemPedido = new ItemPedido();
             itemPedido.setNome(itemRascunho.getNome());
             itemPedido.setQuantidade(itemRascunho.getQuantidade());
             itemPedido.setDescricao(itemRascunho.getDescricao());
             itemPedido.setObservacao(itemRascunho.getObservacao());
+            itemPedido.setTipo(itemRascunho.getTipo()); // Copiar tipo do item
             itemPedido.setSolicitacaoDePedido(pedido);
             pedido.getItens().add(itemPedido);
             mapaItens.put(itemRascunho.getId(), itemPedido);
@@ -547,7 +570,10 @@ public class RascunhoService {
                 cotacao.setSolicitacaoDePedido(pedidoSalvo);
                 cotacao.setFornecedorProduto(cotacaoRascunho.getFornecedorProduto());
                 cotacao.setFornecedorServico(cotacaoRascunho.getFornecedorServico());
-                cotacao.setPreco(cotacaoRascunho.getPreco()); // Legacy - será ignorado, calculado dos itens
+                
+                // Define o preço global (será usado pois os itens terão preço zero)
+                cotacao.setPreco(cotacaoRascunho.getPreco()); 
+                
                 cotacao.setPrazoEmDiasUteis(cotacaoRascunho.getPrazoEmDiasUteis());
                 cotacao.setDataLimite(cotacaoRascunho.getDataLimite());
                 cotacao.setGastoPrevisto(cotacaoRascunho.getGastoPrevisto());
@@ -558,14 +584,19 @@ public class RascunhoService {
 
                 // REMOVIDO: anexoPdf e caminhoAnexo (campos legados) - gerenciados via AnexoCotacao com deduplificação
 
-                // Criar um único CotacaoItem com o primeiro item e o valor total
-                ItemPedido primeiroItem = itensPedidoCotacao.iterator().next();
-                com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem cotacaoItem =
-                        new com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem();
-                cotacaoItem.setItemPedido(primeiroItem);
-                cotacaoItem.setPrecoUnitario(cotacaoRascunho.getPreco());
-                cotacaoItem.setQuantidade(1);
-                cotacao.addItem(cotacaoItem);
+                // Bug Fix: Iterar sobre TODOS os itens selecionados para esta cotação
+                for (ItemPedido itemPedido : itensPedidoCotacao) {
+                    com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem cotacaoItem =
+                            new com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem();
+                    
+                    cotacaoItem.setItemPedido(itemPedido);
+                    
+                    // Preço unitário zero - valor total será pego da Cotação (global)
+                    cotacaoItem.setPrecoUnitario(java.math.BigDecimal.ZERO);
+                    
+                    cotacaoItem.setQuantidade(1); // Quantidade padrão pois rascunho não detalha qtd por item na cotação
+                    cotacao.addItem(cotacaoItem);
+                }
 
                 // Copiar anexos múltiplos com deduplificação
                 if (cotacaoRascunho.getAnexos() != null && !cotacaoRascunho.getAnexos().isEmpty()) {

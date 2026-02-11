@@ -1,5 +1,6 @@
 package com.gestordecompras.gestorcomprasbackend.model.rascunho;
 
+import com.gestordecompras.gestorcomprasbackend.model.pedido.TipoItem;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,6 +33,10 @@ public class ItemRascunho {
 
     @Column(name = "observacao")
     private String observacao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TipoItem tipo = TipoItem.PRODUTO;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "rascunho_id", nullable = false)

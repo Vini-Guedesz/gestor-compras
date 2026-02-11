@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-layout">
+  <div class="dashboard-layout" :class="{ 'sidebar-collapsed': isCollapsed }">
     <!-- Header -->
     <DashboardHeader />
 
@@ -8,6 +8,16 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+          </svg>
+        </router-link>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Cotações</span>
+      </div>
       <!-- Mensagem de Boas-vindas -->
       <div class="welcome-section">
         <div class="welcome-header">
@@ -74,41 +84,45 @@
       </div>
 
       <!-- Controles e Filtros -->
-      <div class="controls-section">
-        <div class="search-container">
-          <input
-            type="text"
-            v-model="termoBusca"
-            placeholder="Buscar cotações por ID, fornecedor, item ou preço..."
-            class="search-input"
-            @input="buscarCotacoes"
-          >
-          <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
-            <path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
-          </svg>
+      <div class="search-section">
+        <div class="chip-bar">
+          <div class="chip-group">
+            <span class="chip-label">Período</span>
+            <button class="chip" :class="{ active: filtros.periodo === '' }" @click="filtros.periodo = ''; aplicarFiltros()" aria-pressed="filtros.periodo === ''">
+              Todos
+            </button>
+            <button class="chip" :class="{ active: filtros.periodo === 'semana' }" @click="filtros.periodo = 'semana'; aplicarFiltros()" aria-pressed="filtros.periodo === 'semana'">
+              Semana
+            </button>
+            <button class="chip" :class="{ active: filtros.periodo === 'mes' }" @click="filtros.periodo = 'mes'; aplicarFiltros()" aria-pressed="filtros.periodo === 'mes'">
+              Mês
+            </button>
+            <button class="chip" :class="{ active: filtros.periodo === 'trimestre' }" @click="filtros.periodo = 'trimestre'; aplicarFiltros()" aria-pressed="filtros.periodo === 'trimestre'">
+              Trimestre
+            </button>
+          </div>
         </div>
-
-        <div class="filter-controls">
-          <select v-model="filtros.periodo" class="filter-select" @change="aplicarFiltros">
-            <option value="">Todos os Períodos</option>
-            <option value="semana">Última semana</option>
-            <option value="mes">Último mês</option>
-            <option value="trimestre">Último trimestre</option>
-          </select>
-
-          <select v-model="filtros.fornecedor" class="filter-select" @change="aplicarFiltros">
-            <option value="">Todos os Fornecedores</option>
-            <option v-for="fornecedor in fornecedoresUnicos" :key="`${fornecedor.id}-${fornecedor.tipo}`" :value="`${fornecedor.id}-${fornecedor.tipo}`">
-              {{ fornecedor.nome }}
-            </option>
-          </select>
-
-          <button @click="limparFiltros" class="clear-filters-btn">
-            <svg viewBox="0 0 24 24" width="16" height="16">
-              <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+        <div class="search-container">
+          <div class="search-input-container">
+            <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
             </svg>
-            Limpar
-          </button>
+            <input
+              type="text"
+              v-model="termoBusca"
+              placeholder="Buscar cotações por ID, fornecedor, item ou preço..."
+              class="search-input"
+              @input="buscarCotacoes"
+            >
+          </div>
+          <div class="search-actions">
+            <button @click="limparFiltros" class="filter-button">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+              </svg>
+              Limpar
+            </button>
+          </div>
         </div>
       </div>
 
@@ -618,6 +632,7 @@ import { ref, computed, onMounted, watch, nextTick, defineAsyncComponent } from 
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { useErrorModal } from '@/composables/useErrorModal'
+import { useSidebar } from '@/composables/useSidebar'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import Icon from '@/components/ui/Icon.vue'
@@ -631,6 +646,7 @@ import logger from '../utils/logger.js'
 const route = useRoute()
 const router = useRouter()
 const { success, warning, error: toastError } = useToast()
+const { isCollapsed } = useSidebar()
 
 // Estado reativo
 const showCotacaoForm = ref(false)
@@ -1367,22 +1383,25 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 }
 
 /* Seção de busca e controles */
-.controls-section {
-  display: flex;
-  gap: 16px;
-  align-items: center;
+.search-section {
   background: white;
-  padding: 20px;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  padding: 24px;
   margin-bottom: 32px;
-  flex-wrap: wrap;
+  border: 1px solid #e5e7eb;
 }
 
 .search-container {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input-container {
   flex: 1;
-  position: relative;
   min-width: 300px;
+  position: relative;
 }
 
 .search-icon {
@@ -1391,15 +1410,18 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   top: 50%;
   transform: translateY(-50%);
   color: #9ca3af;
+  z-index: 1;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 12px 12px 44px;
+  padding: 12px 16px 12px 40px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s;
+  background: white;
+  min-width: 0;
 }
 
 .search-input:focus {
@@ -1408,21 +1430,12 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.filter-controls {
+.search-actions {
   display: flex;
   gap: 12px;
-  align-items: center;
 }
 
-.filter-select {
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  min-width: 140px;
-}
-
-.clear-filters-btn {
+.filter-button {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1435,7 +1448,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
   transition: all 0.2s;
 }
 
-.clear-filters-btn:hover {
+.filter-button:hover {
   background: #f9fafb;
   border-color: #9ca3af;
 }
@@ -2115,11 +2128,7 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
 
 /* Responsividade */
 @media (max-width: 1024px) {
-  .controls-section {
-    flex-wrap: wrap;
-  }
-
-  .filter-controls {
+  .search-actions {
     flex-wrap: wrap;
   }
 
@@ -2204,11 +2213,11 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
     font-size: 0.6875rem;
   }
 
-  .controls-section {
+  .search-section {
     flex-direction: column;
     align-items: stretch;
-    padding: 16px;
-    margin-bottom: 24px;
+    padding: 12px;
+    margin-bottom: 20px;
     gap: 12px;
   }
 
@@ -2217,11 +2226,10 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
     width: 100%;
   }
 
-  .filter-controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+  .search-actions {
     width: 100%;
+    justify-content: stretch;
+    flex-direction: column;
   }
 
   .filter-select {
@@ -2353,21 +2361,19 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
     margin-top: 2px;
   }
 
-  .controls-section {
-    padding: 12px;
-    margin-bottom: 16px;
+  .search-section {
+    padding: 10px;
+    margin-bottom: 12px;
   }
 
   .search-input {
     padding: 10px 10px 10px 40px;
   }
 
-  .filter-controls {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-select {
-    padding: 10px;
+  .search-actions {
+    width: 100%;
+    justify-content: stretch;
+    flex-direction: column;
   }
 
   .section-header {
@@ -2491,9 +2497,9 @@ watch(() => route.query.openCotacao, async (novaCotacaoId) => {
     font-size: 0.625rem;
   }
 
-  .controls-section {
-    padding: 10px;
-    margin-bottom: 12px;
+  .search-section {
+    padding: 6px;
+    margin-bottom: 8px;
     gap: 10px;
   }
 

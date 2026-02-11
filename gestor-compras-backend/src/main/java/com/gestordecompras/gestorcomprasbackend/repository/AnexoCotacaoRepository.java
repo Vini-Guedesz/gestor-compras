@@ -55,11 +55,6 @@ public interface AnexoCotacaoRepository extends JpaRepository<AnexoCotacao, Long
     Long countByPdfStorageIsNotNull();
 
     /**
-     * Conta anexos ainda em modo legado (conteúdo inline)
-     */
-    Long countByConteudoLegacyIsNotNull();
-
-    /**
      * Encontra PDFs duplicados (mesmo hash, múltiplas entradas)
      * Útil para relatórios de economia de espaço
      *

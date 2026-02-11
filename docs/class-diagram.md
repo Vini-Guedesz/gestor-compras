@@ -2,75 +2,101 @@
 
 ```mermaid
 classDiagram
-    %% Relationships
-    PedidoController --> PedidoService
-    PedidoService --> PedidoRepository
-    PedidoService --> HistoricoPedidoService
-    PedidoRepository --> Pedido
-    Pedido "1" *-- "*" ItemPedido : contem
-    Pedido "1" --> "1" Usuario : solicitante
+    %% Relacionamentos de Rascunho
+    RascunhoController --> RascunhoService
+    RascunhoService --> RascunhoRepository
+    RascunhoService --> HistoricoRascunhoService
+    Rascunho "1" *-- "*" ItemRascunho : possui
+    Rascunho "1" --> "1" User : criador
     
+    %% Relacionamentos de Pedido
+    SolicitacaoDePedidoController --> SolicitacaoDePedidoService
+    SolicitacaoDePedidoService --> SolicitacaoDePedidoRepository
+    SolicitacaoDePedidoService --> HistoricoPedidoService
+    SolicitacaoDePedido "1" *-- "*" ItemPedido : possui
+    
+    %% Relacionamentos de Cotação
     CotacaoController --> CotacaoService
     CotacaoService --> CotacaoRepository
-    CotacaoRepository --> Cotacao
-    Cotacao "*" --> "1" Pedido : referente_a
-    Cotacao "*" --> "1" Fornecedor : enviada_por
+    CotacaoService --> PdfDeduplicationService
+    Cotacao "*" --> "1" SolicitacaoDePedido : vinculada_a
+    Cotacao "*" --> "0..1" FornecedorDeProduto : fornece_produto
+    Cotacao "*" --> "0..1" FornecedorDeServico : fornece_servico
+    Cotacao "1" *-- "*" AnexoCotacao : possui
+    AnexoCotacao "*" --> "1" PdfStorage : referencia
     
-    AuthController --> JwtService
-    AuthController --> AuthenticationManager
-    
-    %% Classes
-    class Pedido {
+    %% Classes de Modelo
+    class Rascunho {
         +Long id
-        +Date dataCriacao
-        +StatusPedido status
-        +Usuario solicitante
-        +List~ItemPedido~ itens
-        +adicionarItem(ItemPedido)
-        +calcularTotal()
+        +StatusRascunho status
+        +String objetivo
+        +List~ItemRascunho~ itens
+        +User criador
+        +converterParaPedido()
     }
     
-    class ItemPedido {
+    class SolicitacaoDePedido {
         +Long id
-        +String produto
-        +Integer quantidade
-        +Pedido pedido
+        +StatusPedido status
+        +LocalDateTime dataCriacao
+        +List~ItemPedido~ itens
     }
     
     class Cotacao {
         +Long id
-        +Date dataRecebimento
-        +Fornecedor fornecedor
-        +Pedido pedido
-        +byte[] arquivoPdf
-        +validar()
+        +BigDecimal preco
+        +Integer prazoEmDiasUteis
+        +List~AnexoCotacao~ anexos
+        +FornecedorDeProduto fornecedorProduto
+        +FornecedorDeServico fornecedorServico
     }
     
-    class Fornecedor {
+    class PdfStorage {
         +Long id
-        +String razaoSocial
-        +String cnpj
-        +String email
+        +String hashSha256
+        +byte[] conteudo
+        +Integer contadorReferencias
     }
     
-    class Usuario {
-        +Long id
+    class FornecedorDeProduto {
+        +Integer id
         +String nome
-        +String email
-        +String senha
-        +Role role
+        +String cnpj
+        +String inscricaoEstadual
     }
 
-    class PedidoService {
-        +criar(PedidoDTO)
-        +atualizar(Long, PedidoDTO)
-        +buscarPorId(Long)
-        +listarTodos()
+    class FornecedorDeServico {
+        +Integer id
+        +String nome
+        +String cnpj
+        +String inscricaoMunicipal
+    }
+
+    %% Serviços
+    class RascunhoService {
+        +createRascunho(dto)
+        +adicionarItem(id, itemDto)
+        +converterRascunhoParaPedido(id)
+        +devolverParaEdicao(id, motivo)
     }
 
     class CotacaoService {
-        +salvar(CotacaoDTO)
-        +buscarPorPedido(Long)
-        +compararPrecos(Long)
+        +createCotacao(dto)
+        +uploadAnexos(id, files)
+        +editarCotacao(dto)
+    }
+
+    class PdfDeduplicationService {
+        +storePdf(bytes)
+        +removeReference(storageId)
+        +generateDeduplicationReport()
     }
 ```
+
+## Descrição da Arquitetura
+
+- **Controller Layer**: Endpoints REST que validam DTOs e coordenam chamadas aos serviços.
+- **Service Layer**: Contém a lógica de negócio, orquestração de transações e regras de segurança.
+- **Repository Layer**: Interface com o banco de dados via Spring Data JPA.
+- **Model Layer**: Entidades JPA que representam o domínio do sistema.
+- **DTOs**: Objetos de transferência para comunicação entre Frontend e Backend.

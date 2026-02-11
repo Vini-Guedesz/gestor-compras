@@ -27,19 +27,18 @@ import java.util.List;
  * Controller REST para gerenciar usuários do sistema.
  *
  * <p>Oferece operações CRUD completas com validação e segurança.
- * Todos os endpoints (exceto POST para registro) requerem autenticação JWT
- * e role ADMIN.</p>
+ * Todos os endpoints requerem autenticação JWT e role ADMIN.</p>
  *
  * <p><b>Endpoints principais:</b></p>
  * <ul>
  *   <li>GET /api/v1/users - Listar todos os usuários</li>
  *   <li>GET /api/v1/users/{id} - Buscar por ID</li>
- *   <li>POST /api/v1/users - Criar novo usuário</li>
+ *   <li>POST /api/v1/users - Criar novo usuário (Apenas ADMIN)</li>
  *   <li>PUT /api/v1/users - Atualizar usuário existente</li>
  *   <li>DELETE /api/v1/users/{id} - Deletar usuário</li>
  * </ul>
  *
- * <p><b>Autenticação:</b> JWT obrigatório (exceto POST)</p>
+ * <p><b>Autenticação:</b> JWT obrigatório</p>
  * <p><b>Roles permitidas:</b> ADMIN</p>
  *
  * @since 1.0.0

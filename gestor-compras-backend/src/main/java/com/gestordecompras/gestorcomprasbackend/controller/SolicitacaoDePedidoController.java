@@ -35,8 +35,7 @@ import java.util.List;
  *   <li>DELETE /api/v1/solicitacoes-pedido/{id} - Deletar solicitação</li>
  * </ul>
  *
- * <p><b>Autenticação:</b> JWT obrigatório</p>
- * <p><b>Roles permitidas:</b> USER, ADMIN</p>
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> ADMIN, COMPRADOR, USUARIO, APROVADOR</p>
  *
  * <p><b>Paginação:</b> Padrão 20 itens por página, ordenado por ID</p>
  *

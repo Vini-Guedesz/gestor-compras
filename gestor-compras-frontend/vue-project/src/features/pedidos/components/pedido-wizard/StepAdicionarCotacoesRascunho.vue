@@ -210,7 +210,7 @@
           <button
             @click="fecharFormulario"
             class="btn-close"
-            aria-label="Fechar modal"
+            aria-label=" Fechar modal"
           >&times;</button>
         </div>
 
@@ -567,12 +567,14 @@ export default {
     })
 
     const validarTeclaPreco = (event) => {
-      // Bloquear letras - permitir apenas números, backspace, delete, arrows
-      const char = event.key
-      // Permitir teclas de controle
-      if (event.ctrlKey || event.metaKey) return
+      // Permitir teclas de controle e navegação
+      const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter']
+      if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+        return
+      }
+      
       // Bloquear se não for número
-      if (!/^\d$/.test(char)) {
+      if (!/^\d$/.test(event.key)) {
         event.preventDefault()
       }
     }
@@ -794,7 +796,7 @@ export default {
         Array.from(files).forEach(file => {
           // Validar tipo de arquivo
           if (file.type !== 'application/pdf') {
-            warning(`Arquivo "${file.name}" não é um PDF válido. Apenas arquivos PDF são permitidos.`)
+            warning(`Arquivo "${file.name}" não é um PDF válido. Apenas arquivos PDF são permitidos.`) 
             return
           }
 

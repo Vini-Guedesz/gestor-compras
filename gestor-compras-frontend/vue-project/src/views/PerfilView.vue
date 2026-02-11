@@ -8,6 +8,16 @@
 
         <!-- Conteúdo Principal -->
         <div class="main-content">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+                    </svg>
+                </router-link>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">Perfil</span>
+            </div>
             <div class="perfil-container">
                 <!-- Card Principal do Perfil -->
                 <div class="profile-main-card">
@@ -312,6 +322,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import '../assets/css/layout.css';
 .perfil-view {
     min-height: 100vh;
     background: #f8fafc;

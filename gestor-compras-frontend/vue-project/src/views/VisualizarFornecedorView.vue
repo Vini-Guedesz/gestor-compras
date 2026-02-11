@@ -14,7 +14,13 @@
             </svg>
             Voltar
           </button>
-          <span class="breadcrumb-separator">|</span>
+          <span class="breadcrumb-separator">/</span>
+          <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+            </svg>
+          </router-link>
+          <span class="breadcrumb-separator">/</span>
           <router-link to="/fornecedores" class="breadcrumb-link">
             Fornecedores
           </router-link>
@@ -49,13 +55,6 @@
                     <path fill="currentColor" d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 1.99 2H19c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
                   </svg>
                   <span>{{ historicoCompras.total }} {{ historicoCompras.total === 1 ? 'cotação' : 'cotações' }}</span>
-                </div>
-                <span class="resumo-separator" v-if="historicoCompras.valor > 0">•</span>
-                <div class="resumo-item resumo-total" v-if="historicoCompras.valor > 0">
-                  <svg viewBox="0 0 24 24" width="16" height="16" class="resumo-icon">
-                    <path fill="currentColor" d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                  </svg>
-                  <span class="total-valor">Total Cotado: R$ {{ historicoCompras.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
                 </div>
               </div>
             </div>
@@ -202,7 +201,17 @@
           <!-- Conteúdo da Aba: Histórico de Cotações -->
           <div v-show="abaAtiva === 'historico'">
           <div class="section-card">
-            <h3 class="section-title">Histórico de Cotações</h3>
+            <div class="historico-header">
+              <div class="historico-title">
+                <h3 class="section-title">Histórico de Cotações</h3>
+                <p class="section-subtitle">Veja todas as cotações feitas com este fornecedor</p>
+              </div>
+              <div class="historico-actions" v-if="temFiltrosAtivos">
+                <button @click="limparFiltros" class="btn-clear">
+                  Limpar filtros
+                </button>
+              </div>
+            </div>
 
             <!-- Stats Cards -->
             <div class="historico-stats">
@@ -219,18 +228,6 @@
               </div>
 
               <div class="stat-card">
-                <div class="stat-icon" style="background: #dcfce7;">
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="#16a34a">
-                    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                  </svg>
-                </div>
-                <div class="stat-content">
-                  <span class="stat-value">R$ {{ historicoCompras.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
-                  <span class="stat-label">Valor Total Cotado</span>
-                </div>
-              </div>
-
-              <div class="stat-card">
                 <div class="stat-icon" style="background: #fef3c7;">
                   <svg viewBox="0 0 24 24" width="24" height="24" fill="#d97706">
                     <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 1.99 2H19c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
@@ -241,6 +238,58 @@
                   <span class="stat-label">Última Cotação</span>
                 </div>
               </div>
+
+              <div class="stat-card">
+                <div class="stat-icon" style="background: #dcfce7;">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="#059669">
+                    <path d="M12 4a8 8 0 100 16 8 8 0 000-16zm1 4v4.25l3 1.75-.75 1.25L11 13V8h2z"/>
+                  </svg>
+                </div>
+                <div class="stat-content">
+                  <span class="stat-value">{{ historicoCompras.total ? Math.ceil(historicoCompras.total / Math.max(totalPages, 1)) : 0 }}</span>
+                  <span class="stat-label">Média por Página</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filters-bar">
+              <div class="filter-group search-group">
+                <label for="filtroId" class="filter-label">Buscar por ID</label>
+                <div class="search-input-wrapper">
+                  <Icon name="search" :size="16" class="search-icon" />
+                  <input
+                    id="filtroId"
+                    v-model="filtroId"
+                    type="text"
+                    placeholder="Ex: 123"
+                    class="filter-input"
+                  />
+                </div>
+              </div>
+
+              <div class="filter-group date-group">
+                <label class="filter-label">Período</label>
+                <div class="date-inputs">
+                  <div class="date-input-wrapper">
+                    <span class="date-label-small">De</span>
+                    <input
+                      v-model="filtroDataInicio"
+                      type="date"
+                      class="filter-input date-input"
+                    />
+                  </div>
+                  <div class="date-input-wrapper">
+                    <span class="date-label-small">Até</span>
+                    <input
+                      v-model="filtroDataFim"
+                      type="date"
+                      class="filter-input date-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <!-- Loading -->
@@ -250,16 +299,17 @@
             </div>
 
             <!-- Empty State -->
-            <div v-else-if="historicoCompras.cotacoes.length === 0" class="empty-state">
+            <div v-else-if="cotacoesFiltradas.length === 0" class="empty-state">
               <svg viewBox="0 0 24 24" width="48" height="48" fill="#9ca3af">
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
               </svg>
-              <p>Nenhuma cotação encontrada para este fornecedor.</p>
+              <p v-if="historicoCompras.cotacoes.length > 0">Nenhuma cotação encontrada com os filtros selecionados.</p>
+              <p v-else>Nenhuma cotação encontrada para este fornecedor.</p>
             </div>
 
             <!-- Lista de Cotações -->
             <div v-else class="historico-lista">
-              <div v-for="cotacao in historicoCompras.cotacoes" :key="cotacao.id" class="cotacao-card">
+              <div v-for="cotacao in paginatedCotacoes" :key="cotacao.id" class="cotacao-card">
                 <!-- Header -->
                 <div class="cotacao-header-padrao">
                   <div class="cotacao-info-principal">
@@ -267,6 +317,10 @@
                       <strong class="fornecedor-nome">Cotação {{ cotacao.numero }}</strong>
                       <span class="tipo-tag" v-if="cotacao.pedidoId">Pedido #{{ cotacao.pedidoId }}</span>
                       <span class="tipo-tag tipo-tag-data">{{ cotacao.data }}</span>
+                      <!-- Tag de Status -->
+                      <span class="status-badge-small" :class="getStatusCotacaoClass(cotacao.status)">
+                        {{ getStatusCotacaoLabel(cotacao.status) }}
+                      </span>
                     </div>
                   </div>
                   <div class="preco-destaque-box">
@@ -346,6 +400,29 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Paginação -->
+              <div v-if="totalPages > 1" class="pagination-container">
+                <button
+                  @click="prevPage"
+                  class="pagination-btn"
+                  :disabled="currentPage === 1"
+                >
+                  <Icon name="chevron-left" :size="20" />
+                  Anterior
+                </button>
+                <span class="pagination-info">
+                  Página <strong>{{ currentPage }}</strong> de <strong>{{ totalPages }}</strong>
+                </span>
+                <button
+                  @click="nextPage"
+                  class="pagination-btn"
+                  :disabled="currentPage === totalPages"
+                >
+                  Próxima
+                  <Icon name="chevron-right" :size="20" />
+                </button>
+              </div>
             </div>
           </div>
           </div><!-- Fim da aba de histórico -->
@@ -366,7 +443,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
@@ -387,6 +464,15 @@ const fornecedor = ref(null)
 const carregandoHistorico = ref(false)
 const abaAtiva = ref('informacoes') // 'informacoes' ou 'historico'
 
+// Filtros
+const filtroId = ref('')
+const filtroDataInicio = ref('')
+const filtroDataFim = ref('')
+
+// Paginação
+const currentPage = ref(1)
+const itemsPerPage = 5
+
 // PDF
 const pdfAberto = ref(null)
 const carregandoPdf = ref(false)
@@ -398,6 +484,88 @@ const historicoCompras = ref({
   valor: 0,
   ultimoPedido: '-',
   cotacoes: []
+})
+
+// Computeds
+const temFiltrosAtivos = computed(() => {
+  return filtroId.value !== '' || filtroDataInicio.value !== '' || filtroDataFim.value !== ''
+})
+
+const cotacoesFiltradas = computed(() => {
+  let resultado = historicoCompras.value.cotacoes
+
+  // Filtro por ID
+  if (filtroId.value) {
+    const termo = filtroId.value.toLowerCase()
+    resultado = resultado.filter(cot =>
+      cot.id.toString().includes(termo) ||
+      (cot.pedidoId && cot.pedidoId.toString().includes(termo))
+    )
+  }
+
+  // Filtro por Data Inicio
+  if (filtroDataInicio.value) {
+    const dataInicio = new Date(filtroDataInicio.value)
+    dataInicio.setHours(0, 0, 0, 0)
+    resultado = resultado.filter(cot => {
+      if (!cot.dataRaw) return false
+      const dataCot = new Date(cot.dataRaw)
+      dataCot.setHours(0, 0, 0, 0)
+      return dataCot >= dataInicio
+    })
+  }
+
+  // Filtro por Data Fim
+  if (filtroDataFim.value) {
+    const dataFim = new Date(filtroDataFim.value)
+    dataFim.setHours(23, 59, 59, 999)
+    resultado = resultado.filter(cot => {
+      if (!cot.dataRaw) return false
+      const dataCot = new Date(cot.dataRaw)
+      dataCot.setHours(0, 0, 0, 0)
+      return dataCot <= dataFim
+    })
+  }
+
+  return resultado
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(cotacoesFiltradas.value.length / itemsPerPage)
+})
+
+const paginatedCotacoes = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return cotacoesFiltradas.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+    // Scroll to top of list
+    const listElement = document.querySelector('.historico-lista')
+    if (listElement) {
+      listElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+    // Scroll to top of list
+    const listElement = document.querySelector('.historico-lista')
+    if (listElement) {
+      listElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+}
+
+// Watchers
+import { watch } from 'vue'
+watch(cotacoesFiltradas, () => {
+  currentPage.value = 1
 })
 
 // Caches
@@ -416,6 +584,13 @@ const closeSidebar = () => {
 // Navegação
 const voltar = () => {
   router.push('/fornecedores')
+}
+
+// Ações de Filtro
+const limparFiltros = () => {
+  filtroId.value = ''
+  filtroDataInicio.value = ''
+  filtroDataFim.value = ''
 }
 
 // Formatação
@@ -466,6 +641,32 @@ const getStatusLabel = (status) => {
     suspenso: 'Suspenso'
   }
   return labels[status] || 'Ativo'
+}
+
+const getStatusCotacaoClass = (status) => {
+  const classes = {
+    'APROVADA': 'status-aprovada',
+    'SELECIONADA': 'status-aprovada',
+    'REJEITADA': 'status-rejeitada',
+    'NAO_SELECIONADA': 'status-rejeitada',
+    'CANCELADA': 'status-cancelada',
+    'EM_ANALISE': 'status-analise',
+    'PENDENTE': 'status-analise'
+  }
+  return classes[status] || 'status-analise'
+}
+
+const getStatusCotacaoLabel = (status) => {
+  const labels = {
+    'APROVADA': 'Aprovada',
+    'SELECIONADA': 'Selecionada',
+    'REJEITADA': 'Não Selecionada',
+    'NAO_SELECIONADA': 'Não Selecionada',
+    'CANCELADA': 'Cancelada',
+    'EM_ANALISE': 'Em Análise',
+    'PENDENTE': 'Em Análise'
+  }
+  return labels[status] || 'Em Análise'
 }
 
 // PDF
@@ -586,23 +787,47 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
   try {
     carregandoHistorico.value = true
 
-    const todasCotacoes = await cotacaoService.listar()
-    const cotacoes = todasCotacoes.filter(cot => {
-      const fornecedorCotacaoId = cot.fornecedorProdutoId || cot.fornecedorServicoId || cot.fornecedorId
-      return fornecedorCotacaoId === Number(fornecedorId)
-    })
+    // Usar o endpoint específico de histórico do fornecedor
+    // Isso garante que só venham cotações deste fornecedor específico
+    // e evita o problema de IDs duplicados entre tabelas diferentes
+    let cotacoes = []
+    try {
+      cotacoes = await fornecedorService.obterHistoricoCotacoes(fornecedorId, fornecedor.value.tipo)
+    } catch (error) {
+      logger.warn('Erro ao buscar histórico específico, tentando fallback:', error)
+      // Fallback para listagem geral (legado, pode ter bugs de ID)
+      const todasCotacoes = await cotacaoService.listar()
+      cotacoes = todasCotacoes.filter(cot => {
+        const fornecedorCotacaoId = cot.fornecedorProdutoId || cot.fornecedorServicoId || cot.fornecedorId
+        // Verificar também o tipo para evitar conflito de IDs
+        const tipoCotacao = cot.tipoFornecedor?.toLowerCase()
+        if (tipoCotacao && tipoCotacao !== fornecedor.value.tipo) return false
+
+        return fornecedorCotacaoId === Number(fornecedorId)
+      })
+    }
 
     if (cotacoes && cotacoes.length > 0) {
       const totalCotacoes = cotacoes.length
       const valorTotal = cotacoes.reduce((acc, cot) => acc + (parseFloat(cot.preco) || 0), 0)
 
-      const cotacoesOrdenadas = [...cotacoes].sort((a, b) =>
-        new Date(b.dataCotacao) - new Date(a.dataCotacao)
-      )
+      // Função auxiliar para obter a data da cotação
+      const getDataCotacao = (cot) => {
+        // Prioridade: dataCriacao (novo campo) -> dataUltimaEdicao -> data (fallback)
+        const dateStr = cot.dataCriacao || cot.dataUltimaEdicao || cot.data;
+        return dateStr ? new Date(dateStr) : null;
+      }
+
+      const cotacoesOrdenadas = [...cotacoes].sort((a, b) => {
+        const dateA = getDataCotacao(a) || new Date(0)
+        const dateB = getDataCotacao(b) || new Date(0)
+        return dateB - dateA
+      })
 
       const ultimaCotacao = cotacoesOrdenadas[0]
-      const dataUltima = ultimaCotacao?.dataCotacao
-        ? new Date(ultimaCotacao.dataCotacao).toLocaleDateString('pt-BR')
+      const ultimaDataObj = getDataCotacao(ultimaCotacao)
+      const dataUltima = ultimaDataObj
+        ? ultimaDataObj.toLocaleDateString('pt-BR')
         : '-'
 
       const cotacoesComDetalhes = await Promise.all(
@@ -633,15 +858,17 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
           const nomesItens = itensValidos.map(item => item.nome || item.descricao || 'Item sem nome').join(', ')
           const quantidadeTotal = itensValidos.reduce((sum, item) => sum + (item.quantidade || 0), 0)
 
+          const dataRaw = getDataCotacao(cot)
+
           return {
             id: cot.id,
             numero: cot.id?.toString() || '-',
-            data: cot.dataUltimaEdicao
-              ? new Date(cot.dataUltimaEdicao).toLocaleDateString('pt-BR')
+            dataRaw: dataRaw,
+            data: dataRaw
+              ? dataRaw.toLocaleDateString('pt-BR')
               : '-',
             valor: parseFloat(cot.preco) || 0,
-            status: 'cotacao',
-            statusTexto: 'Cotação Enviada',
+            status: cot.statusSelecao || cot.status || 'PENDENTE', // Usar statusSelecao (DTO) ou status (novo campo)
             prazoEntrega: cot.dataLimite
               ? new Date(cot.dataLimite).toLocaleDateString('pt-BR')
               : '-',
@@ -700,6 +927,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+@import '../assets/css/layout.css';
 /* Layout base */
 .page-container {
   min-height: 100vh;
@@ -742,45 +970,18 @@ onBeforeUnmount(() => {
 }
 
 /* Breadcrumb */
-.breadcrumb {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 24px;
-  font-size: 0.875rem;
-}
 
-.btn-voltar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-
-.btn-voltar:hover {
-  background: #e5e7eb;
-}
-
-.breadcrumb a {
+.breadcrumb-link {
   color: #1F285F;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
-.breadcrumb a:hover {
+.breadcrumb-link:hover {
   text-decoration: underline;
-}
-
-.breadcrumb span {
-  color: #6b7280;
 }
 
 /* View Container */
@@ -1162,9 +1363,10 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 2px solid #e5e7eb;
-  gap: 20px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  gap: 16px;
+  background: #f8fafc;
 }
 
 .cotacao-info-principal {
@@ -1174,7 +1376,7 @@ onBeforeUnmount(() => {
 .fornecedor-linha {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -1207,7 +1409,7 @@ onBeforeUnmount(() => {
   align-items: flex-end;
   gap: 4px;
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  padding: 12px 18px;
+  padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid #86efac;
 }
@@ -1221,7 +1423,7 @@ onBeforeUnmount(() => {
 }
 
 .preco-valor-grande {
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 700;
   color: #059669;
   line-height: 1;
@@ -1229,7 +1431,7 @@ onBeforeUnmount(() => {
 
 /* Body */
 .cotacao-body {
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -1246,8 +1448,8 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  padding: 14px 16px;
-  background: #f9fafb;
+  padding: 12px 14px;
+  background: #f8fafc;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -1312,10 +1514,10 @@ onBeforeUnmount(() => {
 }
 
 .item-chip {
-  background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
-  color: #4338ca;
-  padding: 6px 14px;
-  border-radius: 20px;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 6px 12px;
+  border-radius: 999px;
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.4;
@@ -1350,7 +1552,7 @@ onBeforeUnmount(() => {
 
 /* Ações e PDFs */
 .cotacao-actions {
-  padding: 20px 24px;
+  padding: 12px 20px;
   margin-top: 0;
   border-top: 1px solid #e5e7eb;
   display: flex;
@@ -1372,7 +1574,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 8px 12px;
   border-radius: 8px;
   font-size: 0.875rem;
   cursor: pointer;
@@ -1461,14 +1663,29 @@ onBeforeUnmount(() => {
 }
 
 .status-badge-small {
-  padding: 4px 12px;
-  border-radius: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
-.status-cotacao {
+.status-aprovada {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-rejeitada {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-cancelada {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.status-analise {
   background: #e0e7ff;
   color: #4338ca;
 }
@@ -1638,6 +1855,19 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .historico-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .historico-actions {
+    width: 100%;
+  }
+
+  .historico-actions .btn-clear {
+    width: 100%;
+    justify-content: center;
+  }
   .content-area {
     margin-left: 0;
     padding: 16px;
@@ -2260,5 +2490,214 @@ onBeforeUnmount(() => {
     font-size: 0.8125rem;
     width: 100%;
   }
+}
+
+/* Filters Bar */
+.filters-bar {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.historico-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.historico-title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.historico-actions {
+  display: flex;
+  align-items: center;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.date-group {
+  flex: 2;
+  min-width: 300px;
+}
+
+.date-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.date-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.date-label-small {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.date-input {
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 2px;
+}
+
+.btn-clear {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* hover definido acima */
+
+.btn-clear:active {
+  transform: translateY(1px);
+}
+
+.btn-clear:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+@media (max-width: 768px) {
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .date-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pagination-info strong {
+  color: #111827;
+}
+
+/* Enhanced Card Separation */
+.cotacao-card {
+  border-left: 4px solid #1F285F; /* Distinct visual accent */
+  margin-bottom: 24px; /* More spacing */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.cotacao-card:last-child {
+  margin-bottom: 0;
 }
 </style>

@@ -1,6 +1,7 @@
 package com.gestordecompras.gestorcomprasbackend.controller;
 
 import com.gestordecompras.gestorcomprasbackend.config.ApiVersionConfig;
+import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeProdutoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeProdutoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeProdutoUpdateDTO;
@@ -27,7 +28,7 @@ import java.util.List;
  * <p>Oferece operações CRUD completas com paginação. Fornecedores de produto
  * possuem Inscrição Estadual e fornecem mercadorias.</p>
  *
- * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> USER, ADMIN</p>
+ * <p><b>Autenticação:</b> JWT obrigatório | <b>Roles:</b> ADMIN, COMPRADOR, USUARIO, APROVADOR</p>
  *
  * @since 1.0.0
  * @see FornecedorDeProdutoService
@@ -103,5 +104,16 @@ public class FornecedorDeProdutoController {
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         service.deleteFornecedorDeProduto(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /** Retorna o histórico de cotações de um fornecedor de produto. */
+    @GetMapping("/{id}/historico-cotacoes")
+    @Operation(summary = "Histórico de cotações", description = "Retorna o histórico de cotações de um fornecedor de produto")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Histórico retornado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Fornecedor de produto não encontrado")
+    })
+    public ResponseEntity<List<CotacaoDTO>> getHistoricoCotacoes(@PathVariable Integer id) {
+        return ResponseEntity.ok(service.getHistoricoCotacoes(id));
     }
 }

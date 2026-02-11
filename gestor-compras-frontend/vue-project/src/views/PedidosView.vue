@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="dashboard-layout">
+  <div class="dashboard-layout" :class="{ 'sidebar-collapsed': isCollapsed }">
     <!-- Header -->
     <DashboardHeader />
 
@@ -8,6 +8,17 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
+          </svg>
+        </router-link>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Pedidos de Compra</span>
+      </div>
+
       <!-- Mensagem de Boas-vindas -->
       <div class="welcome-section">
         <div class="welcome-header">
@@ -76,23 +87,6 @@
             <div class="metric-value">{{ pedidosAprovados }}</div>
             <div class="metric-growth positive">Aprovados</div>
           </div>
-
-          <!-- Valor Total - REMOVIDO (valor simulado/mockado) -->
-          <!-- TODO: Implementar cálculo real baseado nos valores dos itens dos pedidos -->
-          <!--
-          <div class="metric-card">
-            <div class="metric-header">
-              <div class="metric-icon value">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path fill="white" d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                </svg>
-              </div>
-              <span class="metric-label">Valor em Pedidos</span>
-            </div>
-            <div class="metric-value">R$ {{ valorTotalFormatado }}</div>
-            <div class="metric-growth positive">Este mês</div>
-          </div>
-          -->
         </div>
       </div>
 
@@ -122,6 +116,53 @@
 
       <!-- Filtros de Pesquisa -->
       <div class="search-section">
+        <div class="chip-bar">
+          <div class="chip-group">
+            <span class="chip-label">Status</span>
+            <button class="chip" :class="{ active: filtroStatus === '' }" @click="filtroStatus = ''; filtrarPedidos()" aria-pressed="filtroStatus === ''">
+              Todos
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'RASCUNHO' }" @click="filtroStatus = 'RASCUNHO'; filtrarPedidos()" aria-pressed="filtroStatus === 'RASCUNHO'">
+              Rascunho
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'EM_COTACAO' }" @click="filtroStatus = 'EM_COTACAO'; filtrarPedidos()" aria-pressed="filtroStatus === 'EM_COTACAO'">
+              Em Cotação
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'RASCUNHO_FINALIZADO' }" @click="filtroStatus = 'RASCUNHO_FINALIZADO'; filtrarPedidos()" aria-pressed="filtroStatus === 'RASCUNHO_FINALIZADO'">
+              Rascunho Finalizado
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'EM_NEGOCIACAO' }" @click="filtroStatus = 'EM_NEGOCIACAO'; filtrarPedidos()" aria-pressed="filtroStatus === 'EM_NEGOCIACAO'">
+              Em Negociação
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'PENDENTE_APROVACAO' }" @click="filtroStatus = 'PENDENTE_APROVACAO'; filtrarPedidos()" aria-pressed="filtroStatus === 'PENDENTE_APROVACAO'">
+              Pendente de Aprovação
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'APROVADO' }" @click="filtroStatus = 'APROVADO'; filtrarPedidos()" aria-pressed="filtroStatus === 'APROVADO'">
+              Aprovado
+            </button>
+            <button class="chip" :class="{ active: filtroStatus === 'CANCELADO' }" @click="filtroStatus = 'CANCELADO'; filtrarPedidos()" aria-pressed="filtroStatus === 'CANCELADO'">
+              Cancelado
+            </button>
+          </div>
+          <div class="chip-group">
+            <span class="chip-label">Período</span>
+            <button class="chip" :class="{ active: filtroPeriodo === '' }" @click="filtroPeriodo = ''; filtrarPedidos()" aria-pressed="filtroPeriodo === ''">
+              Todos
+            </button>
+            <button class="chip" :class="{ active: filtroPeriodo === 'hoje' }" @click="filtroPeriodo = 'hoje'; filtrarPedidos()" aria-pressed="filtroPeriodo === 'hoje'">
+              Hoje
+            </button>
+            <button class="chip" :class="{ active: filtroPeriodo === 'semana' }" @click="filtroPeriodo = 'semana'; filtrarPedidos()" aria-pressed="filtroPeriodo === 'semana'">
+              Semana
+            </button>
+            <button class="chip" :class="{ active: filtroPeriodo === 'mes' }" @click="filtroPeriodo = 'mes'; filtrarPedidos()" aria-pressed="filtroPeriodo === 'mes'">
+              Mês
+            </button>
+            <button class="chip" :class="{ active: filtroPeriodo === 'trimestre' }" @click="filtroPeriodo = 'trimestre'; filtrarPedidos()" aria-pressed="filtroPeriodo === 'trimestre'">
+              Trimestre
+            </button>
+          </div>
+        </div>
         <div class="search-container">
           <div class="search-input-container">
             <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -132,22 +173,6 @@
               class="search-input" @input="filtrarPedidos" />
           </div>
           <div class="search-actions">
-            <select v-model="filtroStatus" @change="filtrarPedidos" class="form-select">
-              <option value="">Todos os status</option>
-              <option value="RASCUNHO">Rascunho</option>
-              <option value="PENDENTE">Pendente</option>
-              <option value="EM_ANALISE">Em Análise</option>
-              <option value="EM_ANDAMENTO">Em Andamento</option>
-              <option value="APROVADO">Aprovado</option>
-              <option value="CANCELADO">Cancelado</option>
-            </select>
-            <select v-model="filtroPeriodo" @change="filtrarPedidos" class="form-select">
-              <option value="">Todos os períodos</option>
-              <option value="hoje">Hoje</option>
-              <option value="semana">Esta semana</option>
-              <option value="mes">Este mês</option>
-              <option value="trimestre">Este trimestre</option>
-            </select>
             <button class="filter-button" @click="limparFiltros">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor"
@@ -549,6 +574,19 @@
         </div>
       </div>
 
+      <!-- CTA mobile -->
+      <button
+        v-if="permissions.canCreateRascunho"
+        class="mobile-fab"
+        @click="abrirFormularioNovo"
+        aria-label="Novo Pedido"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+        </svg>
+        Novo Pedido
+      </button>
+
     </main>
   </div>
 </template>
@@ -560,6 +598,7 @@ import { useToast } from '@/composables/useToast'
 import { useErrorModal } from '@/composables/useErrorModal'
 import { usePermissions } from '@/composables/usePermissions'
 import { useAuthStore } from '@/stores/auth'
+import { useSidebar } from '@/composables/useSidebar'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 // Lazy loading para componentes pesados
@@ -587,6 +626,7 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const { success, warning, error: toastError } = useToast()
+    const { isCollapsed } = useSidebar()
 
     // Permissões baseadas em roles
     const { permissions } = usePermissions()
@@ -640,7 +680,7 @@ export default {
     })
 
     const pedidosPendentes = computed(() =>
-      pedidos.value.filter(p => ['PENDENTE', 'EM_ANALISE', 'pendente'].includes(p.status)).length
+      pedidos.value.filter(p => ['PENDENTE_APROVACAO', 'PENDENTE'].includes(p.status)).length
     )
 
     const pedidosAprovados = computed(() =>
@@ -682,7 +722,12 @@ export default {
 
       // Filtro por status
       if (filtroStatus.value) {
-        resultado = resultado.filter(pedido => pedido.status === filtroStatus.value)
+        const status = filtroStatus.value
+        const legacyMap = {
+          PENDENTE_APROVACAO: ['PENDENTE_APROVACAO', 'PENDENTE']
+        }
+        const allowed = legacyMap[status] || [status]
+        resultado = resultado.filter(pedido => allowed.includes(pedido.status))
       }
 
       // Filtro por período
@@ -1082,20 +1127,20 @@ export default {
         if (pedidoParaExcluir.value?.id) {
           const id = pedidoParaExcluir.value.id
 
-          // Verificar se é um rascunho (ID começa com "R-")
-          if (typeof id === 'string' && id.startsWith('R-')) {
-            // Extrair o ID numérico do rascunho
-            const rascunhoId = parseInt(id.replace('R-', ''))
-            await rascunhoService.remover(rascunhoId)
+          // Verificar se é um rascunho usando a propriedade isRascunho
+          if (pedidoParaExcluir.value.isRascunho) {
+            // O ID já é numérico para rascunhos
+            await rascunhoService.remover(id)
           } else {
             // É um pedido normal
             await pedidoService.excluir(id)
           }
 
-          const index = pedidos.value.findIndex(p => p.id === id)
+          const index = pedidos.value.findIndex(p => p.id === id && p.isRascunho === pedidoParaExcluir.value.isRascunho)
           if (index !== -1) {
             pedidos.value.splice(index, 1)
           }
+          success('Excluído com sucesso!')
         }
       } catch (error) {
         logger.error('Erro ao excluir:', error)
@@ -1161,8 +1206,8 @@ export default {
         return pedido.usuarioId === authStore.user?.id
       }
 
-      // Para pedidos (status PENDENTE ou EM_NEGOCIACAO): apenas COMPRADOR e ADMIN
-      if (pedido.status === 'PENDENTE' || pedido.status === 'EM_NEGOCIACAO') {
+      // Para pedidos (status EM_NEGOCIACAO): apenas COMPRADOR e ADMIN
+      if (pedido.status === 'EM_NEGOCIACAO') {
         return permissions.value.canEditPedido
       }
 
@@ -1170,8 +1215,8 @@ export default {
     }
 
     const podeAprovar = (pedido) => {
-      // Só pode aprovar pedidos pendentes ou em análise
-      return ['PENDENTE', 'EM_ANALISE'].includes(pedido.status)
+      // Só pode aprovar pedidos pendentes de aprovação
+      return pedido.status === 'PENDENTE_APROVACAO'
     }
 
     const podeVisualizar = (pedido) => {
@@ -1194,8 +1239,8 @@ export default {
         return permissions.value.canDeleteRascunho
       }
 
-      // Para pedidos (status PENDENTE): apenas COMPRADOR e ADMIN
-      if (pedido.status === 'PENDENTE') {
+      // Para pedidos (status EM_NEGOCIACAO): apenas COMPRADOR e ADMIN
+      if (pedido.status === 'EM_NEGOCIACAO') {
         return permissions.value.canDeletePedido
       }
 
@@ -1209,23 +1254,18 @@ export default {
 
     const getStatusDisponiveis = (statusAtual) => {
       const todosStatus = [
-        { value: 'PENDENTE', label: 'Pendente' },
-        { value: 'EM_ANALISE', label: 'Em Análise' },
-        { value: 'EM_ANDAMENTO', label: 'Em Andamento' },
+        { value: 'EM_NEGOCIACAO', label: 'Em Negociação' },
+        { value: 'PENDENTE_APROVACAO', label: 'Pendente de Aprovação' },
         { value: 'APROVADO', label: 'Aprovado' },
         { value: 'CANCELADO', label: 'Cancelado' }
       ]
 
       // Filtrar status disponíveis baseado no status atual
       switch (statusAtual) {
-        case 'RASCUNHO':
-          return todosStatus.filter(s => ['PENDENTE', 'CANCELADO'].includes(s.value))
-        case 'PENDENTE':
-          return todosStatus.filter(s => ['EM_ANALISE', 'APROVADO', 'CANCELADO'].includes(s.value))
-        case 'EM_ANALISE':
-          return todosStatus.filter(s => ['EM_ANDAMENTO', 'APROVADO', 'CANCELADO'].includes(s.value))
-        case 'EM_ANDAMENTO':
-          return todosStatus.filter(s => ['APROVADO', 'CANCELADO'].includes(s.value))
+        case 'EM_NEGOCIACAO':
+          return todosStatus.filter(s => ['PENDENTE_APROVACAO', 'CANCELADO'].includes(s.value))
+        case 'PENDENTE_APROVACAO':
+          return todosStatus.filter(s => ['EM_NEGOCIACAO', 'APROVADO', 'CANCELADO'].includes(s.value))
         default:
           return []
       }
@@ -1343,7 +1383,8 @@ export default {
       podeExcluir,
       podeAlterarStatus,
       getStatusDisponiveis,
-      alterarStatus
+      alterarStatus,
+      isCollapsed
     }
   }
 }
@@ -1640,6 +1681,7 @@ export default {
   font-size: 0.875rem;
   transition: all 0.2s;
   background: white;
+  min-width: 0;
 }
 
 .search-input:focus {
@@ -2730,6 +2772,29 @@ export default {
   background: #fee2e2;
 }
 
+/* Floating Action Button (mobile) */
+.mobile-fab {
+  display: none;
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #1F285F;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 10px 20px rgba(31, 40, 95, 0.3);
+  z-index: 1000;
+  gap: 8px;
+  align-items: center;
+}
+
+.mobile-fab svg {
+  display: block;
+}
+
 /* Visibility toggles */
 .desktop-only {
   display: block;
@@ -2790,7 +2855,9 @@ export default {
 @media (max-width: 768px) {
   .main-content {
     padding: 12px;
+    padding-bottom: 88px;
   }
+
 
   .welcome-content h1 {
     font-size: 1.75rem;
@@ -2834,6 +2901,10 @@ export default {
 
   .mobile-only {
     display: block !important;
+  }
+
+  .mobile-fab {
+    display: inline-flex;
   }
 
   .table-container {
@@ -2989,841 +3060,4 @@ export default {
     height: 300px;
   }
 }
-
-/* Estilos para Itens Detalhados */
-.itens-list-detalhada {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.item-card-detalhado {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.2s;
-}
-
-.item-card-detalhado:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border-color: #3b82f6;
-}
-
-.item-header-detalhado {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.item-numero-badge {
-  background: #3b82f6;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.item-quantidade-badge {
-  background: #10b981;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.item-content {
-  padding: 16px;
-}
-
-.item-nome {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 12px 0;
-}
-
-.item-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.item-info,
-.item-descricao,
-.item-observacao {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-}
-
-.info-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.info-value {
-  font-size: 0.875rem;
-  color: #374151;
-  line-height: 1.5;
-}
-
-/* Cotações Mini Card */
-.item-cotacoes {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.cotacoes-mini-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.cotacao-mini-card {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 200px;
-}
-
-.cotacao-fornecedor {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.cotacao-valor {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #059669;
-}
-
-.cotacao-prazo {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-/* HistÃ³rico */
-.loading-message {
-  text-align: center;
-  padding: 40px;
-  color: #6b7280;
-  font-style: italic;
-}
-
-.historico-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin: 24px 0;
-}
-
-.stat-card-small {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.stat-icon {
-  font-size: 2rem;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-info .stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  line-height: 1;
-}
-
-.stat-info .stat-label {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-/* Atividades */
-.historico-atividades {
-  margin-top: 24px;
-}
-
-.historico-atividades h5 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 16px;
-}
-
-.atividade-grupo {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.atividade-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.atividade-header strong {
-  font-size: 0.875rem;
-  color: #111827;
-}
-
-.atividade-count {
-  background: #3b82f6;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.atividades-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.atividade-item {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.atividade-marker {
-  width: 12px;
-  height: 12px;
-  background: #3b82f6;
-  border-radius: 50%;
-  margin-top: 4px;
-  flex-shrink: 0;
-}
-
-.atividade-content {
-  flex: 1;
-}
-
-.atividade-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.atividade-fornecedor {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.atividade-data {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.atividade-detalhes {
-  display: flex;
-  gap: 16px;
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.atividade-valor {
-  color: #059669;
-  font-weight: 600;
-}
-
-.timeline-status {
-  display: inline-block;
-  margin-top: 4px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  background: #e5e7eb;
-  color: #374151;
-}
-
-/* Estilos para filtro de itens */
-.itens-header-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.itens-header-section h4 {
-  margin: 0;
-}
-
-.filtro-itens-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filtro-input-wrapper {
-  position: relative;
-  flex: 1;
-  min-width: 250px;
-  max-width: 400px;
-}
-
-.filtro-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-  pointer-events: none;
-}
-
-.filtro-item-input {
-  width: 100%;
-  padding: 10px 40px 10px 36px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-  background: white;
-}
-
-.filtro-item-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.filtro-item-input::placeholder {
-  color: #9ca3af;
-}
-
-.limpar-filtro-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #f3f4f6;
-  border: none;
-  border-radius: 4px;
-  padding: 4px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.limpar-filtro-btn:hover {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.filtro-resultado-count {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.btn-secondary-small {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 12px;
-}
-
-.btn-secondary-small:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-}
-
-.empty-hint {
-  font-size: 0.875rem;
-  color: #9ca3af;
-  margin-top: 8px;
-  margin-bottom: 16px;
-  font-style: italic;
-}
-
-/* Destaque nos resultados da busca */
-.highlight-match {
-  background: linear-gradient(to bottom, transparent 0%, transparent 50%, #fef3c7 50%, #fef3c7 100%);
-  padding: 2px 4px;
-  border-radius: 3px;
-  transition: all 0.2s;
-}
-
-@media (max-width: 640px) {
-  .filtro-itens-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filtro-input-wrapper {
-    max-width: none;
-  }
-
-  .filtro-resultado-count {
-    text-align: center;
-  }
-}
-
-/* ===========================================
-   NOVAS SEÇÕES - ITENS E COTAÇÕES
-   =========================================== */
-
-/* Seção de Itens */
-.secao-itens, .secao-cotacoes {
-  margin-bottom: 24px;
-}
-
-.secao-header {
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.secao-header h4 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 4px 0;
-}
-
-.secao-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-style: italic;
-}
-
-.secao-separador {
-  height: 1px;
-  background: linear-gradient(to right, transparent, #e5e7eb, transparent);
-  margin: 32px 0;
-}
-
-/* Lista de Itens Simples */
-.itens-simples-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.item-simples-card {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 16px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.item-simples-card:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.item-simples-numero {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  background: #3b82f6;
-  color: white;
-  border-radius: 50%;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.item-simples-info {
-  flex: 1;
-}
-
-.item-simples-nome {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 6px;
-}
-
-.item-simples-detalhes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.item-simples-quantidade {
-  font-weight: 500;
-  color: #059669;
-}
-
-.item-simples-descricao {
-  font-style: italic;
-}
-
-/* Cotações por Item */
-.cotacoes-por-item-list {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.cotacao-item-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.2s;
-}
-
-.cotacao-item-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
-}
-
-.cotacao-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #1F285F, #2563eb);
-  color: white;
-}
-
-.cotacao-item-titulo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.cotacao-item-numero {
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.cotacao-item-nome {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.cotacao-item-badge {
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* Lista de Fornecedores */
-.cotacoes-fornecedores-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-}
-
-.cotacao-fornecedor-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.cotacao-fornecedor-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.cotacao-fornecedor-card:hover {
-  background: white;
-  border-color: #3b82f6;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
-}
-
-.cotacao-fornecedor-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.cotacao-fornecedor-header {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.cotacao-fornecedor-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1F285F, #2563eb);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.cotacao-fornecedor-dados {
-  flex: 1;
-}
-
-.cotacao-fornecedor-nome {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 2px;
-}
-
-.cotacao-fornecedor-id {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.cotacao-fornecedor-valores {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.cotacao-valor-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cotacao-label {
-  font-size: 0.75rem;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 500;
-}
-
-.cotacao-preco {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #059669;
-}
-
-.cotacao-prazo-texto, .cotacao-validade {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.cotacao-acoes {
-  display: flex;
-  align-items: center;
-}
-
-.btn-ver-pdf {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-ver-pdf:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
-}
-
-.btn-ver-pdf.active {
-  background: #dc2626;
-}
-
-.btn-ver-pdf.active:hover {
-  background: #b91c1c;
-}
-
-.btn-ver-pdf svg {
-  flex-shrink: 0;
-}
-
-/* Visualizador de PDF Inline */
-.pdf-viewer-inline {
-  width: 100%;
-  background: white;
-  border: 2px solid #3b82f6;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
-}
-
-.pdf-iframe-inline {
-  width: 100%;
-  height: 600px;
-  border: none;
-  display: block;
-}
-
-.loading-pdf-inline,
-.error-pdf-inline {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px 20px;
-  text-align: center;
-  min-height: 200px;
-}
-
-.loading-pdf-inline .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e5e7eb;
-  border-top: 4px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.error-pdf-inline svg {
-  color: #dc2626;
-}
-
-.error-pdf-inline p {
-  color: #6b7280;
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-.sem-pdf-texto {
-  font-size: 0.875rem;
-  color: #9ca3af;
-  font-style: italic;
-}
-
-.empty-cotacoes-message {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  color: #9ca3af;
-  text-align: center;
-}
-
-.empty-cotacoes-message svg {
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-cotacoes-message p {
-  margin: 0;
-  font-size: 0.875rem;
-  font-style: italic;
-}
-
-/* Animação para loading spinner */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .cotacao-fornecedor-card {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .cotacao-fornecedor-valores {
-    gap: 12px;
-  }
-
-  .cotacao-acoes {
-    justify-content: stretch;
-  }
-
-  .btn-ver-pdf {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .item-simples-card {
-    flex-direction: column;
-  }
-
-  .item-simples-numero {
-    align-self: flex-start;
-  }
-
-  .pdf-iframe-inline {
-    height: 400px;
-  }
-}
 </style>
-
