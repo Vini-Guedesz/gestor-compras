@@ -318,8 +318,8 @@
                       <span class="tipo-tag" v-if="cotacao.pedidoId">Pedido #{{ cotacao.pedidoId }}</span>
                       <span class="tipo-tag tipo-tag-data">{{ cotacao.data }}</span>
                       <!-- Tag de Status -->
-                      <span class="status-badge-small" :class="getStatusCotacaoClass(cotacao.status)">
-                        {{ getStatusCotacaoLabel(cotacao.status) }}
+                      <span class="status-badge-small" :class="getStatusCotacaoClass(cotacao.statusExibicao || cotacao.status)">
+                        {{ getStatusCotacaoLabel(cotacao.statusExibicao || cotacao.status) }}
                       </span>
                     </div>
                   </div>
@@ -355,9 +355,27 @@
 
                   <!-- Itens -->
                   <div class="cotacao-itens-section">
-                    <h5 class="itens-section-title">Itens Contemplados ({{ cotacao.totalItens || 1 }})</h5>
-                    <div class="itens-chips">
-                      <span class="item-chip">{{ cotacao.itemNome }}</span>
+                    <h5 class="itens-section-title">Status por Item ({{ cotacao.itensStatusDetalhados?.length || 0 }})</h5>
+                    <div class="itens-chips itens-chips-detalhados">
+                      <span
+                        v-for="itemStatus in (cotacao.itensStatusDetalhados || [])"
+                        :key="`${cotacao.id}-${itemStatus.nome}-${itemStatus.status}`"
+                        class="item-chip item-chip-status"
+                        :class="getStatusItemClass(itemStatus.status)"
+                      >
+                        {{ itemStatus.nome }} - {{ getStatusItemLabel(itemStatus.status) }}
+                      </span>
+                    </div>
+                    <div class="itens-resumo-status" v-if="cotacao.resumoItensStatus">
+                      <span class="resumo-status-badge resumo-aprovado">
+                        Aprovados: {{ cotacao.resumoItensStatus.aprovados }}
+                      </span>
+                      <span class="resumo-status-badge resumo-cotado-nao-selecionado">
+                        Cotados nao selecionados: {{ cotacao.resumoItensStatus.cotadosNaoSelecionados }}
+                      </span>
+                      <span class="resumo-status-badge resumo-nao-cotado">
+                        Nao cotados: {{ cotacao.resumoItensStatus.naoCotados }}
+                      </span>
                     </div>
                   </div>
 
@@ -571,6 +589,7 @@ watch(cotacoesFiltradas, () => {
 // Caches
 const cacheItensPedido = ref(new Map())
 const cachePedidos = ref(new Map())
+const cacheHistoricoCotacao = ref(new Map())
 
 // Sidebar
 const toggleSidebar = () => {
@@ -643,30 +662,158 @@ const getStatusLabel = (status) => {
   return labels[status] || 'Ativo'
 }
 
+const normalizarStatusCotacao = (status) => String(status || '').toUpperCase().trim()
+
 const getStatusCotacaoClass = (status) => {
+  const key = normalizarStatusCotacao(status)
   const classes = {
-    'APROVADA': 'status-aprovada',
-    'SELECIONADA': 'status-aprovada',
-    'REJEITADA': 'status-rejeitada',
-    'NAO_SELECIONADA': 'status-rejeitada',
-    'CANCELADA': 'status-cancelada',
-    'EM_ANALISE': 'status-analise',
-    'PENDENTE': 'status-analise'
+    APROVADA: 'status-aprovada',
+    SELECIONADA: 'status-aprovada',
+    PARCIAL: 'status-parcial',
+    REJEITADA: 'status-rejeitada',
+    NAO_SELECIONADA: 'status-rejeitada',
+    NAO_COTADA: 'status-rejeitada',
+    CANCELADA: 'status-cancelada',
+    EM_ANALISE: 'status-analise',
+    PENDENTE: 'status-analise'
   }
-  return classes[status] || 'status-analise'
+  return classes[key] || 'status-analise'
 }
 
 const getStatusCotacaoLabel = (status) => {
+  const key = normalizarStatusCotacao(status)
   const labels = {
-    'APROVADA': 'Aprovada',
-    'SELECIONADA': 'Selecionada',
-    'REJEITADA': 'Não Selecionada',
-    'NAO_SELECIONADA': 'Não Selecionada',
-    'CANCELADA': 'Cancelada',
-    'EM_ANALISE': 'Em Análise',
-    'PENDENTE': 'Em Análise'
+    APROVADA: 'Aprovada',
+    SELECIONADA: 'Selecionada',
+    PARCIAL: 'Parcial',
+    REJEITADA: 'Nao Selecionada',
+    NAO_SELECIONADA: 'Nao Selecionada',
+    NAO_COTADA: 'Nao Cotada',
+    CANCELADA: 'Cancelada',
+    EM_ANALISE: 'Em Analise',
+    PENDENTE: 'Em Analise'
   }
-  return labels[status] || 'Em Análise'
+  return labels[key] || 'Em Analise'
+}
+
+const getStatusItemLabel = (status) => {
+  const labels = {
+    APROVADO: 'Aprovado',
+    COTADO_NAO_SELECIONADO: 'Cotado nao selecionado',
+    NAO_COTADO: 'Nao cotado'
+  }
+  return labels[status] || status
+}
+
+const getStatusItemClass = (status) => {
+  const classes = {
+    APROVADO: 'item-status-aprovado',
+    COTADO_NAO_SELECIONADO: 'item-status-cotado-nao-selecionado',
+    NAO_COTADO: 'item-status-nao-cotado'
+  }
+  return classes[status] || 'item-status-nao-cotado'
+}
+
+const normalizarNomeItem = (nome) => String(nome || '').trim().toLowerCase()
+
+const parseListaItensTexto = (texto) => {
+  if (!texto || typeof texto !== 'string') return []
+  return texto
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+const deduplicarItensPorNome = (itens) => {
+  const nomes = new Set()
+  return itens.filter(item => {
+    const key = normalizarNomeItem(item?.nome)
+    if (!key || nomes.has(key)) return false
+    nomes.add(key)
+    return true
+  })
+}
+
+const obterHistoricoCotacaoComCache = async (cotacaoId) => {
+  if (!cotacaoId) return []
+
+  if (cacheHistoricoCotacao.value.has(cotacaoId)) {
+    return cacheHistoricoCotacao.value.get(cotacaoId)
+  }
+
+  try {
+    const historico = await cotacaoService.buscarHistorico(cotacaoId)
+    const lista = Array.isArray(historico) ? historico : []
+    cacheHistoricoCotacao.value.set(cotacaoId, lista)
+    return lista
+  } catch (error) {
+    logger.warn(`Erro ao buscar historico da cotacao ${cotacaoId}:`, error)
+    cacheHistoricoCotacao.value.set(cotacaoId, [])
+    return []
+  }
+}
+
+const montarDetalhamentoItensCotacao = (cotacao, pedidoRelacionado, itensSelecionadosDetalhados, historicoComSelecao) => {
+  const itensSelecionadosHistorico = parseListaItensTexto(historicoComSelecao?.itensSelecionados)
+  const itensNaoSelecionadosHistorico = parseListaItensTexto(historicoComSelecao?.itensNaoSelecionados)
+
+  const itensAprovados = deduplicarItensPorNome(
+    (itensSelecionadosDetalhados?.length > 0
+      ? itensSelecionadosDetalhados.map(item => ({ nome: item.nome, status: 'APROVADO' }))
+      : itensSelecionadosHistorico.map(nome => ({ nome, status: 'APROVADO' })))
+  )
+
+  const itensCotadosNaoSelecionados = deduplicarItensPorNome(
+    itensNaoSelecionadosHistorico.map(nome => ({ nome, status: 'COTADO_NAO_SELECIONADO' }))
+  )
+
+  const itensClassificados = new Set(
+    [...itensAprovados, ...itensCotadosNaoSelecionados]
+      .map(item => normalizarNomeItem(item.nome))
+      .filter(Boolean)
+  )
+
+  const itensPedido = Array.isArray(pedidoRelacionado?.itens) ? pedidoRelacionado.itens : []
+  const itensNaoCotados = deduplicarItensPorNome(
+    itensPedido
+      .map(item => item?.nome || (item?.id ? `Item #${item.id}` : null))
+      .filter(Boolean)
+      .filter(nome => !itensClassificados.has(normalizarNomeItem(nome)))
+      .map(nome => ({ nome, status: 'NAO_COTADO' }))
+  )
+
+  const itensStatusDetalhados = [
+    ...itensAprovados,
+    ...itensCotadosNaoSelecionados,
+    ...itensNaoCotados
+  ]
+
+  const resumoItensStatus = {
+    aprovados: itensAprovados.length,
+    cotadosNaoSelecionados: itensCotadosNaoSelecionados.length,
+    naoCotados: itensNaoCotados.length
+  }
+
+  const statusOriginal = normalizarStatusCotacao(cotacao.statusSelecao || cotacao.status || 'EM_ANALISE')
+  let statusExibicao = statusOriginal || 'EM_ANALISE'
+
+  if (statusOriginal !== 'CANCELADA') {
+    if (resumoItensStatus.aprovados > 0 && resumoItensStatus.cotadosNaoSelecionados === 0 && resumoItensStatus.naoCotados === 0) {
+      statusExibicao = 'APROVADA'
+    } else if (resumoItensStatus.aprovados > 0) {
+      statusExibicao = 'PARCIAL'
+    } else if (resumoItensStatus.cotadosNaoSelecionados > 0) {
+      statusExibicao = 'NAO_SELECIONADA'
+    } else if (resumoItensStatus.naoCotados > 0 && itensPedido.length > 0) {
+      statusExibicao = 'NAO_COTADA'
+    }
+  }
+
+  return {
+    itensStatusDetalhados,
+    resumoItensStatus,
+    statusExibicao
+  }
 }
 
 // PDF
@@ -834,29 +981,42 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
         cotacoesOrdenadas.map(async (cot) => {
           let pedido = null
 
-          // Buscar o pedido relacionado
           if (cot.solicitacaoDePedidoId) {
             pedido = await buscarPedidoComCache(cot.solicitacaoDePedidoId)
           }
 
-          // Buscar todos os itens de pedido desta cotação
-          const itensDetalhados = await Promise.all(
+          const itensSelecionadosDetalhados = await Promise.all(
             (cot.itens || []).map(async (itemCotacao) => {
-              if (itemCotacao.itemPedidoId) {
-                const itemPedido = await buscarItemPedidoComCache(itemCotacao.itemPedidoId)
-                return itemPedido
+              if (!itemCotacao) return null
+
+              let itemPedido = null
+              if ((!itemCotacao.nomeItem || !itemCotacao.quantidade) && itemCotacao.itemPedidoId) {
+                itemPedido = await buscarItemPedidoComCache(itemCotacao.itemPedidoId)
               }
-              return null
+
+              return {
+                itemPedidoId: itemCotacao.itemPedidoId || itemPedido?.id || null,
+                nome: itemCotacao.nomeItem || itemPedido?.nome || itemPedido?.descricao || `Item #${itemCotacao.itemPedidoId || 'N/A'}`,
+                quantidade: Number(itemCotacao.quantidade || itemPedido?.quantidade || 0),
+                descricao: itemCotacao.descricao || itemPedido?.descricao || '',
+                observacao: itemCotacao.observacao || itemPedido?.observacao || ''
+              }
             })
           )
 
-          // Filtrar itens nulos e pegar o primeiro item para exibir (ou agregar todos)
-          const itensValidos = itensDetalhados.filter(item => item !== null)
-          const primeiroItem = itensValidos[0] || null
+          const itensSelecionadosValidos = itensSelecionadosDetalhados.filter(item => item && item.nome)
+          const primeiroItem = itensSelecionadosValidos[0] || null
+          const nomesItens = itensSelecionadosValidos.map(item => item.nome).join(', ')
+          const quantidadeTotal = itensSelecionadosValidos.reduce((sum, item) => sum + (item.quantidade || 0), 0)
 
-          // Se houver múltiplos itens, vamos concatenar os nomes dos produtos (nome tem prioridade sobre descrição)
-          const nomesItens = itensValidos.map(item => item.nome || item.descricao || 'Item sem nome').join(', ')
-          const quantidadeTotal = itensValidos.reduce((sum, item) => sum + (item.quantidade || 0), 0)
+          const historicoCotacao = await obterHistoricoCotacaoComCache(cot.id)
+          const historicoComSelecao = historicoCotacao.find(h => h?.itensSelecionados || h?.itensNaoSelecionados)
+          const detalhesItens = montarDetalhamentoItensCotacao(
+            cot,
+            pedido,
+            itensSelecionadosValidos,
+            historicoComSelecao
+          )
 
           const dataRaw = getDataCotacao(cot)
 
@@ -868,11 +1028,12 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
               ? dataRaw.toLocaleDateString('pt-BR')
               : '-',
             valor: parseFloat(cot.preco) || 0,
-            status: cot.statusSelecao || cot.status || 'PENDENTE', // Usar statusSelecao (DTO) ou status (novo campo)
+            status: normalizarStatusCotacao(cot.statusSelecao || cot.status || 'PENDENTE'),
+            statusExibicao: detalhesItens.statusExibicao,
             prazoEntrega: cot.dataLimite
               ? new Date(cot.dataLimite).toLocaleDateString('pt-BR')
               : '-',
-            itemNome: nomesItens || 'Item não especificado',
+            itemNome: nomesItens || 'Item nao especificado',
             itemQuantidade: quantidadeTotal,
             itemDescricao: primeiroItem?.descricao || '',
             itemObservacao: primeiroItem?.observacao || '',
@@ -882,7 +1043,9 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
             pedidoData: pedido?.dataCriacao
               ? new Date(pedido.dataCriacao).toLocaleDateString('pt-BR')
               : '-',
-            totalItens: itensValidos.length,
+            totalItens: detalhesItens.itensStatusDetalhados.length,
+            itensStatusDetalhados: detalhesItens.itensStatusDetalhados,
+            resumoItensStatus: detalhesItens.resumoItensStatus,
             temAnexoPdf: cot.temAnexoPdf || false,
             quantidadeAnexos: cot.quantidadeAnexos || 0
           }
@@ -1513,6 +1676,10 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
+.itens-chips-detalhados {
+  margin-bottom: 10px;
+}
+
 .item-chip {
   background: #eef2ff;
   color: #3730a3;
@@ -1525,10 +1692,62 @@ onBeforeUnmount(() => {
   transition: all 0.2s ease;
 }
 
+.item-chip-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.item-status-aprovado {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.item-status-cotado-nao-selecionado {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+
+.item-status-nao-cotado {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
 .item-chip:hover {
   background: linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(67, 56, 202, 0.15);
+}
+
+.itens-resumo-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resumo-status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.resumo-aprovado {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.resumo-cotado-nao-selecionado {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.resumo-nao-cotado {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 /* Seção de Observações */
@@ -1673,6 +1892,11 @@ onBeforeUnmount(() => {
 .status-aprovada {
   background: #d1fae5;
   color: #065f46;
+}
+
+.status-parcial {
+  background: #ffedd5;
+  color: #9a3412;
 }
 
 .status-rejeitada {
@@ -2701,3 +2925,5 @@ onBeforeUnmount(() => {
   margin-bottom: 0;
 }
 </style>
+
+

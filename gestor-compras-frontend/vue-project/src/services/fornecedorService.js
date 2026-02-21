@@ -571,6 +571,35 @@ const fornecedorService = {
   },
 
   /**
+   * Busca o historico de cotacoes de um fornecedor especifico.
+   *
+   * @async
+   * @function obterHistoricoCotacoes
+   * @memberof fornecedorService
+   * @param {number|string} fornecedorId - ID do fornecedor
+   * @param {'produto'|'servico'|'PRODUTO'|'SERVICO'} tipoFornecedor - Tipo do fornecedor
+   * @returns {Promise<Array<Object>>} Lista de cotacoes do fornecedor
+   */
+  async obterHistoricoCotacoes(fornecedorId, tipoFornecedor) {
+    try {
+      if (!fornecedorId) {
+        throw new Error('ID do fornecedor e obrigatorio')
+      }
+
+      const tipoNormalizado = String(tipoFornecedor || '').toLowerCase()
+      const endpointBase = tipoNormalizado === 'servico'
+        ? '/api/v1/fornecedores-de-servico'
+        : '/api/v1/fornecedores-de-produto'
+
+      const data = await api.get(`${endpointBase}/${fornecedorId}/historico-cotacoes`)
+      return Array.isArray(data) ? data : []
+    } catch (error) {
+      logger.error(`❌ Erro ao buscar historico de cotacoes do fornecedor ${fornecedorId}:`, error.message)
+      throw error
+    }
+  },
+
+  /**
    * Alias para listarTodos() - mantido para compatibilidade
    *
    * @async

@@ -70,6 +70,53 @@
                     <p class="motivo-texto">{{ item.motivoEdicao }}</p>
                   </div>
 
+                  <!-- Status e auditoria de itens -->
+                  <div
+                    v-if="item.statusFinal || item.itensSelecionados || item.itensNaoSelecionados"
+                    class="historico-status"
+                  >
+                    <div
+                      v-if="item.statusFinal"
+                      class="status-badge"
+                      :class="getStatusClass(item.statusFinal)"
+                    >
+                      Status final: {{ formatarStatus(item.statusFinal) }}
+                    </div>
+                    <div v-if="item.itensSelecionados" class="itens-auditoria">
+                      <span class="itens-label">Itens selecionados:</span>
+                      <span class="itens-texto">{{ item.itensSelecionados }}</span>
+                    </div>
+                    <div v-if="item.itensNaoSelecionados" class="itens-auditoria">
+                      <span class="itens-label">Itens não selecionados:</span>
+                      <span class="itens-texto">{{ item.itensNaoSelecionados }}</span>
+                    </div>
+                  </div>
+
+                  <div v-if="getMudancasItens(item).length > 0" class="itens-historico">
+                    <div class="itens-historico-header">Mudancas por item</div>
+                    <div class="itens-historico-lista">
+                      <div
+                        v-for="mudancaItem in getMudancasItens(item)"
+                        :key="`${item.id}-${mudancaItem.chave}`"
+                        class="item-mudanca-card"
+                      >
+                        <div class="item-mudanca-topo">
+                          <span class="item-mudanca-nome">{{ mudancaItem.nomeItem }}</span>
+                          <span class="item-mudanca-badge" :class="getMudancaItemClass(mudancaItem.tipoMudanca)">
+                            {{ getMudancaItemLabel(mudancaItem.tipoMudanca) }}
+                          </span>
+                        </div>
+                        <div class="item-mudanca-valores">
+                          <span class="item-mudanca-anterior">{{ formatarResumoItem(mudancaItem.anterior) }}</span>
+                          <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" class="arrow-icon">
+                            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                          </svg>
+                          <span class="item-mudanca-novo">{{ formatarResumoItem(mudancaItem.novo) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- Alterações -->
                   <div class="alteracoes-grid">
                     <!-- Preço (só se mudou) -->
@@ -113,7 +160,7 @@
                   </div>
 
                   <!-- Mensagem se nenhum campo mudou -->
-                  <div v-if="!houveMudancaPreco(item) && !houveMudancaPrazo(item) && !houveMudancaDataLimite(item) && !houveMudancaPdf(item)" class="sem-alteracoes">
+                  <div v-if="!houveMudancaPreco(item) && !houveMudancaPrazo(item) && !houveMudancaDataLimite(item) && !houveMudancaPdf(item) && !houveMudancaItens(item)" class="sem-alteracoes">
                     <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
                       <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                     </svg>
@@ -197,6 +244,7 @@ export default {
     const pdfAberto = ref(null)
     const pdfUrl = ref(null)
     const carregandoPdf = ref(false)
+    const mudancasItensCache = ref(new Map())
 
     watch(() => props.show, async (newVal) => {
       if (newVal) {
@@ -209,6 +257,7 @@ export default {
 
     const carregarHistorico = async () => {
       carregando.value = true
+      mudancasItensCache.value.clear()
       try {
         const data = await cotacaoService.buscarHistorico(props.cotacao.id)
 
@@ -284,11 +333,145 @@ export default {
       return item.dataLimiteAnterior !== item.dataLimiteNovo
     }
 
+    const formatarStatus = (status) => {
+      const map = {
+        EM_ANALISE: 'Em análise',
+        APROVADA: 'Aprovada',
+        PARCIAL: 'Parcial',
+        REJEITADA: 'Rejeitada',
+        CANCELADA: 'Cancelada'
+      }
+      return map[status] || status
+    }
+
+    const getStatusClass = (status) => {
+      const key = (status || '').toLowerCase()
+      if (key === 'aprovada') return 'status-aprovada'
+      if (key === 'parcial') return 'status-parcial'
+      if (key === 'rejeitada') return 'status-rejeitada'
+      if (key === 'em_analise') return 'status-em-analise'
+      if (key === 'cancelada') return 'status-cancelada'
+      return 'status-default'
+    }
+
     const houveMudancaPdf = (item) => {
-      // Se foi anexado um novo PDF nesta edição, considera que houve mudança
-      // Também considera mudança se o motivo indica adição de anexos
+      // Se foi anexado um novo PDF nesta edicao, considera que houve mudanca
+      // Tambem considera mudanca se o motivo indica adicao de anexos
       return item.temAnexoNovo === true || (item.motivoEdicao && item.motivoEdicao.includes('Adicionado') && item.motivoEdicao.includes('anexo'))
     }
+
+    const parseItensSnapshot = (snapshot) => {
+      if (!snapshot) return []
+      if (Array.isArray(snapshot)) return snapshot
+
+      try {
+        const parsed = JSON.parse(snapshot)
+        return Array.isArray(parsed) ? parsed : []
+      } catch (error) {
+        logger.warn('Nao foi possivel interpretar snapshot de itens do historico:', error)
+        return []
+      }
+    }
+
+    const getChaveItem = (item) => {
+      if (!item) return null
+      if (item.itemPedidoId !== undefined && item.itemPedidoId !== null) return `id-${item.itemPedidoId}`
+      if (item.nomeItem) return `nome-${String(item.nomeItem).trim().toLowerCase()}`
+      return null
+    }
+
+    const formatarResumoItem = (item) => {
+      if (!item) return '-'
+      const qtd = item.quantidade ?? '-'
+      const precoUnitario = item.precoUnitario != null ? `R$ ${formatarPreco(item.precoUnitario)}` : '-'
+      const total = item.total != null ? `R$ ${formatarPreco(item.total)}` : '-'
+      return `Qtd ${qtd} | Unit ${precoUnitario} | Total ${total}`
+    }
+
+    const getMudancaItemLabel = (tipoMudanca) => {
+      const labels = {
+        ADICIONADO: 'Adicionado',
+        REMOVIDO: 'Removido',
+        ALTERADO: 'Alterado'
+      }
+      return labels[tipoMudanca] || tipoMudanca
+    }
+
+    const getMudancaItemClass = (tipoMudanca) => {
+      const classes = {
+        ADICIONADO: 'mudanca-adicionada',
+        REMOVIDO: 'mudanca-removida',
+        ALTERADO: 'mudanca-alterada'
+      }
+      return classes[tipoMudanca] || 'mudanca-alterada'
+    }
+
+    const getMudancasItens = (item) => {
+      const cacheKey = `${item?.id || 'sem-id'}-${item?.dataEdicao || ''}`
+      if (mudancasItensCache.value.has(cacheKey)) {
+        return mudancasItensCache.value.get(cacheKey)
+      }
+
+      const itensAnteriores = parseItensSnapshot(item?.itensAnteriores)
+      const itensNovos = parseItensSnapshot(item?.itensNovos)
+
+      if (itensAnteriores.length === 0 && itensNovos.length === 0) {
+        mudancasItensCache.value.set(cacheKey, [])
+        return []
+      }
+
+      const mapaAnteriores = new Map()
+      const mapaNovos = new Map()
+
+      itensAnteriores.forEach(itemAnterior => {
+        const chave = getChaveItem(itemAnterior)
+        if (chave) mapaAnteriores.set(chave, itemAnterior)
+      })
+
+      itensNovos.forEach(itemNovo => {
+        const chave = getChaveItem(itemNovo)
+        if (chave) mapaNovos.set(chave, itemNovo)
+      })
+
+      const todasChaves = new Set([...mapaAnteriores.keys(), ...mapaNovos.keys()])
+      const mudancas = []
+
+      todasChaves.forEach(chave => {
+        const anterior = mapaAnteriores.get(chave) || null
+        const novo = mapaNovos.get(chave) || null
+
+        let tipoMudanca = null
+        if (!anterior && novo) {
+          tipoMudanca = 'ADICIONADO'
+        } else if (anterior && !novo) {
+          tipoMudanca = 'REMOVIDO'
+        } else if (anterior && novo) {
+          const precoMudou = Number(anterior.precoUnitario || 0) !== Number(novo.precoUnitario || 0)
+          const quantidadeMudou = Number(anterior.quantidade || 0) !== Number(novo.quantidade || 0)
+          const totalMudou = Number(anterior.total || 0) !== Number(novo.total || 0)
+          const observacaoMudou = String(anterior.observacao || '') !== String(novo.observacao || '')
+
+          if (precoMudou || quantidadeMudou || totalMudou || observacaoMudou) {
+            tipoMudanca = 'ALTERADO'
+          }
+        }
+
+        if (tipoMudanca) {
+          mudancas.push({
+            chave,
+            nomeItem: novo?.nomeItem || anterior?.nomeItem || 'Item sem nome',
+            tipoMudanca,
+            anterior,
+            novo
+          })
+        }
+      })
+
+      mudancasItensCache.value.set(cacheKey, mudancas)
+      return mudancas
+    }
+
+    const houveMudancaItens = (item) => getMudancasItens(item).length > 0
 
     const visualizarPdfHistorico = async (historicoId, tipo) => {
       const pdfKey = `${historicoId}-${tipo}`
@@ -349,12 +532,19 @@ export default {
       formatarPreco,
       formatarData,
       formatarDataHora,
+      formatarStatus,
+      getStatusClass,
       calcularDiferenca,
       getDiferencaClass,
       houveMudancaPreco,
       houveMudancaPrazo,
       houveMudancaDataLimite,
       houveMudancaPdf,
+      houveMudancaItens,
+      getMudancasItens,
+      formatarResumoItem,
+      getMudancaItemLabel,
+      getMudancaItemClass,
       visualizarPdfHistorico
     }
   }
@@ -569,6 +759,169 @@ export default {
   line-height: 1.5;
 }
 
+/* Status e auditoria */
+.historico-status {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.status-aprovada {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.status-parcial {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.status-rejeitada {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.status-em-analise {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.status-cancelada {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.status-default {
+  background: #f3f4f6;
+  color: #4b5563;
+  border-color: #d1d5db;
+}
+
+.itens-auditoria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.itens-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.itens-texto {
+  color: #111827;
+}
+
+
+
+.itens-historico {
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.itens-historico-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #1e40af;
+  margin-bottom: 10px;
+}
+
+.itens-historico-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-mudanca-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.item-mudanca-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.item-mudanca-nome {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.item-mudanca-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.mudanca-adicionada {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.mudanca-removida {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.mudanca-alterada {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.item-mudanca-valores {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+}
+
+.item-mudanca-anterior {
+  color: #991b1b;
+}
+
+.item-mudanca-novo {
+  color: #065f46;
+  font-weight: 600;
+}
+
 /* Alterações Grid */
 .alteracoes-grid {
   display: grid;
@@ -770,3 +1123,6 @@ export default {
   }
 }
 </style>
+
+
+
