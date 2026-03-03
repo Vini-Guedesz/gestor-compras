@@ -25,6 +25,7 @@ import Icon from './components/ui/Icon.vue'
 const app = createApp(App)
 
 // Registra o componente Icon globalmente
+// eslint-disable-next-line vue/multi-word-component-names
 app.component('Icon', Icon)
 
 // Configura o Pinia para gerenciamento de estado global

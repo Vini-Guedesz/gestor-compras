@@ -243,7 +243,6 @@ import { ref, computed, watch } from 'vue'
 import { useModal } from '@/composables/useModal'
 import { useAuthStore } from '@/stores/auth'
 import { useErrorModal } from '@/composables/useErrorModal'
-import logger from '@/utils/logger.js'
 
 export default {
   name: 'EditCotacaoModal',

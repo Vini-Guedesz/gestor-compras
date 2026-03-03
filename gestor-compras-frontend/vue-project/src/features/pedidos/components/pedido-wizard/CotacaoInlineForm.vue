@@ -221,7 +221,7 @@ export default {
   },
   emits: ['update', 'remove'],
   setup(props, { emit }) {
-    const { success, error: showError, warning } = useToast()
+    const { error: showError, warning } = useToast()
     const fileInput = ref(null)
     const localCotacao = ref({
       ...props.cotacao,

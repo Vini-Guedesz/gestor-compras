@@ -258,7 +258,6 @@ const router = createRouter({
  * @private
  */
 let isCheckingAuth = false
-let lastAuthCheck = null
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
@@ -269,7 +268,6 @@ router.beforeEach(async (to, from, next) => {
     isCheckingAuth = true
     try {
       await authStore.checkAuth()
-      lastAuthCheck = Date.now()
     } finally {
       isCheckingAuth = false
     }

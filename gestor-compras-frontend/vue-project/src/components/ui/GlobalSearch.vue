@@ -65,7 +65,7 @@ export default {
   name: 'GlobalSearch',
   setup() {
     const router = useRouter()
-    const { warning, error } = useToast()
+    const { warning } = useToast()
 
     const searchQuery = ref('')
     const showSuggestions = ref(false)
@@ -223,7 +223,7 @@ export default {
       showTips.value = searchQuery.value.length >= 1 && searchQuery.value.length < 3
     }
 
-    const navigateToSuggestion = (suggestion) => {
+    const navigateToSuggestion = () => {
       // Sugestões são apenas hints, não navegam diretamente
       showSuggestions.value = false
     }

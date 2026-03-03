@@ -553,7 +553,7 @@ export default {
   },
   emits: ['save-cotacao', 'delete-cotacao', 'view-pdf'],
   setup(props, { emit }) {
-    const { success, error: showError, warning } = useToast()
+    const { error: showError, warning } = useToast()
     const { permissions } = usePermissions()
     const showFormulario = ref(false)
 
@@ -904,10 +904,7 @@ export default {
             const base64 = e.target.result.split(',')[1]
             // Converter Base64 para array de bytes
             const binaryString = atob(base64)
-            const bytes = new Array(binaryString.length)
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i)
-            }
+            const bytes = Array.from(binaryString, caractere => caractere.charCodeAt(0))
             // Adicionar ao array de PDFs
             arquivosPdf.value.push({ nome: file.name, bytes: bytes, tamanho: file.size })
             novaCotacao.value.anexosPdf.push(bytes)

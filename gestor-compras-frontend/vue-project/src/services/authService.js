@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Serviço de Autenticação
  * @module services/authService
  * @description

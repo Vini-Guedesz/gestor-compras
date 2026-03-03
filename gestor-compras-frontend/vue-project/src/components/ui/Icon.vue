@@ -16,7 +16,7 @@ import { getMetricIcon, getTabIcon, getActionIcon } from '@/config/iconConfig'
 import { getIconPath as getMenuIcon } from '@/config/menuConfig'
 
 defineOptions({
-  name: 'Icon'
+  name: 'AppIcon'
 })
 
 const props = defineProps({

@@ -693,23 +693,6 @@ const novasCotacoesMes = computed(() => {
   return Math.floor(cotacoes.value.length * 0.15)
 })
 
-const fornecedoresUnicos = computed(() => {
-  const fornecedoresMap = new Map()
-  cotacoes.value.forEach(c => {
-    if (c.fornecedorId) {
-      const key = `${c.fornecedorId}-${c.tipoFornecedor || ''}`
-      if (!fornecedoresMap.has(key)) {
-        fornecedoresMap.set(key, {
-          id: c.fornecedorId,
-          tipo: c.tipoFornecedor,
-          nome: getNomeFornecedor(c.fornecedorId, c.tipoFornecedor)
-        })
-      }
-    }
-  })
-  return Array.from(fornecedoresMap.values()).sort((a, b) => a.nome.localeCompare(b.nome))
-})
-
 // Computadas
 const resumo = computed(() => {
   const total = cotacoes.value.length
@@ -997,13 +980,12 @@ const salvarCotacao = async (dadosCotacao) => {
   try {
     operacaoEmAndamento.value = true
 
-    let response
     if (cotacaoSelecionada.value && cotacaoSelecionada.value.id) {
       // Editar cotação existente
-      response = await cotacaoService.atualizar(cotacaoSelecionada.value.id, dadosCotacao)
+      await cotacaoService.atualizar(cotacaoSelecionada.value.id, dadosCotacao)
     } else {
       // Criar nova cotação
-      response = await cotacaoService.criar(dadosCotacao)
+      await cotacaoService.criar(dadosCotacao)
     }
 
     // Recarregar a lista de cotações

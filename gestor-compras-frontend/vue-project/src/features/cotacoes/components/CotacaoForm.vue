@@ -336,7 +336,6 @@ const pesquisaItem = ref('')
 // Labels dos itens selecionados
 const fornecedorSelecionadoNome = ref('')
 const pedidoSelecionadoLabel = ref('')
-const itemSelecionadoNome = ref('')
 
 // Campo de preço formatado
 const precoFormatado = ref('')
@@ -765,10 +764,7 @@ const carregarPedidos = async () => {
         const itensDoPedido = todosItens.filter(item => {
           // Tentar diferentes propriedades que podem indicar o pedido
           const pedidoId = item.solicitacaoDePedido?.id || item.solicitacaoDePedidoId || item.pedidoId
-          const match = pedidoId === pedido.id
-          if (match) {
-          }
-          return match
+          return pedidoId === pedido.id
         })
 
 

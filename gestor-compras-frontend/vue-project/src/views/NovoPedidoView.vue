@@ -655,18 +655,18 @@ export default {
             title: '⚠️ ATENÇÃO: Primeira Cotação',
             confirmText: 'Sim, adicionar cotação',
             cancelText: 'Cancelar',
-            onConfirm: async () => {
-              await processarSalvamentoCotacao(dadosCotacao, ehPrimeiraCotacao)
+              onConfirm: async () => {
+              await processarSalvamentoCotacao(dadosCotacao)
             }
           }
         )
       } else {
         // Se não for a primeira cotação, salvar diretamente
-        await processarSalvamentoCotacao(dadosCotacao, ehPrimeiraCotacao)
+        await processarSalvamentoCotacao(dadosCotacao)
       }
     }
 
-    const processarSalvamentoCotacao = async (dadosCotacao, ehPrimeiraCotacao) => {
+    const processarSalvamentoCotacao = async (dadosCotacao) => {
       try {
         isLoading.value = true
 

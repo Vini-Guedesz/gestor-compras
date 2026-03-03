@@ -483,7 +483,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save'])
 
-const { success, error: showError, warning } = useToast()
+const { error: showError, warning } = useToast()
 
 // Prevenir scroll do body quando modal está aberto
 watch(() => props.isVisible, (newValue) => {

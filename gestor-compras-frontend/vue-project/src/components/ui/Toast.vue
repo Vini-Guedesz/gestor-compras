@@ -47,7 +47,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, defineOptions } from 'vue'
+
+defineOptions({
+  name: 'AppToast'
+})
 
 const props = defineProps({
   message: {

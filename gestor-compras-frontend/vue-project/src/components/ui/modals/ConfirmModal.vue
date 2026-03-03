@@ -72,7 +72,7 @@
  * - Foco automático ao abrir
  * - Retorno do foco ao elemento que abriu quando fecha
  */
-import { computed, ref, watch, nextTick, onMounted } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import { useModal } from '@/composables/useModal'
 
 const props = defineProps({

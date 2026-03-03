@@ -372,7 +372,6 @@ import Icon from '@/components/ui/Icon.vue'
 const FornecedorForm = defineAsyncComponent(() => import('@/features/fornecedores/components/FornecedorForm.vue'))
 const ConfirmModal = defineAsyncComponent(() => import('@/components/ui/modals/ConfirmModal.vue'))
 import fornecedorService from '@/services/fornecedorService.js'
-import relatorioService from '@/services/relatorioService.js'
 import logger from '@/utils/logger.js'
 
 // Router
@@ -464,23 +463,6 @@ const formatarCNPJ = (cnpj) => {
   return numbers.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
 }
 
-const formatarTelefone = (telefone) => {
-  if (!telefone) return ''
-  const numbers = telefone.replace(/\D/g, '')
-  if (numbers.length === 11) {
-    return numbers.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')
-  } else if (numbers.length === 10) {
-    return numbers.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3')
-  }
-  return telefone
-}
-
-const formatarCEP = (cep) => {
-  if (!cep) return ''
-  const numbers = cep.replace(/\D/g, '')
-  return numbers.replace(/^(\d{5})(\d{3})$/, '$1-$2')
-}
-
 // Métodos de classificação
 const getTipoClass = (tipo) => {
   const classes = {
@@ -561,11 +543,10 @@ const salvarFornecedor = async (dadosFornecedor) => {
       }
     } else {
       // Criar novo fornecedor
-      let resultado
       if (dadosFornecedor.tipo === 'produto') {
-        resultado = await fornecedorService.criarFornecedorProduto(dadosFornecedor)
+        await fornecedorService.criarFornecedorProduto(dadosFornecedor)
       } else {
-        resultado = await fornecedorService.criarFornecedorServico(dadosFornecedor)
+        await fornecedorService.criarFornecedorServico(dadosFornecedor)
       }
     }
 

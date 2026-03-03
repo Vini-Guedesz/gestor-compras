@@ -609,7 +609,6 @@ import pedidoService from '@/services/pedidoService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import cotacaoRascunhoService from '@/services/cotacaoRascunhoService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
-import relatorioService from '@/services/relatorioService.js'
 import rascunhoService from '@/services/rascunhoService.js'
 import logger from '@/utils/logger.js'
 
@@ -1219,7 +1218,7 @@ export default {
       return pedido.status === 'PENDENTE_APROVACAO'
     }
 
-    const podeVisualizar = (pedido) => {
+    const podeVisualizar = () => {
       // Todos podem visualizar
       return true
     }
