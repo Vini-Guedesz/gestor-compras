@@ -12,6 +12,9 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+ARG VITE_API_BASE_URL=/
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Copiar package files primeiro (melhor cache)
 COPY package*.json ./
 
