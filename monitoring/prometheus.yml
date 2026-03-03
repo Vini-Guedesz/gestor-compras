@@ -4,7 +4,7 @@ global:
   evaluation_interval: 15s  # Intervalo de avaliação de regras
   external_labels:
     monitor: 'gestor-compras-monitor'
-    environment: 'development'
+    environment: 'production'
 
 # Configuração de scrape (coleta de métricas)
 scrape_configs:
@@ -15,12 +15,12 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     scrape_interval: 5s  # Coleta a cada 5 segundos
     static_configs:
-      - targets: ['host.docker.internal:8081']  # Windows/Mac
+      - targets: ['backend:8081']
         labels:
           # Label 'application' usada nos Dashboards do Grafana
-          application: 'gestor-compras' 
-          instance: 'backend-local'
-          environment: 'dev'
+          application: 'gestor-compras'
+          instance: 'backend-prod'
+          environment: 'prod'
 
   # ========================================
   # PROMETHEUS SELF-MONITORING
