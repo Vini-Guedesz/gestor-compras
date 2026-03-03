@@ -1,0 +1,155 @@
+﻿/* Padrão visual unificado para tabelas de listagem (Usuários, Cotações, Pedidos e Fornecedores) */
+
+.table-section,
+.data-section {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06) !important;
+  overflow: hidden !important;
+}
+
+.table-container {
+  border-radius: 14px !important;
+  overflow-x: auto !important;
+}
+
+.users-table,
+.data-table,
+.pedidos-table,
+.suppliers-table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  min-width: 720px;
+}
+
+.users-table thead th,
+.data-table thead th,
+.pedidos-table thead th,
+.suppliers-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 14px 16px !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  color: #334155 !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0 !important;
+  white-space: nowrap;
+}
+
+.users-table tbody td,
+.data-table tbody td,
+.pedidos-table tbody td,
+.suppliers-table tbody td {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid #edf2f7 !important;
+  vertical-align: middle !important;
+}
+
+.users-table tbody tr:last-child td,
+.data-table tbody tr:last-child td,
+.pedidos-table tbody tr:last-child td,
+.suppliers-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.table-row {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.table-row:hover {
+  background: #f8fbff !important;
+}
+
+.usuario-id,
+.fornecedor-id,
+.pedido-numero,
+.cotacao-id {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #eef2ff;
+  color: #1f285f !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  border: 1px solid #dbe4ff;
+}
+
+.status-badge,
+.role-tag,
+.type-tag {
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+}
+
+.action-buttons,
+.actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  border: 1px solid #dbe2ea !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+}
+
+.action-btn.view {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+.action-btn.edit {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+
+.action-btn.approve,
+.action-btn.reactivate {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+.action-btn.delete {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #b91c1c !important;
+}
+
+@media (max-width: 768px) {
+  .table-section,
+  .data-section {
+    border-radius: 14px !important;
+  }
+
+  .users-table,
+  .data-table,
+  .pedidos-table,
+  .suppliers-table {
+    min-width: 640px;
+  }
+}
+
+

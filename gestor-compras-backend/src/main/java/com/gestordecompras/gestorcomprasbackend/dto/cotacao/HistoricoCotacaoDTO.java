@@ -1,11 +1,13 @@
 package com.gestordecompras.gestorcomprasbackend.dto.cotacao;
 
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.StatusCotacao;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * DTO para retornar histórico de edições de cotação
+ * DTO para retornar historico de edicoes de cotacao.
  */
 public record HistoricoCotacaoDTO(
         Long id,
@@ -27,12 +29,12 @@ public record HistoricoCotacaoDTO(
         String editadoPor,
         LocalDateTime dataEdicao,
 
-        // PDFs (não enviamos os bytes, apenas indicamos se existem)
+        // PDFs (nao enviamos os bytes, apenas indicamos se existem)
         Boolean temAnexoAnterior,
 
         /**
-         * DEPRECATED: caminhoAnexoAnterior e caminhoAnexoNovo estão deprecated.
-         * PDFs são gerenciados via AnexoCotacao com deduplificação SHA-256.
+         * DEPRECATED: caminhoAnexoAnterior e caminhoAnexoNovo estao deprecated.
+         * PDFs sao gerenciados via AnexoCotacao com deduplicacao SHA-256.
          * Sempre retornam null.
          */
         @Deprecated
@@ -44,19 +46,22 @@ public record HistoricoCotacaoDTO(
         String caminhoAnexoNovo,
 
         String nomeArquivoAnterior,
-        String nomeArquivoNovo
+        String nomeArquivoNovo,
+
+        // Status e selecao de itens (auditoria)
+        StatusCotacao statusFinal,
+        String itensSelecionados,
+        String itensNaoSelecionados,
+        
+        // Snapshots de itens
+        String itensAnteriores,
+        String itensNovos
 ) {
-    /**
-     * Verifica se houve mudança de preço
-     */
     public boolean houveMudancaPreco() {
         if (precoAnterior == null || precoNovo == null) return false;
         return precoAnterior.compareTo(precoNovo) != 0;
     }
 
-    /**
-     * Calcula o percentual de mudança no preço
-     */
     public BigDecimal calcularPercentualMudancaPreco() {
         if (!houveMudancaPreco() || precoAnterior.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
@@ -66,9 +71,6 @@ public record HistoricoCotacaoDTO(
                 .multiply(BigDecimal.valueOf(100));
     }
 
-    /**
-     * Verifica se houve mudança de prazo
-     */
     public boolean houveMudancaPrazo() {
         if (prazoEmDiasUteisAnterior == null || prazoEmDiasUteisNovo == null) return false;
         return !prazoEmDiasUteisAnterior.equals(prazoEmDiasUteisNovo);

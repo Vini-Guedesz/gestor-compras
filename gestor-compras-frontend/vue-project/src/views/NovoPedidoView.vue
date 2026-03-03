@@ -129,7 +129,7 @@
                           <span>Selecione os itens desta cotação:</span>
                         </div>
                         <div
-                          v-for="itemId in cotacao.itensRascunhoIds"
+                          v-for="itemId in getItensIdsDaCotacao(cotacao)"
                           :key="`item-${cotacao.id}-${itemId}`"
                           class="item-selecao"
                           :class="{
@@ -833,6 +833,24 @@ export default {
       return itens && itens.length > 0
     }
 
+    const getItensIdsDaCotacao = (cotacao) => {
+      if (cotacao.itens && cotacao.itens.length > 0) {
+        return cotacao.itens
+          .map(i => i.itemRascunhoId || i.itemPedidoId)
+          .filter(Boolean)
+      }
+      if (cotacao.itensRascunhoIds && cotacao.itensRascunhoIds.length > 0) {
+        return cotacao.itensRascunhoIds
+      }
+      if (cotacao.itensPedidoIds && cotacao.itensPedidoIds.length > 0) {
+        return cotacao.itensPedidoIds
+      }
+      if (cotacao.itemPedidoId) {
+        return [cotacao.itemPedidoId]
+      }
+      return []
+    }
+
     const contarItensSelecionados = (cotacaoId) => {
       const itens = itensPorCotacao.value[cotacaoId]
       return itens ? itens.length : 0
@@ -969,6 +987,7 @@ export default {
       isItemSelecionadoNaCotacao,
       temItensSelecionados,
       contarItensSelecionados,
+      getItensIdsDaCotacao,
       getNomeItem,
       formatarPreco,
       cancelar,

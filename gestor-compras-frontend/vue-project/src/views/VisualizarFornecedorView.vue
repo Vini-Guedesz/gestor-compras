@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page-container">
     <DashboardHeader @toggle-sidebar="toggleSidebar" />
 
@@ -132,39 +132,53 @@
           <!-- Seção: Contato -->
           <div class="section-card">
             <h3 class="section-title">Informações de Contato</h3>
-            <div class="info-grid-enhanced">
-              <div class="info-card" v-if="fornecedor.contato?.telefoneFixo">
-                <div class="info-card-icon" style="background: #fce7f3;">
-                  <svg viewBox="0 0 20 20" fill="#db2777" width="20" height="20">
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                  </svg>
-                </div>
-                <div class="info-card-content">
-                  <span class="info-card-label">Telefone Fixo</span>
-                  <span class="info-card-value">{{ formatarTelefone(fornecedor.contato.telefoneFixo) }}</span>
+            <div v-if="gruposContato.length > 0" class="contato-grupos">
+              <div v-for="grupo in gruposContato" :key="grupo.key" class="contato-grupo">
+                <h4 class="contato-grupo-titulo">{{ grupo.titulo }}</h4>
+                <div class="info-grid-enhanced contato-grid">
+                  <button
+                    v-for="contatoItem in grupo.itens"
+                    :key="contatoItem.key"
+                    type="button"
+                    class="info-card info-card-copy"
+                    :class="{ 'full-width': contatoItem.tipo === 'EMAIL' }"
+                    :title="`Clique para copiar: ${contatoItem.valorExibicao}`"
+                    :aria-label="`Copiar ${contatoItem.tipoLabel}: ${contatoItem.valorExibicao}`"
+                    @click="copiarContato(contatoItem)"
+                  >
+                    <div class="info-card-icon" :style="{ background: contatoItem.iconeFundo }">
+                      <svg v-if="contatoItem.tipo === 'EMAIL'" viewBox="0 0 20 20" :fill="contatoItem.iconeCor" width="20" height="20">
+                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                      </svg>
+                      <svg v-else-if="contatoItem.tipo === 'OUTRO'" viewBox="0 0 24 24" :fill="contatoItem.iconeCor" width="20" height="20">
+                        <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                      </svg>
+                      <svg v-else viewBox="0 0 20 20" :fill="contatoItem.iconeCor" width="20" height="20">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                      </svg>
+                    </div>
+                    <div class="info-card-content">
+                      <span class="info-card-label">{{ contatoItem.tipoLabel }}</span>
+                      <span v-if="contatoItem.nomeContato" class="info-card-sub-label">{{ contatoItem.nomeContato }}</span>
+                      <span class="info-card-value" :title="contatoItem.valor">
+                        {{ contatoItem.valorExibicao }}
+                      </span>
+                    </div>
+                  </button>
                 </div>
               </div>
-              <div class="info-card" v-if="fornecedor.contato?.celular">
-                <div class="info-card-icon" style="background: #e0f2fe;">
-                  <svg viewBox="0 0 20 20" fill="#0284c7" width="20" height="20">
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                  </svg>
-                </div>
-                <div class="info-card-content">
-                  <span class="info-card-label">Celular</span>
-                  <span class="info-card-value">{{ formatarTelefone(fornecedor.contato.celular) }}</span>
-                </div>
-              </div>
+            </div>
+            <div v-else class="info-grid-enhanced">
               <div class="info-card full-width">
-                <div class="info-card-icon" style="background: #dcfce7;">
-                  <svg viewBox="0 0 20 20" fill="#16a34a" width="20" height="20">
-                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
-                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                <div class="info-card-icon" style="background: #f3f4f6;">
+                  <svg viewBox="0 0 24 24" fill="#64748b" width="20" height="20">
+                    <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                   </svg>
                 </div>
                 <div class="info-card-content">
-                  <span class="info-card-label">E-mail</span>
-                  <span class="info-card-value">{{ fornecedor.contato?.email || 'Não informado' }}</span>
+                  <span class="info-card-label">Contato</span>
+                  <span class="info-card-value">Não informado</span>
                 </div>
               </div>
             </div>
@@ -181,17 +195,56 @@
                   </svg>
                 </div>
                 <div class="info-card-content">
-                  <span class="info-card-label">Endereço Completo</span>
-                  <span class="info-card-value endereco-completo">
-                    {{ fornecedor.endereco.rua }}, {{ fornecedor.endereco.numero }}
-                    <span v-if="fornecedor.endereco.complemento"> - {{ fornecedor.endereco.complemento }}</span>
-                    <br>
-                    {{ fornecedor.endereco.bairro }}
-                    <br>
-                    {{ fornecedor.endereco.cidade }}/{{ fornecedor.endereco.estado }}
-                    <br>
-                    CEP: {{ formatarCEP(fornecedor.endereco.cep) }}
-                  </span>
+                  <span class="info-card-label">Logradouro</span>
+                  <span class="info-card-value endereco-completo">{{ getEnderecoLogradouro(fornecedor.endereco) }}</span>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <div class="info-card-icon" style="background: #ede9fe;">
+                  <svg viewBox="0 0 20 20" fill="#7c3aed" width="20" height="20">
+                    <path d="M10 2a4 4 0 00-4 4v2H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-1V6a4 4 0 00-4-4zm-2 6V6a2 2 0 114 0v2H8z"/>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <span class="info-card-label">Bairro</span>
+                  <span class="info-card-value">{{ fornecedor.endereco.bairro || 'Não informado' }}</span>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <div class="info-card-icon" style="background: #dbeafe;">
+                  <svg viewBox="0 0 20 20" fill="#2563eb" width="20" height="20">
+                    <path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1zm1 3v8h10V6H5zm2 2h6v2H7V8z"/>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <span class="info-card-label">Cidade / UF</span>
+                  <span class="info-card-value">{{ getEnderecoCidadeUf(fornecedor.endereco) }}</span>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <div class="info-card-icon" style="background: #ccfbf1;">
+                  <svg viewBox="0 0 20 20" fill="#0f766e" width="20" height="20">
+                    <path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1zm1 4h10V5H5v2zm0 2v6h10V9H5z"/>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <span class="info-card-label">CEP</span>
+                  <span class="info-card-value">{{ formatarCEP(fornecedor.endereco.cep) || 'Não informado' }}</span>
+                </div>
+              </div>
+
+              <div class="info-card full-width" v-if="fornecedor.endereco.complemento">
+                <div class="info-card-icon" style="background: #f1f5f9;">
+                  <svg viewBox="0 0 24 24" fill="#475569" width="20" height="20">
+                    <path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm2 2h8v2H8V8zm0 4h6v2H8v-2z"/>
+                  </svg>
+                </div>
+                <div class="info-card-content">
+                  <span class="info-card-label">Complemento</span>
+                  <span class="info-card-value">{{ fornecedor.endereco.complemento }}</span>
                 </div>
               </div>
             </div>
@@ -325,7 +378,7 @@
                   </div>
                   <div class="preco-destaque-box">
                     <span class="preco-label-small">VALOR TOTAL</span>
-                    <span class="preco-valor-grande">R$ {{ cotacao.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</span>
+                    <span class="preco-valor-grande">{{ formatarMoeda(cotacao.valor) }}</span>
                   </div>
                 </div>
 
@@ -355,17 +408,85 @@
 
                   <!-- Itens -->
                   <div class="cotacao-itens-section">
-                    <h5 class="itens-section-title">Status por Item ({{ cotacao.itensStatusDetalhados?.length || 0 }})</h5>
-                    <div class="itens-chips itens-chips-detalhados">
-                      <span
-                        v-for="itemStatus in (cotacao.itensStatusDetalhados || [])"
-                        :key="`${cotacao.id}-${itemStatus.nome}-${itemStatus.status}`"
-                        class="item-chip item-chip-status"
-                        :class="getStatusItemClass(itemStatus.status)"
+                    <div v-if="(cotacao.itensStatusDetalhados || []).length > 0" class="itens-detalhes-actions">
+                      <button
+                        type="button"
+                        class="btn-itens-detalhes"
+                        @click="toggleDetalhesItens(cotacao.id)"
                       >
-                        {{ itemStatus.nome }} - {{ getStatusItemLabel(itemStatus.status) }}
-                      </span>
+                        <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" class="btn-itens-icon">
+                          <path
+                            v-if="isDetalhesItensAberto(cotacao.id)"
+                            fill-rule="evenodd"
+                            d="M5.23 12.21a.75.75 0 001.06 0L10 8.5l3.71 3.71a.75.75 0 001.06-1.06l-4.24-4.24a.75.75 0 00-1.06 0L5.23 11.15a.75.75 0 000 1.06z"
+                            clip-rule="evenodd"
+                          />
+                          <path
+                            v-else
+                            fill-rule="evenodd"
+                            d="M14.77 7.79a.75.75 0 00-1.06 0L10 11.5 6.29 7.79a.75.75 0 00-1.06 1.06l4.24 4.24a.75.75 0 001.06 0l4.24-4.24a.75.75 0 000-1.06z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                        <span>
+                          {{ `Status por Item (${cotacao.itensStatusDetalhados?.length || 0})` }}
+                          {{ isDetalhesItensAberto(cotacao.id) ? ' - Ocultar detalhes' : ' - Ver detalhes' }}
+                        </span>
+                      </button>
                     </div>
+                    <div
+                      v-if="(cotacao.itensStatusDetalhados || []).length > 0 && isDetalhesItensAberto(cotacao.id)"
+                      class="itens-status-lista"
+                    >
+                      <article
+                        v-for="itemStatus in (cotacao.itensStatusDetalhados || [])"
+                        :key="`${cotacao.id}-${itemStatus.chave || itemStatus.nome}-${itemStatus.status}`"
+                        class="item-status-card"
+                        :class="getStatusItemCardClass(itemStatus.status)"
+                      >
+                        <div class="item-status-header">
+                          <div class="item-status-identificacao">
+                            <span class="item-status-nome">{{ itemStatus.nome }}</span>
+                            <span v-if="itemStatus.itemPedidoId" class="item-status-codigo">Item #{{ itemStatus.itemPedidoId }}</span>
+                          </div>
+                          <span
+                            class="item-chip item-chip-status"
+                            :class="getStatusItemClass(itemStatus.status)"
+                          >
+                            {{ getStatusItemLabel(itemStatus.status) }}
+                          </span>
+                        </div>
+
+                        <div class="item-status-metricas">
+                          <div class="item-status-metrica">
+                            <span class="metrica-label">Qtd</span>
+                            <span class="metrica-valor">{{ formatarQuantidade(itemStatus.quantidade) }}</span>
+                          </div>
+                          <div class="item-status-metrica">
+                            <span class="metrica-label">Preco Unit.</span>
+                            <span class="metrica-valor">{{ formatarMoeda(itemStatus.precoUnitario) }}</span>
+                          </div>
+                          <div class="item-status-metrica">
+                            <span class="metrica-label">Subtotal</span>
+                            <span class="metrica-valor">{{ formatarMoeda(itemStatus.total) }}</span>
+                          </div>
+                        </div>
+
+                        <p v-if="itemStatus.descricao" class="item-status-detalhe">
+                          <strong>Descricao:</strong> {{ itemStatus.descricao }}
+                        </p>
+                        <p v-if="itemStatus.observacao" class="item-status-detalhe">
+                          <strong>Observacao:</strong> {{ itemStatus.observacao }}
+                        </p>
+                      </article>
+                    </div>
+                    <p
+                      v-else-if="(cotacao.itensStatusDetalhados || []).length > 0"
+                      class="itens-sem-detalhe"
+                    >
+                      Detalhes retraidos. Clique em "Ver detalhes de itens" para visualizar.
+                    </p>
+                    <p v-else class="itens-sem-detalhe">Nenhum item encontrado para esta cotacao.</p>
                     <div class="itens-resumo-status" v-if="cotacao.resumoItensStatus">
                       <span class="resumo-status-badge resumo-aprovado">
                         Aprovados: {{ cotacao.resumoItensStatus.aprovados }}
@@ -466,6 +587,8 @@ import { useRoute, useRouter } from 'vue-router'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import Icon from '@/components/ui/Icon.vue'
+import { useToast } from '@/composables/useToast.js'
+import { useClipboard } from '@/composables/useClipboard.js'
 import fornecedorService from '@/services/fornecedorService.js'
 import cotacaoService from '@/services/cotacaoService.js'
 import itemPedidoService from '@/services/itemPedidoService.js'
@@ -474,6 +597,8 @@ import logger from '@/utils/logger.js'
 
 const route = useRoute()
 const router = useRouter()
+const { success, error: showError } = useToast()
+const { copyText } = useClipboard()
 
 // Estados
 const isSidebarOpen = ref(false)
@@ -503,6 +628,7 @@ const historicoCompras = ref({
   ultimoPedido: '-',
   cotacoes: []
 })
+const detalhesItensAbertos = ref(new Set())
 
 // Computeds
 const temFiltrosAtivos = computed(() => {
@@ -612,6 +738,21 @@ const limparFiltros = () => {
   filtroDataFim.value = ''
 }
 
+const isDetalhesItensAberto = (cotacaoId) => detalhesItensAbertos.value.has(cotacaoId)
+
+const toggleDetalhesItens = (cotacaoId) => {
+  if (cotacaoId === null || cotacaoId === undefined) return
+
+  const proximosAbertos = new Set(detalhesItensAbertos.value)
+  if (proximosAbertos.has(cotacaoId)) {
+    proximosAbertos.delete(cotacaoId)
+  } else {
+    proximosAbertos.add(cotacaoId)
+  }
+
+  detalhesItensAbertos.value = proximosAbertos
+}
+
 // Formatação
 const formatarCNPJ = (cnpj) => {
   if (!cnpj) return 'Não informado'
@@ -630,10 +771,201 @@ const formatarTelefone = (telefone) => {
   return telefone
 }
 
+const normalizarTipoContato = (tipoContato) => {
+  const tipo = String(tipoContato || '').toUpperCase().trim()
+  const tiposValidos = ['TELEFONE_FIXO', 'CELULAR', 'EMAIL', 'OUTRO']
+  return tiposValidos.includes(tipo) ? tipo : 'OUTRO'
+}
+
+const getLabelTipoContato = (tipoContato) => {
+  const labels = {
+    TELEFONE_FIXO: 'Telefone Fixo',
+    CELULAR: 'Celular',
+    EMAIL: 'E-mail',
+    OUTRO: 'Outro'
+  }
+  return labels[normalizarTipoContato(tipoContato)] || 'Contato'
+}
+
+const formatarValorContato = (tipoContato, valor) => {
+  if (!valor) return ''
+  const tipoNormalizado = normalizarTipoContato(tipoContato)
+
+  if (tipoNormalizado === 'TELEFONE_FIXO' || tipoNormalizado === 'CELULAR') {
+    return formatarTelefone(valor)
+  }
+
+  return valor
+}
+
+const getEstiloContato = (tipoContato) => {
+  const tipoNormalizado = normalizarTipoContato(tipoContato)
+
+  switch (tipoNormalizado) {
+    case 'EMAIL':
+      return { iconeFundo: '#dcfce7', iconeCor: '#16a34a' }
+    case 'CELULAR':
+      return { iconeFundo: '#e0f2fe', iconeCor: '#0284c7' }
+    case 'TELEFONE_FIXO':
+      return { iconeFundo: '#fce7f3', iconeCor: '#db2777' }
+    default:
+      return { iconeFundo: '#f1f5f9', iconeCor: '#64748b' }
+  }
+}
+
+const copiarContato = async (contatoItem) => {
+  const valorContato = String(contatoItem?.valor || '').trim()
+
+  if (!valorContato) {
+    showError('Não foi possível copiar esse contato.')
+    return
+  }
+
+  const copied = await copyText(valorContato)
+
+  if (copied) {
+    success(`${contatoItem.tipoLabel} copiado para a área de transferência.`)
+    return
+  }
+
+  showError('Falha ao copiar o contato. Tente novamente ou copie manualmente.')
+}
+
+const contatosFornecedor = computed(() => {
+  const contato = fornecedor.value?.contato
+  if (!contato) return []
+
+  const contatos = []
+
+  const adicionarContato = ({ key, tipo, label, valor, origem }) => {
+    const valorNormalizado = String(valor || '').trim()
+    if (!valorNormalizado) return
+
+    const tipoNormalizado = normalizarTipoContato(tipo)
+    const estilo = getEstiloContato(tipoNormalizado)
+    const nomeContato = String(label || '').trim()
+    const tipoLabel = getLabelTipoContato(tipoNormalizado)
+
+    contatos.push({
+      key,
+      tipo: tipoNormalizado,
+      tipoLabel,
+      nomeContato: nomeContato && nomeContato.toLowerCase() !== tipoLabel.toLowerCase() ? nomeContato : '',
+      valor: valorNormalizado,
+      valorExibicao: formatarValorContato(tipoNormalizado, valorNormalizado),
+      origem: origem || 'principal',
+      ...estilo
+    })
+  }
+
+  adicionarContato({
+    key: 'contato-principal-telefone-fixo',
+    tipo: 'TELEFONE_FIXO',
+    label: contato.rotuloTelefoneFixo,
+    valor: contato.telefoneFixo,
+    origem: 'principal'
+  })
+
+  adicionarContato({
+    key: 'contato-principal-celular',
+    tipo: 'CELULAR',
+    label: contato.rotuloCelular,
+    valor: contato.celular,
+    origem: 'principal'
+  })
+
+  adicionarContato({
+    key: 'contato-principal-email',
+    tipo: 'EMAIL',
+    label: contato.rotuloEmail,
+    valor: contato.email,
+    origem: 'principal'
+  })
+
+  if (Array.isArray(contato.contatosAdicionais)) {
+    contato.contatosAdicionais.forEach((contatoAdicional, index) => {
+      adicionarContato({
+        key: `contato-adicional-${contatoAdicional?.id || index}`,
+        tipo: contatoAdicional?.tipoContato,
+        label: contatoAdicional?.nomeContato,
+        valor: contatoAdicional?.valorContato,
+        origem: 'adicional'
+      })
+    })
+  }
+
+  return contatos
+})
+
+const contatosPrincipais = computed(() =>
+  contatosFornecedor.value.filter(contato => contato.origem === 'principal')
+)
+
+const contatosAdicionais = computed(() =>
+  contatosFornecedor.value.filter(contato => contato.origem === 'adicional')
+)
+
+const gruposContato = computed(() => {
+  const grupos = []
+
+  if (contatosPrincipais.value.length > 0) {
+    grupos.push({
+      key: 'principais',
+      titulo: 'Contatos Principais',
+      itens: contatosPrincipais.value
+    })
+  }
+
+  if (contatosAdicionais.value.length > 0) {
+    grupos.push({
+      key: 'adicionais',
+      titulo: 'Contatos Adicionais',
+      itens: contatosAdicionais.value
+    })
+  }
+
+  return grupos
+})
+
+const getEnderecoLogradouro = (endereco) => {
+  if (!endereco) return 'Não informado'
+  const rua = String(endereco.rua || '').trim()
+  const numero = String(endereco.numero || '').trim()
+
+  if (!rua && !numero) return 'Não informado'
+  if (!rua) return numero
+  if (!numero) return rua
+  return `${rua}, ${numero}`
+}
+
+const getEnderecoCidadeUf = (endereco) => {
+  if (!endereco) return 'Não informado'
+  const cidade = String(endereco.cidade || '').trim()
+  const estado = String(endereco.estado || '').trim()
+
+  if (!cidade && !estado) return 'Não informado'
+  if (!cidade) return estado
+  if (!estado) return cidade
+  return `${cidade}/${estado}`
+}
+
 const formatarCEP = (cep) => {
   if (!cep) return ''
   const numbers = cep.replace(/\D/g, '')
   return numbers.replace(/^(\d{5})(\d{3})$/, '$1-$2')
+}
+
+const formatarMoeda = (valor) => {
+  if (valor === null || valor === undefined || valor === '' || Number.isNaN(Number(valor))) return '-'
+  return `R$ ${Number(valor).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`
+}
+
+const formatarQuantidade = (quantidade) => {
+  if (quantidade === null || quantidade === undefined || quantidade === '' || Number.isNaN(Number(quantidade))) return '-'
+  return Number(quantidade).toLocaleString('pt-BR')
 }
 
 const getTipoLabel = (tipo) => {
@@ -714,24 +1046,115 @@ const getStatusItemClass = (status) => {
   return classes[status] || 'item-status-nao-cotado'
 }
 
-const normalizarNomeItem = (nome) => String(nome || '').trim().toLowerCase()
+const getStatusItemCardClass = (status) => {
+  const classes = {
+    APROVADO: 'item-card-aprovado',
+    COTADO_NAO_SELECIONADO: 'item-card-cotado-nao-selecionado',
+    NAO_COTADO: 'item-card-nao-cotado'
+  }
+  return classes[status] || 'item-card-nao-cotado'
+}
+
+const normalizarNomeItem = (nome) => String(nome || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^\w\s]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .toLowerCase()
 
 const parseListaItensTexto = (texto) => {
   if (!texto || typeof texto !== 'string') return []
   return texto
-    .split(',')
+    .split(/[,;|]/)
     .map(item => item.trim())
     .filter(Boolean)
 }
 
-const deduplicarItensPorNome = (itens) => {
-  const nomes = new Set()
-  return itens.filter(item => {
-    const key = normalizarNomeItem(item?.nome)
-    if (!key || nomes.has(key)) return false
-    nomes.add(key)
-    return true
-  })
+const parseItensSnapshot = (snapshot) => {
+  if (!snapshot) return []
+  if (Array.isArray(snapshot)) return snapshot
+
+  try {
+    const parsed = JSON.parse(snapshot)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const localizarItemPorNome = (nome, itens = [], mapa = new Map()) => {
+  const chaveBusca = normalizarNomeItem(nome)
+  if (!chaveBusca) return null
+
+  if (mapa.has(chaveBusca)) {
+    return mapa.get(chaveBusca)
+  }
+
+  return itens.find(item => {
+    const nomeItem = normalizarNomeItem(item?.nome)
+    return nomeItem && (nomeItem.includes(chaveBusca) || chaveBusca.includes(nomeItem))
+  }) || null
+}
+
+const gerarChaveItem = (item = {}) => {
+  if (item.itemPedidoId !== null && item.itemPedidoId !== undefined) {
+    return `id-${item.itemPedidoId}`
+  }
+
+  const nomeNormalizado = normalizarNomeItem(item.nome)
+  if (nomeNormalizado) {
+    return `nome-${nomeNormalizado}`
+  }
+
+  return null
+}
+
+const normalizarDetalheItem = (item = {}) => {
+  const quantidade = item.quantidade !== null && item.quantidade !== undefined && !Number.isNaN(Number(item.quantidade))
+    ? Number(item.quantidade)
+    : null
+
+  const precoUnitario = item.precoUnitario !== null && item.precoUnitario !== undefined && !Number.isNaN(Number(item.precoUnitario))
+    ? Number(item.precoUnitario)
+    : null
+
+  const total = item.total !== null && item.total !== undefined && !Number.isNaN(Number(item.total))
+    ? Number(item.total)
+    : (precoUnitario !== null && quantidade !== null ? precoUnitario * quantidade : null)
+
+  return {
+    chave: item.chave || gerarChaveItem(item),
+    itemPedidoId: item.itemPedidoId !== null && item.itemPedidoId !== undefined ? Number(item.itemPedidoId) : null,
+    nome: item.nome || (item.itemPedidoId ? `Item #${item.itemPedidoId}` : 'Item sem nome'),
+    quantidade,
+    precoUnitario,
+    total,
+    descricao: item.descricao || '',
+    observacao: item.observacao || '',
+    status: item.status || 'NAO_COTADO'
+  }
+}
+
+const deduplicarItensDetalhados = (itens) => {
+  const chaves = new Set()
+
+  return (Array.isArray(itens) ? itens : [])
+    .map(item => normalizarDetalheItem(item))
+    .filter(item => {
+      const chave = item.chave || gerarChaveItem(item)
+      if (!chave || chaves.has(chave)) return false
+      item.chave = chave
+      chaves.add(chave)
+      return true
+    })
+}
+
+const aplicarStatusNosItens = (itens, status) => {
+  return itens.map(item => ({
+    ...item,
+    status
+  }))
 }
 
 const obterHistoricoCotacaoComCache = async (cotacaoId) => {
@@ -756,37 +1179,124 @@ const obterHistoricoCotacaoComCache = async (cotacaoId) => {
 const montarDetalhamentoItensCotacao = (cotacao, pedidoRelacionado, itensSelecionadosDetalhados, historicoComSelecao) => {
   const itensSelecionadosHistorico = parseListaItensTexto(historicoComSelecao?.itensSelecionados)
   const itensNaoSelecionadosHistorico = parseListaItensTexto(historicoComSelecao?.itensNaoSelecionados)
-
-  const itensAprovados = deduplicarItensPorNome(
-    (itensSelecionadosDetalhados?.length > 0
-      ? itensSelecionadosDetalhados.map(item => ({ nome: item.nome, status: 'APROVADO' }))
-      : itensSelecionadosHistorico.map(nome => ({ nome, status: 'APROVADO' })))
-  )
-
-  const itensCotadosNaoSelecionados = deduplicarItensPorNome(
-    itensNaoSelecionadosHistorico.map(nome => ({ nome, status: 'COTADO_NAO_SELECIONADO' }))
-  )
-
-  const itensClassificados = new Set(
-    [...itensAprovados, ...itensCotadosNaoSelecionados]
-      .map(item => normalizarNomeItem(item.nome))
-      .filter(Boolean)
-  )
-
   const itensPedido = Array.isArray(pedidoRelacionado?.itens) ? pedidoRelacionado.itens : []
-  const itensNaoCotados = deduplicarItensPorNome(
-    itensPedido
-      .map(item => item?.nome || (item?.id ? `Item #${item.id}` : null))
-      .filter(Boolean)
-      .filter(nome => !itensClassificados.has(normalizarNomeItem(nome)))
-      .map(nome => ({ nome, status: 'NAO_COTADO' }))
+
+  const itensPedidoDetalhados = deduplicarItensDetalhados(
+    itensPedido.map(item => {
+      if (!item) return null
+      return {
+        chave: item.id ? `id-${item.id}` : null,
+        itemPedidoId: item.id || null,
+        nome: item.nome || (item.id ? `Item #${item.id}` : null),
+        quantidade: item.quantidade ?? null,
+        precoUnitario: null,
+        total: null,
+        descricao: item.descricao || '',
+        observacao: item.observacao || '',
+        status: 'NAO_COTADO'
+      }
+    })
+  )
+  const itensPedidoPorNome = new Map(
+    itensPedidoDetalhados
+      .filter(item => normalizarNomeItem(item.nome))
+      .map(item => [normalizarNomeItem(item.nome), item])
   )
 
-  const itensStatusDetalhados = [
-    ...itensAprovados,
-    ...itensCotadosNaoSelecionados,
-    ...itensNaoCotados
-  ]
+  const itensCotacao = deduplicarItensDetalhados(itensSelecionadosDetalhados || [])
+  const itensCotacaoPorNome = new Map(
+    itensCotacao
+      .filter(item => normalizarNomeItem(item.nome))
+      .map(item => [normalizarNomeItem(item.nome), item])
+  )
+
+  const itensSnapshotHistorico = deduplicarItensDetalhados(
+    parseItensSnapshot(historicoComSelecao?.itensNovos).map(item => ({
+      itemPedidoId: item?.itemPedidoId ?? item?.itemRascunhoId ?? null,
+      nome: item?.nomeItem || item?.nome || ((item?.itemPedidoId || item?.itemRascunhoId) ? `Item #${item?.itemPedidoId ?? item?.itemRascunhoId}` : null),
+      quantidade: item?.quantidade ?? null,
+      precoUnitario: item?.precoUnitario ?? null,
+      total: item?.total ?? null,
+      descricao: item?.descricao || '',
+      observacao: item?.observacao || ''
+    }))
+  )
+  const itensSnapshotPorNome = new Map(
+    itensSnapshotHistorico
+      .filter(item => normalizarNomeItem(item.nome))
+      .map(item => [normalizarNomeItem(item.nome), item])
+  )
+
+  const criarItemComNomeHistorico = (nome, status) => {
+    const itemCotacao = localizarItemPorNome(nome, itensCotacao, itensCotacaoPorNome)
+    const itemSnapshot = localizarItemPorNome(nome, itensSnapshotHistorico, itensSnapshotPorNome)
+    const itemPedido = localizarItemPorNome(nome, itensPedidoDetalhados, itensPedidoPorNome)
+
+    const quantidade = itemCotacao?.quantidade ?? itemSnapshot?.quantidade ?? itemPedido?.quantidade ?? null
+    const precoUnitario = itemCotacao?.precoUnitario ?? itemSnapshot?.precoUnitario ?? null
+    const total = itemCotacao?.total ?? itemSnapshot?.total
+      ?? (precoUnitario !== null && quantidade !== null ? precoUnitario * quantidade : null)
+
+    return normalizarDetalheItem({
+      itemPedidoId: itemCotacao?.itemPedidoId ?? itemSnapshot?.itemPedidoId ?? itemPedido?.itemPedidoId ?? null,
+      nome: nome || itemCotacao?.nome || itemSnapshot?.nome || itemPedido?.nome,
+      quantidade,
+      precoUnitario,
+      total,
+      descricao: itemCotacao?.descricao || itemSnapshot?.descricao || itemPedido?.descricao || '',
+      observacao: itemCotacao?.observacao || itemSnapshot?.observacao || itemPedido?.observacao || '',
+      status
+    })
+  }
+
+  let itensAprovados = []
+  if (itensSelecionadosHistorico.length > 0) {
+    itensAprovados = deduplicarItensDetalhados(
+      itensSelecionadosHistorico.map(nome => criarItemComNomeHistorico(nome, 'APROVADO'))
+    )
+  } else if (itensNaoSelecionadosHistorico.length === 0 && itensCotacao.length > 0) {
+    itensAprovados = deduplicarItensDetalhados(aplicarStatusNosItens(itensCotacao, 'APROVADO'))
+  }
+
+  let itensCotadosNaoSelecionados = []
+  if (itensNaoSelecionadosHistorico.length > 0) {
+    itensCotadosNaoSelecionados = deduplicarItensDetalhados(
+      itensNaoSelecionadosHistorico.map(nome => criarItemComNomeHistorico(nome, 'COTADO_NAO_SELECIONADO'))
+    )
+  } else if (itensSelecionadosHistorico.length > 0) {
+    const chavesAprovadas = new Set(itensAprovados.map(item => item.chave).filter(Boolean))
+    const nomesAprovados = new Set(itensAprovados.map(item => normalizarNomeItem(item.nome)).filter(Boolean))
+    itensCotadosNaoSelecionados = deduplicarItensDetalhados(
+      aplicarStatusNosItens(
+        itensCotacao.filter(item => !chavesAprovadas.has(item.chave) && !nomesAprovados.has(normalizarNomeItem(item.nome))),
+        'COTADO_NAO_SELECIONADO'
+      )
+    )
+  }
+
+  const itensClassificados = new Set([
+    ...itensAprovados.map(item => item.chave).filter(Boolean),
+    ...itensCotadosNaoSelecionados.map(item => item.chave).filter(Boolean)
+  ])
+  const nomesClassificados = new Set([
+    ...itensAprovados.map(item => normalizarNomeItem(item.nome)).filter(Boolean),
+    ...itensCotadosNaoSelecionados.map(item => normalizarNomeItem(item.nome)).filter(Boolean)
+  ])
+
+  const itensNaoCotados = aplicarStatusNosItens(
+    itensPedidoDetalhados.filter(item => {
+      const chave = item.chave || gerarChaveItem(item)
+      const nomeNormalizado = normalizarNomeItem(item.nome)
+      return !itensClassificados.has(chave) && !nomesClassificados.has(nomeNormalizado)
+    }),
+    'NAO_COTADO'
+  )
+
+  const itensStatusDetalhados = deduplicarItensDetalhados([
+    ...aplicarStatusNosItens(itensAprovados, 'APROVADO'),
+    ...aplicarStatusNosItens(itensCotadosNaoSelecionados, 'COTADO_NAO_SELECIONADO'),
+    ...aplicarStatusNosItens(itensNaoCotados, 'NAO_COTADO')
+  ])
 
   const resumoItensStatus = {
     aprovados: itensAprovados.length,
@@ -868,7 +1378,7 @@ const buscarItemPedidoComCache = async (itemPedidoId) => {
     }
     return item
   } catch (error) {
-    logger.warn(`⚠️ Erro ao buscar item ${itemPedidoId}:`, error)
+    logger.warn(`Erro ao buscar item ${itemPedidoId}:`, error)
     return null
   }
 }
@@ -885,7 +1395,7 @@ const buscarPedidoComCache = async (pedidoId) => {
     }
     return pedido
   } catch (error) {
-    logger.warn(`⚠️ Erro ao buscar pedido ${pedidoId}:`, error)
+    logger.warn(`Erro ao buscar pedido ${pedidoId}:`, error)
     return null
   }
 }
@@ -908,12 +1418,12 @@ const carregarFornecedor = async () => {
       try {
         fornecedor.value = await fornecedorService.obterFornecedorProdutoPorId(fornecedorId)
         fornecedor.value.tipo = 'produto'
-      } catch (erroProduto) {
+      } catch {
         // Se não encontrou em produtos, tentar em serviços
         try {
           fornecedor.value = await fornecedorService.obterFornecedorServicoPorId(fornecedorId)
           fornecedor.value.tipo = 'servico'
-        } catch (erroServico) {
+        } catch {
           throw new Error('Fornecedor não encontrado em produtos nem em serviços')
         }
       }
@@ -933,6 +1443,7 @@ const carregarFornecedor = async () => {
 const carregarHistoricoFornecedor = async (fornecedorId) => {
   try {
     carregandoHistorico.value = true
+    detalhesItensAbertos.value = new Set()
 
     // Usar o endpoint específico de histórico do fornecedor
     // Isso garante que só venham cotações deste fornecedor específico
@@ -990,14 +1501,33 @@ const carregarHistoricoFornecedor = async (fornecedorId) => {
               if (!itemCotacao) return null
 
               let itemPedido = null
-              if ((!itemCotacao.nomeItem || !itemCotacao.quantidade) && itemCotacao.itemPedidoId) {
+              if (
+                (!itemCotacao.nomeItem ||
+                  itemCotacao.quantidade === null || itemCotacao.quantidade === undefined ||
+                  !itemCotacao.descricao || !itemCotacao.observacao) &&
+                itemCotacao.itemPedidoId
+              ) {
                 itemPedido = await buscarItemPedidoComCache(itemCotacao.itemPedidoId)
               }
+
+              const quantidade = itemCotacao.quantidade !== null && itemCotacao.quantidade !== undefined
+                ? Number(itemCotacao.quantidade)
+                : (itemPedido?.quantidade !== null && itemPedido?.quantidade !== undefined ? Number(itemPedido.quantidade) : null)
+
+              const precoUnitario = itemCotacao.precoUnitario !== null && itemCotacao.precoUnitario !== undefined
+                ? Number(itemCotacao.precoUnitario)
+                : null
+
+              const total = itemCotacao.precoTotal !== null && itemCotacao.precoTotal !== undefined
+                ? Number(itemCotacao.precoTotal)
+                : (precoUnitario !== null && quantidade !== null ? precoUnitario * quantidade : null)
 
               return {
                 itemPedidoId: itemCotacao.itemPedidoId || itemPedido?.id || null,
                 nome: itemCotacao.nomeItem || itemPedido?.nome || itemPedido?.descricao || `Item #${itemCotacao.itemPedidoId || 'N/A'}`,
-                quantidade: Number(itemCotacao.quantidade || itemPedido?.quantidade || 0),
+                quantidade,
+                precoUnitario,
+                total,
                 descricao: itemCotacao.descricao || itemPedido?.descricao || '',
                 observacao: itemCotacao.observacao || itemPedido?.observacao || ''
               }
@@ -1349,6 +1879,31 @@ onBeforeUnmount(() => {
   margin-bottom: 20px;
 }
 
+.contato-grupos {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contato-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contato-grupo-titulo {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.contato-grid {
+  margin-bottom: 0;
+}
+
 .info-card {
   display: flex;
   gap: 12px;
@@ -1363,6 +1918,20 @@ onBeforeUnmount(() => {
 .info-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transform: translateY(-1px);
+}
+
+.info-card-copy {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  appearance: none;
+}
+
+.info-card-copy:focus-visible {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.28), 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .info-card-icon {
@@ -1395,6 +1964,12 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
+}
+
+.info-card-sub-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
 }
 
 .info-card-value {
@@ -1441,6 +2016,8 @@ onBeforeUnmount(() => {
 /* Estilos adicionais específicos */
 .endereco-completo {
   line-height: 1.6;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .full-width {
@@ -1670,14 +2247,97 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.itens-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.itens-detalhes-actions {
+  margin-bottom: 10px;
 }
 
-.itens-chips-detalhados {
+.btn-itens-detalhes {
+  border: 1px solid #1F285F;
+  background: linear-gradient(135deg, #1F285F 0%, #2b387a 100%);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(31, 40, 95, 0.24);
+}
+
+.btn-itens-detalhes:hover {
+  background: linear-gradient(135deg, #253173 0%, #334190 100%);
+  border-color: #334190;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(31, 40, 95, 0.28);
+}
+
+.btn-itens-detalhes:active {
+  transform: translateY(0);
+}
+
+.btn-itens-icon {
+  flex-shrink: 0;
+}
+
+.itens-status-lista {
+  display: grid;
+  gap: 10px;
   margin-bottom: 10px;
+}
+
+.item-status-card {
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-card-aprovado {
+  border-left-color: #10b981;
+  background: #f8fffb;
+}
+
+.item-card-cotado-nao-selecionado {
+  border-left-color: #f97316;
+  background: #fffaf5;
+}
+
+.item-card-nao-cotado {
+  border-left-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.item-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.item-status-identificacao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-status-nome {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.item-status-codigo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .item-chip {
@@ -1685,17 +2345,17 @@ onBeforeUnmount(() => {
   color: #3730a3;
   padding: 6px 12px;
   border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   line-height: 1.4;
   border: 1px solid #c7d2fe;
-  transition: all 0.2s ease;
 }
 
 .item-chip-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .item-status-aprovado {
@@ -1716,10 +2376,47 @@ onBeforeUnmount(() => {
   border-color: #d1d5db;
 }
 
-.item-chip:hover {
-  background: linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(67, 56, 202, 0.15);
+.item-status-metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.item-status-metrica {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metrica-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.metrica-valor {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.item-status-detalhe {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.itens-sem-detalhe {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  color: #64748b;
 }
 
 .itens-resumo-status {
@@ -2299,6 +2996,26 @@ onBeforeUnmount(() => {
     padding: 12px;
   }
 
+  .btn-itens-detalhes {
+    width: 100%;
+    text-align: center;
+    padding: 8px 10px;
+  }
+
+  .item-status-card {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .item-status-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .item-status-metricas {
+    grid-template-columns: 1fr;
+  }
+
   .item-chip {
     padding: 5px 10px;
     font-size: 0.75rem;
@@ -2598,14 +3315,45 @@ onBeforeUnmount(() => {
     padding-bottom: 6px;
   }
 
-  .itens-chips {
-    gap: 6px;
-  }
-
   .item-chip {
     padding: 4px 8px;
     font-size: 0.7rem;
     border-radius: 12px;
+  }
+
+  .btn-itens-detalhes {
+    font-size: 0.6875rem;
+    padding: 7px 8px;
+  }
+
+  .item-status-card {
+    padding: 8px;
+    border-radius: 6px;
+  }
+
+  .item-status-nome {
+    font-size: 0.8125rem;
+  }
+
+  .item-status-codigo {
+    font-size: 0.6875rem;
+  }
+
+  .item-status-metrica {
+    padding: 6px 8px;
+  }
+
+  .metrica-label {
+    font-size: 0.5625rem;
+  }
+
+  .metrica-valor {
+    font-size: 0.75rem;
+  }
+
+  .item-status-detalhe,
+  .itens-sem-detalhe {
+    font-size: 0.75rem;
   }
 
   .observacoes-section {
@@ -2925,5 +3673,6 @@ onBeforeUnmount(() => {
   margin-bottom: 0;
 }
 </style>
+
 
 

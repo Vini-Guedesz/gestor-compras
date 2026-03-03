@@ -19,7 +19,8 @@ public interface CotacaoRascunhoRepository extends JpaRepository<CotacaoRascunho
      * @return Lista de cotações com dados completos
      */
     @Query("SELECT DISTINCT c FROM CotacaoRascunho c " +
-           "LEFT JOIN FETCH c.itensRascunho " +
+           "LEFT JOIN FETCH c.itens i " +
+           "LEFT JOIN FETCH i.itemRascunho " +
            "LEFT JOIN FETCH c.fornecedorProduto fp " +
            "LEFT JOIN FETCH fp.endereco " +
            "LEFT JOIN FETCH fp.contato " +
@@ -36,7 +37,8 @@ public interface CotacaoRascunhoRepository extends JpaRepository<CotacaoRascunho
      * @return Cotação com dados completos
      */
     @Query("SELECT DISTINCT c FROM CotacaoRascunho c " +
-           "LEFT JOIN FETCH c.itensRascunho " +
+           "LEFT JOIN FETCH c.itens i " +
+           "LEFT JOIN FETCH i.itemRascunho " +
            "LEFT JOIN FETCH c.fornecedorProduto fp " +
            "LEFT JOIN FETCH fp.endereco " +
            "LEFT JOIN FETCH fp.contato " +
@@ -62,7 +64,7 @@ public interface CotacaoRascunhoRepository extends JpaRepository<CotacaoRascunho
      * @param itemRascunhoId ID do item de rascunho
      * @return Lista de cotações
      */
-    @Query("SELECT DISTINCT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itensRascunho ir WHERE ir.id = :itemRascunhoId")
+    @Query("SELECT DISTINCT c FROM CotacaoRascunho c LEFT JOIN FETCH c.itens i LEFT JOIN FETCH i.itemRascunho ir WHERE ir.id = :itemRascunhoId")
     List<CotacaoRascunho> findByItemRascunhoId(@Param("itemRascunhoId") Long itemRascunhoId);
 
     /**

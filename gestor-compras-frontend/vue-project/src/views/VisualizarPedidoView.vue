@@ -316,45 +316,83 @@
                   <div v-if="cotacao.fornecedorCompleto?.contato" class="cotacao-contato-section">
                     <h5 class="contato-section-title">Contato</h5>
                     <div class="contato-grid">
-                      <a
-                        v-if="cotacao.fornecedorCompleto.contato.telefone"
-                        :href="`tel:${cotacao.fornecedorCompleto.contato.telefone}`"
-                        class="contato-item-new"
+                      <button
+                        v-for="contatoItem in getContatosFornecedor(cotacao)"
+                        :key="contatoItem.key"
+                        type="button"
+                        class="contato-item-new contato-item-copy"
+                        :class="{
+                          'contato-email': contatoItem.tipo === 'EMAIL',
+                          'contato-tipo-email': contatoItem.tipo === 'EMAIL',
+                          'contato-tipo-telefone': contatoItem.tipo === 'TELEFONE_FIXO',
+                          'contato-tipo-celular': contatoItem.tipo === 'CELULAR',
+                          'contato-tipo-outro': contatoItem.tipo === 'OUTRO'
+                        }"
+                        :title="`Clique para copiar: ${contatoItem.valorExibicao}`"
+                        :aria-label="`Copiar ${contatoItem.label}: ${contatoItem.valorExibicao}`"
+                        @click="copiarContato(contatoItem)"
                       >
-                        <svg class="contato-item-icon" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                        </svg>
-                        <span>{{ formatarTelefone(cotacao.fornecedorCompleto.contato.telefone) }}</span>
-                      </a>
-                      <a
-                        v-if="cotacao.fornecedorCompleto.contato.celular"
-                        :href="`tel:${cotacao.fornecedorCompleto.contato.celular}`"
-                        class="contato-item-new"
-                      >
-                        <svg class="contato-item-icon" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                        </svg>
-                        <span>{{ formatarTelefone(cotacao.fornecedorCompleto.contato.celular) }}</span>
-                      </a>
-                      <a
-                        v-if="cotacao.fornecedorCompleto.contato.email"
-                        :href="`mailto:${cotacao.fornecedorCompleto.contato.email}`"
-                        class="contato-item-new contato-email"
-                        :title="cotacao.fornecedorCompleto.contato.email"
-                      >
-                        <svg class="contato-item-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <svg
+                          v-if="contatoItem.tipo === 'EMAIL'"
+                          class="contato-item-icon"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
                           <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
                           <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
                         </svg>
-                        <span class="email-text">{{ cotacao.fornecedorCompleto.contato.email }}</span>
-                      </a>
+                        <svg
+                          v-else-if="contatoItem.tipo === 'OUTRO'"
+                          class="contato-item-icon"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path fill-rule="evenodd" d="M18 10A8 8 0 114.293 4.293a1 1 0 011.414 1.414A6 6 0 1016 10a1 1 0 112 0zm-9-3a1 1 0 011 1v3a1 1 0 11-2 0V8a1 1 0 011-1zm0 7a1.25 1.25 0 100-2.5A1.25 1.25 0 0010 14z" clip-rule="evenodd"/>
+                        </svg>
+                        <svg
+                          v-else
+                          class="contato-item-icon"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                        </svg>
+                        <div class="contato-item-content">
+                          <span class="contato-item-label">{{ contatoItem.label }}</span>
+                          <span class="contato-item-value" :class="{ 'email-text': contatoItem.tipo === 'EMAIL' }">
+                            {{ contatoItem.valorExibicao }}
+                          </span>
+                        </div>
+                      </button>
+                      <div v-if="getContatosFornecedor(cotacao).length === 0" class="contato-empty">
+                        Nenhum contato informado.
+                      </div>
                     </div>
                   </div>
 
                   <!-- Itens -->
                   <div class="cotacao-itens-section">
                     <h5 class="itens-section-title">Itens Contemplados</h5>
-                    <div class="itens-chips">
+                    <div v-if="getItensDetalhadosDaCotacao(cotacao).length > 0" class="itens-detalhados-lista">
+                      <div
+                        v-for="itemDetalhado in getItensDetalhadosDaCotacao(cotacao)"
+                        :key="`cotacao-item-detalhado-${cotacao.id}-${itemDetalhado.itemId}`"
+                        class="item-detalhado-card"
+                      >
+                        <div class="item-detalhado-header">
+                          <span class="item-detalhado-nome">{{ itemDetalhado.nome }}</span>
+                          <span class="item-detalhado-subtotal">R$ {{ formatarPreco(itemDetalhado.subtotal) }}</span>
+                        </div>
+                        <div class="item-detalhado-metricas">
+                          <span>Qtd: {{ itemDetalhado.quantidade }}</span>
+                          <span>Unit.: R$ {{ formatarPreco(itemDetalhado.precoUnitario) }}</span>
+                        </div>
+                        <div v-if="itemDetalhado.observacao" class="item-detalhado-observacao">
+                          {{ itemDetalhado.observacao }}
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="itens-chips">
                       <span
                         v-for="itemId in getItensIdsDaCotacao(cotacao)"
                         :key="itemId"
@@ -735,6 +773,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/composables/useToast.js'
+import { useClipboard } from '@/composables/useClipboard.js'
 import { useErrorModal } from '@/composables/useErrorModal.js'
 import { usePermissions } from '@/composables/usePermissions.js'
 import { useAuthStore } from '@/stores/auth'
@@ -764,7 +803,8 @@ export default {
     const route = useRoute()
     const authStore = useAuthStore()
     const { permissions } = usePermissions()
-    const { success, error: showError, warning } = useToast()
+    const { success, error: showError } = useToast()
+    const { copyText } = useClipboard()
     const { isCollapsed } = useSidebar()
 
     // Sidebar
@@ -779,7 +819,6 @@ export default {
     const historico = ref([])
     const isRascunho = ref(false)
     const isFinalizado = ref(false)
-    const isEditMode = ref(false)
 
     // Computed: Verifica se o usuário pode editar o rascunho
     const podeEditarRascunho = computed(() => {
@@ -924,6 +963,98 @@ export default {
       return telefone
     }
 
+    const getLabelTipoContato = (tipoContato) => {
+      const labels = {
+        TELEFONE_FIXO: 'Telefone Fixo',
+        CELULAR: 'Celular',
+        EMAIL: 'E-mail',
+        OUTRO: 'Outro'
+      }
+      return labels[tipoContato] || 'Contato'
+    }
+
+    const copiarContato = async (contatoItem) => {
+      const valorContato = (contatoItem?.valor || '').trim()
+
+      if (!valorContato) {
+        showError('Não foi possível copiar esse contato.')
+        return
+      }
+
+      const copiado = await copyText(valorContato)
+
+      if (copiado) {
+        success(`${contatoItem.label} copiado para a área de transferência.`)
+        return
+      }
+
+      showError('Falha ao copiar o contato. Tente novamente ou copie manualmente.')
+    }
+
+    const formatarValorContato = (tipoContato, valor) => {
+      if (!valor) return ''
+      if (tipoContato === 'TELEFONE_FIXO' || tipoContato === 'CELULAR') {
+        return formatarTelefone(valor)
+      }
+      return valor
+    }
+
+    const getContatosFornecedor = (cotacao) => {
+      const contato = cotacao?.fornecedorCompleto?.contato
+      if (!contato) return []
+
+      const contatos = []
+
+      if (contato.telefoneFixo) {
+        contatos.push({
+          key: 'contato-principal-telefone-fixo',
+          tipo: 'TELEFONE_FIXO',
+          label: (contato.rotuloTelefoneFixo || '').trim() || 'Telefone Fixo',
+          valor: contato.telefoneFixo,
+          valorExibicao: formatarValorContato('TELEFONE_FIXO', contato.telefoneFixo)
+        })
+      }
+
+      if (contato.celular) {
+        contatos.push({
+          key: 'contato-principal-celular',
+          tipo: 'CELULAR',
+          label: (contato.rotuloCelular || '').trim() || 'Celular',
+          valor: contato.celular,
+          valorExibicao: formatarValorContato('CELULAR', contato.celular)
+        })
+      }
+
+      if (contato.email) {
+        contatos.push({
+          key: 'contato-principal-email',
+          tipo: 'EMAIL',
+          label: (contato.rotuloEmail || '').trim() || 'E-mail',
+          valor: contato.email,
+          valorExibicao: contato.email
+        })
+      }
+
+      if (Array.isArray(contato.contatosAdicionais)) {
+        contato.contatosAdicionais.forEach((contatoAdicional, index) => {
+          const tipoContato = contatoAdicional?.tipoContato || 'OUTRO'
+          const valorContato = (contatoAdicional?.valorContato || '').trim()
+
+          if (!valorContato) return
+
+          contatos.push({
+            key: `contato-adicional-${contatoAdicional.id || index}`,
+            tipo: tipoContato,
+            label: (contatoAdicional?.nomeContato || '').trim() || getLabelTipoContato(tipoContato),
+            valor: valorContato,
+            valorExibicao: formatarValorContato(tipoContato, valorContato)
+          })
+        })
+      }
+
+      return contatos
+    }
+
     const getTotalCotacoes = () => {
       return cotacoes.value.reduce((total, cotacao) => {
         return total + (parseFloat(cotacao.preco) || 0)
@@ -932,6 +1063,9 @@ export default {
 
     const itemTemCotacao = (item) => {
       return cotacoes.value.some(c => {
+        if (c.itens && c.itens.length > 0) {
+          return c.itens.some(i => i.itemRascunhoId === item.id || i.itemPedidoId === item.id)
+        }
         // Para rascunhos: verificar itensRascunhoIds
         if (c.itensRascunhoIds && c.itensRascunhoIds.length > 0) {
           return c.itensRascunhoIds.includes(item.id)
@@ -949,6 +1083,11 @@ export default {
     }
 
     const getItensIdsDaCotacao = (cotacao) => {
+      if (cotacao.itens && cotacao.itens.length > 0) {
+        return cotacao.itens
+          .map(i => i.itemPedidoId || i.itemRascunhoId)
+          .filter(Boolean)
+      }
       // ORDEM CORRIGIDA: Verificar pedidos PRIMEIRO (itens selecionados)
       // Para pedidos - array de IDs
       if (cotacao.itensPedidoIds && cotacao.itensPedidoIds.length > 0) {
@@ -963,6 +1102,30 @@ export default {
         return cotacao.itensRascunhoIds
       }
       return []
+    }
+
+    const getItensDetalhadosDaCotacao = (cotacao) => {
+      if (!cotacao?.itens || cotacao.itens.length === 0) {
+        return []
+      }
+
+      return cotacao.itens.map(item => {
+        const itemId = item.itemPedidoId || item.itemRascunhoId
+        const quantidade = Number(item.quantidade || 0)
+        const precoUnitario = Number(item.precoUnitario || 0)
+        const subtotal = item.precoTotal != null
+          ? Number(item.precoTotal)
+          : (quantidade * precoUnitario)
+
+        return {
+          itemId,
+          nome: item.nomeItem || getNomeItem(itemId),
+          quantidade,
+          precoUnitario,
+          subtotal,
+          observacao: item.observacao || null
+        }
+      })
     }
 
     const getNomeItem = (itemId) => {
@@ -1255,7 +1418,7 @@ export default {
         }
       } catch (err) {
         logger.error('Erro ao verificar cotações:', err)
-        error('Erro ao verificar cotações do rascunho')
+        showError('Erro ao verificar cotações do rascunho')
       }
     }
 
@@ -1277,7 +1440,7 @@ export default {
 
     const confirmarDevolucao = async () => {
       if (motivoDevolucao.value.length < 10) {
-        error('O motivo deve ter pelo menos 10 caracteres')
+        showError('O motivo deve ter pelo menos 10 caracteres')
         return
       }
 
@@ -1294,7 +1457,7 @@ export default {
         await carregarPedido()
       } catch (err) {
         logger.error('Erro ao devolver rascunho:', err)
-        error(err.message || 'Erro ao devolver rascunho para edição')
+        showError(err.message || 'Erro ao devolver rascunho para edição')
       } finally {
         devolvendo.value = false
       }
@@ -1307,15 +1470,15 @@ export default {
           id: dadosEdicao.id,
           motivoEdicao: dadosEdicao.motivoEdicao,
           editadoPor: dadosEdicao.editadoPor,
-          itens: null, // Não editar itens, apenas preço total
-          precoNovo: dadosEdicao.preco,
+          itens: dadosEdicao.itens && dadosEdicao.itens.length > 0 ? dadosEdicao.itens : null,
+          precoNovo: dadosEdicao.itens && dadosEdicao.itens.length > 0 ? null : dadosEdicao.preco,
           prazoEmDiasUteis: dadosEdicao.prazoEmDiasUteis,
           dataLimite: dadosEdicao.dataLimite,
           anexoPdf: null // Backend ignora este campo - usar endpoint /anexos
         }
 
         // 1. Primeiro, editar os dados da cotação
-        const resultado = await cotacaoService.editarCotacao(dadosEdicao.id, editDTO)
+        await cotacaoService.editarCotacao(dadosEdicao.id, editDTO)
 
         // 2. Se há novos PDFs, fazer upload usando endpoint correto
         if (dadosEdicao.pdfFiles && dadosEdicao.pdfFiles.length > 0) {
@@ -1541,8 +1704,11 @@ export default {
       formatarData,
       formatarDataHora,
       getItensIdsDaCotacao,
+      getItensDetalhadosDaCotacao,
       formatarPreco,
       formatarTelefone,
+      getContatosFornecedor,
+      copiarContato,
       getTotalCotacoes,
       itemTemCotacao,
       getNomeItem,
@@ -2260,9 +2426,10 @@ export default {
 /* Seção de Contato */
 .cotacao-contato-section {
   padding: 16px;
-  background: #fafbfc;
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #dbe2ea;
   border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .contato-section-title {
@@ -2279,40 +2446,124 @@ export default {
 .contato-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .contato-item-new {
+  --contato-accent: #6366f1;
+  --contato-soft: #eef2ff;
+  --contato-accent-strong: #4338ca;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  width: 100%;
+  align-items: flex-start;
+  gap: 10px;
+  font: inherit;
   font-size: 0.8125rem;
   color: #475569;
+  text-align: left;
   text-decoration: none;
   padding: 8px 12px;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #ffffff 0%, var(--contato-soft) 170%);
+  appearance: none;
+  border: 1px solid #dbe2ea;
+  border-left: 3px solid var(--contato-accent);
   border-radius: 6px;
-  transition: all 0.2s ease;
+  transition: all 0.22s ease;
+  min-height: 58px;
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.04);
 }
 
-.contato-item-new:hover {
-  background: #f8fafc;
-  border-color: #6366f1;
-  color: #4f46e5;
+.contato-item-copy {
+  cursor: pointer;
+}
+
+.contato-item-copy:hover {
+  background: linear-gradient(135deg, #ffffff 0%, var(--contato-soft) 140%);
+  border-color: var(--contato-accent);
+  border-left-color: var(--contato-accent-strong);
   transform: translateX(2px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.1);
+}
+
+.contato-item-copy:focus-visible {
+  outline: none;
+  border-color: var(--contato-accent);
+  border-left-color: var(--contato-accent-strong);
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.24), 0 10px 18px rgba(15, 23, 42, 0.1);
+}
+
+.contato-item-copy:active {
+  transform: translateX(1px);
 }
 
 .contato-item-icon {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--contato-accent-strong);
+}
+
+.contato-item-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.contato-item-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--contato-accent-strong);
+}
+
+.contato-item-value {
+  font-size: 0.8125rem;
+  color: inherit;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.contato-tipo-email {
+  --contato-accent: #0ea5e9;
+  --contato-soft: #e0f2fe;
+  --contato-accent-strong: #0369a1;
+}
+
+.contato-tipo-telefone {
+  --contato-accent: #14b8a6;
+  --contato-soft: #ccfbf1;
+  --contato-accent-strong: #0f766e;
+}
+
+.contato-tipo-celular {
+  --contato-accent: #f59e0b;
+  --contato-soft: #fef3c7;
+  --contato-accent-strong: #b45309;
+}
+
+.contato-tipo-outro {
+  --contato-accent: #64748b;
+  --contato-soft: #e2e8f0;
+  --contato-accent-strong: #334155;
 }
 
 .contato-email .email-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.contato-empty {
+  color: #64748b;
+  font-size: 0.8125rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px dashed #94a3b8;
+  border-radius: 6px;
+  padding: 10px 12px;
+  text-align: center;
 }
 
 /* Seção de Itens */
@@ -2356,6 +2607,54 @@ export default {
   background: linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(67, 56, 202, 0.15);
+}
+
+.itens-detalhados-lista {
+  display: grid;
+  gap: 10px;
+}
+
+.item-detalhado-card {
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.item-detalhado-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.item-detalhado-nome {
+  font-size: 0.875rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.item-detalhado-subtotal {
+  font-size: 0.875rem;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.item-detalhado-metricas {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.item-detalhado-observacao {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #64748b;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 6px;
 }
 
 .cotacao-actions {
@@ -3854,6 +4153,11 @@ export default {
     grid-template-columns: 1fr;
   }
 
+  .contato-item-new {
+    min-height: 54px;
+    padding: 8px 10px;
+  }
+
   .cotacao-actions {
     padding: 16px;
     flex-direction: column;
@@ -3959,6 +4263,21 @@ export default {
   .contato-item-new {
     font-size: 0.75rem;
     padding: 6px 10px;
+    min-height: 52px;
+  }
+
+  .contato-item-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .contato-item-label {
+    font-size: 0.625rem;
+    letter-spacing: 0.35px;
+  }
+
+  .contato-item-value {
+    font-size: 0.75rem;
   }
 
   /* Simplificar timeline do histórico */

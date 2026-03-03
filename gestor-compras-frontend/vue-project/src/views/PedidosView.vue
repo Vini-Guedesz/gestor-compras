@@ -947,7 +947,7 @@ export default {
     // Métodos de ação
     const filtrarPedidos = () => {
       // A filtragem é feita automaticamente pelo computed
-      // Este mÃ©todo existe para ser chamado nos eventos de input
+      // Este método existe para ser chamado nos eventos de input
     }
 
     const limparFiltros = () => {
@@ -1248,7 +1248,7 @@ export default {
     }
 
     const podeAlterarStatus = (pedido) => {
-      // Pode alterar status de pedidos que nÃ£o estÃ£o finalizados
+      // Pode alterar status de pedidos que não estão finalizados
       return !['APROVADO', 'CANCELADO'].includes(pedido.status)
     }
 
@@ -1393,6 +1393,7 @@ export default {
 <style scoped>
 /* Importar layout global */
 @import '../assets/css/layout.css';
+@import '../assets/css/tables-modern.css';
 
 /* Welcome Section */
 .welcome-section {
@@ -1496,7 +1497,7 @@ export default {
   animation: spin 0.8s linear infinite;
 }
 
-/* MÃ©tricas */
+/* Métricas */
 .metrics-section {
   margin-bottom: 32px;
 }
@@ -1833,7 +1834,7 @@ export default {
   background-color: #f9fafb;
 }
 
-/* CÃ©lulas da tabela */
+/* Células da tabela */
 .pedido-cell {
   padding-right: 8px !important;
 }
@@ -1935,7 +1936,7 @@ export default {
   color: #374151;
 }
 
-/* BotÃµes de aÃ§Ã£o */
+/* Botões de ação */
 .actions-cell {
   display: flex;
   gap: 8px;
@@ -3061,3 +3062,8 @@ export default {
   }
 }
 </style>
+
+
+
+
+

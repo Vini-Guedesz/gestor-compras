@@ -139,6 +139,10 @@ public class SolicitacaoDePedidoService {
         // Salvar a solicitação (o cascade ALL irá salvar os itens automaticamente)
         SolicitacaoDePedido solicitacaoSalva = solicitacaoDePedidoRepository.save(solicitacaoDePedido);
 
+        // Registrar criação no histórico
+        User usuario = getUsuarioAutenticado();
+        historicoPedidoService.registrarCriacao(solicitacaoSalva, usuario);
+
         return solicitacaoDePedidoMapper.toDTO(solicitacaoSalva);
     }
 
@@ -156,8 +160,20 @@ public class SolicitacaoDePedidoService {
     public SolicitacaoDePedidoDTO updateSolicitacao(Long id, SolicitacaoDePedidoDTO solicitacaoDePedidoDTO) {
         return solicitacaoDePedidoRepository.findById(id)
                 .map(solicitacao -> {
+                    User usuario = getUsuarioAutenticado();
+                    
+                    // Verificar mudança de status
+                    if (solicitacaoDePedidoDTO.status() != null && solicitacaoDePedidoDTO.status() != solicitacao.getStatus()) {
+                        historicoPedidoService.registrarMudancaStatus(
+                            solicitacao, 
+                            usuario, 
+                            solicitacao.getStatus().name(), 
+                            solicitacaoDePedidoDTO.status().name()
+                        );
+                        solicitacao.setStatus(solicitacaoDePedidoDTO.status());
+                    }
+                    
                     solicitacao.setObservacao(solicitacaoDePedidoDTO.observacao());
-                    solicitacao.setStatus(solicitacaoDePedidoDTO.status());
 
                     // Atualizar itens se fornecidos no DTO
                     if (solicitacaoDePedidoDTO.itens() != null) {
@@ -174,6 +190,7 @@ public class SolicitacaoDePedidoService {
 
                         // Remover itens deletados
                         for (ItemPedido itemRemover : itensParaRemover) {
+                            historicoPedidoService.registrarRemocaoItem(solicitacao, usuario, itemRemover.getNome());
                             solicitacao.getItens().remove(itemRemover);
                             itemPedidoRepository.delete(itemRemover);
                         }
@@ -193,6 +210,19 @@ public class SolicitacaoDePedidoService {
                                                     .orElse(new ItemPedido());
                                         });
 
+                                // Verificar se houve mudança para registrar no histórico
+                                boolean mudou = false;
+                                StringBuilder detalhes = new StringBuilder();
+                                
+                                if (!item.getNome().equals(itemDTO.nome())) {
+                                    detalhes.append("Nome alterado de '").append(item.getNome()).append("' para '").append(itemDTO.nome()).append("'. ");
+                                    mudou = true;
+                                }
+                                if (item.getQuantidade() != itemDTO.quantidade()) {
+                                    detalhes.append("Quantidade alterada de ").append(item.getQuantidade()).append(" para ").append(itemDTO.quantidade()).append(". ");
+                                    mudou = true;
+                                }
+                                
                                 // Atualizar campos do item existente
                                 item.setNome(itemDTO.nome());
                                 item.setQuantidade(itemDTO.quantidade());
@@ -201,13 +231,22 @@ public class SolicitacaoDePedidoService {
                                 // Atualizar tipo se fornecido
                                 if (itemDTO.tipo() != null) {
                                     try {
-                                        item.setTipo(TipoItem.valueOf(itemDTO.tipo()));
+                                        TipoItem novoTipo = TipoItem.valueOf(itemDTO.tipo());
+                                        if (item.getTipo() != novoTipo) {
+                                            detalhes.append("Tipo alterado de ").append(item.getTipo()).append(" para ").append(novoTipo).append(". ");
+                                            mudou = true;
+                                        }
+                                        item.setTipo(novoTipo);
                                     } catch (IllegalArgumentException e) {
                                         // Ignorar ou logar erro de tipo inválido
                                         log.warn("Tipo de item inválido: {}", itemDTO.tipo());
                                     }
                                 }
                                 item.setSolicitacaoDePedido(solicitacao);
+                                
+                                if (mudou) {
+                                    historicoPedidoService.registrarAtualizacaoItem(solicitacao, usuario, item.getNome(), detalhes.toString());
+                                }
                             } else {
                                 // Novo item - criar e adicionar à lista
                                 item = new ItemPedido();
@@ -232,6 +271,8 @@ public class SolicitacaoDePedidoService {
                                     solicitacao.setItens(new java.util.HashSet<>());
                                 }
                                 solicitacao.getItens().add(item);
+                                
+                                historicoPedidoService.registrarAdicaoItem(solicitacao, usuario, item.getNome());
                             }
                         }
                     }

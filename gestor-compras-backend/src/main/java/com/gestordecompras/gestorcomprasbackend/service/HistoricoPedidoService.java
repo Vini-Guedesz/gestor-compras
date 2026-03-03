@@ -185,6 +185,32 @@ public class HistoricoPedidoService {
     }
 
     /**
+     * Registra a atualização de um item do pedido.
+     *
+     * @param pedido Pedido alterado.
+     * @param usuario Usuário que atualizou o item.
+     * @param nomeItem Nome do item atualizado.
+     * @param detalhes Detalhes da alteração.
+     */
+    @Transactional
+    public void registrarAtualizacaoItem(
+            SolicitacaoDePedido pedido,
+            User usuario,
+            String nomeItem,
+            String detalhes
+    ) {
+        registrarHistorico(
+                pedido,
+                usuario,
+                HistoricoPedido.TipoModificacao.ATUALIZACAO_ITEM,
+                "itens",
+                null,
+                nomeItem,
+                "Item atualizado: " + nomeItem + (detalhes != null ? " - " + detalhes : "")
+        );
+    }
+
+    /**
      * Registra a adição de uma cotação ao pedido.
      *
      * @param pedido Pedido alterado.

@@ -8,6 +8,7 @@ import com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.StatusCotacao;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,13 +31,6 @@ public class CotacaoMapper {
             return null;
         }
 
-        // DEBUG: Verificar quantidade de itens antes do mapeamento
-        if (cotacao.getItens() != null) {
-            System.out.println("DEBUG: Mapeando Cotação ID " + cotacao.getId() + " - Total Itens no Set: " + cotacao.getItens().size());
-        } else {
-            System.out.println("DEBUG: Mapeando Cotação ID " + cotacao.getId() + " - Set de Itens é NULL");
-        }
-
         // Determinar o tipo de fornecedor e nome
         String tipoFornecedor = null;
         String nomeFornecedor = "";
@@ -49,11 +43,12 @@ public class CotacaoMapper {
         }
 
         // Mapear itens com preços individuais (novo formato)
-        List<CotacaoItemDTO> itensDTO = cotacao.getItens() != null
-                ? cotacao.getItens().stream()
+        List<CotacaoItemDTO> itensDTO = new ArrayList<>();
+        if (cotacao.getItens() != null) {
+            itensDTO = cotacao.getItens().stream()
                     .map(cotacaoItemMapper::toDTO)
-                    .collect(Collectors.toList())
-                : Collections.emptyList();
+                    .collect(Collectors.toList());
+        }
 
         // Extrair IDs dos itens para compatibilidade (legacy)
         List<Long> itensPedidoIds = itensDTO.stream()
@@ -62,7 +57,7 @@ public class CotacaoMapper {
 
         // Calcular quantidade de anexos
         int quantidadeAnexos = 0;
-        if (cotacao.getAnexos() != null && !cotacao.getAnexos().isEmpty()) {
+        if (cotacao.getAnexos() != null) {
             quantidadeAnexos = cotacao.getAnexos().size();
         }
 
@@ -117,8 +112,6 @@ public class CotacaoMapper {
         if (cotacaoCreateDTO.preco() != null) {
             cotacao.setPrecoLegacy(cotacaoCreateDTO.preco());
         }
-
-        // Nota: itens, fornecedor e solicitacaoDePedido são setados manualmente no service
 
         return cotacao;
     }

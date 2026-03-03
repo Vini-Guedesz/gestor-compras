@@ -128,8 +128,12 @@
               </svg>
               Dados de Contato
             </h3>
-            <div class="form-grid">
-              <div class="form-group">
+            <div class="form-grid contato-principal-grid">
+              <div class="form-group contato-principal-card contato-principal-email">
+                <div class="contato-principal-meta">
+                  <span class="contato-principal-kind">E-mail principal</span>
+                  <span class="contato-principal-badge">Principal</span>
+                </div>
                 <label class="form-label">E-mail *</label>
                 <input
                   type="email"
@@ -144,9 +148,23 @@
                 <div v-if="fieldTouched.email && fieldErrors.email" class="error-message">
                   {{ fieldErrors.email }}
                 </div>
+                <div class="form-subfield">
+                  <label class="form-label">Rótulo do E-mail</label>
+                  <input
+                    type="text"
+                    v-model="formData.contato.rotuloEmail"
+                    class="form-input"
+                    placeholder="Ex: Financeiro"
+                    maxlength="100"
+                  />
+                </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group contato-principal-card contato-principal-fixo">
+                <div class="contato-principal-meta">
+                  <span class="contato-principal-kind">Telefone fixo</span>
+                  <span class="contato-principal-badge">Principal</span>
+                </div>
                 <label class="form-label">Telefone Fixo</label>
                 <input
                   type="text"
@@ -164,9 +182,23 @@
                 <div v-if="!fieldErrors.telefoneFixo" class="form-hint">
                   Opcional - Formato: (00) 0000-0000
                 </div>
+                <div class="form-subfield">
+                  <label class="form-label">Rótulo do Telefone Fixo</label>
+                  <input
+                    type="text"
+                    v-model="formData.contato.rotuloTelefoneFixo"
+                    class="form-input"
+                    placeholder="Ex: Comercial"
+                    maxlength="100"
+                  />
+                </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group contato-principal-card contato-principal-celular">
+                <div class="contato-principal-meta">
+                  <span class="contato-principal-kind">Celular</span>
+                  <span class="contato-principal-badge">Principal</span>
+                </div>
                 <label class="form-label">Celular</label>
                 <input
                   type="text"
@@ -184,6 +216,107 @@
                 <div v-if="!fieldErrors.celular" class="form-hint">
                   Opcional - Formato: (00) 00000-0000
                 </div>
+                <div class="form-subfield">
+                  <label class="form-label">Rótulo do Celular</label>
+                  <input
+                    type="text"
+                    v-model="formData.contato.rotuloCelular"
+                    class="form-input"
+                    placeholder="Ex: Plantão"
+                    maxlength="100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="contatos-adicionais-section">
+              <div class="contatos-adicionais-header">
+                <h4 class="contatos-adicionais-title">Contatos Adicionais</h4>
+                <button type="button" class="btn-add-contato" @click="adicionarContatoAdicional">
+                  + Adicionar contato
+                </button>
+              </div>
+              <p class="form-hint">
+                Cadastre quantos contatos extras quiser e nomeie cada um (ex: Comercial, Financeiro, Plantão).
+              </p>
+
+              <div
+                v-if="formData.contato.contatosAdicionais.length === 0"
+                class="contatos-adicionais-empty"
+              >
+                Nenhum contato adicional cadastrado.
+              </div>
+
+              <div v-else class="contatos-adicionais-list">
+                <div
+                  v-for="(contatoAdicional, index) in formData.contato.contatosAdicionais"
+                  :key="`contato-adicional-${contatoAdicional.id || index}`"
+                  :class="['contato-adicional-item', getTipoContatoAdicionalClasse(contatoAdicional.tipoContato)]"
+                >
+                  <div class="contato-adicional-meta">
+                    <div class="contato-adicional-meta-left">
+                      <span class="contato-adicional-index">Contato adicional #{{ index + 1 }}</span>
+                      <span class="contato-adicional-kind">{{ getTipoContatoAdicionalLabel(contatoAdicional.tipoContato) }}</span>
+                    </div>
+                    <span class="contato-adicional-badge">Adicional</span>
+                  </div>
+
+                  <div class="contato-adicional-grid">
+                    <div class="form-group">
+                      <label class="form-label">Tipo *</label>
+                      <select
+                        v-model="contatoAdicional.tipoContato"
+                        class="form-select"
+                        @change="handleTipoContatoAdicionalChange(index)"
+                      >
+                        <option
+                          v-for="tipo in tiposContatoAdicional"
+                          :key="tipo.value"
+                          :value="tipo.value"
+                        >
+                          {{ tipo.label }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Nome/Rótulo</label>
+                      <input
+                        type="text"
+                        v-model="contatoAdicional.nomeContato"
+                        class="form-input"
+                        maxlength="100"
+                        placeholder="Ex: Comercial"
+                        @blur="validateContatosAdicionais"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Valor *</label>
+                      <input
+                        type="text"
+                        v-model="contatoAdicional.valorContato"
+                        class="form-input"
+                        maxlength="255"
+                        :placeholder="getPlaceholderContatoAdicional(contatoAdicional.tipoContato)"
+                        @input="formatContatoAdicional(index, $event)"
+                        @blur="validateContatosAdicionais"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="btn-remove-contato"
+                    @click="removerContatoAdicional(index)"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="fieldErrors.contatosAdicionais" class="error-message">
+                {{ fieldErrors.contatosAdicionais }}
               </div>
             </div>
           </div>
@@ -419,6 +552,155 @@ const estados = ref([
   { sigla: 'TO', nome: 'Tocantins' }
 ])
 
+const tiposContatoAdicional = [
+  { value: 'TELEFONE_FIXO', label: 'Telefone Fixo' },
+  { value: 'CELULAR', label: 'Celular' },
+  { value: 'EMAIL', label: 'E-mail' },
+  { value: 'OUTRO', label: 'Outro' }
+]
+
+const formatarTelefoneFixoValor = (valor) => {
+  let value = (valor || '').replace(/\D/g, '')
+  value = value.substring(0, 10)
+  value = value.replace(/^(\d{2})(\d)/, '($1) $2')
+  value = value.replace(/(\d{4})(\d{4})$/, '$1-$2')
+  return value
+}
+
+const formatarCelularValor = (valor) => {
+  let value = (valor || '').replace(/\D/g, '')
+  value = value.substring(0, 11)
+  value = value.replace(/^(\d{2})(\d)/, '($1) $2')
+  value = value.replace(/(\d{5})(\d{4})$/, '$1-$2')
+  return value
+}
+
+const normalizarTipoContato = (tipoContato) => {
+  const tiposValidos = tiposContatoAdicional.map(tipo => tipo.value)
+  return tiposValidos.includes(tipoContato) ? tipoContato : 'OUTRO'
+}
+
+const getPlaceholderContatoAdicional = (tipoContato) => {
+  switch (tipoContato) {
+    case 'TELEFONE_FIXO':
+      return '(00) 0000-0000'
+    case 'CELULAR':
+      return '(00) 00000-0000'
+    case 'EMAIL':
+      return 'contato@empresa.com'
+    default:
+      return 'Digite a informação de contato'
+  }
+}
+
+const getTipoContatoAdicionalLabel = (tipoContato) => {
+  const tipoNormalizado = normalizarTipoContato(tipoContato)
+  const tipoEncontrado = tiposContatoAdicional.find(tipo => tipo.value === tipoNormalizado)
+  return tipoEncontrado?.label || 'Outro'
+}
+
+const getTipoContatoAdicionalClasse = (tipoContato) => {
+  const tipoNormalizado = normalizarTipoContato(tipoContato)
+  switch (tipoNormalizado) {
+    case 'EMAIL':
+      return 'contato-adicional-tipo-email'
+    case 'TELEFONE_FIXO':
+      return 'contato-adicional-tipo-telefone-fixo'
+    case 'CELULAR':
+      return 'contato-adicional-tipo-celular'
+    default:
+      return 'contato-adicional-tipo-outro'
+  }
+}
+
+const criarContatoAdicionalVazio = () => ({
+  id: null,
+  nomeContato: '',
+  tipoContato: 'TELEFONE_FIXO',
+  valorContato: '',
+  ordemExibicao: null
+})
+
+const validateContatosAdicionais = () => {
+  const contatos = formData.value.contato.contatosAdicionais || []
+
+  for (let index = 0; index < contatos.length; index += 1) {
+    const contato = contatos[index]
+    const tipoContato = normalizarTipoContato(contato.tipoContato)
+    const valorContato = (contato.valorContato || '').trim()
+
+    contato.tipoContato = tipoContato
+
+    if (!valorContato) {
+      fieldErrors.value.contatosAdicionais = `Preencha o valor do contato adicional #${index + 1}`
+      return false
+    }
+
+    if (tipoContato === 'EMAIL') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(valorContato)) {
+        fieldErrors.value.contatosAdicionais = `E-mail inválido no contato adicional #${index + 1}`
+        return false
+      }
+    }
+
+    if (tipoContato === 'TELEFONE_FIXO') {
+      const telefone = valorContato.replace(/\D/g, '')
+      if (telefone.length !== 10) {
+        fieldErrors.value.contatosAdicionais = `Telefone fixo inválido no contato adicional #${index + 1}`
+        return false
+      }
+    }
+
+    if (tipoContato === 'CELULAR') {
+      const celular = valorContato.replace(/\D/g, '')
+      if (celular.length !== 11) {
+        fieldErrors.value.contatosAdicionais = `Celular inválido no contato adicional #${index + 1}`
+        return false
+      }
+      if (celular[2] !== '9') {
+        fieldErrors.value.contatosAdicionais = `Celular do contato adicional #${index + 1} deve começar com 9 após o DDD`
+        return false
+      }
+    }
+  }
+
+  fieldErrors.value.contatosAdicionais = ''
+  return true
+}
+
+const adicionarContatoAdicional = () => {
+  formData.value.contato.contatosAdicionais.push(criarContatoAdicionalVazio())
+  fieldErrors.value.contatosAdicionais = ''
+}
+
+const removerContatoAdicional = (index) => {
+  formData.value.contato.contatosAdicionais.splice(index, 1)
+  validateContatosAdicionais()
+}
+
+const handleTipoContatoAdicionalChange = (index) => {
+  formatContatoAdicional(index)
+  validateContatosAdicionais()
+}
+
+const formatContatoAdicional = (index, event) => {
+  const contatoAdicional = formData.value.contato.contatosAdicionais[index]
+  if (!contatoAdicional) return
+
+  const valorAtual = event?.target?.value ?? contatoAdicional.valorContato ?? ''
+
+  if (contatoAdicional.tipoContato === 'TELEFONE_FIXO') {
+    contatoAdicional.valorContato = formatarTelefoneFixoValor(valorAtual)
+  } else if (contatoAdicional.tipoContato === 'CELULAR') {
+    contatoAdicional.valorContato = formatarCelularValor(valorAtual)
+  } else {
+    contatoAdicional.valorContato = valorAtual
+  }
+
+  validateContatosAdicionais()
+}
+
 
 
 // ============================================
@@ -437,8 +719,12 @@ const formData = ref({
   contato: {
     id: null,           // ID - obrigatório para update
     email: '',           // OBRIGATÓRIO
+    rotuloEmail: '',     // OPCIONAL
     telefoneFixo: '',    // OPCIONAL - 10 ou 11 dígitos
-    celular: ''          // OPCIONAL - 11 dígitos (deve começar com 9 após DDD)
+    rotuloTelefoneFixo: '', // OPCIONAL
+    celular: '',         // OPCIONAL - 11 dígitos (deve começar com 9 após DDD)
+    rotuloCelular: '',   // OPCIONAL
+    contatosAdicionais: []
   },
 
   // Objeto ENDERECO (EnderecoCreateDTO ou EnderecoUpdateDTO)
@@ -465,6 +751,7 @@ const fieldErrors = ref({
   email: '',
   telefoneFixo: '',
   celular: '',
+  contatosAdicionais: '',
   cep: '',
   estado: '',
   cidade: '',
@@ -658,7 +945,8 @@ const isFormValid = computed(() => {
          validateCidade() &&
          validateBairro() &&
          validateRua() &&
-         validateNumero()
+         validateNumero() &&
+         validateContatosAdicionais()
 })
 
 // ============================================
@@ -673,8 +961,12 @@ const resetForm = () => {
   // Resetar contato
   formData.value.contato.id = null
   formData.value.contato.email = ''
+  formData.value.contato.rotuloEmail = ''
   formData.value.contato.telefoneFixo = ''
+  formData.value.contato.rotuloTelefoneFixo = ''
   formData.value.contato.celular = ''
+  formData.value.contato.rotuloCelular = ''
+  formData.value.contato.contatosAdicionais = []
 
   // Resetar endereco
   formData.value.endereco.id = null
@@ -709,21 +1001,11 @@ const formatCNPJ = (event) => {
 }
 
 const formatTelefoneFixo = (event) => {
-  let value = event.target.value.replace(/\D/g, '')
-  // Limita a 10 dígitos (DDD + 8 dígitos para fixo)
-  value = value.substring(0, 10)
-  value = value.replace(/^(\d{2})(\d)/, '($1) $2')
-  value = value.replace(/(\d{4})(\d{4})$/, '$1-$2')
-  formData.value.contato.telefoneFixo = value
+  formData.value.contato.telefoneFixo = formatarTelefoneFixoValor(event.target.value)
 }
 
 const formatCelular = (event) => {
-  let value = event.target.value.replace(/\D/g, '')
-  // Limita a 11 dígitos (DDD + 9 dígitos para celular)
-  value = value.substring(0, 11)
-  value = value.replace(/^(\d{2})(\d)/, '($1) $2')
-  value = value.replace(/(\d{5})(\d{4})$/, '$1-$2')
-  formData.value.contato.celular = value
+  formData.value.contato.celular = formatarCelularValor(event.target.value)
 }
 
 const formatCEP = (event) => {
@@ -791,8 +1073,29 @@ const loadFornecedorData = (fornecedor) => {
   if (fornecedor.contato) {
     formData.value.contato.id = fornecedor.contato.id || null
     formData.value.contato.email = fornecedor.contato.email || ''
+    formData.value.contato.rotuloEmail = fornecedor.contato.rotuloEmail || ''
     formData.value.contato.telefoneFixo = fornecedor.contato.telefoneFixo || ''
+    formData.value.contato.rotuloTelefoneFixo = fornecedor.contato.rotuloTelefoneFixo || ''
     formData.value.contato.celular = fornecedor.contato.celular || ''
+    formData.value.contato.rotuloCelular = fornecedor.contato.rotuloCelular || ''
+    formData.value.contato.contatosAdicionais = Array.isArray(fornecedor.contato.contatosAdicionais)
+      ? fornecedor.contato.contatosAdicionais.map((contatoAdicional, index) => ({
+          id: contatoAdicional.id || null,
+          nomeContato: contatoAdicional.nomeContato || '',
+          tipoContato: normalizarTipoContato(contatoAdicional.tipoContato),
+          valorContato: contatoAdicional.valorContato || '',
+          ordemExibicao: contatoAdicional.ordemExibicao ?? index
+        }))
+      : []
+  } else {
+    formData.value.contato.id = null
+    formData.value.contato.email = ''
+    formData.value.contato.rotuloEmail = ''
+    formData.value.contato.telefoneFixo = ''
+    formData.value.contato.rotuloTelefoneFixo = ''
+    formData.value.contato.celular = ''
+    formData.value.contato.rotuloCelular = ''
+    formData.value.contato.contatosAdicionais = []
   }
 
   // Carregar endereco (incluindo ID para update)
@@ -866,16 +1169,39 @@ const handleSubmit = () => {
 
   // ===== ETAPA 2: MONTAR OBJETO CONTATO =====
 
+  const contatosAdicionais = (formData.value.contato.contatosAdicionais || []).map((contatoAdicional, index) => {
+    const tipoContato = normalizarTipoContato(contatoAdicional.tipoContato)
+    const valorContatoOriginal = (contatoAdicional.valorContato || '').trim()
+    let valorContato = valorContatoOriginal
+
+    if (tipoContato === 'TELEFONE_FIXO') {
+      valorContato = formatarTelefoneFixoValor(valorContatoOriginal)
+    } else if (tipoContato === 'CELULAR') {
+      valorContato = formatarCelularValor(valorContatoOriginal)
+    }
+
+    return {
+      ...(contatoAdicional.id ? { id: contatoAdicional.id } : {}),
+      nomeContato: contatoAdicional.nomeContato?.trim() || null,
+      tipoContato,
+      valorContato,
+      ordemExibicao: index
+    }
+  })
+
   const contato = {
     email: formData.value.contato.email.trim(),
+    rotuloEmail: formData.value.contato.rotuloEmail?.trim() || null,
     telefoneFixo: telefoneFixo || null,
-    celular: celular || null
+    rotuloTelefoneFixo: formData.value.contato.rotuloTelefoneFixo?.trim() || null,
+    celular: celular || null,
+    rotuloCelular: formData.value.contato.rotuloCelular?.trim() || null,
+    contatosAdicionais
   }
 
   // Se for edição (fornecedor existente), incluir o ID do contato
   if (props.fornecedor && formData.value.contato.id) {
     contato.id = formData.value.contato.id
-  } else {
   }
 
 
@@ -894,7 +1220,6 @@ const handleSubmit = () => {
   // Se for edição (fornecedor existente), incluir o ID do endereco
   if (props.fornecedor && formData.value.endereco.id) {
     endereco.id = formData.value.endereco.id
-  } else {
   }
 
 
@@ -1123,6 +1448,335 @@ const handleSubmit = () => {
   font-size: 0.75rem;
   margin-top: 4px;
   font-style: italic;
+}
+
+.contato-principal-grid {
+  align-items: start;
+}
+
+.contato-principal-card {
+  --contato-accent: #2563eb;
+  --contato-soft: #dbeafe;
+  --contato-soft-strong: #bfdbfe;
+  --contato-border-hover: #93c5fd;
+  --contato-border-focus: #60a5fa;
+  --contato-ring: rgba(37, 99, 235, 0.16);
+  --contato-contrast: #1e3a8a;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.contato-principal-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--contato-accent) 0%, var(--contato-soft-strong) 100%);
+  opacity: 0.95;
+}
+
+.contato-principal-card:hover {
+  border-color: var(--contato-border-hover);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.contato-principal-card:focus-within {
+  border-color: var(--contato-border-focus);
+  box-shadow: 0 0 0 4px var(--contato-ring), 0 12px 22px rgba(37, 99, 235, 0.1);
+  transform: translateY(-1px);
+}
+
+.contato-principal-email {
+  --contato-accent: #2563eb;
+  --contato-soft: #dbeafe;
+  --contato-soft-strong: #bfdbfe;
+  --contato-border-hover: #93c5fd;
+  --contato-border-focus: #60a5fa;
+  --contato-ring: rgba(37, 99, 235, 0.16);
+  --contato-contrast: #1e3a8a;
+}
+
+.contato-principal-fixo {
+  --contato-accent: #0f766e;
+  --contato-soft: #ccfbf1;
+  --contato-soft-strong: #99f6e4;
+  --contato-border-hover: #5eead4;
+  --contato-border-focus: #2dd4bf;
+  --contato-ring: rgba(15, 118, 110, 0.15);
+  --contato-contrast: #115e59;
+}
+
+.contato-principal-celular {
+  --contato-accent: #b45309;
+  --contato-soft: #ffedd5;
+  --contato-soft-strong: #fed7aa;
+  --contato-border-hover: #fdba74;
+  --contato-border-focus: #fb923c;
+  --contato-ring: rgba(180, 83, 9, 0.14);
+  --contato-contrast: #9a3412;
+}
+
+.contato-principal-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.contato-principal-kind {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--contato-accent);
+  font-weight: 700;
+}
+
+.contato-principal-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--contato-contrast);
+  background: var(--contato-soft);
+  border: 1px solid var(--contato-soft-strong);
+  border-radius: 999px;
+  padding: 2px 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.form-subfield {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.form-subfield .form-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  letter-spacing: 0.3px;
+}
+
+.form-subfield .form-input {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  border-color: var(--contato-soft-strong);
+}
+
+.form-subfield .form-input:focus {
+  background: #ffffff;
+}
+
+.contatos-adicionais-section {
+  margin-top: 20px;
+  border: 1px dashed #bfdbfe;
+  border-radius: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.contatos-adicionais-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.contatos-adicionais-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0.2px;
+}
+
+.btn-add-contato {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #2563eb;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 8px 15px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+}
+
+.btn-add-contato:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 20px rgba(37, 99, 235, 0.24);
+}
+
+.btn-add-contato:active {
+  transform: translateY(0);
+}
+
+.contatos-adicionais-empty {
+  margin-top: 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  padding: 12px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.8125rem;
+}
+
+.contatos-adicionais-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contato-adicional-item {
+  --contato-adicional-accent: #2563eb;
+  --contato-adicional-soft: #dbeafe;
+  --contato-adicional-soft-strong: #bfdbfe;
+  --contato-adicional-contrast: #1e3a8a;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.contato-adicional-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--contato-adicional-accent) 0%, var(--contato-adicional-soft-strong) 100%);
+  opacity: 0.95;
+}
+
+.contato-adicional-item:hover {
+  border-color: var(--contato-adicional-soft-strong);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.contato-adicional-item:focus-within {
+  border-color: var(--contato-adicional-accent);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 12px 24px rgba(15, 23, 42, 0.09);
+}
+
+.contato-adicional-tipo-email {
+  --contato-adicional-accent: #0ea5e9;
+  --contato-adicional-soft: #e0f2fe;
+  --contato-adicional-soft-strong: #bae6fd;
+  --contato-adicional-contrast: #0369a1;
+}
+
+.contato-adicional-tipo-telefone-fixo {
+  --contato-adicional-accent: #14b8a6;
+  --contato-adicional-soft: #ccfbf1;
+  --contato-adicional-soft-strong: #99f6e4;
+  --contato-adicional-contrast: #0f766e;
+}
+
+.contato-adicional-tipo-celular {
+  --contato-adicional-accent: #f59e0b;
+  --contato-adicional-soft: #fef3c7;
+  --contato-adicional-soft-strong: #fde68a;
+  --contato-adicional-contrast: #b45309;
+}
+
+.contato-adicional-tipo-outro {
+  --contato-adicional-accent: #64748b;
+  --contato-adicional-soft: #e2e8f0;
+  --contato-adicional-soft-strong: #cbd5e1;
+  --contato-adicional-contrast: #334155;
+}
+
+.contato-adicional-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.contato-adicional-meta-left {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.contato-adicional-index {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.contato-adicional-kind {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--contato-adicional-contrast);
+}
+
+.contato-adicional-badge {
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--contato-adicional-contrast);
+  background: var(--contato-adicional-soft);
+  border: 1px solid var(--contato-adicional-soft-strong);
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+  padding: 2px 8px;
+}
+
+.contato-adicional-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px dashed #dbe2ea;
+}
+
+.btn-remove-contato {
+  align-self: flex-end;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff5f5;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(185, 28, 28, 0.08);
+}
+
+.btn-remove-contato:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
 }
 
 .radio-group {
@@ -1370,6 +2024,53 @@ const handleSubmit = () => {
 
   .radio-card-description {
     font-size: 0.75rem;
+  }
+
+  .contatos-adicionais-section {
+    padding: 12px;
+  }
+
+  .contato-principal-card {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .contato-principal-meta {
+    margin-bottom: 6px;
+  }
+
+  .contato-principal-kind {
+    font-size: 0.6875rem;
+  }
+
+  .contato-principal-badge {
+    font-size: 0.625rem;
+    padding: 2px 7px;
+  }
+
+  .contatos-adicionais-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .btn-add-contato {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .contato-adicional-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contato-adicional-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .contato-adicional-badge {
+    align-self: flex-start;
   }
 
   .modal-footer {

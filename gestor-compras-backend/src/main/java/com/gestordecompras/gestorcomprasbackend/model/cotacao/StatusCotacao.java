@@ -1,27 +1,31 @@
 package com.gestordecompras.gestorcomprasbackend.model.cotacao;
 
 /**
- * Define o status de uma cotação específica dentro de um processo de compra.
+ * Define o status de uma cotacao especifica dentro de um processo de compra.
  */
 public enum StatusCotacao {
     /**
-     * Cotação recebida e sob análise do comprador.
+     * Cotacao recebida e sob analise do comprador.
      */
     EM_ANALISE,
 
     /**
-     * Cotação selecionada/vencedora para os itens cotados.
-     * Esta cotação fará parte do pedido final.
+     * Cotacao selecionada/vencedora para os itens cotados.
      */
     APROVADA,
 
     /**
-     * Cotação não selecionada (preço alto, prazo ruim, etc).
+     * Cotacao parcialmente selecionada (apenas alguns itens).
+     */
+    PARCIAL,
+
+    /**
+     * Cotacao nao selecionada.
      */
     REJEITADA,
 
     /**
-     * Cotação cancelada ou inválida.
+     * Cotacao cancelada ou invalida.
      */
     CANCELADA
 }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="dashboard-layout" :class="{ 'sidebar-collapsed': isCollapsed }">
     <!-- Header -->
     <DashboardHeader />
@@ -806,6 +806,7 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
 <style scoped>
 /* Importar layout global */
 @import '../assets/css/layout.css';
+@import '../assets/css/tables-modern.css';
 
 /* Welcome Section */
 .welcome-section {
@@ -2300,3 +2301,6 @@ watch(() => route.query.filtrarUsuario, (novoId) => {
   }
 }
 </style>
+
+
+

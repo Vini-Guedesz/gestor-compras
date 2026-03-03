@@ -62,6 +62,37 @@ public class HistoricoCotacao {
     private LocalDate dataLimiteNovo;
 
     /**
+     * Status final da cotacao no momento do registro.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_final", length = 20)
+    private StatusCotacao statusFinal;
+
+    /**
+     * Itens selecionados na conversao (auditoria).
+     */
+    @Column(name = "itens_selecionados", length = 2000)
+    private String itensSelecionados;
+
+    /**
+     * Itens nao selecionados na conversao (auditoria).
+     */
+    @Column(name = "itens_nao_selecionados", length = 2000)
+    private String itensNaoSelecionados;
+
+    /**
+     * Snapshot dos itens anteriores (JSON ou texto formatado).
+     */
+    @Column(name = "itens_anteriores", columnDefinition = "TEXT")
+    private String itensAnteriores;
+
+    /**
+     * Snapshot dos itens novos (JSON ou texto formatado).
+     */
+    @Column(name = "itens_novos", columnDefinition = "TEXT")
+    private String itensNovos;
+
+    /**
      * Informações de auditoria
      */
     @Column(name = "motivo_edicao", nullable = false, length = 500)

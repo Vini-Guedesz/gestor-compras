@@ -190,6 +190,9 @@ CREATE TABLE historico_cotacao (
     preco_novo DECIMAL(12, 2),
     prazo_novo INTEGER,
     data_limite_novo DATE,
+    status_final VARCHAR(20),
+    itens_selecionados TEXT,
+    itens_nao_selecionados TEXT,
     motivo_edicao VARCHAR(500) NOT NULL,
     editado_por VARCHAR(100),
     data_edicao TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -267,7 +270,7 @@ CREATE TABLE cotacao_rascunho (
     rascunho_id BIGINT NOT NULL,
     fornecedor_produto_id BIGINT,
     fornecedor_servico_id BIGINT,
-    preco DECIMAL(19, 2) NOT NULL,
+    preco DECIMAL(19, 2),
     prazo_em_dias_uteis INTEGER,
     data_limite DATE,
     data_criacao TIMESTAMP DEFAULT NOW(),
@@ -283,13 +286,17 @@ CREATE TABLE cotacao_rascunho (
 );
 
 CREATE TABLE cotacao_rascunho_item (
+    id BIGSERIAL PRIMARY KEY,
     cotacao_rascunho_id BIGINT NOT NULL,
     item_rascunho_id BIGINT NOT NULL,
-    PRIMARY KEY (cotacao_rascunho_id, item_rascunho_id),
+    preco_unitario DECIMAL(19, 2) NOT NULL,
+    quantidade INTEGER NOT NULL,
+    observacao VARCHAR(1000),
     CONSTRAINT fk_cri_cotacao FOREIGN KEY (cotacao_rascunho_id) 
         REFERENCES cotacao_rascunho(id) ON DELETE CASCADE,
     CONSTRAINT fk_cri_item FOREIGN KEY (item_rascunho_id) 
-        REFERENCES item_rascunho(id) ON DELETE CASCADE
+        REFERENCES item_rascunho(id) ON DELETE CASCADE,
+    CONSTRAINT uk_cotacao_rascunho_item UNIQUE (cotacao_rascunho_id, item_rascunho_id)
 );
 
 CREATE TABLE anexo_cotacao_rascunho (
@@ -304,4 +311,3 @@ CREATE TABLE anexo_cotacao_rascunho (
     CONSTRAINT fk_acr_storage FOREIGN KEY (pdf_storage_id) 
         REFERENCES pdf_storage(id)
 );
-

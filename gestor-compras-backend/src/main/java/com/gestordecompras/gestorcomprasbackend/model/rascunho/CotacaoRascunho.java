@@ -11,9 +11,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name = "cotacao_rascunho")
@@ -41,16 +41,16 @@ public class CotacaoRascunho {
     @JoinColumn(name = "fornecedor_servico_id")
     private FornecedorDeServico fornecedorServico;
 
-    @ManyToMany
-    @JoinTable(
-        name = "cotacao_rascunho_item",
-        joinColumns = @JoinColumn(name = "cotacao_rascunho_id"),
-        inverseJoinColumns = @JoinColumn(name = "item_rascunho_id")
-    )
-    private Set<ItemRascunho> itensRascunho = new HashSet<>();
+    @OneToMany(mappedBy = "cotacaoRascunho", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CotacaoRascunhoItem> itens = new HashSet<>();
 
-    @Column(nullable = false)
-    private BigDecimal preco;
+    /**
+     * Preço total legado.
+     * @deprecated Use {@link #getPreco()} calculado a partir dos itens.
+     */
+    @Deprecated
+    @Column(name = "preco")
+    private BigDecimal precoLegacy;
 
     private Integer prazoEmDiasUteis;
 
@@ -114,5 +114,29 @@ public class CotacaoRascunho {
             return "SERVICO";
         }
         return null;
+    }
+
+    public void addItem(CotacaoRascunhoItem item) {
+        itens.add(item);
+        item.setCotacaoRascunho(this);
+    }
+
+    public void removeItem(CotacaoRascunhoItem item) {
+        itens.remove(item);
+        item.setCotacaoRascunho(null);
+    }
+
+    public BigDecimal getPreco() {
+        if (itens != null && !itens.isEmpty()) {
+            return itens.stream()
+                .map(CotacaoRascunhoItem::calcularPrecoTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        return precoLegacy != null ? precoLegacy : BigDecimal.ZERO;
+    }
+
+    @Deprecated
+    public void setPreco(BigDecimal preco) {
+        this.precoLegacy = preco;
     }
 }

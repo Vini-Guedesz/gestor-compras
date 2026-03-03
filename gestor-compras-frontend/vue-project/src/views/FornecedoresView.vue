@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="dashboard-layout" :class="{ 'sidebar-collapsed': isCollapsed }">
     <!-- Header -->
     <DashboardHeader />
@@ -667,6 +667,7 @@ onMounted(() => {
 <style scoped>
 /* Importar layout global */
 @import '../assets/css/layout.css';
+@import '../assets/css/tables-modern.css';
 
 /* Welcome Section */
 .welcome-section {
@@ -1878,3 +1879,6 @@ onMounted(() => {
   }
 }
 </style>
+
+
+

@@ -26,7 +26,8 @@ public interface FornecedorDeServicoRepository extends JpaRepository<FornecedorD
      */
     @Query("SELECT DISTINCT f FROM FornecedorDeServico f " +
            "LEFT JOIN FETCH f.endereco " +
-           "LEFT JOIN FETCH f.contato")
+           "LEFT JOIN FETCH f.contato c " +
+           "LEFT JOIN FETCH c.contatosAdicionais")
     List<FornecedorDeServico> findAllWithRelationships();
 
     /**
@@ -35,9 +36,10 @@ public interface FornecedorDeServicoRepository extends JpaRepository<FornecedorD
      * @param id ID do fornecedor
      * @return Optional com o fornecedor encontrado
      */
-    @Query("SELECT f FROM FornecedorDeServico f " +
+    @Query("SELECT DISTINCT f FROM FornecedorDeServico f " +
            "LEFT JOIN FETCH f.endereco " +
-           "LEFT JOIN FETCH f.contato " +
+           "LEFT JOIN FETCH f.contato c " +
+           "LEFT JOIN FETCH c.contatosAdicionais " +
            "WHERE f.id = :id")
     Optional<FornecedorDeServico> findByIdWithRelationships(@Param("id") Integer id);
 
@@ -62,6 +64,6 @@ public interface FornecedorDeServicoRepository extends JpaRepository<FornecedorD
      * @param id ID do fornecedor
      * @return Optional contendo o fornecedor com relacionamentos carregados
      */
-    @EntityGraph(attributePaths = {"endereco", "contato"})
+    @EntityGraph(attributePaths = {"endereco", "contato", "contato.contatosAdicionais"})
     Optional<FornecedorDeServico> findById(Integer id);
 }

@@ -7,6 +7,7 @@ import com.gestordecompras.gestorcomprasbackend.dto.fornecedor.FornecedorDeServi
 import com.gestordecompras.gestorcomprasbackend.mapper.CotacaoMapper;
 import com.gestordecompras.gestorcomprasbackend.mapper.FornecedorDeServicoMapper;
 import com.gestordecompras.gestorcomprasbackend.model.fornecedor.FornecedorDeServico;
+import com.gestordecompras.gestorcomprasbackend.repository.ContatoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.CotacaoRepository;
 import com.gestordecompras.gestorcomprasbackend.repository.FornecedorDeServicoRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -29,10 +31,12 @@ import java.util.stream.Collectors;
  * @since 1.0
  */
 @Service
+@Transactional(readOnly = true)
 public class FornecedorDeServicoService {
 
     private final FornecedorDeServicoRepository repository;
     private final FornecedorDeServicoMapper mapper;
+    private final ContatoRepository contatoRepository;
     private final CotacaoRepository cotacaoRepository;
     private final CotacaoMapper cotacaoMapper;
 
@@ -46,10 +50,12 @@ public class FornecedorDeServicoService {
      */
     public FornecedorDeServicoService(FornecedorDeServicoRepository repository,
                                       FornecedorDeServicoMapper mapper,
+                                      ContatoRepository contatoRepository,
                                       CotacaoRepository cotacaoRepository,
                                       CotacaoMapper cotacaoMapper) {
         this.repository = repository;
         this.mapper = mapper;
+        this.contatoRepository = contatoRepository;
         this.cotacaoRepository = cotacaoRepository;
         this.cotacaoMapper = cotacaoMapper;
     }
@@ -61,7 +67,9 @@ public class FornecedorDeServicoService {
      * @return Uma página de DTOs de fornecedores de serviços.
      */
     public Page<FornecedorDeServicoDTO> getAllFornecedoresDeServico(Pageable pageable) {
-        return repository.findAll(pageable).map(mapper::toDTO);
+        Page<FornecedorDeServico> fornecedoresPage = repository.findAll(pageable);
+        preloadContatosAdicionais(fornecedoresPage.getContent());
+        return fornecedoresPage.map(mapper::toDTO);
     }
 
     /**
@@ -145,5 +153,19 @@ public class FornecedorDeServicoService {
         return cotacaoRepository.findByFornecedorServicoId(id).stream()
                 .map(cotacaoMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    private void preloadContatosAdicionais(List<FornecedorDeServico> fornecedores) {
+        List<Integer> contatosIds = fornecedores.stream()
+                .map(FornecedorDeServico::getContato)
+                .filter(Objects::nonNull)
+                .map(contato -> contato.getId())
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (!contatosIds.isEmpty()) {
+            contatoRepository.findAllByIdInWithContatosAdicionais(contatosIds);
+        }
     }
 }

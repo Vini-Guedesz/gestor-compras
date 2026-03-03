@@ -1,51 +1,61 @@
-<template>
+﻿<template>
   <header class="dashboard-header">
     <div class="header-content">
       <div class="left-section">
-        <!-- Botão Menu Mobile -->
-        <button class="menu-toggle" @click="toggleMobileSidebar" aria-label="Abrir menu">
+        <button class="menu-toggle icon-button" @click="toggleMobileSidebar" aria-label="Abrir menu">
           <svg viewBox="0 0 24 24" width="24" height="24">
             <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
           </svg>
         </button>
 
-        <!-- Botão Toggle Sidebar (Desktop) -->
-        <button class="sidebar-toggle desktop-only" @click="toggleCollapse" aria-label="Alternar menu">
+        <button class="sidebar-toggle desktop-only icon-button" @click="toggleCollapse" aria-label="Alternar menu">
           <svg viewBox="0 0 24 24" width="24" height="24">
             <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
           </svg>
         </button>
 
-        <!-- Logo -->
         <div class="logo-section">
+          <div class="brand-mark" aria-hidden="true"></div>
           <div class="logo">
             <span class="logo-text">Gestor de Compras</span>
+            <span class="logo-subtext">Painel principal</span>
           </div>
         </div>
       </div>
 
-      <!-- Barra de Busca Global -->
       <div class="search-section">
-        <GlobalSearch />
+        <div class="search-shell">
+          <GlobalSearch />
+        </div>
       </div>
 
-      <!-- Ícones e Usuário -->
       <div class="user-section">
-        <!-- Avatar e Info do Usuário -->
-        <div class="user-info" @click="toggleUserMenu" v-click-outside="closeUserMenu">
+        <div
+          class="user-info"
+          :class="{ open: isUserMenuOpen }"
+          @click="toggleUserMenu"
+          v-click-outside="closeUserMenu"
+        >
           <div class="user-avatar">
             <img :src="userAvatar" :alt="userName" loading="lazy" width="40" height="40" />
+            <span class="avatar-status" aria-hidden="true"></span>
           </div>
+
           <div class="user-details">
             <span class="user-name">{{ userName }}</span>
             <span class="user-role">{{ userRole }}</span>
           </div>
-          <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" :class="{ 'rotated': isUserMenuOpen }">
+
+          <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16" :class="{ rotated: isUserMenuOpen }">
             <path fill="currentColor" d="M7 10l5 5 5-5z"/>
           </svg>
 
-          <!-- Dropdown Menu do Usuário -->
-          <div v-if="isUserMenuOpen" class="user-dropdown">
+          <div v-if="isUserMenuOpen" class="user-dropdown" @click.stop>
+            <div class="dropdown-user-summary">
+              <strong>{{ userName }}</strong>
+              <span>{{ userRole }}</span>
+            </div>
+
             <div class="dropdown-item" @click="viewProfile">
               <svg class="item-icon" viewBox="0 0 24 24" width="16" height="16">
                 <path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -55,14 +65,14 @@
 
             <div class="dropdown-item" @click="openSettings">
               <svg class="item-icon" viewBox="0 0 24 24" width="16" height="16">
-                <path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03-0.7-1.62-0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c-0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                <path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7.5 7.5 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.48-.41h-3.84a.5.5 0 0 0-.47.41l-.36 2.54a7.35 7.35 0 0 0-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58c-.04.31-.07.63-.07.94s.02.63.07.94l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.04.24.23.41.47.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.12-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.02-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/>
               </svg>
               <span>Configurações</span>
             </div>
 
             <div class="dropdown-item" @click="openAbout">
               <svg class="item-icon" viewBox="0 0 24 24" width="16" height="16">
-                <path fill="currentColor" d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/>
+                <path fill="currentColor" d="M11 9h2V7h-2m1 13C7.59 20 4 16.41 4 12S7.59 4 12 4s8 3.59 8 8-3.59 8-8 8m0-18a10 10 0 0 0-10 10 10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2m-1 15h2v-6h-2v6z"/>
               </svg>
               <span>Sobre</span>
             </div>
@@ -80,27 +90,11 @@
       </div>
     </div>
 
-    <!-- Modal de Logout -->
-    <LogoutModal
-      :show="showLogoutModal"
-      @confirm="confirmLogout"
-      @cancel="cancelLogout"
-    />
+    <LogoutModal :show="showLogoutModal" @confirm="confirmLogout" @cancel="cancelLogout" />
   </header>
 </template>
 
 <script setup>
-/**
- * Componente DashboardHeader - Cabeçalho da aplicação
- *
- * Funcionalidades:
- * - Exibição da logo
- * - Barra de pesquisa
- * - Notificações
- * - Menu do usuário com logout
- * - Configurações
- */
-
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -118,18 +112,12 @@ const { error: toastError } = useToast()
 const isUserMenuOpen = ref(false)
 const showLogoutModal = ref(false)
 
-// Controle do sidebar mobile
 const { toggleSidebar } = useMobileSidebar()
-// Controle do sidebar desktop (retrátil)
 const { toggleCollapse, setCollapsed } = useSidebar()
 
 const userName = computed(() => authStore.user?.nome || authStore.user?.email || 'Usuário')
-
-const userRole = computed(() => {
-  return getUserRole(authStore.user)
-})
+const userRole = computed(() => getUserRole(authStore.user))
 const userAvatar = computed(() => {
-  // Placeholder para avatar - pode ser substituído por uma URL real
   return `data:image/svg+xml;base64,${btoa(`
     <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
       <circle cx="20" cy="20" r="20" fill="#1F285F"/>
@@ -139,91 +127,54 @@ const userAvatar = computed(() => {
   `)}`
 })
 
-/**
- * Abre/fecha o menu dropdown do usuário
- */
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value
 }
 
-/**
- * Fecha o menu do usuário
- */
 const closeUserMenu = () => {
   isUserMenuOpen.value = false
 }
 
-/**
- * Abre a página de perfil do usuário
- * Ao clicar, o menu lateral se retrai automaticamente
- */
 const viewProfile = () => {
   isUserMenuOpen.value = false
-  setCollapsed(true) // Retrai o menu lateral
+  setCollapsed(true)
   router.push('/perfil')
 }
 
-/**
- * Abre a página de configurações
- */
 const openSettings = () => {
   isUserMenuOpen.value = false
   router.push('/configuracoes')
 }
 
-/**
- * Abre a página Sobre
- */
 const openAbout = () => {
   isUserMenuOpen.value = false
   router.push('/sobre')
 }
 
-/**
- * Realiza o logout do usuário
- *
- * Abre o modal de confirmação em vez de usar alert()
- */
 const handleLogout = () => {
   isUserMenuOpen.value = false
   showLogoutModal.value = true
 }
 
-/**
- * Confirma o logout após o usuário aceitar no modal
- */
 const confirmLogout = async () => {
   try {
-    // Realiza o logout
-    authStore.logout()
-
-    // Fecha o modal
     showLogoutModal.value = false
-
-    // Redireciona para a página de login
-    router.push('/login')
-
+    authStore.logout()
+    await router.replace('/login')
   } catch (error) {
     logger.error('Erro ao fazer logout:', error)
     toastError('Erro ao sair da aplicação. Tente novamente.')
   }
 }
 
-/**
- * Cancela o logout
- */
 const cancelLogout = () => {
   showLogoutModal.value = false
 }
 
-/**
- * Toggle do sidebar mobile
- */
 const toggleMobileSidebar = () => {
   toggleSidebar()
 }
 
-// Diretiva customizada para fechar menu ao clicar fora
 const vClickOutside = {
   beforeMount(el, binding) {
     el.clickOutsideEvent = function(event) {
@@ -241,13 +192,14 @@ const vClickOutside = {
 
 <style scoped>
 .dashboard-header {
-  background: white;
-  border-bottom: 1px solid #e0e6ed;
-  height: 70px;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid #e2e8f0;
+  height: 72px;
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
 }
 
 .header-content {
@@ -255,93 +207,119 @@ const vClickOutside = {
   align-items: center;
   justify-content: space-between;
   height: 100%;
-  padding: 0 24px;
+  padding: 0 20px;
   max-width: 100%;
-  min-width: 0; /* Permite que o container encolha */
+  min-width: 0;
+  gap: 14px;
 }
 
 .left-section {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
-/* Menu Toggle (Hamburguer) */
+.icon-button {
+  border: 1px solid #e2e8f0;
+  color: #1f285f;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  transform: translateY(-1px);
+}
+
+.icon-button:active {
+  transform: translateY(0);
+}
+
 .menu-toggle {
   display: none;
-  background: none;
-  border: none;
-  color: #1F285F;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
 }
 
-.menu-toggle:hover {
-  background: #f3f4f6;
-}
-
-.menu-toggle:active {
-  background: #e5e7eb;
-}
-
-/* Sidebar Toggle (Desktop) */
 .sidebar-toggle {
   display: inline-flex;
-  background: none;
-  border: none;
-  color: #1F285F;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-  flex-shrink: 0;
-  margin-right: 16px;
-  align-items: center;
-  justify-content: center;
+  margin-right: 4px;
 }
 
-.sidebar-toggle:hover {
-  background: #f3f4f6;
-}
-
-/* Logo Section */
 .logo-section {
   flex: 0 0 auto;
   min-width: 0;
   display: flex;
   align-items: center;
-  height: 100%;
+  gap: 10px;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #1f285f 0%, #3f519f 100%);
+  box-shadow: 0 10px 18px rgba(31, 40, 95, 0.28);
+  position: relative;
+}
+
+.brand-mark::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .logo-text {
-  font-family: inherit;
-  font-size: 20px;
-  font-weight: bold;
-  color: #1F285F;
-  line-height: 1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1f285f;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
-/* Search Section */
+.logo-subtext {
+  color: #64748b;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
 .search-section {
   flex: 1;
-  max-width: 600px;
-  margin: 0 40px;
-  min-width: 0; /* Permite que o flex item encolha */
+  max-width: 620px;
+  margin: 0 22px;
+  min-width: 0;
 }
 
-/* User Section */
+.search-shell {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
 .user-section {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 20px;
-  min-width: 0; /* Permite que o flex item encolha */
+  min-width: 0;
 }
 
 .user-info {
@@ -349,22 +327,37 @@ const vClickOutside = {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px;
-  border-radius: 25px;
+  padding: 7px 12px 7px 8px;
+  border-radius: 14px;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.user-info:hover {
-  background: #f8f9fa;
+.user-info:hover,
+.user-info.open {
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #e0e6ed;
+  border: 2px solid #dbeafe;
+  position: relative;
+}
+
+.avatar-status {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #fff;
 }
 
 .user-avatar img {
@@ -377,33 +370,32 @@ const vClickOutside = {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;
 }
 
 .user-name {
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1F285F;
-  line-height: 1.2;
+  font-size: 0.87rem;
+  font-weight: 700;
+  color: #1f285f;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
+  max-width: 140px;
 }
 
 .user-role {
-  font-family: inherit;
-  font-size: 12px;
-  color: #6b7280;
-  line-height: 1.2;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
+  max-width: 140px;
 }
 
 .dropdown-arrow {
-  color: #6b7280;
+  color: #64748b;
   transition: transform 0.2s ease;
 }
 
@@ -411,23 +403,38 @@ const vClickOutside = {
   transform: rotate(180deg);
 }
 
-.user-info:hover .dropdown-arrow {
-  transform: rotate(180deg);
-}
-
-/* User Dropdown Menu */
 .user-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  min-width: 200px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.14);
+  min-width: 240px;
   z-index: 1000;
   overflow: hidden;
   animation: dropdownFadeIn 0.15s ease-out;
+}
+
+.dropdown-user-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #f8fafc, #ffffff);
+  border-bottom: 1px solid #eef2f7;
+}
+
+.dropdown-user-summary strong {
+  font-size: 0.86rem;
+  color: #1f285f;
+  line-height: 1.2;
+}
+
+.dropdown-user-summary span {
+  font-size: 0.75rem;
+  color: #64748b;
 }
 
 @keyframes dropdownFadeIn {
@@ -445,12 +452,12 @@ const vClickOutside = {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  color: #374151;
-  font-size: 14px;
-  font-family: inherit;
+  padding: 11px 16px;
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.15s ease;
   border: none;
   background: none;
   width: 100%;
@@ -458,7 +465,8 @@ const vClickOutside = {
 }
 
 .dropdown-item:hover {
-  background-color: #f9fafb;
+  background-color: #f8fafc;
+  color: #1f285f;
 }
 
 .dropdown-item.logout-item {
@@ -480,27 +488,26 @@ const vClickOutside = {
   margin: 4px 0;
 }
 
-/* Responsividade */
 @media (max-width: 1024px) {
   .search-section {
-    margin: 0 20px;
-    max-width: 400px;
+    margin: 0 12px;
+    max-width: 430px;
   }
 
   .header-content {
-    padding: 0 16px;
+    padding: 0 14px;
   }
 
   .sidebar-toggle {
     display: none;
   }
-}
 
-@media (max-width: 1024px) {
   .menu-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-flex;
+  }
+
+  .logo-subtext {
+    display: none;
   }
 }
 
@@ -509,47 +516,49 @@ const vClickOutside = {
     display: none;
   }
 
-  .user-details {
+  .user-details,
+  .dropdown-arrow {
     display: none;
   }
 
   .header-content {
-    padding: 0 16px;
-    gap: 12px;
-  }
-
-  .logo-section {
-    flex: 1;
-    display: flex;
-    justify-content: flex-start;
-    min-width: auto;
+    padding: 0 12px;
+    gap: 10px;
   }
 
   .logo-text {
-    font-size: 18px;
+    font-size: 0.98rem;
   }
 
-  .user-section {
-    gap: 12px;
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .user-info {
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .user-dropdown {
+    min-width: 210px;
   }
 }
 
 @media (max-width: 480px) {
+  .logo-text {
+    font-size: 0.9rem;
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+
   .header-content {
-    padding: 0 12px;
-  }
-
-  .user-section {
-    gap: 12px;
-  }
-
-  .notification-icon,
-  .settings-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0 10px;
   }
 }
 </style>
+
+

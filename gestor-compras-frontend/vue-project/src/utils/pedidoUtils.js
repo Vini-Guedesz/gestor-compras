@@ -69,6 +69,9 @@ export const itemTemCotacao = (itemId, cotacoes) => {
   if (!cotacoes || !Array.isArray(cotacoes)) return false
 
   return cotacoes.some(c => {
+    if (c.itens && c.itens.length > 0) {
+      return c.itens.some(i => i.itemRascunhoId === itemId || i.itemPedidoId === itemId)
+    }
     // Para rascunhos: verificar itensRascunhoIds
     if (c.itensRascunhoIds && c.itensRascunhoIds.length > 0) {
       return c.itensRascunhoIds.includes(itemId)
@@ -113,6 +116,12 @@ export const itemTemCotacao = (itemId, cotacoes) => {
 export const getItensIdsDaCotacao = (cotacao) => {
   if (!cotacao) return []
 
+  // Itens detalhados (novo)
+  if (cotacao.itens && cotacao.itens.length > 0) {
+    return cotacao.itens
+      .map(i => i.itemRascunhoId || i.itemPedidoId)
+      .filter(Boolean)
+  }
   // Para rascunhos
   if (cotacao.itensRascunhoIds && cotacao.itensRascunhoIds.length > 0) {
     return cotacao.itensRascunhoIds

@@ -82,11 +82,11 @@
               <span class="itens-label">Itens contemplados:</span>
               <div class="itens-tags">
                 <span
-                  v-for="itemId in cotacao.itensRascunhoIds"
-                  :key="itemId"
+                  v-for="item in getItensCotacao(cotacao)"
+                  :key="item.id"
                   class="item-tag"
                 >
-                  {{ getNomeItem(itemId) }}
+                  {{ item.label }}
                 </span>
               </div>
             </div>
@@ -346,6 +346,31 @@
                   <span class="checkbox-nome">{{ item.nome }}</span>
                   <span class="checkbox-qtd">Quantidade: {{ item.quantidade }}</span>
                 </div>
+                <div
+                  v-if="novaCotacao.itensRascunhoIds.includes(item.id)"
+                  class="item-cotacao-fields"
+                >
+                  <div class="field-inline">
+                    <label class="field-label">Preço unitário</label>
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      pattern="\\d*"
+                      :value="formatarPrecoMascara(getItemDetalhes(item).precoUnitario)"
+                      @input="onPrecoUnitarioInput(item, $event)"
+                      @click.stop
+                    >
+                  </div>
+                  <div class="field-inline">
+                    <label class="field-label">Qtd</label>
+                    <input
+                      type="number"
+                      min="1"
+                      v-model.number="getItemDetalhes(item).quantidade"
+                      @click.stop
+                    >
+                  </div>
+                </div>
               </div>
             </div>
             <span v-if="novaCotacao.itensRascunhoIds.length > 0" class="selected-count">
@@ -353,23 +378,13 @@
             </span>
           </div>
 
-          <!-- Preço -->
+          <!-- Preço Total -->
           <div class="form-group">
-            <label>Preço Total *</label>
-            <div class="preco-input-container">
-              <span class="preco-prefix">R$</span>
-              <input
-                type="text"
-                :value="precoFormatado"
-                @input="handlePrecoInput($event)"
-                @keypress="validarTeclaPreco($event)"
-                @click.stop
-                class="preco-input"
-                placeholder="0,00"
-                inputmode="numeric"
-                required
-              >
+            <label>Preço Total (calculado)</label>
+            <div class="preco-total-display">
+              R$ {{ totalCotacaoFormatado }}
             </div>
+            <small class="form-hint">Somatório de preço unitário x quantidade.</small>
           </div>
 
           <!-- Prazo -->
@@ -483,14 +498,22 @@
         </div>
 
         <div class="modal-footer">
-          <button @click="fecharFormulario" class="btn-cancel">Cancelar</button>
-          <button
-            @click="salvarCotacao"
-            class="btn-save"
-            :disabled="!cotacaoValida || salvando"
-          >
-            {{ salvando ? 'Salvando...' : 'Salvar Cotação' }}
-          </button>
+          <div class="modal-footer-actions">
+            <button @click="fecharFormulario" class="btn-cancel">Cancelar</button>
+            <div class="btn-save-wrapper">
+              <button
+                @click="salvarCotacao"
+                class="btn-save"
+                :disabled="!cotacaoValida || salvando"
+                :title="motivoBotaoDesabilitado || 'Salvar Cotação'"
+              >
+                {{ salvando ? 'Salvando...' : 'Salvar Cotação' }}
+              </button>
+              <span v-if="motivoBotaoDesabilitado && !cotacaoValida" class="btn-save-hint">
+                {{ motivoBotaoDesabilitado }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
       </div>
@@ -541,7 +564,6 @@ export default {
     const gerandoRelatorio = ref(false)
     const fornecedorSelecionado = ref('')
     const arquivosPdf = ref([])
-    const precoFormatado = ref('')
     const fileInput = ref(null)
     const fornecedorInput = ref(null)
     const buscaFornecedor = ref('')
@@ -558,7 +580,7 @@ export default {
       fornecedorId: null,
       tipoFornecedor: '',
       itensRascunhoIds: [],
-      preco: null,
+      itensDetalhes: {},
       prazoEmDiasUteis: null,
       dataLimite: null,
       anexosPdf: [],
@@ -566,51 +588,31 @@ export default {
       projeto: null
     })
 
-    const validarTeclaPreco = (event) => {
-      // Permitir teclas de controle e navegação
-      const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter']
-      if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
-        return
-      }
-      
-      // Bloquear se não for número
-      if (!/^\d$/.test(event.key)) {
-        event.preventDefault()
-      }
-    }
+    const totalCotacao = computed(() => {
+      return novaCotacao.value.itensRascunhoIds.reduce((total, itemId) => {
+        const detalhe = novaCotacao.value.itensDetalhes[itemId] || {}
+        const preco = parseFloat(detalhe.precoUnitario) || 0
+        const quantidade = parseInt(detalhe.quantidade || 0)
+        return total + (preco * quantidade)
+      }, 0)
+    })
 
-    const handlePrecoInput = (event) => {
-      // Remove tudo que não é dígito do valor digitado
-      let valor = event.target.value.replace(/\D/g, '')
-
-      // Se vazio, limpa tudo
-      if (!valor) {
-        precoFormatado.value = ''
-        novaCotacao.value.preco = null
-        event.target.value = ''
-        return
-      }
-
-      // Converte para centavos e depois para reais
-      let centavos = parseInt(valor)
-      let reais = centavos / 100
-
-      // Formata com duas casas decimais
-      const valorFormatado = reais.toLocaleString('pt-BR', {
+    const totalCotacaoFormatado = computed(() => {
+      return totalCotacao.value.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       })
+    })
 
-      // Atualiza o ref e o input diretamente
-      precoFormatado.value = valorFormatado
-      event.target.value = valorFormatado
-
-      // Salva o valor numérico
-      novaCotacao.value.preco = reais
-    }
-
-    const formatarPrecoOnBlur = () => {
-      // Não precisa fazer nada, já está formatado
+    const getItemDetalhes = (item) => {
+      if (!novaCotacao.value.itensDetalhes[item.id]) {
+        novaCotacao.value.itensDetalhes[item.id] = {
+          precoUnitario: null,
+          quantidade: item.quantidade,
+          observacao: ''
+        }
+      }
+      return novaCotacao.value.itensDetalhes[item.id]
     }
 
     const removerPdfIndividual = (index) => {
@@ -691,10 +693,47 @@ export default {
     })
 
     const cotacaoValida = computed(() => {
+      const itensValidos = novaCotacao.value.itensRascunhoIds.every(itemId => {
+        const detalhe = novaCotacao.value.itensDetalhes[itemId] || {}
+        return detalhe.precoUnitario > 0 && detalhe.quantidade > 0
+      })
+
       return novaCotacao.value.fornecedorId &&
              novaCotacao.value.tipoFornecedor &&
              novaCotacao.value.itensRascunhoIds.length > 0 &&
-             novaCotacao.value.preco > 0
+             itensValidos &&
+             totalCotacao.value > 0
+    })
+
+    const motivoBotaoDesabilitado = computed(() => {
+      if (salvando.value) return 'Salvando...'
+      if (cotacaoValida.value) return ''
+
+      if (!novaCotacao.value.fornecedorId) {
+        return 'Selecione um fornecedor'
+      }
+      if (!novaCotacao.value.tipoFornecedor) {
+        return 'Selecione o tipo de fornecedor'
+      }
+      if (novaCotacao.value.itensRascunhoIds.length === 0) {
+        return 'Selecione pelo menos um item'
+      }
+
+      const itemInvalido = novaCotacao.value.itensRascunhoIds.find(itemId => {
+        const detalhe = novaCotacao.value.itensDetalhes[itemId] || {}
+        return !detalhe.precoUnitario || detalhe.precoUnitario <= 0 ||
+          !detalhe.quantidade || detalhe.quantidade <= 0
+      })
+
+      if (itemInvalido) {
+        return 'Informe preço unitário e quantidade válidos'
+      }
+
+      if (totalCotacao.value <= 0) {
+        return 'O total da cotação deve ser maior que zero'
+      }
+
+      return 'Preencha os dados obrigatórios'
     })
 
     const formatarData = (data) => {
@@ -714,14 +753,51 @@ export default {
       })
     }
 
+    const formatarPrecoMascara = (preco) => {
+      const valor = Number(preco)
+      if (!preco || Number.isNaN(valor)) {
+        return '0.00'
+      }
+      return valor.toFixed(2)
+    }
+
+    const onPrecoUnitarioInput = (item, event) => {
+      const detalhe = getItemDetalhes(item)
+      const raw = event?.target?.value ?? ''
+      const digits = raw.replace(/\D/g, '')
+      const cents = digits ? parseInt(digits, 10) : 0
+      const valor = cents / 100
+      detalhe.precoUnitario = cents === 0 ? null : valor
+      if (event?.target) {
+        event.target.value = formatarPrecoMascara(detalhe.precoUnitario)
+      }
+    }
+
     const getNomeItem = (itemId) => {
       const item = props.rascunho.itens?.find(i => i.id === itemId)
       return item ? item.nome : `Item #${itemId}`
     }
 
+    const getItensCotacao = (cotacao) => {
+      if (cotacao.itens && cotacao.itens.length > 0) {
+        return cotacao.itens.map(item => ({
+          id: item.itemRascunhoId,
+          label: `${item.nomeItem} (R$ ${formatarPreco(item.precoUnitario)} x ${item.quantidade})`
+        }))
+      }
+      if (cotacao.itensRascunhoIds && cotacao.itensRascunhoIds.length > 0) {
+        return cotacao.itensRascunhoIds.map(itemId => ({
+          id: itemId,
+          label: getNomeItem(itemId)
+        }))
+      }
+      return []
+    }
+
     const itemTemCotacao = (itemId) => {
       return props.cotacoes.some(c =>
-        c.itensRascunhoIds && c.itensRascunhoIds.includes(itemId)
+        (c.itens && c.itens.some(i => i.itemRascunhoId === itemId)) ||
+        (c.itensRascunhoIds && c.itensRascunhoIds.includes(itemId))
       )
     }
 
@@ -751,7 +827,6 @@ export default {
     const abrirFormularioCotacao = () => {
       fornecedorSelecionado.value = ''
       fornecedorSelecionadoNome.value = ''
-      precoFormatado.value = ''
       arquivosPdf.value = []
       buscaFornecedor.value = ''
       showFornecedorDropdown.value = false
@@ -759,7 +834,7 @@ export default {
         fornecedorId: null,
         tipoFornecedor: '',
         itensRascunhoIds: [],
-        preco: null,
+        itensDetalhes: {},
         prazoEmDiasUteis: null,
         dataLimite: null,
         anexosPdf: [],
@@ -778,9 +853,18 @@ export default {
       if (index > -1) {
         // Remove o item se já está selecionado
         novaCotacao.value.itensRascunhoIds.splice(index, 1)
+        delete novaCotacao.value.itensDetalhes[itemId]
       } else {
         // Adiciona o item se não está selecionado
         novaCotacao.value.itensRascunhoIds.push(itemId)
+        const item = props.rascunho.itens?.find(i => i.id === itemId)
+        if (item && !novaCotacao.value.itensDetalhes[itemId]) {
+          novaCotacao.value.itensDetalhes[itemId] = {
+            precoUnitario: null,
+            quantidade: item.quantidade,
+            observacao: ''
+          }
+        }
       }
     }
 
@@ -856,11 +940,20 @@ export default {
 
       salvando.value = true
       try {
+        const itensPayload = novaCotacao.value.itensRascunhoIds.map(itemId => {
+          const detalhe = novaCotacao.value.itensDetalhes[itemId] || {}
+          return {
+            itemRascunhoId: itemId,
+            precoUnitario: parseFloat(detalhe.precoUnitario),
+            quantidade: parseInt(detalhe.quantidade),
+            observacao: detalhe.observacao || null
+          }
+        })
+
         emit('save-cotacao', {
           fornecedorId: parseInt(novaCotacao.value.fornecedorId),
           tipoFornecedor: novaCotacao.value.tipoFornecedor,
-          itensRascunhoIds: novaCotacao.value.itensRascunhoIds,
-          preco: parseFloat(novaCotacao.value.preco),
+          itens: itensPayload,
           prazoEmDiasUteis: novaCotacao.value.prazoEmDiasUteis ? parseInt(novaCotacao.value.prazoEmDiasUteis) : null,
           dataLimite: novaCotacao.value.dataLimite || null,
           gastoPrevisto: novaCotacao.value.gastoPrevisto,
@@ -952,9 +1045,13 @@ export default {
       fornecedoresProdutoFiltrados,
       fornecedoresServicoFiltrados,
       cotacaoValida,
+      motivoBotaoDesabilitado,
       formatarData,
       formatarPreco,
+      formatarPrecoMascara,
+      onPrecoUnitarioInput,
       getNomeItem,
+      getItensCotacao,
       itemTemCotacao,
       gerarRelatorio,
       abrirFormularioCotacao,
@@ -963,11 +1060,10 @@ export default {
       handleFileUpload,
       salvarCotacao,
       onFornecedorChange,
-      // Novas funções de preço e PDF
-      precoFormatado,
-      handlePrecoInput,
-      validarTeclaPreco,
-      formatarPrecoOnBlur,
+      // Preço calculado e detalhes por item
+      totalCotacao,
+      totalCotacaoFormatado,
+      getItemDetalhes,
       arquivosPdf,
       removerPdfIndividual,
       limparTodosPdfs,
@@ -1585,6 +1681,40 @@ export default {
   font-weight: 500;
 }
 
+.item-cotacao-fields {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.field-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.preco-total-display {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
 /* Preço input estilizado */
 .preco-input-container {
   display: flex;
@@ -2079,9 +2209,55 @@ export default {
 .modal-footer {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid #e5e7eb;
+}
+
+.modal-footer-actions {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.btn-save-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  width: fit-content;
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.btn-save-hint {
+  font-size: 0.8rem;
+  color: #7f1d1d;
+  background: linear-gradient(180deg, #fff1f2, #fee2e2);
+  border: 1px solid #fecaca;
+  padding: 8px 12px;
+  border-radius: 10px;
+  max-width: 300px;
+  text-align: right;
+  box-shadow: 0 6px 18px rgba(127, 29, 29, 0.12);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 2;
+}
+
+.btn-save-hint::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 14px;
+  width: 12px;
+  height: 12px;
+  background: #fff1f2;
+  border-left: 1px solid #fecaca;
+  border-top: 1px solid #fecaca;
+  transform: rotate(45deg);
 }
 
 .btn-cancel,

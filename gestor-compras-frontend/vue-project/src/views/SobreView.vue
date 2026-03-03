@@ -94,11 +94,22 @@
 
                     <div class="card-body">
                         <div class="releases-list">
-                            <!-- v3.2.0 -->
+                            <!-- v3.2.1 -->
                             <div class="release-item current">
                                 <div class="release-header">
-                                    <span class="release-version">v3.2.0</span>
+                                    <span class="release-version">v3.2.1</span>
                                     <span class="release-badge current">Atual</span>
+                                </div>
+                                <p class="release-description">
+                                    Ajustado o clique em e-mail e telefone para copiar o contato sem travar o navegador.
+                                    Padronizada a cópia de contatos nas telas de pedido, rascunho e fornecedor.
+                                </p>
+                            </div>
+
+                            <!-- v3.2.0 -->
+                            <div class="release-item">
+                                <div class="release-header">
+                                    <span class="release-version">v3.2.0</span>
                                 </div>
                                 <p class="release-description">
                                     Corrigido bug de tipo de fornecedor no modal de cotacao.

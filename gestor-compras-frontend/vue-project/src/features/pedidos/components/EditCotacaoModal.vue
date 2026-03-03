@@ -78,8 +78,57 @@
                 <span class="form-hint">Preenchido automaticamente com o usuário logado</span>
               </div>
 
+              <!-- Edição por Item (novo modelo) -->
+              <div v-if="form.itemEdicoes.length > 0" class="form-group">
+                <label class="form-label">Itens da Cotação (preço unitário por item)</label>
+                <div class="itens-edicao-lista">
+                  <div v-for="(item, index) in form.itemEdicoes" :key="`edit-item-${item.itemPedidoId}`" class="item-edicao-card">
+                    <div class="item-edicao-header">
+                      <span class="item-edicao-nome">{{ item.nomeItem }}</span>
+                      <span class="item-edicao-qtd">Qtd: {{ item.quantidade }}</span>
+                    </div>
+                    <div class="item-edicao-grid">
+                      <div class="item-edicao-field">
+                        <label>Preço Unitário (R$)</label>
+                        <input
+                          type="text"
+                          :value="item.precoUnitarioFormatado"
+                          @input="handleItemPrecoInput(index, $event)"
+                          @blur="formatarItemPrecoFinal(index)"
+                          class="form-input"
+                          inputmode="decimal"
+                          placeholder="0,00"
+                        />
+                      </div>
+                      <div class="item-edicao-field">
+                        <label>Subtotal</label>
+                        <input
+                          type="text"
+                          :value="`R$ ${formatarPreco(item.precoUnitario * item.quantidade)}`"
+                          class="form-input"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                    <div class="item-edicao-field">
+                      <label>Observação do Item</label>
+                      <input
+                        type="text"
+                        v-model="item.observacao"
+                        class="form-input"
+                        maxlength="255"
+                        placeholder="Observação opcional para este item"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="total-edicao-itens">
+                  Total calculado pelos itens: <strong>R$ {{ formatarPreco(totalItensEditados) }}</strong>
+                </div>
+              </div>
+
               <!-- Grid: Novo Valor e Prazo -->
-              <div class="form-grid">
+              <div class="form-grid" v-if="form.itemEdicoes.length === 0">
                 <div class="form-group">
                   <label class="form-label">
                     Novo Valor (R$)
@@ -223,7 +272,8 @@ export default {
       preco: null,
       prazoEmDiasUteis: null,
       dataLimite: null,
-      pdfFiles: []
+      pdfFiles: [],
+      itemEdicoes: []
     })
 
     const dataMinima = computed(() => {
@@ -231,9 +281,28 @@ export default {
       return hoje.toISOString().split('T')[0]
     })
 
+    const totalItensEditados = computed(() => {
+      if (!form.value.itemEdicoes || form.value.itemEdicoes.length === 0) {
+        return Number(form.value.preco || 0)
+      }
+
+      return form.value.itemEdicoes.reduce((total, item) => {
+        const subtotal = Number(item.precoUnitario || 0) * Number(item.quantidade || 0)
+        return total + subtotal
+      }, 0)
+    })
+
     const formValido = computed(() => {
-      return form.value.motivoEdicao.trim().length >= 10 &&
-             form.value.editadoPor.trim().length > 0
+      const baseValido = form.value.motivoEdicao.trim().length >= 10 &&
+        form.value.editadoPor.trim().length > 0
+
+      if (!baseValido) return false
+
+      if (!form.value.itemEdicoes || form.value.itemEdicoes.length === 0) {
+        return true
+      }
+
+      return form.value.itemEdicoes.every(item => Number(item.precoUnitario) > 0 && Number(item.quantidade) > 0)
     })
 
     // Funções de formatação de preço
@@ -253,13 +322,17 @@ export default {
       })
     }
 
+    const parsePrecoInput = (valor) => {
+      const numero = String(valor || '').replace(/\D/g, '')
+      return numero ? parseFloat(numero) / 100 : null
+    }
+
     const handlePrecoInput = (event) => {
       const valor = event.target.value
       precoFormatado.value = formatarPrecoInput(valor)
 
       // Atualiza o valor numérico no form
-      const numero = valor.replace(/\D/g, '')
-      form.value.preco = numero ? parseFloat(numero) / 100 : null
+      form.value.preco = parsePrecoInput(valor)
     }
 
     const formatarPrecoFinal = () => {
@@ -269,6 +342,26 @@ export default {
           maximumFractionDigits: 2
         })
       }
+    }
+
+    const handleItemPrecoInput = (index, event) => {
+      const valor = event.target.value
+      const formatado = formatarPrecoInput(valor)
+      const preco = parsePrecoInput(valor)
+
+      form.value.itemEdicoes[index].precoUnitarioFormatado = formatado
+      form.value.itemEdicoes[index].precoUnitario = preco || 0
+    }
+
+    const formatarItemPrecoFinal = (index) => {
+      const item = form.value.itemEdicoes[index]
+      if (!item) return
+      item.precoUnitarioFormatado = item.precoUnitario
+        ? item.precoUnitario.toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })
+        : ''
     }
 
     // Resetar form quando abrir/fechar modal
@@ -283,7 +376,15 @@ export default {
           preco: props.cotacao.preco,
           prazoEmDiasUteis: props.cotacao.prazoEmDiasUteis,
           dataLimite: props.cotacao.dataLimite,
-          pdfFiles: []
+          pdfFiles: [],
+          itemEdicoes: (props.cotacao.itens || []).map(item => ({
+            itemPedidoId: item.itemPedidoId,
+            nomeItem: item.nomeItem || `Item #${item.itemPedidoId}`,
+            quantidade: Number(item.quantidade || 0),
+            precoUnitario: Number(item.precoUnitario || 0),
+            precoUnitarioFormatado: formatarPrecoInput(String(item.precoUnitario || '').replace(/[^\d]/g, '')),
+            observacao: item.observacao || ''
+          }))
         }
         // Formatar preço inicial
         if (props.cotacao.preco) {
@@ -302,7 +403,8 @@ export default {
           preco: null,
           prazoEmDiasUteis: null,
           dataLimite: null,
-          pdfFiles: []
+          pdfFiles: [],
+          itemEdicoes: []
         }
         precoFormatado.value = ''
       }
@@ -323,6 +425,12 @@ export default {
           id: props.cotacao.id,
           motivoEdicao: form.value.motivoEdicao.trim(),
           editadoPor: form.value.editadoPor.trim(),
+          itens: form.value.itemEdicoes.map(item => ({
+            itemPedidoId: item.itemPedidoId,
+            precoUnitario: Number(item.precoUnitario),
+            quantidade: Number(item.quantidade),
+            observacao: item.observacao || null
+          })),
           preco: form.value.preco,
           prazoEmDiasUteis: form.value.prazoEmDiasUteis,
           dataLimite: form.value.dataLimite,
@@ -407,9 +515,12 @@ export default {
       salvando,
       dataMinima,
       formValido,
+      totalItensEditados,
       precoFormatado,
       handlePrecoInput,
       formatarPrecoFinal,
+      handleItemPrecoInput,
+      formatarItemPrecoFinal,
       fechar,
       salvar,
       handleFileUpload,
@@ -575,6 +686,61 @@ export default {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+}
+
+.itens-edicao-lista {
+  display: grid;
+  gap: 10px;
+}
+
+.item-edicao-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.item-edicao-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.item-edicao-nome {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.9rem;
+}
+
+.item-edicao-qtd {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.item-edicao-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.item-edicao-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-edicao-field label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.total-edicao-itens {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #1e293b;
 }
 
 /* Upload Container */

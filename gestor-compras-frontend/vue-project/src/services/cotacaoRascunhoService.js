@@ -25,8 +25,10 @@
  * const novaCotacao = {
  *   fornecedorId: 10,
  *   tipoFornecedor: 'PRODUTO',
- *   itensRascunhoIds: [1, 2],
- *   preco: 1500.00,
+ *   itens: [
+ *     { itemRascunhoId: 1, precoUnitario: 10.50, quantidade: 5 },
+ *     { itemRascunhoId: 2, precoUnitario: 20.00, quantidade: 3 }
+ *   ],
  *   anexoPdf: arquivoPdf
  * }
  * await cotacaoRascunhoService.criar(5, novaCotacao)
@@ -103,8 +105,7 @@ const cotacaoRascunhoService = {
    * @param {Object} cotacao - Dados da cotação
    * @param {number} cotacao.fornecedorId - ID do fornecedor (obrigatório)
    * @param {string} cotacao.tipoFornecedor - Tipo: 'PRODUTO' ou 'SERVICO' (obrigatório)
-   * @param {Array<number>} cotacao.itensRascunhoIds - IDs dos itens cotados (mínimo 1)
-   * @param {number} cotacao.preco - Valor da cotação (> 0)
+   * @param {Array<Object>} cotacao.itens - Itens cotados com preço e quantidade (mínimo 1)
    * @param {File} [cotacao.anexoPdf] - Arquivo PDF anexo (máx 10MB)
    * @returns {Promise<Object>} Cotação criada
    * @throws {Error} Erro de validação ou comunicação
@@ -113,8 +114,10 @@ const cotacaoRascunhoService = {
    * const cotacao = {
    *   fornecedorId: 10,
    *   tipoFornecedor: 'PRODUTO',
-   *   itensRascunhoIds: [1, 2],
-   *   preco: 1500.00
+   *   itens: [
+   *     { itemRascunhoId: 1, precoUnitario: 10.50, quantidade: 5 },
+   *     { itemRascunhoId: 2, precoUnitario: 20.00, quantidade: 3 }
+   *   ]
    * }
    * await cotacaoRascunhoService.criar(5, cotacao)
    *
@@ -122,7 +125,7 @@ const cotacaoRascunhoService = {
    * Validações aplicadas:
    * - Fornecedor obrigatório
    * - Mínimo 1 item selecionado
-   * - Preço > 0
+   * - Itens devem ter preço unitário e quantidade > 0
    * - Tipo fornecedor obrigatório
    * - PDF: apenas application/pdf, máx 10MB
    */
@@ -133,14 +136,20 @@ const cotacaoRascunhoService = {
       if (!cotacao.fornecedorId) {
         throw new Error('Fornecedor é obrigatório')
       }
-      if (!cotacao.itensRascunhoIds || cotacao.itensRascunhoIds.length === 0) {
-        throw new Error('Selecione pelo menos um item')
-      }
-      if (!cotacao.preco || cotacao.preco <= 0) {
-        throw new Error('Preço deve ser maior que zero')
+      if (!cotacao.itens || cotacao.itens.length === 0) {
+        throw new Error('Informe pelo menos um item cotado')
       }
       if (!cotacao.tipoFornecedor) {
         throw new Error('Tipo do fornecedor é obrigatório')
+      }
+
+      const itensInvalidos = cotacao.itens.filter(item =>
+        !item.itemRascunhoId ||
+        !item.precoUnitario || item.precoUnitario <= 0 ||
+        !item.quantidade || item.quantidade <= 0
+      )
+      if (itensInvalidos.length > 0) {
+        throw new Error('Todos os itens devem ter preço unitário e quantidade válidos')
       }
 
       // Validar e processar anexo PDF se fornecido

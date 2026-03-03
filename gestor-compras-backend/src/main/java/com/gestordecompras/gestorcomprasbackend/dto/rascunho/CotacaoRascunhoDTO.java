@@ -11,6 +11,7 @@ public record CotacaoRascunhoDTO(
     Integer fornecedorId,
     String tipoFornecedor,
     String nomeFornecedor,
+    List<CotacaoRascunhoItemDTO> itens,
     List<Long> itensRascunhoIds,
     BigDecimal preco,
     Integer prazoEmDiasUteis,

@@ -1,5 +1,7 @@
 package com.gestordecompras.gestorcomprasbackend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoCreateDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoDTO;
 import com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoEditDTO;
@@ -31,8 +33,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("deprecation")
 public class CotacaoService {
 
     private final CotacaoRepository cotacaoRepository;
@@ -45,6 +50,7 @@ public class CotacaoService {
     private final PdfDeduplicationService pdfDeduplicationService;
     private final HistoricoPedidoService historicoPedidoService;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     public CotacaoService(CotacaoRepository cotacaoRepository,
                           FornecedorDeProdutoRepository fornecedorProdutoRepository,
@@ -55,7 +61,8 @@ public class CotacaoService {
                           HistoricoCotacaoMapper historicoCotacaoMapper,
                           PdfDeduplicationService pdfDeduplicationService,
                           HistoricoPedidoService historicoPedidoService,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          ObjectMapper objectMapper) {
         this.cotacaoRepository = cotacaoRepository;
         this.fornecedorProdutoRepository = fornecedorProdutoRepository;
         this.fornecedorServicoRepository = fornecedorServicoRepository;
@@ -66,6 +73,7 @@ public class CotacaoService {
         this.pdfDeduplicationService = pdfDeduplicationService;
         this.historicoPedidoService = historicoPedidoService;
         this.userRepository = userRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
@@ -118,7 +126,7 @@ public class CotacaoService {
             BigDecimal total = cotacao.getItens().stream()
                     .map(item -> item.getPrecoUnitario().multiply(BigDecimal.valueOf(item.getQuantidade())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            cotacao.setPreco(total);
+            cotacao.setPrecoLegacy(total);
         }
 
         cotacao.setDataCriacao(LocalDateTime.now()); // Adicionado data de criação
@@ -143,7 +151,7 @@ public class CotacaoService {
             cotacao.setDataLimite(cotacaoUpdateDTO.dataLimite());
         }
         if (cotacaoUpdateDTO.preco() != null) {
-            cotacao.setPreco(cotacaoUpdateDTO.preco());
+            cotacao.setPrecoLegacy(cotacaoUpdateDTO.preco());
         }
 
         // Recalcular total se itens mudaram
@@ -152,7 +160,7 @@ public class CotacaoService {
             BigDecimal total = cotacao.getItens().stream()
                     .map(item -> item.getPrecoUnitario().multiply(BigDecimal.valueOf(item.getQuantidade())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            cotacao.setPreco(total);
+            cotacao.setPrecoLegacy(total);
         }
 
         cotacao.setDataUltimaEdicao(LocalDateTime.now());
@@ -254,15 +262,51 @@ public class CotacaoService {
             .orElseThrow(() -> new EntityNotFoundException("Cotação não encontrada com ID: " + editDTO.id()));
 
         // 1. Criar registro no histórico com os dados ATUAIS (antes da mudança)
-        criarHistoricoCotacao(cotacao, editDTO);
+        HistoricoCotacao historico = criarHistoricoCotacao(cotacao, editDTO);
 
         // 2. Aplicar as alterações na cotação
-        if (editDTO.precoNovo() != null) {
-            cotacao.setPreco(editDTO.precoNovo());
-        } else if (editDTO.itens() != null && !editDTO.itens().isEmpty()) {
-            // Se itens foram fornecidos, recalcular preço total
-            // (Lógica de atualização de itens seria mais complexa aqui, simplificando para preço)
-            cotacao.setPreco(editDTO.calcularPrecoTotal());
+        if (editDTO.itens() != null && !editDTO.itens().isEmpty()) {
+            // Identificar IDs de ItemPedido presentes no DTO
+            java.util.Set<Long> itemPedidoIdsNoDTO = editDTO.itens().stream()
+                    .map(com.gestordecompras.gestorcomprasbackend.dto.cotacao.CotacaoItemCreateDTO::itemPedidoId)
+                    .collect(java.util.stream.Collectors.toSet());
+
+            // 1. Remover itens que não estão no DTO
+            cotacao.getItens().removeIf(item -> !itemPedidoIdsNoDTO.contains(item.getItemPedido().getId()));
+
+            // 2. Atualizar ou Adicionar itens
+            for (var itemDTO : editDTO.itens()) {
+                CotacaoItem item = cotacao.getItens().stream()
+                        .filter(i -> i.getItemPedido().getId().equals(itemDTO.itemPedidoId()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (item != null) {
+                    // Atualizar existente
+                    item.setPrecoUnitario(itemDTO.precoUnitario());
+                    item.setQuantidade(itemDTO.quantidade());
+                    item.setObservacao(itemDTO.observacao());
+                } else {
+                    // Adicionar novo
+                    ItemPedido itemPedido = itemPedidoRepository.findById(itemDTO.itemPedidoId())
+                            .orElseThrow(() -> new EntityNotFoundException("Item de pedido não encontrado: " + itemDTO.itemPedidoId()));
+                    
+                    CotacaoItem newItem = new CotacaoItem();
+                    newItem.setCotacao(cotacao);
+                    newItem.setItemPedido(itemPedido);
+                    newItem.setPrecoUnitario(itemDTO.precoUnitario());
+                    newItem.setQuantidade(itemDTO.quantidade());
+                    newItem.setObservacao(itemDTO.observacao());
+                    
+                    cotacao.getItens().add(newItem);
+                }
+            }
+            
+            // Recalcular preço total com base nos novos itens
+            cotacao.setPrecoLegacy(editDTO.calcularPrecoTotal());
+        } else if (editDTO.precoNovo() != null) {
+            // Se não enviou itens, mas enviou preço novo (modo legado ou ajuste manual)
+            cotacao.setPrecoLegacy(editDTO.precoNovo());
         }
 
         if (editDTO.prazoEmDiasUteis() != null) {
@@ -287,6 +331,29 @@ public class CotacaoService {
 
         // Salva cotação atualizada
         Cotacao cotacaoAtualizada = cotacaoRepository.save(cotacao);
+        
+        // Atualizar histórico com snapshot dos itens novos
+        if (historico != null) {
+            try {
+                List<Map<String, Object>> itensNovosSnapshot = cotacaoAtualizada.getItens().stream()
+                    .map(item -> {
+                        java.util.Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("itemPedidoId", item.getItemPedido().getId());
+                        map.put("nomeItem", item.getItemPedido().getNome());
+                        map.put("quantidade", item.getQuantidade());
+                        map.put("precoUnitario", item.getPrecoUnitario());
+                        map.put("total", item.calcularPrecoTotal());
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+                
+                historico.setItensNovos(objectMapper.writeValueAsString(itensNovosSnapshot));
+                historicoCotacaoRepository.save(historico);
+            } catch (JsonProcessingException e) {
+                // Logar erro mas não falhar a transação
+                System.err.println("Erro ao serializar itens novos para histórico: " + e.getMessage());
+            }
+        }
 
         // Registra edição no histórico do pedido
         if (cotacaoAtualizada.getSolicitacaoDePedido() != null) {
@@ -300,8 +367,10 @@ public class CotacaoService {
 
                 // Constrói detalhes do que foi modificado
                 StringBuilder detalhes = new StringBuilder();
-                if (editDTO.precoNovo() != null) {
-                    detalhes.append("Preço alterado");
+                if (editDTO.itens() != null && !editDTO.itens().isEmpty()) {
+                    detalhes.append("Itens e preços unitários atualizados");
+                } else if (editDTO.precoNovo() != null) {
+                    detalhes.append("Preço total alterado");
                 }
                 if (editDTO.prazoEmDiasUteis() != null) {
                     if (detalhes.length() > 0) detalhes.append(", ");
@@ -328,7 +397,7 @@ public class CotacaoService {
     /**
      * Cria registro no histórico de cotações
      */
-    private void criarHistoricoCotacao(Cotacao cotacaoAnterior, CotacaoEditDTO editDTO) {
+    private HistoricoCotacao criarHistoricoCotacao(Cotacao cotacaoAnterior, CotacaoEditDTO editDTO) {
         HistoricoCotacao historico = new HistoricoCotacao();
 
         historico.setCotacaoId(cotacaoAnterior.getId());
@@ -341,6 +410,28 @@ public class CotacaoService {
         historico.setPrecoAnterior(cotacaoAnterior.getPreco());
         historico.setPrazoEmDiasUteisAnterior(cotacaoAnterior.getPrazoEmDiasUteis());
         historico.setDataLimiteAnterior(cotacaoAnterior.getDataLimite());
+        
+        // Snapshot dos itens anteriores
+        if (cotacaoAnterior.getItens() != null && !cotacaoAnterior.getItens().isEmpty()) {
+            try {
+                List<Map<String, Object>> itensAnterioresSnapshot = cotacaoAnterior.getItens().stream()
+                    .map(item -> {
+                        java.util.Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("itemPedidoId", item.getItemPedido().getId());
+                        map.put("nomeItem", item.getItemPedido().getNome());
+                        map.put("quantidade", item.getQuantidade());
+                        map.put("precoUnitario", item.getPrecoUnitario());
+                        map.put("total", item.calcularPrecoTotal());
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+                
+                historico.setItensAnteriores(objectMapper.writeValueAsString(itensAnterioresSnapshot));
+            } catch (JsonProcessingException e) {
+                // Logar erro mas não falhar a transação
+                System.err.println("Erro ao serializar itens anteriores para histórico: " + e.getMessage());
+            }
+        }
 
         // Armazenar hash do PDF anterior (ao invés do PDF completo)
         if (cotacaoAnterior.getAnexos() != null && !cotacaoAnterior.getAnexos().isEmpty()) {
@@ -358,10 +449,10 @@ public class CotacaoService {
         // Dados novos (após edição)
         // Determina o novo preço: usa precoNovo se fornecido, senão calcula dos itens, senão mantém o atual
         BigDecimal novoPreco;
-        if (editDTO.precoNovo() != null) {
-            novoPreco = editDTO.precoNovo();
-        } else if (editDTO.itens() != null && !editDTO.itens().isEmpty()) {
+        if (editDTO.itens() != null && !editDTO.itens().isEmpty()) {
             novoPreco = editDTO.calcularPrecoTotal();
+        } else if (editDTO.precoNovo() != null) {
+            novoPreco = editDTO.precoNovo();
         } else {
             novoPreco = cotacaoAnterior.getPreco();
         }
@@ -387,7 +478,7 @@ public class CotacaoService {
         historico.setEditadoPor(editDTO.editadoPor());
         historico.setDataEdicao(LocalDateTime.now());
 
-        historicoCotacaoRepository.saveAndFlush(historico);
+        return historicoCotacaoRepository.saveAndFlush(historico);
     }
 
     /**

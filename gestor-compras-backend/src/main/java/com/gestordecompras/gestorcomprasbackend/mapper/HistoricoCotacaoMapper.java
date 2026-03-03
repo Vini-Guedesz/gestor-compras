@@ -17,5 +17,7 @@ public interface HistoricoCotacaoMapper {
     @Mapping(target = "caminhoAnexoNovo", constant = "null") // deprecated - sempre null
     @Mapping(target = "nomeArquivoAnterior", source = "nomeArquivoAnterior")
     @Mapping(target = "nomeArquivoNovo", source = "nomeArquivoNovo")
+    @Mapping(target = "itensAnteriores", source = "itensAnteriores")
+    @Mapping(target = "itensNovos", source = "itensNovos")
     HistoricoCotacaoDTO toDTO(HistoricoCotacao historico);
 }

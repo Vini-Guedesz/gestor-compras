@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview Serviço de Autenticação
  * @module services/authService
  * @description
@@ -249,12 +249,12 @@ export const authService = {
 
       return {
         success: true,
-        message: 'Se o email estiver cadastrado, você receberá as instruções para recuperação da senha.'
+        message: 'Se o e-mail estiver cadastrado, você receberá as instruções de recuperação em instantes.'
       }
     } catch {
       return {
         success: false,
-        error: 'Erro ao solicitar recuperação de senha'
+        error: 'Não foi possível solicitar a recuperação de senha no momento.'
       }
     }
   },
@@ -359,3 +359,8 @@ export const authService = {
     }
   }
 }
+
+
+
+
+

@@ -1,5 +1,7 @@
 package com.gestordecompras.gestorcomprasbackend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gestordecompras.gestorcomprasbackend.dto.rascunho.*;
 import com.gestordecompras.gestorcomprasbackend.dto.solicitacaodepedido.SolicitacaoDePedidoDTO;
 import com.gestordecompras.gestorcomprasbackend.mapper.RascunhoMapper;
@@ -13,6 +15,8 @@ import com.gestordecompras.gestorcomprasbackend.model.user.User;
 import com.gestordecompras.gestorcomprasbackend.model.user.UserRole;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.AnexoCotacao;
 import com.gestordecompras.gestorcomprasbackend.model.cotacao.Cotacao;
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.HistoricoCotacao;
+import com.gestordecompras.gestorcomprasbackend.model.cotacao.StatusCotacao;
 import com.gestordecompras.gestorcomprasbackend.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +44,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("deprecation")
 public class RascunhoService {
 
     private final RascunhoRepository rascunhoRepository;
@@ -52,8 +57,10 @@ public class RascunhoService {
     private final HistoricoRascunhoService historicoRascunhoService;
     private final CotacaoRascunhoRepository cotacaoRascunhoRepository;
     private final CotacaoRepository cotacaoRepository;
+    private final HistoricoCotacaoRepository historicoCotacaoRepository;
     private final NumeroItemDisponivelRepository numeroItemDisponivelRepository;
     private final PdfDeduplicationService pdfDeduplicationService;
+    private final ObjectMapper objectMapper;
 
     /**
      * Recupera todos os rascunhos de forma paginada.
@@ -547,78 +554,94 @@ public class RascunhoService {
         // Salvar pedido
         SolicitacaoDePedido pedidoSalvo = solicitacaoDePedidoRepository.save(pedido);
 
-        // Converter cotações do rascunho para cotações do pedido
+        // Converter cotações do rascunho para cotações do pedido.
+        // Regra: cotações não selecionadas são migradas como REJEITADA.
+        Set<Long> cotacoesSelecionadasIds = dto.cotacaoParaItens().keySet();
+        if (cotacoesSelecionadasIds.isEmpty()) {
+            throw new IllegalArgumentException("Nenhuma cotação selecionada para conversão");
+        }
+
+        Set<Long> idsCotacoesDoRascunho = cotacoesRascunho.stream()
+                .map(CotacaoRascunho::getId)
+                .collect(Collectors.toSet());
+
+        List<Long> cotacoesInvalidas = cotacoesSelecionadasIds.stream()
+                .filter(id -> !idsCotacoesDoRascunho.contains(id))
+                .toList();
+        if (!cotacoesInvalidas.isEmpty()) {
+            throw new IllegalArgumentException("Cotação(ões) não pertencem ao rascunho " + rascunhoId + ": " + cotacoesInvalidas);
+        }
+
         int cotacoesConvertidas = 0;
+        User usuario = getUsuarioAutenticado();
+
         for (CotacaoRascunho cotacaoRascunho : cotacoesRascunho) {
-            Set<ItemPedido> itensPedidoCotacao = new HashSet<>();
+            boolean cotacaoFoiSelecionada = cotacoesSelecionadasIds.contains(cotacaoRascunho.getId());
 
-            // Apenas converter cotações que estão no mapeamento selecionado
-            if (dto.cotacaoParaItens().containsKey(cotacaoRascunho.getId())) {
-                List<Long> itensDestaCotacao = dto.cotacaoParaItens().get(cotacaoRascunho.getId());
-                for (Long itemId : itensDestaCotacao) {
-                    if (mapaItens.containsKey(itemId)) {
-                        itensPedidoCotacao.add(mapaItens.get(itemId));
-                    }
+            Map<Long, CotacaoRascunhoItem> itensCotados = cotacaoRascunho.getItens().stream()
+                .filter(item -> item.getItemRascunho() != null)
+                .collect(Collectors.toMap(item -> item.getItemRascunho().getId(), item -> item));
+
+            List<Long> itensSelecionados = cotacaoFoiSelecionada
+                ? dto.cotacaoParaItens().getOrDefault(cotacaoRascunho.getId(), Collections.emptyList())
+                : Collections.emptyList();
+
+            if (cotacaoFoiSelecionada && itensSelecionados.isEmpty()) {
+                throw new IllegalArgumentException("Cotação " + cotacaoRascunho.getId() + " foi selecionada sem itens");
+            }
+            List<Long> itensInvalidos = itensSelecionados.stream()
+                .filter(itemId -> !itensCotados.containsKey(itemId))
+                .toList();
+            if (!itensInvalidos.isEmpty()) {
+                throw new IllegalArgumentException("Itens selecionados nao pertencem a cotacao " + cotacaoRascunho.getId() + ": " + itensInvalidos);
+            }
+
+            int totalCotados = itensCotados.size();
+            int totalSelecionados = itensSelecionados.size();
+            StatusCotacao status = totalSelecionados == 0
+                ? StatusCotacao.REJEITADA
+                : (totalSelecionados == totalCotados ? StatusCotacao.APROVADA : StatusCotacao.PARCIAL);
+
+            Cotacao cotacao = new Cotacao();
+            cotacao.setSolicitacaoDePedido(pedidoSalvo);
+            cotacao.setFornecedorProduto(cotacaoRascunho.getFornecedorProduto());
+            cotacao.setFornecedorServico(cotacaoRascunho.getFornecedorServico());
+            cotacao.setPrazoEmDiasUteis(cotacaoRascunho.getPrazoEmDiasUteis());
+            cotacao.setDataLimite(cotacaoRascunho.getDataLimite());
+            cotacao.setGastoPrevisto(cotacaoRascunho.getGastoPrevisto());
+            cotacao.setProjeto(cotacaoRascunho.getProjeto());
+            cotacao.setStatus(status);
+            if (!cotacaoFoiSelecionada) {
+                // Preserva o valor cotado original para não exibir preço zerado.
+                cotacao.setPrecoLegacy(cotacaoRascunho.getPreco());
+            }
+
+            for (Long itemId : itensSelecionados) {
+                ItemPedido itemPedido = mapaItens.get(itemId);
+                if (itemPedido == null) {
+                    throw new IllegalArgumentException("Item selecionado nao encontrado no pedido: " + itemId);
+                }
+                CotacaoRascunhoItem itemCotado = itensCotados.get(itemId);
+                com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem cotacaoItem =
+                    new com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem();
+                cotacaoItem.setItemPedido(itemPedido);
+                cotacaoItem.setPrecoUnitario(itemCotado.getPrecoUnitario());
+                cotacaoItem.setQuantidade(itemCotado.getQuantidade());
+                cotacaoItem.setObservacao(itemCotado.getObservacao());
+                cotacao.addItem(cotacaoItem);
+            }
+
+            if (cotacaoRascunho.getAnexos() != null && !cotacaoRascunho.getAnexos().isEmpty()) {
+                for (AnexoCotacaoRascunho anexoRascunho : cotacaoRascunho.getAnexos()) {
+                    AnexoCotacao anexoCotacao = pdfDeduplicationService
+                        .convertRascunhoAnexoWithDeduplication(cotacao, anexoRascunho);
+                    cotacao.getAnexos().add(anexoCotacao);
                 }
             }
 
-            if (!itensPedidoCotacao.isEmpty()) {
-                log.info("DEBUG: Convertendo cotação rascunho {} - gastoPrevisto: {}, projeto: {}",
-                        cotacaoRascunho.getId(), cotacaoRascunho.getGastoPrevisto(), cotacaoRascunho.getProjeto());
-
-                Cotacao cotacao = new Cotacao();
-                cotacao.setSolicitacaoDePedido(pedidoSalvo);
-                cotacao.setFornecedorProduto(cotacaoRascunho.getFornecedorProduto());
-                cotacao.setFornecedorServico(cotacaoRascunho.getFornecedorServico());
-                
-                // Define o preço global (será usado pois os itens terão preço zero)
-                cotacao.setPreco(cotacaoRascunho.getPreco()); 
-                
-                cotacao.setPrazoEmDiasUteis(cotacaoRascunho.getPrazoEmDiasUteis());
-                cotacao.setDataLimite(cotacaoRascunho.getDataLimite());
-                cotacao.setGastoPrevisto(cotacaoRascunho.getGastoPrevisto());
-                cotacao.setProjeto(cotacaoRascunho.getProjeto());
-
-                log.info("DEBUG: Cotação pedido criada - gastoPrevisto: {}, projeto: {}",
-                        cotacao.getGastoPrevisto(), cotacao.getProjeto());
-
-                // REMOVIDO: anexoPdf e caminhoAnexo (campos legados) - gerenciados via AnexoCotacao com deduplificação
-
-                // Bug Fix: Iterar sobre TODOS os itens selecionados para esta cotação
-                for (ItemPedido itemPedido : itensPedidoCotacao) {
-                    com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem cotacaoItem =
-                            new com.gestordecompras.gestorcomprasbackend.model.cotacao.CotacaoItem();
-                    
-                    cotacaoItem.setItemPedido(itemPedido);
-                    
-                    // Preço unitário zero - valor total será pego da Cotação (global)
-                    cotacaoItem.setPrecoUnitario(java.math.BigDecimal.ZERO);
-                    
-                    cotacaoItem.setQuantidade(1); // Quantidade padrão pois rascunho não detalha qtd por item na cotação
-                    cotacao.addItem(cotacaoItem);
-                }
-
-                // Copiar anexos múltiplos com deduplificação
-                if (cotacaoRascunho.getAnexos() != null && !cotacaoRascunho.getAnexos().isEmpty()) {
-                    for (AnexoCotacaoRascunho anexoRascunho : cotacaoRascunho.getAnexos()) {
-                        // Usa PdfDeduplicationService para evitar duplicação de PDFs idênticos
-                        AnexoCotacao anexoCotacao = pdfDeduplicationService
-                            .convertRascunhoAnexoWithDeduplication(cotacao, anexoRascunho);
-                        cotacao.getAnexos().add(anexoCotacao);
-                    }
-                }
-
-                cotacaoRepository.save(cotacao);
-                cotacoesConvertidas++;
-            } else {
-                log.warn("Cotação do rascunho {} não foi convertida pois nenhum item foi mapeado. " +
-                        "Fornecedor: {}, Preço: {}",
-                        rascunhoId,
-                        cotacaoRascunho.getFornecedorProduto() != null
-                            ? cotacaoRascunho.getFornecedorProduto().getRazaoSocial()
-                            : cotacaoRascunho.getFornecedorServico().getRazaoSocial(),
-                        cotacaoRascunho.getPreco());
-            }
+            Cotacao cotacaoSalva = cotacaoRepository.save(cotacao);
+            registrarHistoricoConversao(cotacaoSalva, cotacaoRascunho, itensSelecionados, itensCotados, usuario);
+            cotacoesConvertidas++;
         }
 
         // Bug Fix #3: Avisar se havia cotações no rascunho mas nenhuma foi migrada
@@ -632,7 +655,6 @@ public class RascunhoService {
         }
 
         // Registrar no histórico do pedido
-        User usuario = getUsuarioAutenticado();
         historicoPedidoService.registrarCriacao(pedidoSalvo, usuario);
 
         // Registrar no histórico do rascunho
@@ -644,6 +666,71 @@ public class RascunhoService {
         rascunhoRepository.save(rascunho);
 
         return solicitacaoDePedidoMapper.toDTO(pedidoSalvo);
+    }
+
+    private void registrarHistoricoConversao(
+        Cotacao cotacao,
+        CotacaoRascunho cotacaoRascunho,
+        List<Long> itensSelecionados,
+        Map<Long, CotacaoRascunhoItem> itensCotados,
+        User usuario
+    ) {
+        HistoricoCotacao historico = new HistoricoCotacao();
+        historico.setCotacaoId(cotacao.getId());
+        historico.setVersao(cotacao.getNumeroVersao() != null ? cotacao.getNumeroVersao() : 1);
+        historico.setPrecoAnterior(cotacao.getPreco());
+        historico.setPrecoNovo(cotacao.getPreco());
+        historico.setPrazoEmDiasUteisAnterior(cotacao.getPrazoEmDiasUteis());
+        historico.setPrazoEmDiasUteisNovo(cotacao.getPrazoEmDiasUteis());
+        historico.setDataLimiteAnterior(cotacao.getDataLimite());
+        historico.setDataLimiteNovo(cotacao.getDataLimite());
+        historico.setMotivoEdicao("Conversao de rascunho");
+        historico.setEditadoPor(usuario != null ? usuario.getNome() : "Sistema");
+        historico.setStatusFinal(cotacao.getStatus());
+
+        List<String> selecionados = itensSelecionados.stream()
+            .map(itensCotados::get)
+            .filter(Objects::nonNull)
+            .map(item -> item.getItemRascunho().getNome())
+            .toList();
+
+        List<String> naoSelecionados = itensCotados.values().stream()
+            .filter(item -> item.getItemRascunho() != null && !itensSelecionados.contains(item.getItemRascunho().getId()))
+            .map(item -> item.getItemRascunho().getNome())
+            .toList();
+
+        historico.setItensSelecionados(String.join(", ", selecionados));
+        historico.setItensNaoSelecionados(String.join(", ", naoSelecionados));
+
+        // Snapshot completo dos itens cotados (inclui selecionados e nao selecionados) com preco por item.
+        // Isso permite exibir no frontend os detalhes dos itens "cotados nao selecionados".
+        try {
+            List<Map<String, Object>> itensSnapshot = itensCotados.values().stream()
+                .filter(item -> item.getItemRascunho() != null)
+                .map(item -> {
+                    Map<String, Object> map = new HashMap<>();
+                    Long itemRascunhoId = item.getItemRascunho().getId();
+                    boolean selecionado = itemRascunhoId != null && itensSelecionados.contains(itemRascunhoId);
+
+                    map.put("itemRascunhoId", itemRascunhoId);
+                    map.put("nomeItem", item.getItemRascunho().getNome());
+                    map.put("quantidade", item.getQuantidade());
+                    map.put("precoUnitario", item.getPrecoUnitario());
+                    map.put("total", item.calcularPrecoTotal());
+                    map.put("observacao", item.getObservacao());
+                    map.put("statusItem", selecionado ? "APROVADO" : "COTADO_NAO_SELECIONADO");
+
+                    return map;
+                })
+                .toList();
+
+            historico.setItensNovos(objectMapper.writeValueAsString(itensSnapshot));
+        } catch (JsonProcessingException e) {
+            log.warn("Nao foi possivel serializar snapshot de itens da conversao para historico da cotacao {}: {}",
+                cotacao.getId(), e.getMessage());
+        }
+
+        historicoCotacaoRepository.save(historico);
     }
 
     private User getUsuarioAutenticado() {
@@ -664,3 +751,4 @@ public class RascunhoService {
         return user;
     }
 }
+

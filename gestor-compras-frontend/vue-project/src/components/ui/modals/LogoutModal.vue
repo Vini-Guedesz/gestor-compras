@@ -1,24 +1,24 @@
-<!--
-  Componente LogoutModal - Modal de confirmação de logout
+﻿<!--
+  Componente LogoutModal - Modal de confirmaÃ§Ã£o de logout
 
-  Modal elegante para confirmar o logout do usuário, substituindo
-  o alert() nativo por uma interface mais amigável.
+  Modal elegante para confirmar o logout do usuÃ¡rio, substituindo
+  o alert() nativo por uma interface mais amigÃ¡vel.
 
   Props:
   - show (Boolean): Controla a visibilidade do modal
 
   Events:
-  - confirm: Emitido quando o usuário confirma o logout
-  - cancel: Emitido quando o usuário cancela o logout
+  - confirm: Emitido quando o usuÃ¡rio confirma o logout
+  - cancel: Emitido quando o usuÃ¡rio cancela o logout
 -->
 <template>
-  <!-- Overlay do modal -->
-  <div
-    v-if="show"
-    class="modal-overlay"
-    @click.self="handleCancel"
-    @keydown.esc="handleCancel"
-  >
+  <Teleport to="body">
+    <!-- Overlay do modal -->
+    <div
+      v-if="show"
+      class="modal-overlay"
+      @click.self="handleCancel"
+    >
     <div
       ref="modalRef"
       class="modal-container"
@@ -68,24 +68,25 @@
           Sim, Sair
         </button>
       </div>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>
 /**
- * Modal de confirmação de logout
+ * Modal de confirmaÃ§Ã£o de logout
  *
- * Proporciona uma experiência mais profissional que o alert() nativo
+ * Proporciona uma experiÃªncia mais profissional que o alert() nativo
  *
  * Acessibilidade:
  * - role="dialog" e aria-modal="true" para identificar como modal
  * - Focus trap para manter foco dentro do modal
  * - ESC para fechar
- * - Foco automático ao abrir
+ * - Foco automÃ¡tico ao abrir
  * - Retorno do foco ao elemento que abriu quando fecha
  */
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onUnmounted } from 'vue'
 import { useModal } from '@/composables/useModal'
 
 // Props do componente
@@ -105,7 +106,7 @@ const modalRef = ref(null)
 const confirmButtonRef = ref(null)
 const cancelButtonRef = ref(null)
 
-// IDs únicos para acessibilidade
+// IDs Ãºnicos para acessibilidade
 let idCounter = 0
 const titleId = `logout-modal-title-${++idCounter}`
 const messageId = `logout-modal-message-${idCounter}`
@@ -113,7 +114,7 @@ const messageId = `logout-modal-message-${idCounter}`
 // Elemento que tinha foco antes do modal abrir
 let previousActiveElement = null
 
-// Calcula se o modal está aberto
+// Calcula se o modal estÃ¡ aberto
 const isOpen = computed(() => props.show)
 
 // Usa o composable para gerenciar o scroll
@@ -125,7 +126,7 @@ watch(isOpen, async (newValue) => {
     // Guarda elemento que tinha foco
     previousActiveElement = document.activeElement
 
-    // Aguarda próximo tick para garantir que modal foi renderizado
+    // Aguarda prÃ³ximo tick para garantir que modal foi renderizado
     await nextTick()
 
     // Foca no modal
@@ -135,9 +136,11 @@ watch(isOpen, async (newValue) => {
 
     // Adiciona listener para focus trap
     document.addEventListener('keydown', handleFocusTrap)
+    document.addEventListener('keydown', handleEscape)
   } else {
     // Remove listener
     document.removeEventListener('keydown', handleFocusTrap)
+    document.removeEventListener('keydown', handleEscape)
 
     // Retorna foco ao elemento anterior
     if (previousActiveElement && previousActiveElement.focus) {
@@ -146,7 +149,7 @@ watch(isOpen, async (newValue) => {
   }
 })
 
-// Focus trap: mantém foco dentro do modal
+// Focus trap: mantÃ©m foco dentro do modal
 const handleFocusTrap = (e) => {
   if (e.key !== 'Tab' || !modalRef.value) return
 
@@ -158,13 +161,13 @@ const handleFocusTrap = (e) => {
   const lastElement = focusableElements[focusableElements.length - 1]
 
   if (e.shiftKey) {
-    // Shift + Tab: se estiver no primeiro, vai para o último
+    // Shift + Tab: se estiver no primeiro, vai para o Ãºltimo
     if (document.activeElement === firstElement) {
       e.preventDefault()
       lastElement.focus()
     }
   } else {
-    // Tab: se estiver no último, vai para o primeiro
+    // Tab: se estiver no Ãºltimo, vai para o primeiro
     if (document.activeElement === lastElement) {
       e.preventDefault()
       firstElement.focus()
@@ -172,8 +175,14 @@ const handleFocusTrap = (e) => {
   }
 }
 
+const handleEscape = (e) => {
+  if (e.key === 'Escape' && isOpen.value) {
+    handleCancel()
+  }
+}
+
 /**
- * Manipula a confirmação do logout
+ * Manipula a confirmaÃ§Ã£o do logout
  */
 const handleConfirm = () => {
   emit('confirm')
@@ -185,13 +194,18 @@ const handleConfirm = () => {
 const handleCancel = () => {
   emit('cancel')
 }
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleFocusTrap)
+  document.removeEventListener('keydown', handleEscape)
+})
 </script>
 
 <style scoped>
 /*
   Estilos do Modal de Logout
 
-  Design moderno e acessível com animações suaves
+  Design moderno e acessÃ­vel com animaÃ§Ãµes suaves
 */
 
 /* Overlay que cobre toda a tela */
@@ -244,7 +258,7 @@ const handleCancel = () => {
   }
 }
 
-/* Cabeçalho do modal */
+/* CabeÃ§alho do modal */
 .modal-header {
   padding: 24px 24px 0 24px;
   text-align: center;
@@ -291,7 +305,7 @@ const handleCancel = () => {
   line-height: 1.4;
 }
 
-/* Rodapé do modal */
+/* RodapÃ© do modal */
 .modal-footer {
   padding: 0 24px 24px 24px;
   display: flex;
@@ -299,7 +313,7 @@ const handleCancel = () => {
   justify-content: center;
 }
 
-/* Botões do modal */
+/* BotÃµes do modal */
 .modal-button {
   flex: 1;
   padding: 12px 24px;
@@ -358,3 +372,4 @@ const handleCancel = () => {
   }
 }
 </style>
+
