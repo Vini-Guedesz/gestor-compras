@@ -1,255 +1,199 @@
-# 🛒 Gestor de Compras
+# Gestor de Compras
 
-## 📄 Resumo do Projeto
+Versao atual: `3.2.1`
 
-O **Gestor de Compras** é uma solução completa para gerenciamento de processos de aquisição, cotações, fornecedores e pedidos. Desenvolvido com uma arquitetura moderna separada em Backend (API REST) e Frontend (SPA).
+## Visao geral
 
-O sistema permite:
-- **Gestão de Pedidos**: Criação, edição e acompanhamento de status.
-- **Cotações Inteligentes**: Comparativo de preços, upload de propostas com **deduplificação de PDFs** (economia de storage) e validação de itens.
-- **Fornecedores**: Cadastro completo (PF/PJ) e histórico de fornecimento.
-- **Relatórios**: Dashboards executivos e exportação em PDF via JasperReports.
-- **Auditoria e Segurança**: Rastreamento completo de alterações (quem, quando, o quê), controle de CORS aprimorado e permissões granulares por role.
+O Gestor de Compras centraliza o fluxo de rascunhos, pedidos, cotacoes, fornecedores e aprovacoes em uma arquitetura separada entre backend Spring Boot e frontend Vue 3.
 
----
+Principais capacidades:
 
-## 📂 Estrutura de Diretórios
+- Criacao e acompanhamento de rascunhos e pedidos de compra.
+- Cotacao por item, com precos unitarios, quantidades e observacoes por item.
+- Gestao de fornecedores de produto e servico.
+- Contatos principais com rotulos e contatos adicionais por fornecedor.
+- Historico de alteracoes em pedidos, rascunhos e cotacoes.
+- Upload de anexos PDF com armazenamento deduplicado.
+- Interface web com dashboard, filtros, modais e visualizacao detalhada.
 
-```
+## Destaques da release 3.2.1
+
+- Clique em e-mail e telefone agora copia o valor para a area de transferencia.
+- Comportamento padronizado nas telas de pedido, rascunho e fornecedor.
+- Tela "Sobre" atualizada com a versao `3.2.1`.
+- Ajustes de lint no frontend para estabilizar a release.
+
+## Estrutura do repositorio
+
+```text
 gestor-compras/
-├── docs/                       # Documentação (diagramas de classe, schemas de banco)
-├── gestor-compras-backend/     # API REST (Spring Boot 3.3.1 + Java 21)
-│   ├── src/main/java           # Código fonte Java
-│   ├── src/main/resources      # Configurações, migrations (Flyway) e relatórios (Jasper)
-│   └── Dockerfile              # Configuração de container do backend
-├── gestor-compras-frontend/    # Frontend SPA (Vue.js 3 + Vite)
-│   └── vue-project/
-│       ├── src/                # Componentes, views, stores (Pinia) e services
-│       └── public/             # Assets estáticos
-├── monitoring/                 # Stack de observabilidade
-│   ├── grafana/                # Dashboards e datasources provisionados
-│   ├── prometheus.yml          # Configuração de scraping de métricas
-│   └── loki-config.yml         # Agregação de logs
-└── nginx/                      # Reverse Proxy e API Gateway
-    ├── conf.d/                 # Regras de roteamento
-    └── nginx.conf              # Configuração global de performance e segurança
+|-- docs/
+|   |-- README.md
+|   |-- class-diagram.md
+|   `-- database-schema.md
+|-- gestor-compras-backend/
+|   |-- src/main/java/
+|   |-- src/main/resources/
+|   `-- pom.xml
+|-- gestor-compras-frontend/
+|   `-- vue-project/
+|       |-- src/
+|       |-- public/
+|       `-- package.json
+|-- monitoring/
+|-- nginx/
+|-- docker-compose.yml
+|-- docker-compose.prod.yml
+`-- docker-compose-monitoring.yml
 ```
 
----
+## Stack
 
-## 📦 Dependências e Requisitos
+### Backend
 
-| Tecnologia | Versão Mínima | Uso |
-|------------|---------------|-----|
-| **Java** | 21 (JDK) | Backend Spring Boot |
-| **Node.js** | 20.x (LTS) | Frontend Vue.js |
-| **PostgreSQL**| 15+ | Banco de Dados Principal |
-| **Docker** | 20.x | (Opcional) Containerização do Banco |
+- Java 21
+- Spring Boot
+- Spring Data JPA
+- PostgreSQL
+- Flyway
+- Maven
 
----
+### Frontend
 
-## 🛠️ Instalação das Ferramentas
+- Node.js 20+
+- Vue 3
+- Vite
+- Pinia
+- Vue Router
 
-Antes de rodar o projeto, você precisa preparar seu ambiente. Siga as instruções para seu sistema operacional:
+## Configuracao de ambiente
 
-### 🪟 Windows
+O repositorio possui um arquivo `.env` na raiz com configuracoes de desenvolvimento para banco e backend. Ajuste os valores conforme seu ambiente antes de subir a stack.
 
-1.  **Java JDK 21**:
-    *   Baixe e instale o [Oracle JDK 21](https://www.oracle.com/java/technologies/downloads/#java21) ou [OpenJDK](https://adoptium.net/).
-    *   *Verifique:* Abra o CMD e digite `java -version`.
-
-2.  **Node.js**:
-    *   Baixe o instalador LTS em [nodejs.org](https://nodejs.org/).
-    *   *Verifique:* `node -v` e `npm -v`.
-
-3.  **PostgreSQL (Se não usar Docker)**:
-    *   Baixe o instalador em [postgresql.org/download/windows](https://www.postgresql.org/download/windows/).
-    *   Durante a instalação, defina a senha do usuário `postgres`.
-
-### 🐧 Linux (Ubuntu/Debian)
-
-1.  **Java JDK 21**:
-    ```bash
-    sudo apt update
-    sudo apt install openjdk-21-jdk
-    java -version
-    ```
-
-2.  **Node.js**:
-    ```bash
-    # Usando NVM (Recomendado)
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-    # (Reinicie o terminal)
-    nvm install 20
-    node -v
-    ```
-
-3.  **Docker (Recomendado para Banco)**:
-    ```bash
-    # Siga as instruções oficiais:
-    # https://docs.docker.com/engine/install/ubuntu/
-    ```
-
----
-
-## ⚙️ Configuração do Ambiente (.env)
-
-O backend utiliza variáveis de ambiente para configurações sensíveis. Crie um arquivo chamado `.env` na pasta `gestor-compras-backend/`.
-
-### 1. Modelo de Configuração
-Copie o conteúdo abaixo e substitua os textos explicativos pelos seus dados reais:
+Exemplo atual:
 
 ```env
-# --- Segurança ---
-# Chave secreta JWT (mínimo 256 bits)
-JWT_SECRET=digite_sua_chave_secreta_aqui
-
-# --- Banco de Dados (PostgreSQL) ---
-POSTGRES_USER=digite_seu_usuario_postgres
-POSTGRES_PASSWORD=digite_sua_senha_postgres
-POSTGRES_DB=digite_o_nome_do_banco
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/digite_o_nome_do_banco
-
-# --- Servidor ---
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=admin
+POSTGRES_DB=gestorcomprasbackend
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/gestorcomprasbackend
 SERVER_PORT=8081
 SPRING_PROFILES_ACTIVE=dev
+JWT_SECRET=chave_secreta_padrao_desenvolvimento_gestor_compras_2026
 ```
 
-### 2. Detalhes das Variáveis
+## Como executar
 
-| Variável | Descrição | Obrigatório | Exemplo |
-|----------|-----------|-------------|---------|
-| `JWT_SECRET` | Chave secreta para assinar tokens JWT. | **Sim** | `minha-chave-secreta-base64` |
-| `POSTGRES_USER` | Usuário do banco de dados PostgreSQL. | **Sim** | `postgres` |
-| `POSTGRES_PASSWORD` | Senha do banco de dados PostgreSQL. | **Sim** | `123456` |
-| `POSTGRES_DB` | Nome do banco de dados. | **Sim** | `meu_banco_gestor` |
-| `SPRING_DATASOURCE_URL` | URL JDBC completa. | Não | `jdbc:postgresql://localhost:5432/meu_banco_gestor` |
-| `SERVER_PORT` | Porta do servidor backend. | Não | `8081` |
-| `SPRING_PROFILES_ACTIVE` | Perfil ativo (dev ou prod). | Não | `dev` |
+### 1. Banco de dados
 
----
+Via Docker:
 
-## 🚀 Executando o Projeto
-
-### Passo 1: Banco de Dados
-
-**Via Docker (Mais Fácil):**
-Na raiz do projeto (`gestor-compras/`), suba o banco:
 ```bash
 docker-compose up -d db
 ```
 
-**Via Instalação Local:**
-Certifique-se que o serviço PostgreSQL está rodando e crie o banco com o **mesmo nome** que você definiu no `.env`:
-```sql
-CREATE DATABASE digite_o_nome_do_banco;
-```
+Ou use uma instancia local de PostgreSQL e crie o banco configurado no `.env`.
 
-### Passo 2: Backend (API)
+### 2. Backend
 
-Abra um terminal na pasta `gestor-compras-backend` e execute:
+No diretorio `gestor-compras-backend`:
 
-**🪟 Windows:**
-```cmd
-.\mvnw.cmd spring-boot:run
-```
-
-**🐧 Linux/Mac:**
 ```bash
-chmod +x mvnw
 ./mvnw spring-boot:run
 ```
 
-*Sucesso:* O servidor iniciará na porta **8081**.
-*Swagger (Documentação Completa):* Acesse [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html) para visualizar todos os endpoints, roles permitidas e fluxos de trabalho detalhados.
+No Windows:
 
-### Passo 3: Frontend (Web)
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
-Abra **outro** terminal na pasta `gestor-compras-frontend/vue-project` e execute:
+Backend padrao: `http://localhost:8081`
+
+Swagger:
+
+- `http://localhost:8081/swagger-ui.html`
+
+### 3. Frontend
+
+No diretorio `gestor-compras-frontend/vue-project`:
 
 ```bash
-# Instalar dependências (apenas na 1ª vez)
 npm install
-
-# Rodar servidor de desenvolvimento
 npm run dev
 ```
 
-*Sucesso:* O sistema abrirá na porta **5173**.
-*Acesse:* [http://localhost:5173](http://localhost:5173)
+Frontend padrao: `http://localhost:5173`
 
----
+## Validacao da release
 
-## 👥 Primeiro Acesso (Usuário Padrão)
+Comandos usados na revisao da branch `release/3.2.1-copy-contacts`:
 
-Após iniciar o sistema pela primeira vez, o banco será populado automaticamente com um usuário administrador padrão:
-
-| Campo | Valor |
-|-------|-------|
-| **E-mail** | `admin@admin.com` |
-| **Senha** | `admin` |
-
-> **IMPORTANTE:** Por questões de segurança, recomenda-se alterar esta senha ou criar um novo usuário administrador e desativar este após o primeiro login bem-sucedido.
-
----
-
-## 🛠️ Utilitários
-
-### 📊 Monitoramento
-O projeto possui uma stack pronta com Prometheus e Grafana.
 ```bash
-# Na raiz do projeto:
+# Frontend
+npx eslint .
+npx oxlint . -D correctness --ignore-path .gitignore
+npm run build
+
+# Backend
+mvn -q test
+```
+
+Observacao:
+
+- O frontend hoje nao possui arquivos de teste unitario ativos para o Vitest. `vitest --run` encerra informando que nao ha testes encontrados.
+
+## Primeiro acesso
+
+Usuario padrao de desenvolvimento:
+
+- E-mail: `admin@admin.com`
+- Senha: `admin`
+
+## Documentacao tecnica
+
+Os arquivos tecnicos principais estao em [`docs/`](./docs):
+
+- [`docs/README.md`](./docs/README.md): indice da documentacao
+- [`docs/class-diagram.md`](./docs/class-diagram.md): relacoes entre camadas e entidades
+- [`docs/database-schema.md`](./docs/database-schema.md): visao do esquema de banco
+
+## Monitoramento e infraestrutura
+
+### Monitoramento
+
+```bash
 docker-compose -f docker-compose-monitoring.yml up -d
 ```
-- **Prometheus:** [localhost:9090](http://localhost:9090)
-- **Grafana:** [localhost:3000](http://localhost:3000) (Login: `admin` / `admin`)
 
-### 📚 Documentação de Código (JavaDoc)
-Gere a documentação técnica do backend:
-```bash
-cd gestor-compras-backend
-./mvnw javadoc:javadoc
-# Abra o arquivo: target/site/apidocs/index.html
-```
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
 
-### 🌐 Nginx (Reverse Proxy)
-
-O projeto inclui uma configuração completa do **Nginx** como reverse proxy para rotear requisições entre frontend e backend.
-
-#### ⚙️ Configurações Principais
-
-**Arquivos:**
-- [`nginx/nginx.conf`](nginx/nginx.conf) - Configuração global
-- [`nginx/conf.d/default.conf`](nginx/conf.d/default.conf) - Configuração de roteamento
-
-**Funcionalidades:**
-- ✅ **Compressão Gzip** para otimização de tráfego
-- ✅ **Connection Pooling** (keepalive) para backend/frontend
-- ✅ **Security Headers** (X-Frame-Options, X-XSS-Protection, etc.)
-- ✅ **Timeouts customizados** (relatórios têm 120s, API 60s)
-- ✅ **Upload de arquivos** até 10MB
-- ✅ **Preparado para SSL/HTTPS** (comentado no arquivo)
-
-Em ambiente de produção com Docker, o Nginx é executado automaticamente:
+### Producao com Nginx
 
 ```bash
-# Subir todo o sistema com Nginx
 docker-compose -f docker-compose.prod.yml up -d
-
-# Verificar logs do Nginx
-docker-compose -f docker-compose.prod.yml logs -f nginx
 ```
 
-## 🔌 Portas e Serviços
+Arquivos principais:
 
-Resumo das portas utilizadas pelo sistema:
+- [`nginx/nginx.conf`](./nginx/nginx.conf)
+- [`nginx/conf.d/default.conf`](./nginx/conf.d/default.conf)
 
-| Serviço | Porta | Descrição |
-|---------|-------|-----------|
-| **Frontend** | `5173` | Aplicação Web (Vue.js) - Dev (CORS permitindo 5173, 5174, 4173) |
-| **Backend** | `8081` | API REST (Spring Boot) |
-| **PostgreSQL**| `5432` | Banco de Dados |
-| **Nginx** | `80` | Reverse Proxy - Produção |
-| **Nginx (HTTPS)** | `443` | Reverse Proxy - SSL (Opcional) |
-| **Grafana** | `3000` | Dashboards (CORS permitindo porta 3000) |
-| **Prometheus**| `9090` | Métricas |
+## Portas padrao
+
+| Servico | Porta |
+|---|---:|
+| Frontend dev | 5173 |
+| Frontend preview | 4173 |
+| Backend | 8081 |
+| PostgreSQL | 5432 |
+| Nginx HTTP | 80 |
+| Nginx HTTPS | 443 |
+| Grafana | 3000 |
+| Prometheus | 9090 |
+
+## Branch de release atual
+
+- Branch: `release/3.2.1-copy-contacts`
+

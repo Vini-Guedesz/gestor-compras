@@ -1,135 +1,97 @@
-# Esquema do Banco de Dados
+# Database Schema
 
 ```mermaid
 erDiagram
     users ||--o{ rascunho : cria
-    users ||--o{ solicitacao_de_pedido : solicita
-    users ||--o{ historico_pedido : realiza_acao
-    users ||--o{ historico_rascunho : realiza_acao
-    
+    users ||--o{ historico_pedido : registra
+    users ||--o{ historico_rascunho : registra
+
+    contato ||--o{ contato_adicional : possui
+    endereco ||--o{ fornecedor_de_produto : vincula
+    endereco ||--o{ fornecedor_de_servico : vincula
+    contato ||--o{ fornecedor_de_produto : vincula
+    contato ||--o{ fornecedor_de_servico : vincula
+
     rascunho ||--|{ item_rascunho : possui
-    rascunho ||--o{ numero_item_disponivel : gerencia_numeros
+    rascunho ||--o{ numero_item_disponivel : controla
+    rascunho ||--o{ historico_rascunho : registra
     rascunho ||--o{ cotacao_rascunho : recebe
-    cotacao_rascunho ||--o{ cotacao_rascunho_item : vincula_itens
-    item_rascunho ||--o{ cotacao_rascunho_item : vinculado_a
-    
-    solicitacao_de_pedido ||--|{ item_pedido : possui
-    solicitacao_de_pedido ||--o{ cotacao : recebe
-    cotacao ||--o{ cotacao_item_pedido : vincula_itens
-    item_pedido ||--o{ cotacao_item_pedido : vinculado_a
-    
-    fornecedor_de_produto ||--o{ cotacao : fornece
-    fornecedor_de_produto ||--o{ cotacao_rascunho : fornece
-    fornecedor_de_servico ||--o{ cotacao : fornece
-    fornecedor_de_servico ||--o{ cotacao_rascunho : fornece
-    
-    cotacao ||--o{ anexo_cotacao : possui
+
+    cotacao_rascunho ||--o{ cotacao_rascunho_item : detalha
+    item_rascunho ||--o{ cotacao_rascunho_item : compoe
     cotacao_rascunho ||--o{ anexo_cotacao_rascunho : possui
+
+    solicitacao_de_pedido ||--|{ item_pedido : possui
+    solicitacao_de_pedido ||--o{ historico_pedido : registra
+    solicitacao_de_pedido ||--o{ cotacao : recebe
+
+    cotacao ||--o{ cotacao_item : detalha
+    item_pedido ||--o{ cotacao_item : compoe
+    cotacao ||--o{ anexo_cotacao : possui
+    cotacao ||--o{ historico_cotacao : registra
+
+    fornecedor_de_produto ||--o{ cotacao : atende
+    fornecedor_de_servico ||--o{ cotacao : atende
+    fornecedor_de_produto ||--o{ cotacao_rascunho : atende
+    fornecedor_de_servico ||--o{ cotacao_rascunho : atende
+
     pdf_storage ||--o{ anexo_cotacao : armazena
     pdf_storage ||--o{ anexo_cotacao_rascunho : armazena
-
-    users {
-        bigint id PK
-        varchar username UK
-        varchar senha
-        varchar email UK
-        varchar role
-        boolean ativo
-        timestamp created_at
-    }
-
-    fornecedor_de_produto {
-        int id PK
-        varchar nome
-        varchar cnpj UK
-        varchar inscricao_estadual
-        bigint endereco_id FK
-        bigint contato_id FK
-    }
-
-    fornecedor_de_servico {
-        int id PK
-        varchar nome
-        varchar cnpj UK
-        varchar inscricao_municipal
-        bigint endereco_id FK
-        bigint contato_id FK
-    }
-
-    rascunho {
-        bigint id PK
-        bigint user_id FK
-        varchar status
-        text observacao
-        text objetivo
-        timestamp data_criacao
-        timestamp data_modificacao
-        integer proximo_numero_item
-        bigint pedido_gerado_id
-    }
-
-    item_rascunho {
-        bigint id PK
-        integer numero_item
-        varchar nome
-        integer quantidade
-        text descricao
-        text observacao
-        bigint rascunho_id FK
-    }
-
-    solicitacao_de_pedido {
-        bigint id PK
-        varchar status
-        text observacao
-        timestamp data_criacao
-    }
-
-    item_pedido {
-        bigint id PK
-        varchar nome
-        integer quantidade
-        text descricao
-        text observacao
-        bigint solicitacao_de_pedido_id FK
-    }
-
-    cotacao {
-        bigint id PK
-        bigint solicitacao_de_pedido_id FK
-        integer fornecedor_produto_id FK
-        integer fornecedor_servico_id FK
-        decimal preco
-        integer prazo_em_dias_uteis
-        date data_limite
-        integer numero_versao
-        boolean foi_editada
-        timestamp data_ultima_edicao
-        varchar editado_por
-    }
-
-    pdf_storage {
-        bigint id PK
-        varchar hash_sha256 UK
-        bytea conteudo
-        bigint tamanho_bytes
-        integer contador_referencias
-    }
-
-    anexo_cotacao {
-        bigint id PK
-        bigint cotacao_id FK
-        bigint pdf_storage_id FK
-        integer ordem
-        varchar nome_arquivo
-    }
 ```
 
-## Descrição das Tabelas Principais
+## Main tables
 
-- **users**: Armazena os usuários do sistema com roles (ADMIN, COMPRADOR, USUARIO, APROVADOR).
-- **rascunho**: Área de trabalho preliminar para montagem de pedidos.
-- **solicitacao_de_pedido**: Pedidos oficializados no sistema.
-- **cotacao / cotacao_rascunho**: Registros de preços e prazos de fornecedores.
-- **pdf_storage**: Implementação de *Content-Addressable Storage* (CAS) para deduplicação de anexos.
-- **fornecedor_de_produto / fornecedor_de_servico**: Especializações de fornecedores conforme o tipo de entrega.
+### Security and base data
+
+- `users`: usuarios, roles e status de ativacao.
+- `contato`: email, telefone fixo, celular e rotulos dos contatos principais.
+- `contato_adicional`: contatos extras por fornecedor, com tipo e ordem de exibicao.
+- `endereco`: endereco completo usado por fornecedores.
+
+### Suppliers
+
+- `fornecedor_de_produto`
+- `fornecedor_de_servico`
+
+Cada fornecedor referencia `endereco` e `contato`.
+
+### Draft flow
+
+- `rascunho`
+- `item_rascunho`
+- `numero_item_disponivel`
+- `historico_rascunho`
+- `cotacao_rascunho`
+- `cotacao_rascunho_item`
+- `anexo_cotacao_rascunho`
+
+`cotacao_rascunho_item` resolve o relacionamento entre cotacao de rascunho e item do rascunho, com preco unitario, quantidade e observacao por item.
+
+### Purchase request flow
+
+- `solicitacao_de_pedido`
+- `item_pedido`
+- `historico_pedido`
+- `cotacao`
+- `cotacao_item`
+- `historico_cotacao`
+- `anexo_cotacao`
+
+`cotacao_item` resolve o relacionamento entre cotacao final e item do pedido, com granularidade por item.
+
+### File storage
+
+- `pdf_storage`: armazenamento centralizado de anexos por hash SHA-256.
+
+## Relevant migrations
+
+- `V1__Initial_Setup.sql`: schema base consolidado.
+- `V3__Add_Contato_Adicional.sql`: suporte a contatos adicionais.
+- `V4__Add_Rotulos_Contato_Principal.sql`: rotulos para telefone fixo, celular e email.
+
+## Practical notes
+
+- `cotacao.preco` e `cotacao_rascunho.preco` existem por compatibilidade, mas o valor total pode ser calculado pelos itens.
+- Historico de cotacao registra versao, motivo da edicao, autor e snapshots relevantes.
+- A estrutura atual de contato sustenta a exibicao detalhada do fornecedor no frontend e a copia de valores para a area de transferencia na release `3.2.1`.
+

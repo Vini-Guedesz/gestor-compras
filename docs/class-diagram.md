@@ -1,102 +1,128 @@
-# Diagrama de Classes - Gestor de Compras
+# Class Diagram
 
 ```mermaid
 classDiagram
-    %% Relacionamentos de Rascunho
-    RascunhoController --> RascunhoService
-    RascunhoService --> RascunhoRepository
-    RascunhoService --> HistoricoRascunhoService
+    Contato "1" *-- "*" ContatoAdicional : possui
+    FornecedorDeProduto "1" --> "1" Contato : usa
+    FornecedorDeServico "1" --> "1" Contato : usa
+    FornecedorDeProduto "1" --> "1" Endereco : usa
+    FornecedorDeServico "1" --> "1" Endereco : usa
+
+    User "1" --> "*" Rascunho : cria
     Rascunho "1" *-- "*" ItemRascunho : possui
-    Rascunho "1" --> "1" User : criador
-    
-    %% Relacionamentos de Pedido
-    SolicitacaoDePedidoController --> SolicitacaoDePedidoService
-    SolicitacaoDePedidoService --> SolicitacaoDePedidoRepository
-    SolicitacaoDePedidoService --> HistoricoPedidoService
+    Rascunho "1" *-- "*" CotacaoRascunho : recebe
+    Rascunho "1" *-- "*" HistoricoRascunho : registra
+
     SolicitacaoDePedido "1" *-- "*" ItemPedido : possui
-    
-    %% Relacionamentos de Cotação
-    CotacaoController --> CotacaoService
-    CotacaoService --> CotacaoRepository
-    CotacaoService --> PdfDeduplicationService
-    Cotacao "*" --> "1" SolicitacaoDePedido : vinculada_a
-    Cotacao "*" --> "0..1" FornecedorDeProduto : fornece_produto
-    Cotacao "*" --> "0..1" FornecedorDeServico : fornece_servico
+    SolicitacaoDePedido "1" *-- "*" Cotacao : recebe
+    SolicitacaoDePedido "1" *-- "*" HistoricoPedido : registra
+
+    Cotacao "1" *-- "*" CotacaoItem : detalha
     Cotacao "1" *-- "*" AnexoCotacao : possui
+    Cotacao "1" *-- "*" HistoricoCotacao : registra
+
+    CotacaoRascunho "1" *-- "*" CotacaoRascunhoItem : detalha
+    CotacaoRascunho "1" *-- "*" AnexoCotacaoRascunho : possui
+
     AnexoCotacao "*" --> "1" PdfStorage : referencia
-    
-    %% Classes de Modelo
+    AnexoCotacaoRascunho "*" --> "1" PdfStorage : referencia
+
+    Cotacao "*" --> "0..1" FornecedorDeProduto : produto
+    Cotacao "*" --> "0..1" FornecedorDeServico : servico
+    CotacaoRascunho "*" --> "0..1" FornecedorDeProduto : produto
+    CotacaoRascunho "*" --> "0..1" FornecedorDeServico : servico
+
+    class Contato {
+        +Integer id
+        +String telefoneFixo
+        +String rotuloTelefoneFixo
+        +String celular
+        +String rotuloCelular
+        +String email
+        +String rotuloEmail
+    }
+
+    class ContatoAdicional {
+        +Integer id
+        +String nomeContato
+        +TipoContatoAdicional tipoContato
+        +String valorContato
+        +Integer ordemExibicao
+    }
+
     class Rascunho {
         +Long id
-        +StatusRascunho status
+        +String status
         +String objetivo
-        +List~ItemRascunho~ itens
-        +User criador
-        +converterParaPedido()
+        +String observacao
+        +Long pedidoGeradoId
     }
-    
+
     class SolicitacaoDePedido {
         +Long id
-        +StatusPedido status
+        +String status
+        +String objetivo
+        +String observacao
         +LocalDateTime dataCriacao
-        +List~ItemPedido~ itens
     }
-    
+
     class Cotacao {
         +Long id
-        +BigDecimal preco
+        +BigDecimal precoLegacy
         +Integer prazoEmDiasUteis
-        +List~AnexoCotacao~ anexos
-        +FornecedorDeProduto fornecedorProduto
-        +FornecedorDeServico fornecedorServico
+        +LocalDate dataLimite
+        +Boolean gastoPrevisto
+        +String projeto
+        +BigDecimal calcularPrecoTotal()
     }
-    
+
+    class CotacaoItem {
+        +Long id
+        +BigDecimal precoUnitario
+        +Integer quantidade
+        +String observacao
+        +BigDecimal calcularPrecoTotal()
+    }
+
+    class CotacaoRascunho {
+        +Long id
+        +BigDecimal precoLegacy
+        +Integer prazoEmDiasUteis
+        +LocalDate dataLimite
+        +Boolean gastoPrevisto
+        +String projeto
+        +BigDecimal getPreco()
+    }
+
+    class CotacaoRascunhoItem {
+        +Long id
+        +BigDecimal precoUnitario
+        +Integer quantidade
+        +String observacao
+        +BigDecimal calcularPrecoTotal()
+    }
+
     class PdfStorage {
         +Long id
         +String hashSha256
         +byte[] conteudo
+        +Long tamanhoBytes
         +Integer contadorReferencias
     }
-    
-    class FornecedorDeProduto {
-        +Integer id
-        +String nome
-        +String cnpj
-        +String inscricaoEstadual
-    }
 
-    class FornecedorDeServico {
-        +Integer id
-        +String nome
-        +String cnpj
-        +String inscricaoMunicipal
-    }
-
-    %% Serviços
-    class RascunhoService {
-        +createRascunho(dto)
-        +adicionarItem(id, itemDto)
-        +converterRascunhoParaPedido(id)
-        +devolverParaEdicao(id, motivo)
-    }
-
-    class CotacaoService {
-        +createCotacao(dto)
-        +uploadAnexos(id, files)
-        +editarCotacao(dto)
-    }
-
-    class PdfDeduplicationService {
-        +storePdf(bytes)
-        +removeReference(storageId)
-        +generateDeduplicationReport()
+    class HistoricoCotacao {
+        +Long id
+        +Integer versao
+        +String motivoEdicao
+        +String editadoPor
+        +LocalDateTime dataEdicao
     }
 ```
 
-## Descrição da Arquitetura
+## Notes
 
-- **Controller Layer**: Endpoints REST que validam DTOs e coordenam chamadas aos serviços.
-- **Service Layer**: Contém a lógica de negócio, orquestração de transações e regras de segurança.
-- **Repository Layer**: Interface com o banco de dados via Spring Data JPA.
-- **Model Layer**: Entidades JPA que representam o domínio do sistema.
-- **DTOs**: Objetos de transferência para comunicação entre Frontend e Backend.
+- `Cotacao` e `CotacaoRascunho` aceitam fornecedor de produto ou servico, nunca os dois ao mesmo tempo.
+- O valor total das cotacoes pode vir do preco legado ou ser calculado a partir dos itens.
+- O modelo de contato foi ampliado com rotulos nos contatos principais e lista de contatos adicionais.
+- Anexos PDF usam armazenamento deduplicado via `PdfStorage`.
+
