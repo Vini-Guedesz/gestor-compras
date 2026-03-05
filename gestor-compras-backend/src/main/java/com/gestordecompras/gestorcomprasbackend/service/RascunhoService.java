@@ -81,6 +81,9 @@ public class RascunhoService {
      */
     @Transactional(readOnly = true)
     public List<RascunhoDTO> getRascunhosPorUsuario(Long userId) {
+        User usuario = getUsuarioAutenticado();
+        validarAcessoRascunhosPorUsuario(userId, usuario);
+
         return rascunhoRepository.findAllByCriadorIdWithItens(userId).stream()
                 .map(rascunhoMapper::toDTO)
                 .collect(Collectors.toList());
@@ -146,6 +149,8 @@ public class RascunhoService {
     public RascunhoDTO atualizarStatus(Long rascunhoId, String status) {
         Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
                 .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId));
+        User usuario = getUsuarioAutenticado();
+        validarPermissaoEdicaoRascunho(rascunho, usuario);
 
         try {
             StatusRascunho novoStatus = StatusRascunho.valueOf(status.toUpperCase());
@@ -185,6 +190,8 @@ public class RascunhoService {
     public RascunhoDTO devolverParaEdicao(Long rascunhoId, com.gestordecompras.gestorcomprasbackend.dto.rascunho.DevolverRascunhoDTO dto) {
         Rascunho rascunho = rascunhoRepository.findById(rascunhoId)
                 .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId));
+        User usuario = getUsuarioAutenticado();
+        validarPermissaoExclusaoRascunho(usuario);
 
         // Validar que o rascunho está em cotação
         if (rascunho.getStatus() != StatusRascunho.EM_COTACAO) {
@@ -196,8 +203,6 @@ public class RascunhoService {
 
         if (!cotacoesExistentes.isEmpty()) {
             // Registrar no histórico a remoção das cotações
-            User usuario = getUsuarioAutenticado();
-
             log.warn("Rascunho {} possui {} cotação(ões) que serão removidas ao devolver para edição",
                     rascunhoId, cotacoesExistentes.size());
 
@@ -219,7 +224,6 @@ public class RascunhoService {
         Rascunho rascunhoSalvo = rascunhoRepository.save(rascunho);
 
         // Registrar no histórico
-        User usuario = getUsuarioAutenticado();
         historicoRascunhoService.registrarDevolucaoParaEdicao(rascunho, usuario, dto.motivo());
 
         log.info("Rascunho {} devolvido para edição por {}. Motivo: {}. Cotações removidas: {}",
@@ -242,6 +246,7 @@ public class RascunhoService {
                 .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + rascunhoId));
 
         User usuario = getUsuarioAutenticado();
+        validarPermissaoEdicaoRascunho(rascunho, usuario);
         adicionarItemInterno(rascunho, itemDTO, usuario);
 
         return rascunhoMapper.toDTO(rascunho);
@@ -317,6 +322,7 @@ public class RascunhoService {
         }
 
         User usuario = getUsuarioAutenticado();
+        validarPermissaoEdicaoRascunho(rascunho, usuario);
 
         // Registrar alterações
         StringBuilder detalhes = new StringBuilder();
@@ -365,6 +371,7 @@ public class RascunhoService {
         }
 
         User usuario = getUsuarioAutenticado();
+        validarPermissaoEdicaoRascunho(rascunho, usuario);
 
         // Registrar no histórico antes de remover
         historicoRascunhoService.registrarRemocaoItem(rascunho, item, usuario);
@@ -396,6 +403,7 @@ public class RascunhoService {
                 .orElseThrow(() -> new EntityNotFoundException("Rascunho não encontrado com ID: " + id));
 
         User usuario = getUsuarioAutenticado();
+        validarPermissaoEdicaoRascunho(rascunho, usuario);
 
         // Registrar atualização de observação se mudou
         if (dto.observacao() != null && !dto.observacao().equals(rascunho.getObservacao())) {
@@ -434,6 +442,10 @@ public class RascunhoService {
         if (!rascunhoRepository.existsById(id)) {
             throw new EntityNotFoundException("Rascunho não encontrado com ID: " + id);
         }
+
+        User usuario = getUsuarioAutenticado();
+        validarPermissaoExclusaoRascunho(usuario);
+
         rascunhoRepository.deleteById(id);
     }
 
@@ -749,6 +761,37 @@ public class RascunhoService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado: " + email));
         return user;
+    }
+
+    private boolean isAdminOuComprador(User usuario) {
+        return usuario.getRole() == UserRole.ADMIN || usuario.getRole() == UserRole.COMPRADOR;
+    }
+
+    private void validarAcessoRascunhosPorUsuario(Long userId, User usuario) {
+        if (usuario.getRole() == UserRole.USUARIO && !Objects.equals(usuario.getId(), userId)) {
+            throw new SecurityException("Usuário não pode consultar rascunhos de outros usuários.");
+        }
+    }
+
+    private void validarPermissaoExclusaoRascunho(User usuario) {
+        if (!isAdminOuComprador(usuario)) {
+            throw new SecurityException("Apenas ADMIN ou COMPRADOR podem excluir/devolver rascunhos.");
+        }
+    }
+
+    private void validarPermissaoEdicaoRascunho(Rascunho rascunho, User usuario) {
+        if (isAdminOuComprador(usuario)) {
+            return;
+        }
+
+        boolean isUsuarioDonoAtivo = usuario.getRole() == UserRole.USUARIO
+            && rascunho.getCriador() != null
+            && Objects.equals(rascunho.getCriador().getId(), usuario.getId())
+            && rascunho.getStatus() == StatusRascunho.ATIVO;
+
+        if (!isUsuarioDonoAtivo) {
+            throw new SecurityException("Usuário não tem permissão para editar este rascunho.");
+        }
     }
 }
 

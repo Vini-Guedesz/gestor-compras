@@ -935,29 +935,18 @@ export const cotacaoService = {
   // Obter anexo PDF da cotação
   async obterAnexoPdf(cotacaoId, pdfIndex = 0) {
     try {
-      // Obter o token de autenticação
-      const token = sessionStorage.getItem('authToken')
+      const endpoint = `${BASE_URL}/${cotacaoId}/anexo/${pdfIndex}`
+      const blob = await api.getBlob(endpoint)
 
-      // Usar o endpoint com índice para consistência
-      const url = `${API_BASE_URL}/api/v1/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
-      })
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('PDF não encontrado. Esta cotação pode não ter anexo.')
-        }
-        throw new Error(`Erro ao buscar PDF: ${response.status} ${response.statusText}`)
+      if (!blob || blob.size === 0) {
+        throw new Error('PDF retornado vazio pelo servidor.')
       }
 
-      const blob = await response.blob()
       return blob
     } catch (error) {
+      if (String(error?.message || '').includes('404')) {
+        throw new Error('PDF não encontrado. Esta cotação pode não ter anexo.')
+      }
       logger.error(`❌ Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
       throw error
     }

@@ -40,9 +40,6 @@
 import api from './api.js'
 import logger from '../utils/logger.js'
 
-// Configuração da URL base da API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
-
 /**
  * Serviço de cotações de rascunho
  * @namespace cotacaoRascunhoService
@@ -253,28 +250,18 @@ const cotacaoRascunhoService = {
    */
   async obterAnexoPdf(rascunhoId, cotacaoId, pdfIndex = 0) {
     try {
+      const endpoint = `/api/v1/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
+      const blob = await api.getBlob(endpoint)
 
-      // Obter o token de autenticação
-      const token = sessionStorage.getItem('authToken')
-
-      // Sempre usar o endpoint com índice para consistência
-      const url = `${API_BASE_URL}/api/v1/rascunhos/${rascunhoId}/cotacoes/${cotacaoId}/anexo/${pdfIndex}`
-
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar PDF: ${response.status}`)
+      if (!blob || blob.size === 0) {
+        throw new Error('PDF retornado vazio pelo servidor.')
       }
 
-      const blob = await response.blob()
       return blob
     } catch (error) {
+      if (String(error?.message || '').includes('404')) {
+        throw new Error('PDF não encontrado para esta cotação de rascunho.')
+      }
       logger.error(`Erro ao obter PDF da cotação ${cotacaoId}:`, error.message)
       throw error
     }

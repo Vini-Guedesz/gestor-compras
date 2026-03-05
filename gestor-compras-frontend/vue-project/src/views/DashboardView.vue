@@ -56,6 +56,7 @@
 
           <!-- Cotações -->
           <MetricCard
+            v-if="permissions.canViewCotacao"
             title="Cotações"
             description="Gerenciar cotações e fornecedores"
             :metrics="[
@@ -92,6 +93,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useSidebar } from '@/composables/useSidebar'
+import { usePermissions } from '@/composables/usePermissions'
 import { getWelcomeMessage as getWelcomeMessageUtil } from '../utils/genderUtils'
 import logger from '../utils/logger.js'
 import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue'
@@ -104,6 +106,7 @@ import cotacaoService from '../services/cotacaoService.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { permissions } = usePermissions()
 const { isCollapsed } = useSidebar()
 
 // Estados reativos para métricas reais

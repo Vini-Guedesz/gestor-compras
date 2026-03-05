@@ -150,19 +150,28 @@ const router = createRouter({
       path: '/pedidos/novo',
       name: 'novo-pedido',
       component: NovoPedidoView,
-      meta: { requiresAuth: true }
+      meta: {
+        requiresAuth: true,
+        requiredRoles: ['ADMIN', 'USUARIO', 'COMPRADOR']
+      }
     },
     {
       path: '/pedidos/novo/:id',
       name: 'continuar-pedido',
       component: NovoPedidoView,
-      meta: { requiresAuth: true } // Continuar rascunho existente
+      meta: {
+        requiresAuth: true,
+        requiredRoles: ['ADMIN', 'USUARIO', 'COMPRADOR']
+      } // Continuar rascunho existente
     },
     {
       path: '/pedidos/rascunho/:id',
       name: 'editar-rascunho',
       component: NovoPedidoView,
-      meta: { requiresAuth: true }
+      meta: {
+        requiresAuth: true,
+        requiredRoles: ['ADMIN', 'USUARIO', 'COMPRADOR']
+      }
     },
     {
       path: '/pedidos/visualizar/:id',

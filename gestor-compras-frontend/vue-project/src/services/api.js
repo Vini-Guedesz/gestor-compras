@@ -266,8 +266,27 @@ const api = {
    * Método GET para buscar recursos do servidor.
    * O token JWT é adicionado automaticamente pelo interceptador.
    */
-  async get(endpoint) {
-    const response = await apiClient.get(endpoint)
+  async get(endpoint, config = {}) {
+    const response = await apiClient.get(endpoint, config)
+    return response.data
+  },
+
+  /**
+   * Realiza requisição HTTP GET com retorno binário (Blob)
+   *
+   * @async
+   * @function getBlob
+   * @memberof api
+   * @param {string} endpoint - Caminho do endpoint
+   * @param {Object} [config={}] - Configuração adicional do Axios
+   * @returns {Promise<Blob>} Blob retornado pela API
+   * @throws {Error} Erro tratado pelos interceptadores
+   */
+  async getBlob(endpoint, config = {}) {
+    const response = await apiClient.get(endpoint, {
+      ...config,
+      responseType: 'blob'
+    })
     return response.data
   },
 

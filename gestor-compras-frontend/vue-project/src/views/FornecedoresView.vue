@@ -517,11 +517,19 @@ const carregarFornecedores = async () => {
 }
 
 const abrirFormularioNovo = () => {
+  if (!permissions.value.canCreateFornecedor) {
+    toastError('Você não tem permissão para cadastrar fornecedores.')
+    return
+  }
   fornecedorEditando.value = null
   showFornecedorForm.value = true
 }
 
 const editarFornecedor = (fornecedor) => {
+  if (!permissions.value.canEditFornecedor) {
+    toastError('Você não tem permissão para editar fornecedores.')
+    return
+  }
   fornecedorEditando.value = fornecedor
   showFornecedorForm.value = true
 }
@@ -532,6 +540,16 @@ const fecharFormulario = () => {
 }
 
 const salvarFornecedor = async (dadosFornecedor) => {
+  if (fornecedorEditando.value && !permissions.value.canEditFornecedor) {
+    toastError('Você não tem permissão para editar fornecedores.')
+    return
+  }
+
+  if (!fornecedorEditando.value && !permissions.value.canCreateFornecedor) {
+    toastError('Você não tem permissão para cadastrar fornecedores.')
+    return
+  }
+
   try {
 
     if (fornecedorEditando.value) {
@@ -591,12 +609,21 @@ const salvarFornecedor = async (dadosFornecedor) => {
 }
 
 const confirmarExclusao = (fornecedor) => {
+  if (!permissions.value.canDeleteFornecedor) {
+    toastError('Você não tem permissão para excluir fornecedores.')
+    return
+  }
+
   fornecedorParaExcluir.value = fornecedor
   showConfirmModal.value = true
 }
 
 const excluirFornecedor = async () => {
   if (!fornecedorParaExcluir.value) return
+  if (!permissions.value.canDeleteFornecedor) {
+    toastError('Você não tem permissão para excluir fornecedores.')
+    return
+  }
 
   try {
     const fornecedor = fornecedorParaExcluir.value

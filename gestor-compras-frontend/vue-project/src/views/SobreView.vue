@@ -6,11 +6,11 @@
         <!-- Sidebar -->
         <DashboardSidebar />
 
-        <!-- Conteúdo Principal -->
+        <!-- ConteÃºdo Principal -->
         <div class="main-content">
             <!-- Breadcrumb -->
             <div class="breadcrumb">
-                <router-link to="/dashboard" class="breadcrumb-home" aria-label="Início">
+                <router-link to="/dashboard" class="breadcrumb-home" aria-label="InÃ­cio">
                     <svg viewBox="0 0 24 24" width="16" height="16">
                         <path fill="currentColor" d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/>
                     </svg>
@@ -26,7 +26,7 @@
                         <div class="banner-pattern"></div>
                     </div>
 
-                    <!-- Conteúdo -->
+                    <!-- ConteÃºdo -->
                     <div class="about-body">
                         <!-- Logo -->
                         <div class="logo-wrapper">
@@ -42,7 +42,7 @@
                         <!-- Info Principal -->
                         <div class="about-info-section">
                             <h1 class="app-name">Gestor de Compras</h1>
-                            <p class="app-tagline">Sistema de Gestão de Pedidos e Cotações</p>
+                            <p class="app-tagline">Sistema de GestÃ£o de Pedidos e CotaÃ§Ãµes</p>
                             <span class="version-badge">v{{ appVersion }}</span>
                         </div>
 
@@ -76,7 +76,7 @@
                     </div>
                 </div>
 
-                <!-- Histórico de Versões -->
+                <!-- HistÃ³rico de VersÃµes -->
                 <div class="about-card">
                     <div class="card-header">
                         <div class="header-left">
@@ -86,23 +86,34 @@
                                 </svg>
                             </div>
                             <div>
-                                <h2 class="card-title">Histórico de Versões</h2>
-                                <p class="card-subtitle">Atualizações recentes</p>
+                                <h2 class="card-title">HistÃ³rico de VersÃµes</h2>
+                                <p class="card-subtitle">AtualizaÃ§Ãµes recentes</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="card-body">
                         <div class="releases-list">
-                            <!-- v3.2.1 -->
+                            <!-- v3.2.2 -->
                             <div class="release-item current">
                                 <div class="release-header">
-                                    <span class="release-version">v3.2.1</span>
+                                    <span class="release-version">v3.2.2</span>
                                     <span class="release-badge current">Atual</span>
                                 </div>
                                 <p class="release-description">
+                                    Corrigido carregamento do visualizador de PDF em producao.
+                                    Ajustado proxy do frontend para rotas de API no deploy.
+                                </p>
+                            </div>
+
+                            <!-- v3.2.1 -->
+                            <div class="release-item">
+                                <div class="release-header">
+                                    <span class="release-version">v3.2.1</span>
+                                </div>
+                                <p class="release-description">
                                     Ajustado o clique em e-mail e telefone para copiar o contato sem travar o navegador.
-                                    Padronizada a cópia de contatos nas telas de pedido, rascunho e fornecedor.
+                                    Padronizada a cÃ³pia de contatos nas telas de pedido, rascunho e fornecedor.
                                 </p>
                             </div>
 
@@ -146,8 +157,8 @@
                                     <span class="release-version">v2.0.0</span>
                                 </div>
                                 <p class="release-description">
-                                    Sistema de cotações, workflow de aprovações e
-                                    gestão de fornecedores.
+                                    Sistema de cotaÃ§Ãµes, workflow de aprovaÃ§Ãµes e
+                                    gestÃ£o de fornecedores.
                                 </p>
                             </div>
 
@@ -157,7 +168,7 @@
                                     <span class="release-version">v1.0.0</span>
                                 </div>
                                 <p class="release-description">
-                                    Lançamento inicial com gestão básica de pedidos de compra.
+                                    LanÃ§amento inicial com gestÃ£o bÃ¡sica de pedidos de compra.
                                 </p>
                             </div>
                         </div>
@@ -166,7 +177,7 @@
 
                 <!-- Footer -->
                 <div class="about-footer">
-                    <p class="copyright">© 2025 Gestor de Compras. Todos os direitos reservados.</p>
+                    <p class="copyright">Â© 2025 Gestor de Compras. Todos os direitos reservados.</p>
                 </div>
             </div>
         </div>
@@ -179,10 +190,10 @@ import DashboardHeader from '@/features/dashboard/components/DashboardHeader.vue
 import DashboardSidebar from '@/features/dashboard/components/DashboardSidebar.vue'
 import packageInfo from '../../package.json'
 
-// Informações do sistema
+// InformaÃ§Ãµes do sistema
 const appVersion = ref(packageInfo.version)
-const gitBranch = ref('V3')
-const environment = ref(import.meta.env.MODE === 'production' ? 'Produção' : 'Desenvolvimento')
+const gitBranch = ref('main')
+const environment = ref(import.meta.env.MODE === 'production' ? 'ProduÃ§Ã£o' : 'Desenvolvimento')
 </script>
 
 <style scoped>
@@ -516,3 +527,4 @@ const environment = ref(import.meta.env.MODE === 'production' ? 'Produção' : '
     }
 }
 </style>
+

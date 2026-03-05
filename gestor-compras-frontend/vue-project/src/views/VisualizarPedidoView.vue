@@ -1354,6 +1354,11 @@ export default {
     }
 
     const excluirCotacao = async (cotacao) => {
+      if (!permissions.value.canEditCotacao) {
+        showError('Você não tem permissão para excluir cotações.')
+        return
+      }
+
       const { showWarning } = useErrorModal()
 
       showWarning(`Tem certeza que deseja excluir a cotação de ${cotacao.nomeFornecedor}?`, {
@@ -1403,6 +1408,11 @@ export default {
     }
 
     const abrirModalDevolucao = async () => {
+      if (!podeDevolverParaEdicao.value) {
+        showError('Você não tem permissão para devolver este rascunho.')
+        return
+      }
+
       try {
         // Verificar quantas cotações existem
         const quantidadeCotacoes = await rascunhoService.contarCotacoes(pedido.value.rascunhoId)
@@ -1439,6 +1449,11 @@ export default {
     }
 
     const confirmarDevolucao = async () => {
+      if (!podeDevolverParaEdicao.value) {
+        showError('Você não tem permissão para devolver este rascunho.')
+        return
+      }
+
       if (motivoDevolucao.value.length < 10) {
         showError('O motivo deve ter pelo menos 10 caracteres')
         return
@@ -1524,6 +1539,11 @@ export default {
 
     // Enviar para Aprovação
     const abrirModalEnviarAprovacao = () => {
+      if (!permissions.value.canEnviarPedidoAprovacao) {
+        showError('Você não tem permissão para enviar pedido para aprovação.')
+        return
+      }
+
       observacaoPedido.value = ''
       modalEnviarAprovacaoAberto.value = true
     }
@@ -1534,12 +1554,13 @@ export default {
     }
 
     const confirmarEnviarAprovacao = async () => {
+      if (!permissions.value.canEnviarPedidoAprovacao) {
+        showError('Você não tem permissão para enviar pedido para aprovação.')
+        return
+      }
+
       processando.value = true
       try {
-        console.log('pedidoService:', pedidoService)
-        console.log('enviarParaAprovacao:', pedidoService.enviarParaAprovacao)
-        console.log('Todas as funções:', Object.keys(pedidoService))
-
         await pedidoService.enviarParaAprovacao(pedido.value.id, {
           observacao: observacaoPedido.value || undefined
         })
@@ -1559,6 +1580,11 @@ export default {
 
     // Aprovar Pedido
     const abrirModalAprovar = () => {
+      if (!permissions.value.canAprovarPedido) {
+        showError('Você não tem permissão para aprovar pedidos.')
+        return
+      }
+
       observacaoPedido.value = ''
       modalAprovarAberto.value = true
     }
@@ -1569,6 +1595,11 @@ export default {
     }
 
     const confirmarAprovar = async () => {
+      if (!permissions.value.canAprovarPedido) {
+        showError('Você não tem permissão para aprovar pedidos.')
+        return
+      }
+
       processando.value = true
       try {
         await pedidoService.aprovarPedidoWorkflow(pedido.value.id, {
@@ -1590,6 +1621,11 @@ export default {
 
     // Devolver Pedido para Edição
     const abrirModalDevolverPedido = () => {
+      if (!permissions.value.canDevolverPedido) {
+        showError('Você não tem permissão para devolver pedidos.')
+        return
+      }
+
       motivoDevolucaoPedido.value = ''
       modalDevolverPedidoAberto.value = true
     }
@@ -1600,6 +1636,11 @@ export default {
     }
 
     const confirmarDevolverPedido = async () => {
+      if (!permissions.value.canDevolverPedido) {
+        showError('Você não tem permissão para devolver pedidos.')
+        return
+      }
+
       if (motivoDevolucaoPedido.value.length < 10) {
         showError('O motivo da devolução deve ter pelo menos 10 caracteres')
         return
@@ -1626,6 +1667,11 @@ export default {
 
     // Cancelar Pedido
     const abrirModalCancelar = () => {
+      if (!permissions.value.canCancelarPedido) {
+        showError('Você não tem permissão para cancelar pedidos.')
+        return
+      }
+
       observacaoPedido.value = ''
       modalCancelarAberto.value = true
     }
@@ -1636,6 +1682,11 @@ export default {
     }
 
     const confirmarCancelar = async () => {
+      if (!permissions.value.canCancelarPedido) {
+        showError('Você não tem permissão para cancelar pedidos.')
+        return
+      }
+
       processando.value = true
       try {
         await pedidoService.cancelarPedidoWorkflow(pedido.value.id, {

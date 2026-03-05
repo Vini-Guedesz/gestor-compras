@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -42,9 +43,9 @@ import java.util.List;
  *
  * <p><b>Política de Endpoints:</b></p>
  * <ul>
- *   <li><b>Públicos (sem autenticação):</b> /auth/login, /swagger-ui/**, fornecedores, relatórios</li>
+ *   <li><b>Públicos (sem autenticação):</b> /auth/login, /swagger-ui/**, /actuator/**</li>
  *   <li><b>Apenas ADMIN:</b> /users/**, /enderecos/**, /contatos/**</li>
- *   <li><b>Autenticados (qualquer role):</b> Todos os demais endpoints</li>
+ *   <li><b>Autenticados com RBAC:</b> Demais endpoints por role e método HTTP</li>
  * </ul>
  *
  * <p><b>Roles disponíveis no sistema:</b></p>
@@ -73,6 +74,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
@@ -118,18 +120,81 @@ public class SecurityConfig {
     };
 
     /**
-     * Endpoints que requerem autenticação mas aceitam qualquer role válida.
-     * Atualmente vazio - a maioria dos endpoints usa {@code anyRequest().authenticated()},
-     * permitindo acesso a ADMIN, USUARIO, COMPRADOR e APROVADOR.
-     */
-    private static final String[] USER_ENDPOINTS = {
-    };
-
-    /**
      * Endpoints restritos para ADMIN e COMPRADOR.
      */
     private static final String[] COTACAO_ENDPOINTS = {
             ApiVersionConfig.API_V1 + "/cotacoes/**"
+    };
+
+    /**
+     * Endpoints de cotações em rascunho restritos para ADMIN e COMPRADOR.
+     */
+    private static final String[] COTACAO_RASCUNHO_ENDPOINTS = {
+            ApiVersionConfig.API_V1 + "/rascunhos/*/cotacoes/**"
+    };
+
+    /**
+     * Endpoints de fornecedores (produto + serviço).
+     */
+    private static final String[] FORNECEDOR_ENDPOINTS = {
+            ApiVersionConfig.API_V1 + "/fornecedores-de-produto/**",
+            ApiVersionConfig.API_V1 + "/fornecedores-de-servico/**"
+    };
+
+    /**
+     * Endpoints de rascunho.
+     */
+    private static final String[] RASCUNHO_ENDPOINTS = {
+            ApiVersionConfig.API_V1 + "/rascunhos/**"
+    };
+
+    /**
+     * Endpoint de criação de rascunho.
+     */
+    private static final String RASCUNHO_CREATE_ENDPOINT = ApiVersionConfig.API_V1 + "/rascunhos";
+
+    /**
+     * Endpoints de mutação de itens do rascunho.
+     */
+    private static final String[] RASCUNHO_ITENS_ENDPOINTS = {
+            ApiVersionConfig.API_V1 + "/rascunhos/*/itens/**"
+    };
+
+    /**
+     * Endpoints de pedido.
+     */
+    private static final String[] PEDIDO_ENDPOINTS = {
+            ApiVersionConfig.API_V1 + "/solicitacoes-pedido/**"
+    };
+
+    /**
+     * Endpoint de criação de pedido.
+     */
+    private static final String PEDIDO_CREATE_ENDPOINT = ApiVersionConfig.API_V1 + "/solicitacoes-pedido";
+
+    /**
+     * Endpoints de fluxo do pedido.
+     */
+    private static final String PEDIDO_ENVIAR_APROVACAO_ENDPOINT = ApiVersionConfig.API_V1 + "/solicitacoes-pedido/*/enviar-para-aprovacao";
+    private static final String PEDIDO_APROVAR_ENDPOINT = ApiVersionConfig.API_V1 + "/solicitacoes-pedido/*/aprovar";
+    private static final String PEDIDO_DEVOLVER_EDICAO_ENDPOINT = ApiVersionConfig.API_V1 + "/solicitacoes-pedido/*/devolver-para-edicao";
+    private static final String PEDIDO_CANCELAR_ENDPOINT = ApiVersionConfig.API_V1 + "/solicitacoes-pedido/*/cancelar";
+
+    /**
+     * Endpoints de leitura de pedidos e histórico.
+     */
+    private static final String[] PEDIDO_LEITURA_ENDPOINTS = {
+            ApiVersionConfig.API_V1 + "/solicitacoes-pedido/**",
+            ApiVersionConfig.API_V1 + "/itens-pedido/**",
+            ApiVersionConfig.API_V1 + "/historico-pedidos/**"
+    };
+
+    /**
+     * Endpoints de relatórios.
+     */
+    private static final String[] RELATORIO_ENDPOINTS = {
+            "/relatorios/**",
+            ApiVersionConfig.API_V1 + "/relatorios/**"
     };
 
     /**
@@ -140,14 +205,6 @@ public class SecurityConfig {
             ApiVersionConfig.API_V1 + "/users/**",
             ApiVersionConfig.API_V1 + "/enderecos/**",
             ApiVersionConfig.API_V1 + "/contatos/**"
-    };
-
-    /**
-     * Endpoints POST específicos que são públicos (ex: registro de usuário).
-     * Permite criar usuário sem autenticação, mas GET/PUT/DELETE requerem ADMIN.
-     */
-    private static final String[] PUBLIC_POST_ENDPOINTS = {
-            // Nenhum endpoint POST público (criação de usuário agora restrita a ADMIN)
     };
 
     /**
@@ -178,10 +235,8 @@ public class SecurityConfig {
      * <p><b>Ordem de avaliação de regras:</b></p>
      * <ol>
      *   <li>OPTIONS requests - Permitidos (preflight CORS)</li>
-     *   <li>/relatorios/** - Público</li>
-     *   <li>POST /users - Público (registro)</li>
      *   <li>PUBLIC_ENDPOINTS - Sem autenticação</li>
-     *   <li>USER_ENDPOINTS - Requer USER ou ADMIN</li>
+     *   <li>Endpoints de domínio (relatórios, cotações, fornecedores, pedidos e rascunhos) com RBAC</li>
      *   <li>ADMIN_ENDPOINTS - Requer ADMIN</li>
      *   <li>Demais endpoints - Requer autenticação JWT válida</li>
      * </ol>
@@ -204,12 +259,44 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Permitir preflight CORS
-                        .requestMatchers("/relatorios/**").permitAll()
-                        .requestMatchers(ApiVersionConfig.API_V1 + "/relatorios/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(USER_ENDPOINTS).hasAnyRole("USUARIO", "ADMIN", "COMPRADOR", "APROVADOR")
+
+                        // Relatórios: leitura para ADMIN/COMPRADOR/APROVADOR, exportação para ADMIN/COMPRADOR
+                        .requestMatchers(HttpMethod.GET, RELATORIO_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR", "APROVADOR")
+                        .requestMatchers(HttpMethod.POST, RELATORIO_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR")
+
+                        // Cotações
                         .requestMatchers(COTACAO_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR")
+                        .requestMatchers(COTACAO_RASCUNHO_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR")
+
+                        // Fornecedores
+                        .requestMatchers(HttpMethod.GET, FORNECEDOR_ENDPOINTS).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR", "APROVADOR")
+                        .requestMatchers(HttpMethod.POST, FORNECEDOR_ENDPOINTS).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR")
+                        .requestMatchers(HttpMethod.PUT, FORNECEDOR_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR")
+                        .requestMatchers(HttpMethod.DELETE, FORNECEDOR_ENDPOINTS).hasRole("ADMIN")
+
+                        // Pedidos (fluxo específico antes do CRUD genérico)
+                        .requestMatchers(HttpMethod.POST, PEDIDO_ENVIAR_APROVACAO_ENDPOINT).hasAnyRole("ADMIN", "COMPRADOR")
+                        .requestMatchers(HttpMethod.POST, PEDIDO_APROVAR_ENDPOINT).hasAnyRole("ADMIN", "APROVADOR")
+                        .requestMatchers(HttpMethod.POST, PEDIDO_DEVOLVER_EDICAO_ENDPOINT).hasAnyRole("ADMIN", "APROVADOR")
+                        .requestMatchers(HttpMethod.POST, PEDIDO_CANCELAR_ENDPOINT).hasAnyRole("ADMIN", "APROVADOR")
+                        .requestMatchers(HttpMethod.GET, PEDIDO_LEITURA_ENDPOINTS).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR", "APROVADOR")
+                        .requestMatchers(HttpMethod.POST, PEDIDO_CREATE_ENDPOINT).hasAnyRole("ADMIN", "COMPRADOR")
+                        .requestMatchers(HttpMethod.PUT, PEDIDO_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR")
+                        .requestMatchers(HttpMethod.DELETE, PEDIDO_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR")
+
+                        // Rascunhos
+                        .requestMatchers(HttpMethod.POST, RASCUNHO_CREATE_ENDPOINT).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR")
+                        .requestMatchers(HttpMethod.POST, ApiVersionConfig.API_V1 + "/rascunhos/*/converter-para-pedido").hasAnyRole("ADMIN", "COMPRADOR")
+                        .requestMatchers(HttpMethod.POST, RASCUNHO_ITENS_ENDPOINTS).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR")
+                        .requestMatchers(HttpMethod.PUT, RASCUNHO_ITENS_ENDPOINTS).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR")
+                        .requestMatchers(HttpMethod.DELETE, ApiVersionConfig.API_V1 + "/rascunhos/*/itens/*").hasAnyRole("ADMIN", "USUARIO", "COMPRADOR")
+                        .requestMatchers(HttpMethod.PUT, RASCUNHO_ENDPOINTS).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR")
+                        .requestMatchers(HttpMethod.PATCH, RASCUNHO_ENDPOINTS).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR")
+                        .requestMatchers(HttpMethod.POST, ApiVersionConfig.API_V1 + "/rascunhos/*/devolver-para-edicao").hasAnyRole("ADMIN", "COMPRADOR")
+                        .requestMatchers(HttpMethod.DELETE, RASCUNHO_ENDPOINTS).hasAnyRole("ADMIN", "COMPRADOR")
+                        .requestMatchers(HttpMethod.GET, RASCUNHO_ENDPOINTS).hasAnyRole("ADMIN", "USUARIO", "COMPRADOR", "APROVADOR")
+
                         .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                         .anyRequest().authenticated() // Permite qualquer role válida (ADMIN, USUARIO, COMPRADOR, APROVADOR)
                 )

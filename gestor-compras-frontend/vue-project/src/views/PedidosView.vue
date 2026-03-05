@@ -956,6 +956,10 @@ export default {
     }
 
     const abrirFormularioNovo = () => {
+      if (!permissions.value.canCreateRascunho) {
+        warning('Você não tem permissão para criar rascunhos.')
+        return
+      }
       router.push('/pedidos/novo')
     }
 
@@ -1117,6 +1121,10 @@ export default {
     }
 
     const confirmarExclusao = (pedido) => {
+      if (!podeExcluir(pedido)) {
+        warning('Você não tem permissão para excluir este registro.')
+        return
+      }
       pedidoParaExcluir.value = pedido
       showConfirmModal.value = true
     }
@@ -1124,6 +1132,11 @@ export default {
     const excluirPedido = async () => {
       try {
         if (pedidoParaExcluir.value?.id) {
+          if (!podeExcluir(pedidoParaExcluir.value)) {
+            warning('Você não tem permissão para excluir este registro.')
+            return
+          }
+
           const id = pedidoParaExcluir.value.id
 
           // Verificar se é um rascunho usando a propriedade isRascunho
@@ -1151,14 +1164,14 @@ export default {
     }
 
     const aprovarPedido = async (pedido) => {
+      if (!podeAprovar(pedido)) {
+        warning('Você não tem permissão para aprovar este pedido.')
+        return
+      }
+
       try {
         isLoading.value = true
-        // Usar o enum correto do backend: APROVADO
-        const dadosAtualizacao = {
-          ...pedido,
-          status: 'APROVADO'
-        }
-        await pedidoService.atualizar(pedido.id, dadosAtualizacao)
+        await pedidoService.aprovarPedidoWorkflow(pedido.id, {})
 
         const index = pedidos.value.findIndex(p => p.id === pedido.id)
         if (index !== -1) {
@@ -1215,7 +1228,7 @@ export default {
 
     const podeAprovar = (pedido) => {
       // Só pode aprovar pedidos pendentes de aprovação
-      return pedido.status === 'PENDENTE_APROVACAO'
+      return pedido.status === 'PENDENTE_APROVACAO' && permissions.value.canAprovarPedido
     }
 
     const podeVisualizar = () => {
@@ -1247,30 +1260,54 @@ export default {
     }
 
     const podeAlterarStatus = (pedido) => {
-      // Pode alterar status de pedidos que não estão finalizados
-      return !['APROVADO', 'CANCELADO'].includes(pedido.status)
+      if (['APROVADO', 'CANCELADO'].includes(pedido.status)) {
+        return false
+      }
+
+      if (pedido.status === 'EM_NEGOCIACAO') {
+        return permissions.value.canEnviarPedidoAprovacao || permissions.value.canCancelarPedido
+      }
+
+      if (pedido.status === 'PENDENTE_APROVACAO') {
+        return permissions.value.canAprovarPedido || permissions.value.canCancelarPedido
+      }
+
+      return false
     }
 
     const getStatusDisponiveis = (statusAtual) => {
-      const todosStatus = [
-        { value: 'EM_NEGOCIACAO', label: 'Em Negociação' },
-        { value: 'PENDENTE_APROVACAO', label: 'Pendente de Aprovação' },
-        { value: 'APROVADO', label: 'Aprovado' },
-        { value: 'CANCELADO', label: 'Cancelado' }
-      ]
-
-      // Filtrar status disponíveis baseado no status atual
-      switch (statusAtual) {
-        case 'EM_NEGOCIACAO':
-          return todosStatus.filter(s => ['PENDENTE_APROVACAO', 'CANCELADO'].includes(s.value))
-        case 'PENDENTE_APROVACAO':
-          return todosStatus.filter(s => ['EM_NEGOCIACAO', 'APROVADO', 'CANCELADO'].includes(s.value))
-        default:
-          return []
+      if (statusAtual === 'EM_NEGOCIACAO') {
+        const opcoes = []
+        if (permissions.value.canEnviarPedidoAprovacao) {
+          opcoes.push({ value: 'PENDENTE_APROVACAO', label: 'Pendente de Aprovação' })
+        }
+        if (permissions.value.canCancelarPedido) {
+          opcoes.push({ value: 'CANCELADO', label: 'Cancelado' })
+        }
+        return opcoes
       }
+
+      if (statusAtual === 'PENDENTE_APROVACAO') {
+        const opcoes = []
+        if (permissions.value.canAprovarPedido) {
+          opcoes.push({ value: 'APROVADO', label: 'Aprovado' })
+        }
+        if (permissions.value.canCancelarPedido) {
+          opcoes.push({ value: 'CANCELADO', label: 'Cancelado' })
+        }
+        return opcoes
+      }
+
+      return []
     }
 
     const alterarStatus = async (pedido, novoStatus) => {
+      const opcoesDisponiveis = getStatusDisponiveis(pedido.status).map(status => status.value)
+      if (!opcoesDisponiveis.includes(novoStatus)) {
+        warning('Você não tem permissão para esta alteração de status.')
+        return
+      }
+
       const { showWarning } = useErrorModal()
 
       showWarning(
@@ -1283,7 +1320,15 @@ export default {
             try {
               isLoading.value = true
 
-              await pedidoService.alterarStatus(pedido.id, novoStatus)
+              if (novoStatus === 'PENDENTE_APROVACAO') {
+                await pedidoService.enviarParaAprovacao(pedido.id, {})
+              } else if (novoStatus === 'APROVADO') {
+                await pedidoService.aprovarPedidoWorkflow(pedido.id, {})
+              } else if (novoStatus === 'CANCELADO') {
+                await pedidoService.cancelarPedidoWorkflow(pedido.id, {})
+              } else {
+                throw new Error('Transição de status não suportada nesta tela.')
+              }
 
               const index = pedidos.value.findIndex(p => p.id === pedido.id)
               if (index !== -1) {

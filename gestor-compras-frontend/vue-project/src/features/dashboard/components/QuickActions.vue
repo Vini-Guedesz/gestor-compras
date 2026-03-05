@@ -3,7 +3,7 @@
     <h3 class="actions-title">Ações Rápidas</h3>
     <div class="actions-grid">
       <button
-        v-for="action in actions"
+        v-for="action in visibleActions"
         :key="action.id"
         class="action-button"
         :class="action.variant"
@@ -27,7 +27,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { usePermissions } from '@/composables/usePermissions'
 
 const actions = ref([
   {
@@ -51,6 +52,22 @@ const actions = ref([
     action: 'novo-fornecedor'
   }
 ])
+
+const { permissions } = usePermissions()
+
+const visibleActions = computed(() => {
+  return actions.value.filter((action) => {
+    if (action.action === 'novo-pedido') {
+      return permissions.value.canCreateRascunho
+    }
+
+    if (action.action === 'novo-fornecedor') {
+      return permissions.value.canCreateFornecedor
+    }
+
+    return true
+  })
+})
 
 const emit = defineEmits(['action-click'])
 
