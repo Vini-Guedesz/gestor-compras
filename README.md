@@ -1,6 +1,6 @@
 # Gestor de Compras
 
-Versao atual: `3.2.1`
+Versao atual: `3.2.2`
 
 ## Visao geral
 
@@ -16,12 +16,12 @@ Principais capacidades:
 - Upload de anexos PDF com armazenamento deduplicado.
 - Interface web com dashboard, filtros, modais e visualizacao detalhada.
 
-## Destaques da release 3.2.1
+## Destaques da release 3.2.2
 
-- Clique em e-mail e telefone agora copia o valor para a area de transferencia.
-- Comportamento padronizado nas telas de pedido, rascunho e fornecedor.
-- Tela "Sobre" atualizada com a versao `3.2.1`.
-- Ajustes de lint no frontend para estabilizar a release.
+- Correcao do carregamento de PDF no viewer em ambiente de producao.
+- Download de anexos PDF centralizado no cliente `api` com resposta `blob`.
+- Ajuste de proxy no frontend para rotas `/api`, `/auth` e `/relatorios`.
+- Tela "Sobre" atualizada com a versao `3.2.2`.
 
 ## Estrutura do repositorio
 
@@ -127,7 +127,7 @@ Frontend padrao: `http://localhost:5173`
 
 ## Validacao da release
 
-Comandos usados na revisao da branch `release/3.2.1-copy-contacts`:
+Comandos usados na validacao da versao `3.2.2`:
 
 ```bash
 # Frontend
@@ -193,7 +193,7 @@ Arquivos principais:
 | Grafana | 3000 |
 | Prometheus | 9090 |
 
-## Branch de release atual
+## Branch principal atual
 
-- Branch: `release/3.2.1-copy-contacts`
+- Branch: `main`
 

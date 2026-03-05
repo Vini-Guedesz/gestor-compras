@@ -18,7 +18,8 @@ Os documentos foram revisados para refletir:
 - cotacao detalhada por item em pedidos e rascunhos;
 - historico de cotacoes;
 - armazenamento deduplicado de anexos PDF;
-- estado da release `3.2.1`.
+- correcao do PDF viewer em producao e ajuste de proxy no frontend;
+- estado da release `3.2.2`.
 
 ## Fonte de verdade
 
