@@ -1,20 +1,20 @@
 # Gestor de Compras (Spring Boot + Vue)
 
-Gestor de Compras is a fullstack platform to manage purchase workflows, quotations, suppliers and approvals in a single product.
+Gestor de Compras e uma plataforma fullstack para gerenciar fluxo de compras, cotacoes, fornecedores e aprovacoes em um unico produto.
 
-## ✨ Features
+## Funcionalidades
 
-- 🧾 Purchase workflow management:
-  - Draft creation and conversion into purchase orders
-  - Order lifecycle tracking
-- 💸 Quotation management:
-  - Item-based quotations with quantity, unit price and notes
-- 🏢 Supplier management:
-  - Supplier records, contacts and history
-- 📎 PDF attachments with deduplicated storage
-- 📊 Dashboard-oriented UI for fast operational analysis
+- Gestao do fluxo de compras:
+  - criacao de rascunho e conversao em pedido
+  - acompanhamento do ciclo de vida do pedido
+- Gestao de cotacoes:
+  - cotacao por item com quantidade, preco unitario e observacoes
+- Gestao de fornecedores:
+  - cadastro de fornecedores, contatos e historico
+- Anexos PDF com armazenamento deduplicado
+- Interface orientada a dashboard para analise operacional rapida
 
-## 🛠️ Tech Stack
+## Stack
 
 ### Backend
 
@@ -37,30 +37,30 @@ Gestor de Compras is a fullstack platform to manage purchase workflows, quotatio
 - Nginx
 - Prometheus + Grafana
 
-## 📦 Installation
+## Instalacao
 
 ```bash
-# Clone repository
+# Clonar repositorio
 git clone https://github.com/Vini-Guedesz/gestor-compras.git
 
-# Enter project folder
+# Entrar no projeto
 cd gestor-compras
 ```
 
-### Run database (Docker)
+### Subir banco (Docker)
 
 ```bash
 docker-compose up -d db
 ```
 
-### Run backend
+### Subir backend
 
 ```bash
 cd gestor-compras-backend
 ./mvnw spring-boot:run
 ```
 
-### Run frontend
+### Subir frontend
 
 ```bash
 cd gestor-compras-frontend/vue-project
@@ -68,13 +68,13 @@ npm install
 npm run dev
 ```
 
-Main URLs:
+URLs principais:
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:8081`
 - Swagger: `http://localhost:8081/swagger-ui.html`
 
-## 🧩 Project Structure
+## Estrutura do projeto
 
 ```text
 gestor-compras/
@@ -89,9 +89,9 @@ gestor-compras/
  └── docker-compose-monitoring.yml
 ```
 
-## 📌 Roadmap
+## Roadmap
 
-- [ ] Increase frontend automated test coverage
-- [ ] Add deployment pipeline with environment promotion
-- [ ] Improve audit trail visualization in UI
-- [ ] Add advanced filters and reporting exports
+- [ ] Aumentar cobertura de testes automatizados no frontend
+- [ ] Adicionar pipeline de deploy com promocao de ambiente
+- [ ] Melhorar visualizacao da trilha de auditoria na interface
+- [ ] Adicionar filtros avancados e exportacao de relatorios
