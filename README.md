@@ -88,10 +88,3 @@ gestor-compras/
  ├── docker-compose.prod.yml
  └── docker-compose-monitoring.yml
 ```
-
-## Roadmap
-
-- [ ] Aumentar cobertura de testes automatizados no frontend
-- [ ] Adicionar pipeline de deploy com promocao de ambiente
-- [ ] Melhorar visualizacao da trilha de auditoria na interface
-- [ ] Adicionar filtros avancados e exportacao de relatorios
